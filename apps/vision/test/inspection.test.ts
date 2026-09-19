@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createVisionApp } from '../src/app.js';
 import { readConfig } from '../src/config.js';
 import { InspectionJobs } from '../src/jobs.js';
@@ -44,10 +44,20 @@ describe('bounded image inspection', () => {
   });
   it('preserves timeout even for a provider that ignores cancellation', async () => {
     let finish!: (value: ReturnType<typeof assessment>) => void;
-    const jobs = new InspectionJobs({ name: 'mock', model: 'test', assess: async () => new Promise(resolve => { finish = resolve; }) });
+    let entered!: () => void;
+    const providerEntered = new Promise<void>(resolve => { entered = resolve; });
+    const jobs = new InspectionJobs({ name: 'mock', model: 'test', assess: async () => new Promise(resolve => { finish = resolve; entered(); }) });
     const body = await input(); body.remainingBudgetMs = 30;
-    await expect(jobs.inspect(body)).rejects.toMatchObject({ code: 'deadline' });
-    expect(jobs.ready).toBe(false); finish(assessment());
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const pending = expect(jobs.inspect(body)).rejects.toMatchObject({ code: 'deadline' });
+      // Actual sharp decoding finishes before advancing the injected deadline. CPU load cannot
+      // turn this provider-cancellation test into an unrelated decoder-timeout scenario.
+      await providerEntered;
+      await vi.advanceTimersByTimeAsync(30);
+      await pending;
+      expect(jobs.ready).toBe(false); finish(assessment());
+    } finally { vi.useRealTimers(); }
   });
   it.each(['hash', 'mime', 'dimensions', 'truncated', 'base64'] as const)('rejects %s mismatch before provider use', async mode => {
     const img = await image();
