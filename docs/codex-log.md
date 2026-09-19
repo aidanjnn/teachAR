@@ -240,6 +240,42 @@ Append a dated entry after each substantive Codex session. Keep historical resul
 ## 2026-09-19 — TRAIL-03 shared contract freeze (task 2)
 
 Added strict tutorial/draft, guide-event, native sidecar/calibration v2, scene-reference/inspection and upload boundary schemas. Recording v1 exports and audio sync enum remain compatible; native provenance stays separate. Tutorial binding verifies recording/hash/workspace identity and targets against valid recorded wrists. Initial focused validation: contracts TypeScript build and 15 existing recording tests passed. Strict native parser and shared corpus validation are in progress; this entry is not Unity, provider or headset evidence.
+## 2026-09-19 — Task 3 native capture/calibration/replay software
+
+Implemented TRAIL-04/05 software and TRAIL-19 rigid-transfer foundations: pure
+three-mark rigid fit with independent D rejection, stable median mark holds,
+explicit Unity basis reflection, bounded actual-time recording, missing/jump
+samples, gap-safe replay, native XR Hands Dynamic callback adapter, origin/lifecycle
+invalidation, opposite-hand world-space calibration controls and separate
+procedural articulated ghost/prefab. Added canonical DTO/storage events and
+platform feature registry integration; no narration/microphone/camera code.
+
+Actual C# domain fixtures passed under task-scoped .NET 8.0.425 (initial run used
+shared-contract task's generated C# sources before its publication). Includes
+rotated transfer, mirrored/scale/held-out failures, real timestamp and stale/gap
+behavior. Added Unity runtime tests; unavailable editor means they have not run.
+Static quest scaffold check passed. Final merged-dependency checks will be
+recorded separately. SDK APIs were checked against Unity XR Hands documentation;
+1.7.2 pin follows platform task's inspected Meta Core dependency. See
+[native capture runbook](native-capture.md) for interfaces, controls and evidence
+limits. No headset, physical LEGO, live sensor, shader/Unity import, Android or
+independent human transfer evidence is claimed.
+
+## 2026-09-19 — TRAIL-03 shared contract freeze (task 2)
+
+Added strict tutorial/draft, guide-event, native sidecar/calibration v2, scene-reference/inspection and upload boundary schemas. Recording v1 exports and audio sync enum remain compatible; native provenance stays separate. Tutorial binding verifies recording/hash/workspace identity and targets against valid recorded wrists. Initial focused validation: contracts TypeScript build and 15 existing recording tests passed. Strict native parser and shared corpus validation are in progress; this entry is not Unity, provider or headset evidence.
+
+### 2026-09-19 — Task 4 deterministic guide core
+
+Implemented a pure C# guide reducer/matcher and input-driven runtime session for
+TRAIL-06/07: start gating, ordered intermediate gates, bounded fresh-sample dwell,
+tracking reacquisition, pause/reset/repeat and distinct user-confirmed completion.
+Adaptive cue progress cannot pass gates. The shared temporary .NET 8.0.425 SDK
+compiled the actual sources and passed 19 synthetic scenarios, including a full
+multi-step effect trace without any backend. Unity EditMode, APK and physical
+LEGO/headset validation remain unavailable. Native DTO/capture integration is
+being completed on this task branch; this core result does not claim that wiring.
+TRAIL-03 native implementation update: explicit generated DTO readers/writers now compile with the task-scoped .NET 8 SDK. A dependency-free bounded JSON reader rejects duplicate keys, malformed input and nonfinite exponents; generated structural validation and handwritten semantic validation share the TS corpus. 112 TS contract tests and 99 pure C# corpus/binding/legacy/joint/basis checks passed. This is actual .NET behavior, not Unity import or IL2CPP proof. OpenXR enum names were verified against the Khronos XrHandJointEXT reference; palm is excluded explicitly.
 ### 2026-09-19 — Task 1 native platform: pairing boundary and shared dependencies
 
 - Implemented ephemeral, bounded role/session-scoped native bearer and browser cookie pairing. Codes are single-use with five-minute expiry; credentials expire after one hour and revoke on logout/restart. Browser requests require exact allowed Origin, native requests require bearer even without Origin, present unexpected Origin is rejected. Transport defaults to HTTPS with an explicit actual-peer/Host loopback exception. Trusted initial author code is written atomically to a private operator file; no credentials are logged.
@@ -272,3 +308,20 @@ TRAIL-03 native implementation update: explicit generated DTO readers/writers no
 - Follow-up evidence: pinned Unity 6000.3.24f1 appeared at the default Hub path during this run (not installed by this task). All four real `quest:setup`, `quest:test`, `quest:test:play`, `quest:build` attempts exited 198 before import: no valid Unity Editor license/headless entitlement. This supersedes the earlier absent-editor note; no native gate passed.
 - Compiled `Runtime/Network` against that editor's real Unity Core/WebRequest/JSONSerialize managed DLLs through the .NET netstandard2.1 diagnostic project: zero warnings/errors. This is a managed API compile, not Unity import or IL2CPP proof. Actual HTTPS pairing with a test-generated certificate and Secure cookie also passed; production code does not bypass certificate checks.
 - Desktop fixture: initial parallel Playwright run had one existing 3-second health timeout under concurrent load (2/3 passed); isolated `E2E_PORT=3102 pnpm test:e2e --workers=1` passed all 3. Added E2E_PORT override and per-port data isolation without weakening assertions/timeouts. Added sharp 0.34.5 to the server on task6's request for decoded reviewed-reference validation; lockfile install passed.
+### 2026-09-19 — Task 4 guide integration and adversarial checks
+
+Integrated published shared-contract, capture/calibration and native-platform
+branches without duplicating their implementations. Guide preload now uses the
+canonical ready tutorial/hash binding and copied execution values. The feature
+registry binds real workspace observation/calibration events, timestamp replay,
+separate ghost cues, physical fingertip controls and shared read-only telemetry.
+A synchronous inspection-pause acknowledgment preserves the same event sequence;
+visual findings have no completion or resume input. No voice code was changed.
+
+Actual .NET 8.0.425 checks pass 24 reducer/session scenarios plus shared fixture →
+rotated independent calibration → pose projection → guide → strict telemetry
+round-trip, including a golden phase trace. Contracts, domain and runtime adapter
+code compile as separate assemblies. Native Unity components are not covered by
+that compile. Unity appeared during the concurrent work; coordinator evidence
+reports license exit 198, superseding the earlier absence-of-editor observation.
+Full final pnpm/browser and native wrapper results will be recorded on delivery.

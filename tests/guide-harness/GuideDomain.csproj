@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="GuideContracts.csproj" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/Guide*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/WorkspaceCalibration.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/CaptureMotion.cs" />
+  </ItemGroup>
+</Project>
