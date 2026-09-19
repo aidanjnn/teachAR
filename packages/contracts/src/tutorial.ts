@@ -18,7 +18,7 @@ function validRange(s: { startFrame: number; endFrameExclusive: number; checkpoi
   return s.startFrame < s.endFrameExclusive && s.checkpointFrame >= s.startFrame && s.checkpointFrame < s.endFrameExclusive;
 }
 export const TutorialStepSchema = z.strictObject({
-  ...range, title: z.string().min(1).max(200), instruction: z.string().min(1).max(2000),
+  ...range, title: z.string().min(1).max(60), instruction: z.string().min(1).max(240),
   targets: z.array(HandTargetSchema).min(1).max(2), dwellMs: z.number().min(0).max(10_000),
   startDwellMs: z.number().min(0).max(10_000), completionMode: CompletionModeSchema,
   narrationSpanIds: z.array(IdSchema).max(256).refine(unique, 'Duplicate narration ID'),
@@ -50,7 +50,7 @@ function ordered(steps: { id: string; startFrame: number; endFrameExclusive: num
 }
 export const TutorialDraftStepSchema = z.strictObject({
   ...range, activeHands: z.array(SideSchema).min(1).max(2).refine(unique, 'Duplicate active hand'),
-  completionMode: CompletionModeSchema, title: z.string().min(1).max(200), instruction: z.string().min(1).max(2000),
+  completionMode: CompletionModeSchema, title: z.string().min(1).max(60), instruction: z.string().min(1).max(240),
 }).refine(validRange, 'Invalid half-open step range');
 export const TutorialDraftEditSchema = z.strictObject({
   baseRevision: RevisionSchema, steps: z.array(TutorialDraftStepSchema).min(1).max(128),
