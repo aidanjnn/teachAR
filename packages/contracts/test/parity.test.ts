@@ -2,11 +2,15 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import * as contracts from '../src/index.js';
-import corpus from '../../../fixtures/contracts/corpus.json';
+interface CorpusCase {
+  name: string; contract: string; file?: string; valid: boolean; json?: string;
+  patches?: { path: (string | number)[]; value?: unknown; remove?: boolean }[];
+}
+const corpus = JSON.parse(readFileSync('fixtures/contracts/corpus.json', 'utf8')) as { cases: CorpusCase[] };
 import golden from '../../../fixtures/contracts/transforms.json';
 import map from '../../../fixtures/contracts/joint-map.json';
 import { invertTransform, transformPose } from '../../motion/src/index.js';
-function patched(test: (typeof corpus.cases)[number]): string {
+function patched(test: CorpusCase): string {
   if ('json' in test) return test.json!;
   const value = JSON.parse(readFileSync(`fixtures/contracts/${test.file}`, 'utf8')) as Record<string, unknown>;
   if ('patches' in test) for (const patch of test.patches!) {
@@ -30,6 +34,18 @@ describe('shared strict contract corpus', () => {
     for (const change of [(t:contracts.Tutorial)=>{t.recordingId='wrong';},(t:contracts.Tutorial)=>{t.workspace.layoutId='wrong';},(t:contracts.Tutorial)=>{t.steps[0]!.targets[0]!.checkpointPose.positionM[0]+=0.02;}]) {
       const invalid=structuredClone(tutorial); change(invalid); expect(()=>contracts.parseTutorialForRecording(invalid,recording,tutorial.recordingHash)).toThrow();
     }
+  });
+  it('binds scene/native sidecars to the current tutorial and recording', () => {
+    const recording=contracts.RecordingSchema.parse(JSON.parse(readFileSync('fixtures/contracts/recording.json','utf8')));
+    const tutorial=contracts.TutorialSchema.parse(JSON.parse(readFileSync('fixtures/contracts/tutorial.json','utf8')));
+    const scenes=JSON.parse(readFileSync('fixtures/contracts/scene-references.json','utf8'));
+    const native=JSON.parse(readFileSync('fixtures/contracts/native-sidecar.json','utf8'));
+    expect(()=>contracts.parseSceneReferencesForTutorial(scenes,tutorial)).not.toThrow();
+    expect(()=>contracts.parseNativeSidecarForRecording(native,recording,tutorial.recordingHash)).not.toThrow();
+    expect(()=>contracts.parseSceneReferencesForTutorial(scenes,{...tutorial,revision:2})).toThrow();
+    scenes.references[0].stepId='unknown-step';
+    expect(()=>contracts.parseSceneReferencesForTutorial(scenes,tutorial)).toThrow();
+    expect(()=>contracts.parseNativeSidecarForRecording({...native,source:'live'},recording,tutorial.recordingHash)).toThrow();
   });
   it('preserves the explicit named OpenXR map and excludes palm',()=>{
     expect(contracts.OPENXR_JOINT_MAP).toEqual(map.canonicalToNative);

@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { JOINT_NAMES, OPENXR_JOINT_MAP, RecordingSchema, parseTutorialForRecording, type Pose, type Recording, type Tutorial } from '../src/index.js';
+import { JOINT_NAMES, OPENXR_JOINT_MAP, RecordingSchema, parseTutorialForRecording, type Pose, type Tutorial } from '../src/index.js';
 const dir = 'fixtures/contracts'; mkdirSync(dir, { recursive: true });
 function save(name: string, value: unknown) { writeFileSync(`${dir}/${name}.json`, JSON.stringify(value, null, 2) + '\n'); }
 const pose = (x: number, y: number, z: number): Pose => ({ positionM: [x, y, z], orientationXyzw: [0, 0, 0, 1] });
@@ -77,4 +77,18 @@ bad('NativeCaptureSidecar','native-sidecar','legacy skeleton',['skeleton'],'ovr-
 bad('CalibrationV2','calibration-v2','old calibration version',['schemaVersion'],1);
 bad('CreateRecordingRequest','create-recording','metadata marker duplicate',['metadata','markers',1,'id'],'start');
 for (const [name,json] of [['duplicate key','{"schemaVersion":1,"schemaVersion":1}'],['escaped duplicate key','{"id":1,"\\u0069d":2}'],['infinite exponent','1e999'],['trailing token','{} {}'],['trailing comma','{"a":1,}'],['leading zero','01'],['bad escape','"\\x"'],['control char','"\n"'],['comment','/*x*/{}'],['deep nesting','['.repeat(66)+'0'+']'.repeat(66)]] ) cases.push({name:name!,contract:'Recording',json:json!,valid:false});
+// Duplicate-key cases are otherwise valid recordings so rejection cannot be
+// accidentally explained by missing required fields.
+for (const escaped of [false,true]) cases.push({name:escaped?'valid recording with escaped duplicate':'valid recording with duplicate key',contract:'Recording',valid:false,json:JSON.stringify(recording).replace('"schemaVersion":1', '"schemaVersion":1,"'+(escaped?'\\u0073chemaVersion':'schemaVersion')+'":1')});
+const audio={assetId:'audio-1',mimeType:'audio/wav',durationMs:100,audioStartOffsetMs:0,syncMethod:'manual-markers',estimatedSyncErrorMs:null};
+for (const [name,path,value] of [
+  ['legacy audio',['audio'],audio],
+  ['negative quaternion',['frames',0,'hands','right','joints','wrist','orientationXyzw'],[0,0,0,-1]],
+  ['quaternion tolerance boundary',['frames',0,'hands','right','joints','wrist','orientationXyzw'],[0,0,0,0.9999]],
+  ['zero coordinates',['frames',0,'hands','right','joints','wrist','positionM'],[0,0,0]],
+  ['missing hand preserves explicit reason',['frames',1,'hands','left'],{status:'missing',reason:'nonfinite'}],
+] as const) cases.push({name,contract:'Recording',file:'recording.json',valid:true,patches:[{path:[...path],value}]});
+bad('Recording','recording','native audio cannot silently widen v1',['audio'],{...audio,syncMethod:'unity-dsp-clock-map'});
+bad('Recording','recording','audio offset limit',['audio'],{...audio,audioStartOffsetMs:5001});
+bad('Recording','recording','audio blob URL',['audio'],{...audio,assetId:'blob:test'});
 save('corpus',{cases});

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PoseSchema, Vec3Schema, type JointName } from './recording.js';
+import { PoseSchema, Vec3Schema, RecordingSchema, type Recording, type JointName } from './recording.js';
 import { HashSchema, IdSchema, RevisionSchema } from './common.js';
 export const CalibrationV2Schema = z.strictObject({
   schemaVersion: z.literal(2), id: IdSchema, referenceSpaceType: z.literal('native-device'), trackingSessionId: IdSchema,
@@ -24,3 +24,11 @@ export const OPENXR_JOINT_MAP: Readonly<Record<JointName, string>> = Object.free
     [`${finger}-finger-tip`, `XR_HAND_JOINT_${finger === 'pinky' ? 'LITTLE' : finger.toUpperCase()}_TIP_EXT`],
   ])),
 } as Record<JointName, string>);
+
+/** Hash must be verified against finalized bytes by the storage adapter. */
+export function parseNativeSidecarForRecording(input: unknown, recordingInput: Recording, recordingHash: string): NativeCaptureSidecar {
+  const sidecar = NativeCaptureSidecarSchema.parse(input);
+  const recording = RecordingSchema.parse(recordingInput);
+  if (sidecar.recordingId !== recording.id || sidecar.recordingHash !== HashSchema.parse(recordingHash) || sidecar.source !== recording.source) throw new Error('Native sidecar recording/hash/source mismatch');
+  return sidecar;
+}

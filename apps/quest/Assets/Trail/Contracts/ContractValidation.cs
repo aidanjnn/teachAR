@@ -53,7 +53,8 @@ namespace Trail.Contracts
         internal static void Validate(CoachAssessment a) => Require(!Visual(a) || a.ObservedEvidence.Length > 0, "Visual verdict requires evidence");
         private static bool Visual(CoachAssessment a) => a.Verdict == "visible-match" || a.Verdict == "adjustment-needed";
         internal static void Validate(InspectionResult r) => Require(Unique(r.ReferenceIds) && r.ReferenceIds.SequenceEqual(r.Request.ReferenceIds) && (!Visual(r.Assessment) || r.ObservationId != null && r.ReferenceIds.Length > 0), "Result identity/evidence mismatch");
-        private static bool SamePose(CanonicalPose a, CanonicalPose b) => Vector3.Distance(a.PositionM, b.PositionM) <= 0.000001 &&
+        private static bool SamePosition(Vector3 a, Vector3 b) => Math.Abs(a.X-b.X) <= 0.000001 && Math.Abs(a.Y-b.Y) <= 0.000001 && Math.Abs(a.Z-b.Z) <= 0.000001;
+        private static bool SamePose(CanonicalPose a, CanonicalPose b) => SamePosition(a.PositionM, b.PositionM) &&
             Math.Min(Vector4.Distance(new Vector4(a.OrientationXyzw.X,a.OrientationXyzw.Y,a.OrientationXyzw.Z,a.OrientationXyzw.W), new Vector4(b.OrientationXyzw.X,b.OrientationXyzw.Y,b.OrientationXyzw.Z,b.OrientationXyzw.W)), Vector4.Distance(new Vector4(a.OrientationXyzw.X,a.OrientationXyzw.Y,a.OrientationXyzw.Z,a.OrientationXyzw.W), -new Vector4(b.OrientationXyzw.X,b.OrientationXyzw.Y,b.OrientationXyzw.Z,b.OrientationXyzw.W))) <= 0.0001;
         public static void ValidateTutorialRecording(Tutorial tutorial, Recording recording, string recordingHash)
         {
@@ -69,9 +70,21 @@ namespace Trail.Contracts
                     var start = Hand(recording.Frames[step.StartFrame], target.Side); var checkpoint = Hand(recording.Frames[step.CheckpointFrame], target.Side);
                     Require(start.Status == "valid" && checkpoint.Status == "valid", "Target requires valid hands");
                     Require(SamePose(start.Joints["wrist"], target.StartPose) && SamePose(checkpoint.Joints["wrist"], target.CheckpointPose), "Target must derive from recorded wrist");
-                    foreach (var gate in target.MotionGates) { var hand = Hand(recording.Frames[gate.FrameIndex], target.Side); Require(hand.Status == "valid" && Vector3.Distance(hand.Joints["wrist"].PositionM, gate.PositionM) <= 0.000001, "Gate must derive from recorded wrist"); }
+                    foreach (var gate in target.MotionGates) { var hand = Hand(recording.Frames[gate.FrameIndex], target.Side); Require(hand.Status == "valid" && SamePosition(hand.Joints["wrist"].PositionM, gate.PositionM), "Gate must derive from recorded wrist"); }
                 }
             }
+        }
+        public static void ValidateNativeCaptureRecording(NativeCaptureSidecar sidecar, Recording recording, string recordingHash)
+        {
+            sidecar = ContractJson.ParseNativeCaptureSidecar(ContractJson.SerializeNativeCaptureSidecar(sidecar));
+            recording = ContractJson.ParseRecording(ContractJson.SerializeRecording(recording));
+            Require(sidecar.RecordingId == recording.Id && sidecar.RecordingHash == recordingHash && sidecar.Source == recording.Source, "Native sidecar recording/hash/source mismatch");
+        }
+        public static void ValidateSceneReferencesForTutorial(SceneReferenceManifest manifest, Tutorial tutorial)
+        {
+            manifest = ContractJson.ParseSceneReferenceManifest(ContractJson.SerializeSceneReferenceManifest(manifest));
+            tutorial = ContractJson.ParseTutorial(ContractJson.SerializeTutorial(tutorial));
+            Require(manifest.RecordingId == tutorial.RecordingId && manifest.RecordingHash == tutorial.RecordingHash && manifest.TutorialId == tutorial.Id && manifest.TutorialRevision == tutorial.Revision && manifest.References.All(r => tutorial.Steps.Any(s => s.Id == r.StepId)), "Scene references do not belong to current tutorial steps/revision");
         }
         private static HandSample Hand(MotionFrame frame, string side) => side == "left" ? frame.Hands.Left : frame.Hands.Right;
     }
