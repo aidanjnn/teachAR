@@ -7,13 +7,19 @@ namespace Trail.Runtime.Guide
     // Produces shared read-only spectator events; no transport and no inbound control path.
     public sealed class GuideTelemetry
     {
-        private readonly string sessionId;
+        private string sessionId;
         private readonly double runStartMs;
         private long sequence;
         public GuideTelemetry(string sessionId, double runStartMs)
         {
             if (string.IsNullOrWhiteSpace(sessionId) || sessionId.Length > 128 || double.IsNaN(runStartMs) || double.IsInfinity(runStartMs) || runStartMs < 0) throw new ArgumentException("Session and monotonic run start required.");
             this.sessionId = sessionId; this.runStartMs = runStartMs;
+        }
+        public void RebindSession(string pairedSessionId)
+        {
+            if (string.IsNullOrWhiteSpace(pairedSessionId) || pairedSessionId.Length > 128) throw new ArgumentException("Paired session ID required.");
+            if (pairedSessionId == sessionId) return;
+            sessionId = pairedSessionId; sequence = 0;
         }
         public static GuideContextRef Context(GuideSession session) => new GuideContextRef { RunId = session.State.RunId, TutorialId = session.Definition.TutorialId,
             TutorialRevision = session.Definition.TutorialRevision, StepId = session.Definition.Steps[session.State.StepIndex].Id, StepRevision = session.State.StepRevision, AttemptId = session.State.AttemptId };

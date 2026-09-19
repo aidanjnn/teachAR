@@ -69,10 +69,20 @@ internal static class ContractIntegration
         }
         var completion = events.Single(e => e.Type == "step-completed");
         if (completion.Evidence != "path-and-pose" || completion.StepId != "step-1" || completion.AttemptId != "step-0:attempt-1") throw new Exception("Completion identity/evidence mismatch.");
+        var stableState = session.State;
+        var priorEnvelope = telemetry.SnapshotEvent(session, time);
+        telemetry.RebindSession("fixture-paired-session");
+        var repairedSame = telemetry.SnapshotEvent(session, time);
+        if (repairedSame.Seq <= priorEnvelope.Seq) throw new Exception("Same-session repair reset sequence.");
+        telemetry.RebindSession("fixture-new-server-session");
+        var repairedNew = telemetry.SnapshotEvent(session, time);
+        ContractJson.ParseGuideEvent(ContractJson.SerializeGuideEvent(repairedNew));
+        if (repairedNew.Seq != 0 || repairedNew.SessionId != "fixture-new-server-session" || repairedNew.RunId != priorEnvelope.RunId || repairedNew.TMs != priorEnvelope.TMs || !ReferenceEquals(stableState, session.State))
+            throw new Exception("Backend restart changed guide state or failed to rebind telemetry.");
         // Adapter owns copies of execution values; later caller edits cannot move the active target.
         var checkpoint = definition.Steps[0].Targets[0].Checkpoint;
         tutorial.Steps[0].Targets[0].CheckpointPose = new CanonicalPose(Vector3.Zero, Quaternion.Identity);
         if (definition.Steps[0].Targets[0].Checkpoint.PositionM != checkpoint.PositionM) throw new Exception("Preload retained mutable target DTO.");
-        Console.WriteLine("PASS: bound shared tutorial/recording -> rotated calibration -> workspace projection -> actual C# guide -> strict shared telemetry round-trip; golden phases match.");
+        Console.WriteLine("PASS: bound shared tutorial/recording -> rotated calibration -> workspace projection -> actual C# guide -> strict shared telemetry round-trip; golden phases and same/new-session backend recovery match.");
     }
 }

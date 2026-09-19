@@ -364,3 +364,19 @@ Unity became available externally during this run. Full-project `pnpm quest:test
 - **Integration test repair:** Task6's combined run exposed a race in the ignored-abort provider test: its 30ms real timer could expire during sharp decode before the fake provider installed its completion callback. Repaired with controlled timers advanced only after actual provider entry; the deadline and production code are unchanged. All 20 focused inspection cases pass after the repair.
 - **Task 5 desktop/native results:** All three unchanged Playwright scenarios passed on isolated port3106 once initial import contention subsided; the earlier health AbortError was not repaired by weakening checks. Real Unity EditMode passed17/17, including all4 scene freshness tests, against MRUK205 and Unity6000.3.24f1. Final cached EditMode/PlayMode run follows the last callback ownership/null guard hardening. Findings validation also rejects numeric coordinate/distance instructions; focused assertions cover that boundary.
 - **Task 5 final native gate:** Frozen-source Unity6000.3.24f1 runs passed17/17 EditMode (including4 Scene freshness tests) and4/4 PlayMode lifecycle tests. Artifacts: `test-e9359dda-943f-4c05-9d41-0136304d24c3` and `test-play-63a333a7-7a35-42fc-a0fc-455fd37919dc` under ignored `artifacts/quest`. Editor-generated settings/assets were preserved outside tracked source; platform-owned settings were restored unchanged. This establishes real editor compilation/tests, not Quest capture or physical transfer. Final combined Android build remains coordinated by task6.
+Task 4 actual native evidence: full-project Unity EditMode passed 10/10 tests and
+PlayMode passed 4/4, including the real GuideController/CaptureReplaySession
+lifecycle with injected synthetic hand events, independent calibration, ordered
+completion, inspection pause, resume, Repeat and origin reset. These runs compiled
+actual Unity/Meta assemblies and imported real packages; they do not establish
+physical/headset behavior. Android tooling was subsequently found in the editor's
+sibling PlaybackEngines directory, correcting the earlier absence claim. Parent
+assigned final combined IL2CPP build to task 6 to avoid duplicate heavy builds.
+
+Storage integration review added RebindTelemetrySession: same server session
+preserves sequence; a new session changes only the telemetry envelope. It publishes
+a full snapshot without mutating the loaded guide. The actual C# golden integration
+passes both recovery cases; refreshed Unity tests include the paused re-pair path.
+Final contracts 3d629fa and capture capacity fixes are integrated. Native/source
+checks are rerunning for this last recovery change; prior native passes remain
+at their explicitly recorded revisions.
