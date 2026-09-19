@@ -12,6 +12,7 @@
     "@fastify/static": "10.1.4",
     "@trail/contracts": "workspace:*",
     "fastify": "5.12.5",
+    "openai": "7.19.0",
     "zod": "4.6.5"
   }
 }
