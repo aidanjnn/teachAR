@@ -1,9 +1,10 @@
 # Trail Quest platform
 
 This project now contains the Android setup/build path, a single OpenXR/Meta
-passthrough bootstrap, and a scoped native API connection. The pinned editor has resolved the checked-in UPM lock. **Complete Unity
-compilation/tests, APK build, and headset operation remain pending**; SDK compile
-findings are being repaired, and actual Android build evidence is pending. This branch supplies the
+passthrough bootstrap, and a scoped native API connection. The pinned editor has resolved the checked-in UPM lock, compiled the project,
+applied Android/OpenXR/URP settings, and passed EditMode2/2 plus PlayMode2/2 tests.
+**APK and headset acceptance remain separate gates**; physical operation is not
+proven by editor tests. This branch supplies the
 platform foundation; capture, guide, scene interpretation and storage are
 separate feature branches. Voice remains separately owned.
 
@@ -31,8 +32,8 @@ The checked-in `Packages/packages-lock.json` is actual Unity 6000.3.24f1 resolve
 output. Test Framework 1.6.0 matches its editor-bundled resolution. Built-in
 Animation, AssetBundle, ParticleSystem and Physics2D modules satisfy concrete
 Meta Core/Interaction compiler requirements. Preserve existing GUIDs when saving
-generated XR/URP/Meta assets. Package compatibility still requires passing Unity
-compilation and runtime checks.
+generated XR/URP/Meta assets. The editor import/setup/tests pass; native Android/IL2CPP and device compatibility
+still require their separate build/runtime checks.
 
 ## Reproduce setup and build
 
@@ -114,8 +115,8 @@ APK printed by the wrapper with `adb install -r <absolute-apk-path>` and launch
 URL/token/expiry policy tests. `dotnet build tests/native-network/UnityCompile.csproj`
 compiles the network adapter against installed Unity managed assemblies (set
 `-p:UnityManagedPath=...` on other installations), without loading Unity or proving
-IL2CPP compatibility. PlayMode sources cover native connection lifecycle,
-but cannot count as passing until Unity executes them. WebSocket/HTTP server tests
+IL2CPP compatibility. Unity PlayMode tests passed for native connection lifecycle and head-directed
+pairing keyboard entry/pause-clearing. WebSocket/HTTP server tests
 exercise real server authorization. None establishes tracking, simultaneous
 hands/audio/camera, physical calibration/transfer, APK networking or usable XR UI.
 Use [device checks](../../docs/device-check.md) and record actual hardware evidence

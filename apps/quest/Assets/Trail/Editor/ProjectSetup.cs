@@ -40,6 +40,13 @@ namespace Trail.Editor
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
             EditorUserBuildSettings.buildAppBundle = false;
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+            // OpenXR needs the new Input System; this serialized setting is used by Unity's own package helper.
+            var playerAsset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset").FirstOrDefault();
+            if (playerAsset == null) throw new BuildFailedException("Player settings unavailable");
+            var playerObject = new SerializedObject(playerAsset);
+            var inputHandler = playerObject.FindProperty("activeInputHandler");
+            if (inputHandler == null) throw new BuildFailedException("Active input handling setting unavailable");
+            if (inputHandler.intValue != 1) { inputHandler.intValue = 1; playerObject.ApplyModifiedPropertiesWithoutUndo(); }
             ConfigureOpenXR();
             ConfigureRendering();
             var config = OVRProjectConfig.CachedProjectConfig;
@@ -47,9 +54,28 @@ namespace Trail.Editor
             config.targetDeviceTypes = new System.Collections.Generic.List<OVRProjectConfig.DeviceType> { OVRProjectConfig.DeviceType.Quest3, OVRProjectConfig.DeviceType.Quest3S };
             config.handTrackingSupport = OVRProjectConfig.HandTrackingSupport.HandsOnly;
             config.insightPassthroughSupport = OVRProjectConfig.FeatureSupport.Required;
+            config.isPassthroughCameraAccessEnabled = true;
             OVRProjectConfig.CommitProjectConfig(config);
+            SanitizeDevelopmentTools();
             AssetDatabase.SaveAssets();
             Debug.Log("Trail Android settings applied. Review generated assets and UPM lock; device readiness remains unverified.");
+        }
+        public static void SanitizeDevelopmentTools()
+        {
+            // Meta's editor auto-generates a local AgentBridge credential asset. Never ship it.
+            var asset = AssetDatabase.LoadMainAssetAtPath("Assets/Resources/DevAgentSettings.asset");
+            if (asset == null) return;
+            var settings = new SerializedObject(asset);
+            var enabled = settings.FindProperty("enabled");
+            if (enabled != null) enabled.boolValue = false;
+            foreach (var field in new[] { "accessToken", "witClientAccessToken", "serverAddress" })
+            {
+                var property = settings.FindProperty(field);
+                if (property != null) property.stringValue = "";
+            }
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssetIfDirty(asset);
         }
         private static void ConfigureOpenXR()
         {
@@ -127,5 +153,10 @@ namespace Trail.Editor
                 JsonUtility.ToJson(new BuildEvidence { result = "Succeeded", editor = Application.unityVersion, platform = "Android", architecture = "ARM64", backend = "IL2CPP", development = development, bytes = new FileInfo(output).Length }));
         }
         [Serializable] private sealed class BuildEvidence { public string result; public string editor; public string platform; public string architecture; public string backend; public bool development; public long bytes; }
+    }
+    public sealed class NativeBuildGuard : IPreprocessBuildWithReport
+    {
+        public int callbackOrder => int.MaxValue;
+        public void OnPreprocessBuild(BuildReport report) => ProjectSetup.SanitizeDevelopmentTools();
     }
 }
