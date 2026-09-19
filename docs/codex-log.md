@@ -447,3 +447,53 @@ static scaffold validation passed 97 GUIDs. Reused passing hosted workspace,
 fixture, browser and workflow checks for unchanged inputs; final-head CI follows
 the push. Archived only this run's generated Unity settings/assets. Combined
 Android build remains with integration; no headset or provider evidence is claimed.
+
+## 2026-09-19 — PR 6 babysit: control withdrawal regression
+
+Verified the current review findings against head dba0886. The package manifest
+and lockfile changes originate in native-platform commits f626cd3, 5250e30 and
+d23754a; both files exactly match platform PR #5. They are inherited dependencies
+of this stacked PR, already owned separately by integration. PR #5 and the
+shared-contracts base PR #8 remain prerequisites; the ownership thread needs
+reviewer resolution rather than duplicated dependency edits here.
+
+The follow-up control fix still executed the armed action when the next sample
+hit another button. Added a synthetic PlayMode regression that failed on that
+behavior, then required an outside-all-buttons sample to confirm withdrawal.
+The regression also verifies dwell alone does not execute, confirmation happens
+once, and tracking loss, gaps over 100 ms and non-increasing timestamps cancel.
+Actual full-project Unity 6000.3.24f1 passed 5/5 PlayMode and 11/11 EditMode after
+the fix. Results are in ignored artifacts/quest/test-play-f62733a5-3078-4b83-9c60-c3009593179b
+and artifacts/quest/test-c30e20fd-998a-47ad-9e70-95c8526f9bf8. Generated settings
+and assets were preserved outside Git; no platform configuration was changed.
+
+The native-CI review remains an integration prerequisite: hosted workflows run
+the pure C# harnesses, not Unity/Android, and GitHub currently reports no repository
+Actions secrets or self-hosted runners. Local Editor tests are distinct from
+hosted enforcement. The earlier combined APK predates this panel change and is
+not claimed as current-revision ARM64/IL2CPP evidence. No headset or physical
+transfer evidence, review reply, thread resolution, merge or deployment occurred.
+
+Final local workspace gate passed `pnpm check` (159 tests, typechecks, production
+builds and 78-GUID static check) and `pnpm validate:fixtures` (61-frame synthetic
+recording). The existing Vite chunk-size warning remains. Desktop inputs are
+unchanged by this C# panel repair; current-head hosted browser evidence is checked
+separately after publication.
+
+### 2026-09-19 — Babysit contracts PR #8
+
+Fast-forwarded to the existing review repair `9ccf520`, verified matching TS/C# chunk-order checks and the already-resolved review thread. Reproduced a remaining regression-maintenance bug: fixture regeneration silently removed both new chunk-order cases. Added those cases to the generator and a temporary-directory regeneration test covering every shared fixture; the test failed before the fix and passed afterward. No wire format, runtime behavior or committed fixture changed. Final local signoff passed `pnpm check` (151 tests), fixture validation, 127 focused contract tests, 115 actual .NET parser checks, and 5/5 isolated Unity EditMode tests. Existing browser evidence is reusable because app/runtime/fixture inputs are unchanged; newly pushed hosted checks are verified separately. Full-app Unity dependency limits and Android/headset/physical acceptance remain outside this evidence. No review replies, thread resolutions, bot invocations, merges or deployments were performed.
+
+PR #6 catchup: merged base 1895f08 after an append-only work-log conflict, preserving both entries. Only fixture-generation tooling/tests changed upstream; native runtime inputs and the passing 11 EditMode/5 PlayMode evidence remain unchanged. The merged `pnpm check` passed 160 tests/typechecks/builds/static checks and fixture validation passed.
+
+## 2026-09-19 — Stack babysit: guide base catch-up
+
+Merged the actual capture base `9495c0e` into PR #7 without rewriting published
+history. Preserved both append-only activity-log sections. This brings the
+capture-panel drift cancellation regression and fixture-regeneration checks
+into the guide branch; no guide behavior was changed by the conflict resolution.
+The merged worktree passed `pnpm check` (160 tests), `pnpm validate:fixtures`,
+24 pure C# guide scenarios plus golden integration, and 115 C# contract checks.
+Unity validation is running separately; this entry is not new Android, live
+provider, headset or physical-transfer evidence. PR #6 is concurrently validating
+its newer main catch-up, which will be checked before the final stack report.
