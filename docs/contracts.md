@@ -51,13 +51,16 @@ The additive `HealthSchema` describes the scaffold response only: `status`,
 `buildId`, mock provider modes, and `storage.writable`. No paths, environment
 values, keys, or recordings are returned. Storage failure returns HTTP 503.
 
-## Voice contracts (additive, schema version 1)
+## Vision service scaffold protocol v1
 
-`packages/contracts/src/voice.ts` adds `TranscriptResult`, `LabelRequest`/`LabelResult`,
-`CoachContext`/`CoachRequest`/`CoachAnswer`, `CoachSessionRequest`/`CoachSessionResponse`,
-`VoiceUnavailable`, and `NarrationCapture`. Times are recording-relative integer
-milliseconds; titles ≤ 60 and instructions ≤ 240 characters; every list is bounded.
-`HealthSchema.providers.ai` widened from `'mock'` to `'mock' | 'openai'`. Fixtures:
-`fixtures/narration-transcript.v1.json`, `fixtures/label-segments.v1.json`. No stored
-format existed before, so there is no migration. `LabelResult.provenance` and
-`CoachAnswer.source` carry `model` or `fallback`; mock output is always `fallback`.
+`packages/contracts/src/vision.ts` adds independent strict health/readiness/error
+and dependency-status schemas. It does not modify recording v1. Vision health
+explicitly reports the mock provider and `imageInterpretation: false`; readiness
+reports `ready: false`. `reachable` means an authenticated service responded,
+not that visual coaching is ready. A future implementation must deliberately
+extend these literal capability/provider fields with fixtures and a compatibility
+note. The proposed inspection job/result contract in the plan remains unimplemented.
+
+`Trail.Contracts` currently supplies canonical joint names and a numeric pose
+value. It is not a strict C# recording parser and does not yet pass full C#/Zod
+wire compatibility. Those tests remain part of TRAIL-03/18.

@@ -10,7 +10,9 @@ assumptions are not current verification evidence.
 
 The repository has a pnpm application scaffold, shared recording schemas and
 rigid transforms, a synthetic desktop replay, Fastify health/static serving,
-and automated checks/CI. Capture, calibration, guide progression, persistence,
+an authenticated vision-service skeleton, a Unity source scaffold, and automated
+checks/CI. Unity import/compile and image interpretation are unverified. Capture,
+calibration, guide progression, persistence,
 providers, and headset validation remain planned. Inspect the current tree and
 manifests before claiming a capability exists. Continue from the dependency-ordered
 tickets in plan section 17; docs/scaffold.md records the bootstrap scope.
@@ -50,11 +52,14 @@ authorized by applicable instructions.
 
 The user-approved target is **Unity + Meta XR** for a standalone Quest 3S
 Android app in `apps/quest`, with the existing pnpm TypeScript/Fastify workspace
-for server, authoring, desktop diagnostics and spectator. Unity setup is planned
-in TRAIL-18, not implemented. Do not install IWSDK/Spatial SDK or downgrade Vite.
+for server, authoring, desktop diagnostics and spectator. Unity files are prepared; editor import, rig setup and device validation remain
+in TRAIL-18. Do not install IWSDK/Spatial SDK or downgrade Vite.
 Use Unity OpenXR, Meta XR Core/Interaction and MRUK with a tested native WebRTC
 adapter; freeze compatible exact versions during setup. Keep accounts/cloud DB,
-ORM, React framework and separate worker services out of the baseline.
+ORM and React framework out of the baseline. The user requested a dedicated
+visual interpretation backend: `apps/vision` is a second TypeScript/Fastify
+process with authenticated health and explicit non-readiness (TRAIL-20), with authenticated internal calls from `apps/server`. Other
+worker services remain outside the baseline.
 
 | Planned location | Responsibility / owner |
 | --- | --- |
@@ -63,7 +68,8 @@ ORM, React framework and separate worker services out of the baseline.
 | `apps/quest/Assets/Trail/Contracts/`, `Motion/` | Pure C# DTO validation/calibration/matcher/reducer; motion |
 | `apps/quest/Assets/Trail/Runtime/XR/`, `Record/`, `Guide/` | Native tracking, calibration UI, capture, guide integration; XR, voice owns narration files |
 | `apps/quest/Assets/Trail/Runtime/Scene/`, `Presentation/` | MRUK snapshots, separate ghost and world-space UI; XR |
-| `apps/quest/Assets/Trail/Runtime/Coach/`, server `ai/` | Native mic/WebRTC, Live, labels and Responses assessment; voice/AI |
+| `apps/quest/Assets/Trail/Runtime/Coach/`, server `ai/` | Native mic/WebRTC, Live, labels and inspection coordination; voice/AI |
+| `apps/vision/src/` | Dedicated image interpretation/Responses, bounded inputs/results and cancellation; voice/AI, integration owns service wiring |
 | `apps/quest/Assets/Trail/Runtime/Network/`, `Storage/` | Native pairing/API and private-file persistence; integration |
 | `apps/quest/Packages/`, `ProjectSettings/`, main scene/build scripts | Compatible Unity packages/settings and build; integration |
 | `apps/web/`, other server code, manifests, CI | Desktop review/replay/spectator, files, relay and checks; integration |
@@ -149,7 +155,8 @@ Use [.agents/references/validation.md](.agents/references/validation.md) to sele
 checks. Existing `pnpm check`, fixture and Playwright checks cover web/server.
 Native changes additionally require the implemented Unity EditMode/PlayMode and
 Android ARM64/IL2CPP build gates; green pnpm checks cannot validate native code.
-Unity wrappers/CI remain planned; inspect before invoking them and report editor
+`pnpm quest:setup` and `pnpm quest:test` require an installed editor;
+`pnpm check:quest-scaffold` checks files only. Native CI remains pending; inspect before invoking them and report editor
 activation/licensing or missing-check limitations explicitly. Do not invent scripts,
 claim unavailable checks passed, or install an application just to check docs.
 Normal edits use focused checks; complete signoff and code PR preparation use

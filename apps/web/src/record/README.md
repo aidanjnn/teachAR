@@ -1,5 +1,3 @@
-# Recording adapter
+# Desktop record
 
-`audio.ts` records narration with MediaRecorder on a caller-supplied monotonic
-epoch and reports `NarrationCapture` (MIME, duration, start offset, sync error).
-Hand capture, explicit markers, and the combined recorder (TRAIL-04) remain planned.
+Review/import native recordings; acquisition belongs to apps/quest.

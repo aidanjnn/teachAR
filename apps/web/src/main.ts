@@ -1,8 +1,7 @@
-import { HealthSchema } from '@trail/contracts';
+import { HealthSchema, VisionDependencySchema } from '@trail/contracts';
 import { mountShell } from './dashboard/shell.js';
 import { fixture, frameAtTime } from './replay/fixture-source.js';
 import { createViewer } from './replay/viewer.js';
-import { xrAvailability } from './xr/diagnostics.js';
 import './style.css';
 
 function element<T extends HTMLElement>(selector: string): T {
@@ -80,6 +79,16 @@ async function refreshHealth() {
 }
 element('#refresh-health').addEventListener('click', () => { void refreshHealth(); });
 void refreshHealth();
-void xrAvailability().then(status => { element('#xr').textContent = status; });
+async function refreshVision() {
+  try {
+    const response = await fetch('/api/dependencies/vision', { signal: AbortSignal.timeout(3000), cache: 'no-store' });
+    const dependency = VisionDependencySchema.parse(await response.json());
+    element('#vision').textContent = dependency.status === 'reachable'
+      ? 'Connected · interpretation not implemented' : dependency.status === 'disabled'
+      ? 'Not configured' : 'Unavailable';
+  } catch { element('#vision').textContent = 'Unavailable'; }
+}
+element('#refresh-health').addEventListener('click', () => { void refreshVision(); });
+void refreshVision();
 show(0);
 if (import.meta.hot) import.meta.hot.dispose(() => { pause(); viewer?.dispose(); });

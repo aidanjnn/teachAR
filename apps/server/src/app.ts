@@ -1,3 +1,4 @@
+import { probeVision } from './vision/client.js';
 import Fastify, { LogController } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { HealthSchema } from '@trail/contracts';
@@ -35,6 +36,10 @@ export async function createApp(config: ServerConfig, options: { webRoot?: strin
       status: writable ? 'ok' : 'degraded', buildId: config.buildId,
       providers: config.providers, storage: { writable },
     });
+  });
+  app.get('/api/dependencies/vision', async (_request, reply) => {
+    reply.header('Cache-Control', 'no-store');
+    return probeVision(config.vision);
   });
   await registerVoiceRoutes(app, options.provider ?? createProvider(config));
   if (options.webRoot) {

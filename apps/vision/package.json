@@ -1,0 +1,16 @@
+{
+  "name": "@trail/vision",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@trail/contracts": "workspace:*",
+    "fastify": "5.12.5",
+    "zod": "4.6.5"
+  }
+}

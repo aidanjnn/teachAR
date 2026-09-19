@@ -10,16 +10,15 @@ checkpoints aligned to their workspace.
 
 **Current status:** runnable local application scaffold (the software portion of
 TRAIL-02). The workspace includes a synthetic Three.js hand replay, recording
-schemas, rigid transforms, a Fastify health route, voice routes (transcription, segment
-labels, text coach, GPT-Live session broker) with a mock provider, a Voice Lab
-page, unit/browser checks, and CI.
+schemas, rigid transforms, main/vision Fastify skeletons, a Unity source project,
+unit/browser checks, and CI. Unity import/compile and image interpretation are pending.
 Recording, calibration, learner progression, persistence, live AI, pairing, and
 headset validation remain planned. The experience below describes the target
 product; the current screen is a diagnostic fixture.
 
 **Selected headset stack:** Unity + Meta XR, using C#, Unity OpenXR,
-Core/Interaction SDK and MRUK camera access. The native project is planned at
-`apps/quest`; it does not exist yet. The current Three.js app remains a desktop
+Core/Interaction SDK and MRUK camera access. The source project is prepared at
+[`apps/quest`](apps/quest/README.md); it has not been imported or compiled in Unity. The current Three.js app remains a desktop
 diagnostic. [The migration plan](docs/plan.md#unity-migration-sequence-owned-by-integration-and-xr)
 preserves the web/server while adding native build, capture, guidance and voice.
 
@@ -69,8 +68,10 @@ flowchart LR
     Guide -. current step .-> Coach[Fastify coaching coordinator]
     Headset[Quest microphone and speaker] <-->|WebRTC| Live[GPT Live conversation]
     Live <-->|sideband| Coach
-    Scene[Fresh camera image and expert reference] --> Vision[Responses visual assessor]
-    Vision --> Coach
+    Scene[Fresh camera image and expert reference] --> Coach
+    Coach -->|authenticated images and context| Vision[Separate apps/vision backend]
+    Vision <-->|image analysis| Model[Image-capable Responses model]
+    Vision -->|validated evidence| Coach
 ```
 
 | Layer | Planned technology and responsibility |
@@ -79,7 +80,7 @@ flowchart LR
 | Desktop UI | Existing TypeScript/Vite/HTML/CSS and Three.js for review, diagnostics and spectator |
 | Wire contracts | Zod schemas and strict C# DTO validators; shared versioned JSON fixtures |
 | Motion runtime | Pure C# headset engine; TypeScript offline authoring/math retained with golden fixtures |
-| Backend | One Fastify process for uploads, storage, jobs, AI, and WebSocket relay |
+| Backend | Main Fastify API for storage, pairing, Live and relay; separate Fastify vision service for image interpretation |
 | Persistence | Laptop files and Unity private-file cache; optional desktop IndexedDB |
 | AI | Transcription/labels, GPT Live WebRTC conversation, and a separate Responses visual assessor |
 | Verification | Existing web tests plus planned Unity EditMode/PlayMode, APK builds and real headset trials |
@@ -96,7 +97,9 @@ voice transport must pass the first standalone APK test; engine selection alone
 is not hardware evidence.
 
 GPT Live handles audio/text. Fresh native MRUK camera images go to a separate
-image-capable Responses request, with its findings returned to voice. A paired
+image-capable `apps/vision` backend, with validated findings returned to voice.
+Audio/text-only conversation does not satisfy the target: actual current images
+must produce appropriate spoken feedback in the headset. A paired
 webcam is a development or disclosed reduced-demo source; headset-camera feedback
 is the target. See the [Live and scene design](docs/plan.md#gpt-live-conversation-and-fresh-visual-coaching).
 
@@ -113,9 +116,10 @@ Available now:
 Application layout (module responsibilities beyond the scaffold remain planned):
 
 ```text
-apps/quest/           Planned Unity headset app: capture, guidance, camera and native voice
+apps/quest/           Unity source scaffold; runtime adapters and device setup pending
 apps/web/             Desktop review, synthetic replay and spectator UI
-apps/server/          Fastify routes, storage, AI, and session relay
+apps/server/          Fastify routes, storage, Live/labels, vision coordination and relay
+apps/vision/          Authenticated service skeleton; image interpretation pending
 packages/contracts/  Versioned schemas and shared types
 packages/motion/     Existing pure math; planned offline authoring/reference logic
 fixtures/            Synthetic and explicitly approved real test recordings
@@ -130,7 +134,8 @@ Use Node **22.23.1** (see `.node-version`) and pnpm **11.3.0**. The dependency
 versions are pinned exactly in the package manifests and one `pnpm-lock.yaml`.
 The commands below describe the existing web/server scaffold. Unity requires a
 separate editor, Android tooling and UPM lockfile; pnpm does not build the headset
-app. Exact native setup and check commands are added when TRAIL-18 is implemented.
+app. The dedicated vision service skeleton starts with `pnpm dev`; it reports image
+interpretation as unavailable. Unity source checks do not compile C#. Exact native setup and check commands are added when TRAIL-18 is implemented.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -142,12 +147,14 @@ Open `http://localhost:5173`. The synthetic fixture supports Play/Pause, Reset,
 keyboard scrubbing, and an explicit tracking gap. It is diagnostic joint replay,
 not live capture, an articulated hand mesh, or learner progression.
 
-Vite binds to `127.0.0.1:5173` with a fixed port and proxies `/api` and `/ws` to
-Fastify on `127.0.0.1:3001`. Implemented routes are `/api/health` and the voice
-routes under `/api/voice` and `/api/coach`; the `/ws` proxy reserves the future relay path. In the scaffold, keep `PORT=3001` for development.
+Vite defaults to `127.0.0.1:5173` and proxies `/api` and `/ws` to
+Fastify on `127.0.0.1:3001`. The launcher checks port availability before starting
+children; it never kills an existing stack. For an isolated run, use
+`PORT=3201 DEV_WEB_PORT=5273 VISION_PORT=3202 pnpm dev`. `/api/health` and `/api/dependencies/vision` are implemented; the `/ws` proxy
+reserves the future relay path. In the scaffold, keep `PORT=3001` for development.
 Server startup loads the root `.env` regardless of the package working directory;
 existing process environment values take precedence. Relative `DATA_DIR` paths
-resolve from the repository root. No credentials are required. Unsupported live
+resolve from the repository root. `pnpm dev` supplies an ephemeral internal vision-service token. No provider credentials are required. Unsupported live
 AI/haptic modes fail configuration validation instead of reporting mock success.
 Provider keys must never enter `VITE_*` variables or client bundles.
 
@@ -162,14 +169,17 @@ pnpm --filter @trail/server dev
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev` | Build shared packages, then start shared/web/server watchers |
-| `pnpm check` | Strict typecheck (including tests/config), unit tests, production build |
+| `pnpm dev` | Build shared packages, then start desktop, main API and vision with an ephemeral service token |
+| `pnpm dev:web` | Start the desktop/main API without the vision process |
+| `pnpm check` | Strict typecheck, unit/API tests, production builds and static Unity scaffold checks |
 | `pnpm test` | Contract, pure motion, architecture boundary, and Fastify checks; build shared packages first |
 | `pnpm validate:fixtures` | Build shared packages and validate the committed synthetic recording |
 | `pnpm test:e2e` | Test the **built** application on port 3101; run `pnpm build` or `pnpm check` first |
 | `pnpm build` | Build shared ESM/declarations, web assets, and server |
-| `pnpm start` | Serve built assets and API together on `http://localhost:3001` |
-| `http://localhost:5173/voice-lab.html` | Record narration, generate labels, talk to the coach (mock or OpenAI) |
+| `pnpm start` | Serve built assets and main API on `http://localhost:3001` |
+| `pnpm start:vision` | Run built vision skeleton separately; requires internal service token |
+| `pnpm check:quest-scaffold` | Validate native file/GUID/assembly structure without claiming compilation |
+| `pnpm quest:setup` / `pnpm quest:test` | Run setup/EditMode tests using an installed Unity editor; fail clearly if absent |
 
 Install the browser once before desktop end-to-end tests:
 
@@ -202,7 +212,7 @@ adapter, and native audio is verified only on the APK.
 ### Quest connection
 
 Hardware is **Meta Quest 3S with controllers**. Native setup remains planned:
-install Unity with Android build support, create the pinned OpenXR/Meta project,
+install Unity with Android build support, open the [prepared native project](apps/quest/README.md), resolve its candidate packages, configure the rig,
 build an ARM64 APK and install it using ADB/MQDH. Controllers do not substitute
 for bare-hand capture. See [the setup plan](docs/plan.md#device-connection-and-runtime-validation)
 and [pending device gate](docs/device-check.md).

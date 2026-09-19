@@ -89,3 +89,5 @@ export const HealthSchema = z.strictObject({
   storage: z.strictObject({ writable: z.boolean() }),
 });
 export type Health = z.infer<typeof HealthSchema>;
+
+export * from './vision.js';

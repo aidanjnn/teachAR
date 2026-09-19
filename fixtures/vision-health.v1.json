@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "service": "vision",
+  "status": "ok",
+  "buildId": "fixture-build",
+  "provider": "mock",
+  "capabilities": {
+    "imageInterpretation": false
+  }
+}

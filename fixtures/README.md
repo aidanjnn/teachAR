@@ -15,10 +15,6 @@ system is introduced. Browser playback and path rendering retain the missing gap
 Real recordings, narration, traces, and camera frames are excluded from Git by
 default. Add a real fixture only with explicit consent, inspection, and provenance.
 
-## Voice fixtures
-
-`narration-transcript.v1.json` is a synthetic, hand-written transcript (four spans
-over 12 s, English) shaped like a `TranscriptResult` with `source: "fixture"`. The
-mock AI provider rescales it to the uploaded audio's duration. `label-segments.v1.json`
-holds three ordered, non-overlapping segments; the third receives two spans so
-label tests cover many-to-one assignment. Neither file is a real recording.
+`vision-health.v1.json` is synthetic service-protocol evidence, not scene data.
+It explicitly reports that image interpretation is unavailable and is exercised
+by the authenticated vision service test. Recording v1 fixtures are unchanged.
