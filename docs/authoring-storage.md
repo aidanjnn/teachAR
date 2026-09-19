@@ -101,10 +101,16 @@ pnpm validate:fixtures
 E2E_PORT=3107 pnpm test:e2e --workers=1
 dotnet run --project apps/quest/storage-tests/Storage.csproj
 dotnet build apps/quest/storage-tests/UnityCompile.csproj
+pnpm quest:setup
 pnpm quest:test
+pnpm quest:test:play
+GRADLE_USER_HOME="$PWD/artifacts/gradle-home" TRAIL_DEVELOPMENT_BUILD=1 pnpm quest:build
 ```
 
 The .NET cache harness executes real production C# and hash/binding/recovery behavior.
 The managed assembly diagnostic references the installed Unity 6000.3.24f1 DLLs; neither
 replaces Editor import, IL2CPP, headset tracking, real captured references or novice transfer.
+Keep a separate Gradle home for each concurrent Unity worktree: editor shutdown can stop
+its Gradle daemon, interrupting another build that shares that home.
+
 Per-run results are recorded in `docs/codex-log.md`; no physical LEGO run is claimed here.
