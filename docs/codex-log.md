@@ -380,3 +380,5 @@ passes both recovery cases; refreshed Unity tests include the paused re-pair pat
 Final contracts 3d629fa and capture capacity fixes are integrated. Native/source
 checks are rerunning for this last recovery change; prior native passes remain
 at their explicitly recorded revisions.
+
+- **Task 5 final dependency recheck:** PR #10 is stacked on guide #7. After consuming guide recovery1ed9659, final source94347c3 passed Unity17/17 EditMode and4/4 PlayMode. Results are `test-2c418f04-2873-48f6-89d9-5257d9491952` and `test-play-4f7dd709-2dec-4301-8d41-be0b3df90d66`. Local workspace check passed188 tests/typechecks/builds/static checks; hosted pure C# scene, guide, capture, network and workflow checks passed. Final app composition/combined APK belongs to task6; no hardware/provider success claimed.
