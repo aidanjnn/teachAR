@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <Target Name="RequireRealAssemblies" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(UnityManagedDir)/UnityEngine.CoreModule.dll')" Text="Set UnityManagedDir to the installed editor's real UnityEngine managed DLL directory." />
+    <Error Condition="!Exists('$(XRHandsAssembly)')" Text="Set XRHandsAssembly to the real Unity.XR.Hands assembly. Do not substitute stubs." />
+  </Target>
+  <ItemGroup>
+    <Reference Include="$(UnityManagedDir)/*.dll" />
+    <Reference Include="Unity.XR.Hands"><HintPath>$(XRHandsAssembly)</HintPath></Reference>
+    <Compile Include="../../apps/quest/Assets/Trail/Contracts/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/CoordinateBasis.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/WorkspaceCalibration.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/CaptureMotion.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/HandContinuity.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Record/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/XR/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Network/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Platform/PlatformFeatures.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Presentation/*.cs" />
+  </ItemGroup>
+</Project>

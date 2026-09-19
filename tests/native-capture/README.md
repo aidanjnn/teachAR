@@ -12,3 +12,15 @@ missing samples, immutable replay input, actual timestamp interpolation and no
 bridging/extrapolation across gaps. `CaptureRuntime` Unity tests additionally
 exercise lifecycle subscriptions, calibration/capture/replay invalidation and
 SDK enum mapping. Those require Unity and do not run in this console harness.
+
+`dotnet build tests/native-capture/UnityCompile.csproj -p:UnityManagedDir=... -p:XRHandsAssembly=...`
+checks the actual runtime/adapter/presentation source against real Unity and
+XR Hands assemblies. Set the engine directory to the installed editor's
+`Contents/Resources/Scripting/Managed/UnityEngine`. Use its resolved XR Hands
+assembly, or compile the official XR Hands 1.7.2 and Core Utils 2.2.0 runtime
+sources with the real editor/template Collections, Mathematics, Burst and Input
+System DLLs. The latter was used during delivery with OpenXR package-conditional
+provider code excluded: all consumed hand API types are real SDK source, no
+stubs. This checks C# API compatibility only, not the full Unity asmdef/import,
+OpenXR provider, shader, prefab, license or IL2CPP pipeline. Third-party binaries
+and downloaded source are not committed.
