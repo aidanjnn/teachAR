@@ -11,6 +11,7 @@
   "dependencies": {
     "@trail/contracts": "workspace:*",
     "@trail/motion": "workspace:*",
+    "openai": "7.19.0",
     "three": "0.186.0"
   },
   "devDependencies": {
