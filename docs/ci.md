@@ -8,14 +8,15 @@ older runs for the same PR.
 
 | Job | What it verifies |
 | --- | --- |
-| Typecheck, tests, build and fixtures | Frozen-lockfile install, `pnpm check`, then `pnpm validate:fixtures` |
+| Typecheck, tests, build and fixtures | Frozen-lockfile install, `pnpm check`, native-verifier regression tests, then `pnpm validate:fixtures` |
 | Desktop browser tests | Fresh build and Chromium Playwright scenarios against the built server, using synthetic fixtures and mock providers |
 | Workflow validation | All GitHub Actions workflow files with actionlint 1.7.12, including shell checks when ShellCheck is available on the runner |
-| Native guide validation | Pure C# harness plus licensed Unity EditMode, PlayMode and Android ARM64/IL2CPP gates |
-| `check` | All four jobs succeeded; failures, cancellations and skipped jobs cannot produce a passing result |
+| Native Unity gates | Actual full-project EditMode and PlayMode tests, then the production Android ARM64/IL2CPP build; nonempty passing XML and the APK binary are checked |
+| Native guide validation | Pure C# guide scenarios and golden contract integration; full-project Unity coverage runs in Native Unity gates |
+| `check` | All five jobs succeeded; failures, cancellations and skipped jobs cannot produce a passing result |
 
-Hosted jobs use Ubuntu 24.04. Node and pnpm jobs use the versions in
-`.node-version` and `package.json`. Dependency installation uses the committed lockfile and the
+Jobs use Ubuntu 24.04, the Node version in `.node-version` and the pnpm version
+in `package.json`. Dependency installation uses the committed lockfile and the
 pnpm store cache. Action references are pinned to commit SHAs; the actionlint
 release archive is checked against its pinned SHA-256 checksum. Updating these
 pins requires reviewing the upstream release and its matching SHA/checksum.
@@ -27,8 +28,10 @@ add personal recordings, camera frames, provider secrets or raw narration to
 test artifacts.
 
 The workflow needs only `contents: read`, disables checkout credential
-persistence and uses `pull_request`. The native jobs require a separately
-provisioned, licensed runner as described below.
+persistence and uses `pull_request`. Web/server checks do not need secrets.
+The native jobs require Unity activation secrets; forks without those secrets
+fail the native prerequisite explicitly. Do not switch to `pull_request_target`
+or expose activation credentials to untrusted code to bypass that restriction.
 
 ## Reproduce locally
 
@@ -52,48 +55,64 @@ repository rules.
 
 `pnpm check` follows the scripts available on the checked-out revision, so
 additional workspace packages or static scaffold checks added to that command
-are included automatically. The Check workflow calls
-[Native guide software](../.github/workflows/guide.yml) as a reusable workflow,
-so native failures and missing configuration fail the existing `check` status.
-The guide workflow can also be dispatched manually. No path filters or
-optional-success fallback bypass native validation.
+are included automatically. Native Unity EditMode/PlayMode tests and Android
+ARM64/IL2CPP builds still need an activated editor, compatible resolved packages
+and reproducible build gates (plan TRAIL-18). The reusable
+[native workflow](../.github/workflows/native-unity.yml) now runs these gates and
+is a required dependency of `check`. Missing credentials, skipped suites, failed
+tests or missing/wrong-architecture APKs cannot pass that aggregate. Static
+scaffold checks and the standalone .NET workflows remain supplemental.
 
-## Native runner setup
-
-Provision a disposable self-hosted Linux or macOS Actions runner with the exact
-editor from `apps/quest/ProjectSettings/ProjectVersion.txt`, an active Unity
-license and Android Build Support (SDK, NDK and OpenJDK). Use isolated runners
-approved for the repository's PR trust model; do not attach a developer's
-persistent machine or expose its credentials to arbitrary PR code. Fork PRs
-need the same approved isolated execution environment to obtain a native pass.
-
-Set repository variable `TRAIL_UNITY_RUNNER_LABELS` to a JSON array matching the
-provisioned runner, for example `["self-hosted", "trail-unity"]`. Set
-`TRAIL_UNITY_EDITOR` to its absolute Unity executable path (optional only when
-the wrapper's macOS Hub default matches). License activation belongs in runner
-provisioning; no license or provider credential belongs in repository files.
-The hosted configuration job fails explicitly when labels are missing or
-invalid. A configured but unavailable runner leaves validation queued, not green.
-
-Each matrix job checks out the revision and runs the existing wrapper:
-`pnpm quest:test`, `pnpm quest:test:play`, or `pnpm quest:build`. Tests require
-fresh, passing, nonempty NUnit XML. Builds require a nonempty APK and matching
-Android/ARM64/IL2CPP evidence. All commands verify the pinned editor from its
-log and require a resolved UPM lock. The matrix runs one gate at a time and
-attempts the other gates even after a failure. Logs, test XML, build reports and
-any APK are retained for seven days, including diagnostics from failed runs.
-
-Runner provisioning remains an external prerequisite: at implementation time,
-GitHub reported zero repository self-hosted runners and no Actions variables.
-Adding these workflow gates does not establish a native pass until that runner
-is configured and the actual jobs succeed. Static scaffold checks cannot
-establish native compilation or headset readiness.
-
-Passing jobs establish automated web/server, desktop fixture and native
-build/test evidence.
+These workflows establish automated web/server and desktop fixture evidence.
 Live providers, physical calibration, cross-room transfer and headset/human
 acceptance require separate validation. There is no automatic deployment;
 deployment needs a selected destination and its own release configuration.
 
 References: [GitHub workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax),
 [actionlint usage](https://github.com/rhysd/actionlint/blob/main/docs/usage.md).
+
+The guide workflow retains its standalone C# harness. Its former self-hosted
+Unity matrix is superseded by the required full-project hosted native workflow,
+which includes guide EditMode/PlayMode tests and the same production APK build.
+`TRAIL_UNITY_RUNNER_LABELS` is no longer required. No test/build gate is optional.
+
+## Unity CI activation and local reproduction
+
+Configure `UNITY_EMAIL`, `UNITY_PASSWORD` and either `UNITY_LICENSE` (a valid
+CI license file) or `UNITY_SERIAL` (a suitable paid license serial) as repository
+Actions secrets using the [GameCI activation instructions](https://game.ci/docs/github/activation/).
+Never commit them or paste them into PR comments. At the time this gate was
+added, the repository had no Actions secrets or self-hosted runners; hosted
+Unity execution is blocked until activation is configured. Local activation
+does not license the GitHub runner. The prerequisite job fails visibly instead
+of skipping the native check. Repository rules still need to require `check`
+to prevent merging a failing PR; no branch-protection rule was present when
+this change was prepared, and this PR does not change repository settings.
+
+Both test jobs use the editor pinned in `ProjectVersion.txt`, an Android-capable
+GameCI image and `-buildTarget Android`. Coverage injection is disabled to keep
+the package set unchanged. The build starts in a separate clean checkout and
+calls `Trail.Editor.ProjectSetup.BuildAndroidCi`, which delegates to the same
+production configuration/prebuild guard as `quest:build`. It produces a
+non-development APK. Actions are SHA-pinned and the test runner's CLI is pinned.
+See the upstream [test runner](https://game.ci/docs/github/test-runner/) and
+[builder](https://game.ci/docs/github/builder/) input documentation.
+
+On an activated local editor with Android SDK/NDK/JDK installed:
+
+```sh
+pnpm quest:test
+pnpm quest:test:play
+pnpm quest:build
+python3 -m unittest discover -s tests/native-ci -v
+# Pass each printed artifact directory to the corresponding verifier:
+python3 scripts/verify-native-ci.py tests artifacts/quest/test-<run-id>
+python3 scripts/verify-native-ci.py tests artifacts/quest/test-play-<run-id>
+python3 scripts/verify-native-ci.py build artifacts/quest/build-<run-id>
+```
+
+Each hosted test job retains its synthetic NUnit XML for seven days. A successful
+build retains the verified APK and structured build report for seven days, named
+with the workflow SHA. Raw editor logs and generated SDK credential assets are
+not uploaded. These outputs prove software execution/build only; they do not
+prove headset tracking, physical calibration or live-provider behavior.

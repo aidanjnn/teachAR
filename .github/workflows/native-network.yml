@@ -22,4 +22,4 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Exercise actual pure C# URL, token and lifecycle policy
         run: dotnet run --project tests/native-network/Network.csproj --configuration Release
-      # Unity/IL2CPP and device checks require their actual editor/toolchain/hardware.
+      # Supplemental domain harness. Check also requires native-unity.yml; device acceptance is separate.
