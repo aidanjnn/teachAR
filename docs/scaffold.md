@@ -7,6 +7,15 @@ This implements the software bootstrap from TRAIL-02 and the minimum schema,
 fixture, and transform examples needed to exercise the package graph. It does
 not finish the headset setup gate or the full TRAIL-03 contract freeze.
 
+## Native setup and integration update (September 19, 2026)
+
+The local pinned editor/Android toolchain is installed and activated. The merged
+platform includes a resolved UPM lock, OpenXR/URP configuration, a rig bootstrap,
+pairing client and real editor test/build wrappers. See [revision-specific setup
+evidence](native-setup.md) and [installation directions](../README.md#install-dependencies-on-a-new-machine).
+The sections below retain historical bootstrap evidence; they are not a current
+inventory of every merged feature or proof of headset operation.
+
 ## Unity and vision rescaffold (September 19, 2026)
 
 The repository now contains a Unity source project and a separate vision process.
