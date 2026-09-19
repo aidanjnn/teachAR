@@ -97,7 +97,7 @@ namespace Trail.Editor
                 throw new BuildFailedException("OpenXR loader assignment failed");
             FeatureHelpers.RefreshFeatures(BuildTargetGroup.Android);
             // IDs verified in the exact OpenXR 1.18 / Meta Core 205 / XR Hands 1.7.2 package sources.
-            foreach (var id in new[] { "com.meta.openxr.feature.metaxr", "com.unity.openxr.feature.metaquest", "com.unity.openxr.feature.input.handtracking", "com.unity.openxr.feature.input.oculustouch" })
+            foreach (var id in new[] { "com.meta.openxr.feature.metaxr", "com.unity.openxr.feature.metaquest", "com.unity.openxr.feature.input.oculustouch" })
             {
                 var feature = FeatureHelpers.GetFeatureWithIdForBuildTarget(BuildTargetGroup.Android, id);
                 if (feature == null) throw new BuildFailedException("Required OpenXR feature is unavailable: " + id);
@@ -105,6 +105,12 @@ namespace Trail.Editor
             }
             var openxr = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
             if (openxr == null) throw new BuildFailedException("OpenXR settings missing");
+            // MicrosoftHandInteraction declares the same feature ID as XR Hands; select by type.
+            var hands = openxr.GetFeature<UnityEngine.XR.Hands.OpenXR.HandTracking>();
+            if (hands == null) throw new BuildFailedException("XR Hands HandTracking subsystem feature is unavailable");
+            hands.enabled = true; EditorUtility.SetDirty(hands);
+            var microsoftHands = openxr.GetFeature<UnityEngine.XR.OpenXR.Features.Interactions.MicrosoftHandInteraction>();
+            if (microsoftHands != null) { microsoftHands.enabled = false; EditorUtility.SetDirty(microsoftHands); }
             openxr.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
             EditorUtility.SetDirty(openxr); EditorUtility.SetDirty(manager); EditorUtility.SetDirty(general); EditorUtility.SetDirty(settings);
         }

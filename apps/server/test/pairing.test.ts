@@ -12,7 +12,7 @@ async function fixture(allowUsbLoopback = true) {
   const app = Fastify();
   registerPairingRoutes(app, auth);
   app.get('/protected', { preHandler: auth.require({ roles: ['learner'], sessionId: auth.sessionId }) }, async () => ({ ok: true }));
-  const pair = (role: 'author' | 'learner' | 'spectator' = 'learner', client = 'native') => app.inject({ method: 'POST', url: '/api/pair', headers: { host: 'localhost:3401', ...(client === 'browser' ? { origin: 'http://localhost:3401' } : {}) }, payload: { code: auth.issueCode(role).code, client } });
+  const pair = (role: 'author' | 'learner' | 'spectator' = 'learner', client: 'native' | 'browser' = 'native') => app.inject({ method: 'POST', url: '/api/pair', headers: { host: 'localhost:3401', ...(client === 'browser' ? { origin: 'http://localhost:3401' } : {}) }, payload: { code: auth.issueCode(role, auth.sessionId, client).code, client } });
   return { app, auth, pair, advance: (ms: number) => { now += ms; } };
 }
 
@@ -115,7 +115,7 @@ it('applies the same gate to real WebSocket upgrades for native and browser clie
     expect(await connect(headers)).toBe(101);
     expect(await connect({})).toBe(401);
     expect(await connect({ ...headers, origin: 'http://evil.example' })).toBe(403);
-    const browser = await app.inject({ method: 'POST', url: '/api/pair', headers: { origin: 'http://localhost:3401' }, payload: { code: auth.issueCode('learner').code, client: 'browser' } });
+    const browser = await app.inject({ method: 'POST', url: '/api/pair', headers: { origin: 'http://localhost:3401' }, payload: { code: auth.issueCode('learner', auth.sessionId, 'browser').code, client: 'browser' } });
     const cookie = String(browser.headers['set-cookie']).split(';')[0]!;
     expect(await connect({ cookie, origin: 'http://localhost:3401' })).toBe(101);
     expect(await connect({ cookie })).toBe(401);
@@ -143,9 +143,23 @@ it('pairs over real TLS with a Secure browser cookie and authorizes a protected 
         request.on('error', reject); request.end(JSON.stringify(payload));
       });
     }
-    const paired = await post('/api/pair', { code: auth.issueCode('author').code, client: 'browser' });
+    const paired = await post('/api/pair', { code: auth.issueCode('author', auth.sessionId, 'browser').code, client: 'browser' });
     expect(paired.status).toBe(200); expect(paired.cookie).toContain('; Secure');
     const current = await post('/api/session', {}, paired.cookie.split(';')[0]);
     expect(current.status).toBe(200); expect(JSON.parse(current.body).role).toBe('author');
   } finally { await app?.close(); await rm(dir, { recursive: true, force: true }); }
+});
+
+it('binds codes to their intended client and never returns native bearers to browser exchanges', async () => {
+  const { app, auth } = await fixture();
+  try {
+    const browser = auth.issueCode('author', auth.sessionId, 'browser');
+    expect((await app.inject({ method: 'POST', url: '/api/pair', payload: { code: browser.code, client: 'native' } })).statusCode).toBe(401);
+    const native = auth.issueCode('learner');
+    expect((await app.inject({ method: 'POST', url: '/api/pair', headers: { origin: 'http://localhost:3401' }, payload: { code: native.code, client: 'native' } })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'POST', url: '/api/pair', headers: { 'sec-fetch-mode': 'same-origin' }, payload: { code: native.code, client: 'native' } })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'POST', url: '/api/pair', headers: { origin: 'http://localhost:3401' }, payload: { code: native.code, client: 'browser' } })).statusCode).toBe(401);
+    expect((await app.inject({ method: 'POST', url: '/api/pair', headers: { origin: 'http://localhost:3401' }, payload: { code: browser.code, client: 'browser' } })).statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: '/api/pair', payload: { code: native.code, client: 'native' } })).statusCode).toBe(200);
+  } finally { await app.close(); }
 });

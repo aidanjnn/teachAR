@@ -78,7 +78,15 @@ namespace Trail.Runtime.Network
                 {
                     yield return request.SendWebRequest();
                     if (revision != generation) yield break;
-                    if (request.responseCode == 401) { session.Clear(); SetState(ConnectionState.Expired); SessionInvalidated?.Invoke(); }
+                    if (request.responseCode == 401)
+                    {
+                        // Revoke the whole transport epoch before notifying consumers. Other responses
+                        // may already be queued; abort alone cannot suppress their callbacks.
+                        generation++;
+                        foreach (var pending in active) if (pending != request) pending.Abort();
+                        session.Clear(); SetState(ConnectionState.Expired); SessionInvalidated?.Invoke();
+                        yield break;
+                    }
                     if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.DataProcessingError) { SetState(ConnectionState.Unavailable); completed(0, ""); }
                     else completed(request.responseCode, download.Text);
                 }

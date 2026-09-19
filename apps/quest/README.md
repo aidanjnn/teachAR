@@ -76,7 +76,9 @@ feature is not represented as successful hardware capability.
 ## Pair and reach the API
 
 Server composition is delivered by the authoring/storage branch; reusable auth
-and routes are in `apps/server/src/auth`. See [pairing setup](../../docs/pairing.md).
+and routes are in `apps/server/src/auth`. Issue a **native** client code for the
+Quest app; browser codes are bound to cookie sessions and cannot become native
+bearer credentials. See [pairing setup](../../docs/pairing.md).
 The native scene opens a world-space setup keyboard. Aim your head at a key for
 0.9 seconds, then look away to release it. Enter the HTTPS origin, select **Edit
 code**, enter the eight-digit desktop-issued author/learner code, then select
