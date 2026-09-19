@@ -89,6 +89,13 @@ it('allows a newly paired app generation but permanently rejects the retired app
     await expect(h.coordinator.start('session', { ...h.start, requestEpoch: 999 })).rejects.toMatchObject({ code: 'stale' });
   } finally { h.coordinator.close(); }
 });
+it('keeps accepting legitimate live-session transitions beyond the bounded retirement memory', async () => {
+  const h = await setup();
+  try {
+    for (let i = 0; i < 70; i++) await h.coordinator.start('session', { ...h.start, liveSessionId: `app-${i}` });
+    await expect(h.coordinator.start('session', { ...h.start, liveSessionId: 'app-69', requestEpoch: 0 })).rejects.toMatchObject({ code: 'stale' });
+  } finally { h.coordinator.close(); }
+});
 it('enforces learner role and exact paired session through real route composition', async () => {
   const h = await setup(); const app = Fastify();
   const { registerPairingRoutes } = await import('../src/auth/pairing.js');

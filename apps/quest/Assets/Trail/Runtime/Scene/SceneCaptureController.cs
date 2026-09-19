@@ -93,8 +93,9 @@ namespace Trail.Runtime.Scene
             Texture2D cpu = null;
             try
             {
-                if (this == null || !foreground || !isActiveAndEnabled || request.hasError || ticket.Generation != gate.Generation)
+                if (this == null || !foreground || !isActiveAndEnabled || ticket.Generation != gate.Generation)
                 { gate.Complete(ticket, Now); return; }
+                if (request.hasError) { gate.ReleaseCopy(); Fail("readback-failed"); return; }
                 // Copy callback-owned data before any encoding; no cached skins, screen captures or rendered camera overlays.
                 var pixels = request.GetData<byte>().ToArray();
                 cpu = new Texture2D(owned.width, owned.height, TextureFormat.RGBA32, false);

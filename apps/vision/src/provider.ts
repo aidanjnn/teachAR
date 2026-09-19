@@ -29,7 +29,10 @@ export function validateAssessment(value: unknown): CoachAssessment {
 
 /** Bounded parser used for untrusted provider responses; never log their body. */
 async function readJson(response: Response, signal: AbortSignal): Promise<unknown> {
-  if (!response.ok || !response.body) throw new VisionError('provider-unavailable', 503);
+  if (!response.ok || !response.body) {
+    await response.body?.cancel().catch(() => undefined);
+    throw new VisionError('provider-unavailable', 503);
+  }
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let bytes = 0;

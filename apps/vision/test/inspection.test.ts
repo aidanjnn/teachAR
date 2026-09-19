@@ -4,7 +4,8 @@ import { createVisionApp } from '../src/app.js';
 import { readConfig } from '../src/config.js';
 import { InspectionJobs } from '../src/jobs.js';
 import { createOpenAIProvider, validateAssessment } from '../src/provider.js';
-import { validateImage } from '../src/images.js';
+import sharp from 'sharp';
+import { MAX_IMAGE_BYTES, validateImage } from '../src/images.js';
 import { assessment, input, image, token, auth } from './fixtures.js';
 
 const config = () => readConfig({ VISION_SERVICE_TOKEN: token });
@@ -124,4 +125,13 @@ it('rejects animated PNG control chunks before decoding', async () => {
   const data = Buffer.concat([raw.subarray(0, 33), animation, raw.subarray(33)]);
   await expect(validateImage({ ...img, dataBase64: data.toString('base64'), sha256: createHash('sha256').update(data).digest('hex') }, new AbortController().signal))
     .rejects.toMatchObject({ code: 'invalid-image' });
+});
+it('keeps a realistic camera JPEG in its source format instead of failing lossless PNG size limits', async () => {
+  const width = 1280, height = 960, noise = Buffer.alloc(width * height * 3);
+  let seed = 7; for (let i = 0; i < noise.length; i++) { seed = (seed * 1103515245 + 12345) >>> 0; noise[i] = seed >>> 24; }
+  const data = await sharp(noise, { raw: { width, height, channels: 3 } }).jpeg({ quality: 85 }).toBuffer();
+  expect((await sharp(data).png().toBuffer()).length).toBeGreaterThan(MAX_IMAGE_BYTES);
+  const clean = await validateImage({ mimeType: 'image/jpeg', dataBase64: data.toString('base64'), sha256: createHash('sha256').update(data).digest('hex'), width, height }, new AbortController().signal);
+  expect(clean.mimeType).toBe('image/jpeg'); expect([clean.width, clean.height]).toEqual([width, height]);
+  expect(Buffer.from(clean.dataBase64, 'base64').length).toBeLessThanOrEqual(MAX_IMAGE_BYTES);
 });

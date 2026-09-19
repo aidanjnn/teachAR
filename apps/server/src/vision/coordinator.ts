@@ -49,7 +49,8 @@ export class InspectionCoordinator {
       throw new InspectionError('stale', 409);
     }
     if (prior && (prior.sessionId !== sessionId || prior.liveSessionId !== input.liveSessionId)) {
-      if (this.retiredLiveSessions.size >= 64) throw new InspectionError('busy', 429);
+      // Bounded FIFO of retired identities: the oldest is forgotten rather than blocking legitimate re-pairing.
+      if (this.retiredLiveSessions.size >= 64) this.retiredLiveSessions.delete(this.retiredLiveSessions.values().next().value!);
       this.retiredLiveSessions.add(JSON.stringify([prior.sessionId, prior.liveSessionId]));
     }
     this.invalidate(sessionId);

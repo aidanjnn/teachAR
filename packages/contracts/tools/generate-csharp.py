@@ -101,7 +101,7 @@ def write(s,e,path):
         return f'Write{typ(s,path)}({e})'
     raise ValueError(s)
 cs=[header, '    public static partial class ContractJson\n    {\n']
-semantic={'Recording','RecordingMetadata','AudioAsset','TutorialStep','Tutorial','TutorialProvenance','TutorialDraftStep','TutorialDraftEdit','GuideSnapshot','SceneReferenceManifest','CoachAssessment','InspectionRequest','InspectionResult'}
+semantic={'Recording','RecordingMetadata','MotionChunk','AudioAsset','TutorialStep','Tutorial','TutorialProvenance','TutorialDraftStep','TutorialDraftEdit','GuideSnapshot','SceneReferenceManifest','CoachAssessment','InspectionRequest','InspectionResult'}
 for name,s in models.items():
     if name in schemas:
         cs.append(f'        public static {name} Parse{name}(string json) {{ var raw = StrictJson.Parse(json); ContractShape.Validate("{name}", raw); return Read{name}(raw); }}\n')

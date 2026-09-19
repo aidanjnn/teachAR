@@ -34,10 +34,12 @@ export async function validateImage(image: EncodedImage, signal: AbortSignal): P
         !meta.width || !meta.height || meta.width > MAX_EDGE || meta.height > MAX_EDGE ||
         meta.width !== image.width || meta.height !== image.height || (meta.pages ?? 1) !== 1) throw new VisionError('invalid-image');
     // toBuffer forces decoding all scanlines; metadata() alone accepts truncated files.
-    const clean = await decoder.rotate().png().toBuffer({ resolveWithObject: true });
+    // Re-encode in the source format: a camera JPEG re-encoded losslessly as PNG would exceed the accepted size.
+    const rotated = decoder.rotate();
+    const clean = await (image.mimeType === 'image/png' ? rotated.png() : rotated.jpeg({ quality: 92 })).toBuffer({ resolveWithObject: true });
     signal.throwIfAborted();
     if (clean.data.length > MAX_IMAGE_BYTES) throw new VisionError('invalid-image');
-    return { mimeType: 'image/png', dataBase64: clean.data.toString('base64'),
+    return { mimeType: image.mimeType, dataBase64: clean.data.toString('base64'),
       sha256: createHash('sha256').update(clean.data).digest('hex'), width: clean.info.width, height: clean.info.height };
   } catch (error) {
     if (signal.aborted) throw signal.reason;
