@@ -185,6 +185,8 @@ credentials. Vision reachability means the authenticated process responded;
 its baseline `imageInterpretation: false` / `ready: false` remains honest until
 the separate visual-inspection workstream deliberately extends those fields.
 
-`VoiceUnavailable.error` additionally carries `unauthorized`, `forbidden`, `rate_limited`,
-`unknown_tutorial`, and `stale_tutorial` for paired, server-grounded coaching (additive;
-clients treat unknown codes as a failed request).
+`VoiceUnavailable.error` additionally carries `unauthorized`, `forbidden`, `unknown_tutorial`,
+`stale_tutorial`, and `unknown_session` for paired, server-grounded coaching (additive;
+clients treat unknown codes as a failed request). `LiveStepUpdate` is the client's
+step/attempt report for an open live session; `MAX_COACH_STEPS` now equals the
+tutorial step limit so coach numbering matches the tutorial.

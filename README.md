@@ -206,8 +206,11 @@ and text paths. Answers are grounded in the tutorial text and cannot advance a s
 Once `createApp` is given the pairing authority, narration and label routes require
 an author token and the coach routes require a learner or author token on the
 current session; with a tutorial lookup configured, the coach speaks only from the
-stored tutorial and rejects unknown or stale revisions. Until integration wires
-both, dev mode stays open and trusts the client, so keep the server on loopback.
+stored tutorial and rejects unknown, stale, or draft tutorials for learners. Step
+changes reach the live model through the server's own channel: the client posts a
+step ID to `POST /api/live/sessions/:id/step` and the browser data channel can no
+longer append text. Until integration wires auth and lookup, dev mode stays open
+and trusts the client, so keep the server on loopback.
 There is no per-session cap yet, and each live session bills at least 15 seconds. The browser coach,
 recorder and Voice Lab are desktop diagnostics that validate the server protocol;
 the planned Unity client (TRAIL-16) reuses the same routes through a native WebRTC

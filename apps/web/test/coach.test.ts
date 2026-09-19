@@ -24,8 +24,14 @@ function fakeTransport(behaviour: { fail?: boolean } = {}) {
   };
   return { transport, sent, emit: (event: LiveServerEvent) => handlers?.onEvent(event), closeFromServer: () => handlers?.onClosed() };
 }
-function okFetch(body: unknown, status = 200): typeof fetch {
-  return async () => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+type RecordingFetch = typeof fetch & { calls: { url: string; init: RequestInit | undefined }[] };
+function okFetch(body: unknown, status = 200): RecordingFetch {
+  const calls: { url: string; init: RequestInit | undefined }[] = [];
+  const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push({ url: String(input), init });
+    return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
+  return Object.assign(impl, { calls });
 }
 const sessionOk = { schemaVersion: 1, sessionId: 'live_1', sdp: 'v=0 answer', liveModel: 'gpt-live-1' };
 const started = { type: 'session.started', event_id: 'e1', session: { id: 'live_1', model: 'gpt-live-1' } } as unknown as LiveServerEvent;
@@ -37,9 +43,10 @@ beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { vi.useRealTimers(); });
 
 describe('coach live path', () => {
-  it('connects, waits for session.started, mutes, toggles listening, and pushes step context', async () => {
+  it('connects, waits for session.started, mutes, toggles listening, and reports step changes to the server', async () => {
     const fake = fakeTransport();
-    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake.transport, listenTimeoutMs: 1_000 });
+    const fetchImpl = okFetch(sessionOk);
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async () => stream, transportFactory: () => fake.transport, listenTimeoutMs: 1_000 });
     const connecting = coach.connect();
     await vi.advanceTimersByTimeAsync(0);
     fake.emit(started);
@@ -52,9 +59,10 @@ describe('coach live path', () => {
     expect(coach.state.mode).toBe('live');
     expect(fake.sent.at(-1)?.type).toBe('session.input_audio.mute');
     coach.setStep('s2', 1);
-    const last = fake.sent.at(-1);
-    expect(last?.type).toBe('session.thinking.append');
-    if (last?.type === 'session.thinking.append') expect(last.content).toContain('"Insert the support"');
+    expect(fake.sent.some(event => event.type === 'session.thinking.append')).toBe(false);
+    const report = fetchImpl.calls.at(-1);
+    expect(report?.url).toBe('/api/live/sessions/live_1/step');
+    expect(JSON.parse(String(report?.init?.body))).toMatchObject({ currentStepId: 's2', stepRevision: 1 });
     fake.closeFromServer();
     expect(coach.state).toMatchObject({ mode: 'text', liveClosed: true });
     coach.dispose();
@@ -122,9 +130,10 @@ describe('coach microphone lifecycle', () => {
     expect(fake.sent).toEqual([]);
     expect(notifications).toBe(before);
   });
-  it('surfaces live error events and sends context on a new attempt', async () => {
+  it('surfaces live error events and reports a new attempt to the server', async () => {
     const fake = fakeTransport();
-    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake.transport });
+    const fetchImpl = okFetch(sessionOk);
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async () => stream, transportFactory: () => fake.transport });
     const errors: string[] = [];
     coach.onLiveError(error => errors.push(error.code));
     const connecting = coach.connect();
@@ -134,7 +143,7 @@ describe('coach microphone lifecycle', () => {
     fake.emit({ type: 'error', event_id: 'e9', error: { code: 'data_channel_permissions', message: 'denied', type: 'invalid_request_error' } });
     expect(errors).toEqual(['data_channel_permissions']);
     coach.setAttempt('attempt-2');
-    expect(fake.sent.at(-1)?.type).toBe('session.thinking.append');
+    expect(JSON.parse(String(fetchImpl.calls.at(-1)?.init?.body))).toMatchObject({ currentStepId: 's1', attemptId: 'attempt-2' });
     expect(coach.state.attemptId).toBe('attempt-2');
   });
 });

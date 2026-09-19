@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 import type { LiveCreateParams, LiveCreateResponse } from 'openai/resources/live/live';
+import { SidebandWS } from 'openai/resources/live/sideband/ws';
+import type { LiveControlChannel } from './provider.js';
 import type { z } from 'zod';
 
 export interface VerboseTranscript {
@@ -22,6 +24,8 @@ export interface OpenAiGateway {
   transcribeVerbose(input: { bytes: Uint8Array<ArrayBuffer>; mimeType: string; model: string; signal: AbortSignal }): Promise<VerboseTranscript>;
   parseJson<T>(input: ParseJsonInput<T>): Promise<ParsedJson<T>>;
   createLiveSession(params: LiveCreateParams, signal: AbortSignal): Promise<LiveCreateResponse>;
+  /** Trusted server-side sideband to an existing live session. */
+  openSideband(sessionId: string): LiveControlChannel;
 }
 
 const EXTENSIONS: Record<string, string> = { 'audio/webm': 'webm', 'audio/ogg': 'ogg', 'audio/mp4': 'mp4', 'audio/wav': 'wav' };
@@ -63,5 +67,14 @@ export function createOpenAiGateway(apiKey: string): OpenAiGateway {
       return { status: 'ok', parsed };
     },
     createLiveSession: (params, signal) => client.live.create(params, { signal }),
+    openSideband(sessionId) {
+      // Sends queue while the socket connects; no reconnect so a dead session is reported, not silently resumed.
+      const socket = new SidebandWS(client, { session_id: sessionId }, { reconnect: null });
+      return {
+        send: event => { socket.send(event); },
+        close: () => { socket.close(); },
+        onClose: handler => { socket.on('close', () => { handler(); }); },
+      };
+    },
   };
 }

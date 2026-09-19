@@ -32,5 +32,6 @@ export function createMockProvider(options: MockProviderOptions): AiProvider {
     async createLiveSession() {
       return { error: 'live_unavailable', message: 'The live voice coach needs AI_PROVIDER=openai on the server.' };
     },
+    openLiveControl() { return null; },
   };
 }

@@ -1,5 +1,5 @@
 import {
-  CoachAnswerSchema, CoachSessionResponseSchema, describeStepChange, type CoachAnswer, type CoachContext, type CoachStep,
+  CoachAnswerSchema, CoachSessionResponseSchema, type CoachAnswer, type CoachContext, type CoachStep,
 } from '@trail/contracts';
 import { initialCoachState, reduceCoach, type CoachEffect, type CoachEvent, type CoachState } from './coach-state.js';
 import { createWebRtcLiveTransport, type LiveClientEvent, type LiveServerEvent, type LiveTransport } from './live-transport.js';
@@ -57,6 +57,7 @@ export function createCoach(options: CoachOptions): CoachApi {
   });
   let disposed = false;
   let transport: LiveTransport | null = null;
+  let liveSessionId: string | null = null;
   let stream: MediaStream | null = null;
   let listenTimer: ReturnType<typeof setTimeout> | null = null;
   let startTimer: ReturnType<typeof setTimeout> | null = null;
@@ -95,6 +96,7 @@ export function createCoach(options: CoachOptions): CoachApi {
     startedReject = null;
     const active = transport;
     transport = null;
+    liveSessionId = null;
     active?.close();
     stopStream();
     // The audio element outlives this coach; never leave it muted for the next session.
@@ -106,12 +108,25 @@ export function createCoach(options: CoachOptions): CoachApi {
     switch (effect.type) {
       case 'mute': clearListenTimer(); setMicEnabled(false); send({ type: 'session.input_audio.mute', event_id: eventId('mute') }); break;
       case 'unmute': setMicEnabled(true); send({ type: 'session.input_audio.unmute', event_id: eventId('unmute') }); armListenTimer(); break;
-      case 'send-step-context': send({ type: 'session.thinking.append', event_id: eventId('ctx'), delegation_id: null, content: describeStepChange(context) }); break;
+      case 'send-step-context': reportStep(); break;
       case 'release-live': releaseLive(); break;
       case 'invalidate-live-output': outputGateClosed = true; setPlaybackMuted(true); break;
       case 'emit-answer': answerHandlers.forEach(handler => handler(effect.answer)); break;
       case 'drop-answer': break;
     }
+  }
+  /** The server composes and pushes step context over its trusted channel; the browser only names the step. */
+  function reportStep() {
+    if (!liveSessionId) return;
+    const sessionId = liveSessionId;
+    void fetchImpl(`/api/live/sessions/${encodeURIComponent(sessionId)}/step`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(3_000),
+      body: JSON.stringify({ schemaVersion: 1, currentStepId: context.currentStepId, stepRevision: context.stepRevision, attemptId: context.attemptId }),
+    }).then(response => {
+      if (!response.ok) errorHandlers.forEach(handler => handler({ code: 'step_context_rejected', message: `Server refused the step update (${response.status}).` }));
+    }, () => {
+      errorHandlers.forEach(handler => handler({ code: 'step_context_failed', message: 'Could not reach the server to update the coach step.' }));
+    });
   }
   function dispatch(event: CoachEvent): CoachEffect[] {
     if (disposed) return [];
@@ -198,7 +213,9 @@ export function createCoach(options: CoachOptions): CoachApi {
               body: JSON.stringify({ schemaVersion: 1, sdp: offer, context }),
             });
             if (!response.ok) throw new Error(`Live session refused (${response.status})`);
-            return CoachSessionResponseSchema.parse(await response.json()).sdp;
+            const session = CoachSessionResponseSchema.parse(await response.json());
+            liveSessionId = session.sessionId;
+            return session.sdp;
           },
         });
         await started;
@@ -247,6 +264,9 @@ export function createCoach(options: CoachOptions): CoachApi {
       answerHandlers.clear();
       errorHandlers.clear();
       if (transport) { try { transport.send({ type: 'session.close', event_id: eventId('close') }); } catch { /* already closed */ } }
+      if (liveSessionId) {
+        void fetchImpl(`/api/live/sessions/${encodeURIComponent(liveSessionId)}/`.replace(/\/$/, ''), { method: 'DELETE', keepalive: true }).catch(() => undefined);
+      }
       releaseLive();
     },
     onState(handler) { stateHandlers.add(handler); return () => { stateHandlers.delete(handler); }; },

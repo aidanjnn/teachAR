@@ -56,7 +56,7 @@ describe('voice contracts', () => {
     expect(CoachContextSchema.parse(context).currentStepId).toBe('seg-1');
     expect(CoachContextSchema.safeParse({ ...context, currentStepId: 'seg-9' }).success).toBe(false);
     expect(CoachContextSchema.safeParse({ ...context, steps: [context.steps[0], context.steps[0]] }).success).toBe(false);
-    expect(CoachContextSchema.safeParse({ ...context, steps: Array.from({ length: 17 }, (_, i) => ({ id: `s${i}`, title: 't', instruction: 'i' })), currentStepId: 's0' }).success).toBe(false);
+    expect(CoachContextSchema.safeParse({ ...context, steps: Array.from({ length: 129 }, (_, i) => ({ id: `s${i}`, title: 't', instruction: 'i' })), currentStepId: 's0' }).success).toBe(false);
     expect(CoachContextSchema.safeParse({ ...context, steps: [{ ...context.steps[0], title: 'x'.repeat(61) }] }).success).toBe(false);
   });
 

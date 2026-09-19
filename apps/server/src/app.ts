@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { createProvider } from './ai/index.js';
 import type { AiProvider } from './ai/provider.js';
 import type { ServerConfig } from './config.js';
-import type { PairingAuthority } from './auth/pairing.js';
+import { registerPairingRoutes, type PairingAuthority } from './auth/pairing.js';
 import { registerVoiceRoutes, type CoachTutorialLookup } from './routes/voice.js';
 
 async function storageWritable(dataDir: string): Promise<boolean> {
@@ -46,6 +46,7 @@ export async function createApp(
     reply.header('Cache-Control', 'no-store');
     return probeVision(config.vision);
   });
+  if (options.auth) registerPairingRoutes(app, options.auth);
   await registerVoiceRoutes(app, options.provider ?? createProvider(config), {
     ...(options.auth ? { auth: options.auth } : {}),
     ...(options.resolveTutorial ? { resolveTutorial: options.resolveTutorial } : {}),

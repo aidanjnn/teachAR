@@ -16,8 +16,8 @@ export interface OpenAiProviderOptions {
   labelTimeoutMs?: number; coachTimeoutMs?: number;
 }
 export const LABEL_TIMEOUT_MS = 15_000;
-/** Client events the untrusted browser data channel may send. Instructions and session updates never come from the browser. */
-export const BROWSER_CLIENT_EVENTS = ['session.input_audio.mute', 'session.input_audio.unmute', 'session.thinking.append', 'session.close'];
+/** Client events the untrusted browser data channel may send. Context, instructions and session updates come only from the server. */
+export const BROWSER_CLIENT_EVENTS = ['session.input_audio.mute', 'session.input_audio.unmute', 'session.close'];
 
 export function isTimeoutError(error: unknown): boolean {
   return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
@@ -90,6 +90,13 @@ export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider
         return { schemaVersion: 1, sessionId: result.session.id, sdp: result.transport.sdp, liveModel: options.liveModel };
       } catch {
         return { error: 'live_unavailable', message: 'The live coach could not start. Text answers remain available.' };
+      }
+    },
+    openLiveControl(sessionId) {
+      try {
+        return options.gateway.openSideband(sessionId);
+      } catch {
+        return null;
       }
     },
   };
