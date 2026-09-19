@@ -1,0 +1,27 @@
+# Dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+
+# Secrets; keep the documented example trackable
+.env
+.env.*
+!.env.example
+
+# Private runtime data and captures; approve real fixtures individually
+/data/
+/recordings/
+/captures/
+*.log
+logs/
+traces/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Local agent settings and OS files
+.claude/settings.local.json
+.DS_Store
