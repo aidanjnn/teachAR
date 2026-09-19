@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "source": "fixture",
+  "model": null,
+  "language": "en",
+  "audioDurationMs": 12000,
+  "spans": [
+    { "id": "span-0001", "startMs": 400, "endMs": 3200, "text": "Start by sliding the base from its outline into the center of the mat." },
+    { "id": "span-0002", "startMs": 3600, "endMs": 6400, "text": "Now take the tall support and drop it straight down into the base slot." },
+    { "id": "span-0003", "startMs": 6800, "endMs": 9500, "text": "Lay the crosspiece across the top of the support until it sits flat." },
+    { "id": "span-0004", "startMs": 9900, "endMs": 11800, "text": "Finish by pressing the cap onto the crosspiece." }
+  ]
+}

@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { AudioMimeTypeSchema, IdSchema as Id, MAX_RECORDING_DURATION_MS } from './primitives.js';
+export * from './primitives.js';
+export * from './voice.js';
 
 export const JOINT_NAMES = [
   'wrist',
@@ -32,7 +35,6 @@ export const MotionFrameSchema = z.strictObject({
 });
 export type MotionFrame = z.infer<typeof MotionFrameSchema>;
 
-const Id = z.string().min(1).max(128);
 export const WorkspaceDefinitionSchema = z.strictObject({
   id: Id, version: z.literal(1), widthM: z.number().positive(), depthM: z.number().positive(),
   calibrationMarksM: z.strictObject({ A: Vec3Schema, B: Vec3Schema, C: Vec3Schema, D: Vec3Schema }),
@@ -40,7 +42,6 @@ export const WorkspaceDefinitionSchema = z.strictObject({
   calibrationMethod: z.literal('three-point-index-tip-v1'),
 });
 export type WorkspaceDefinition = z.infer<typeof WorkspaceDefinitionSchema>;
-export const MAX_RECORDING_DURATION_MS = 120_000;
 export const MAX_RECORDING_FRAMES = 3_600;
 export const RecordingSchema = z.strictObject({
   schemaVersion: z.literal(1), id: Id, coordinateFrame: z.literal('workspace'),
@@ -56,7 +57,7 @@ export const RecordingSchema = z.strictObject({
   })).max(256),
   audio: z.strictObject({
     assetId: Id.refine(id => !id.startsWith('blob:') && !/[\\/]/.test(id), 'Expected a durable asset ID'),
-    mimeType: z.enum(['audio/webm', 'audio/webm;codecs=opus', 'audio/ogg', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/wav']),
+    mimeType: AudioMimeTypeSchema,
     durationMs: z.number().positive().max(MAX_RECORDING_DURATION_MS),
     audioStartOffsetMs: z.number().min(-5_000).max(5_000),
     syncMethod: z.enum(['media-recorder-start', 'manual-markers']),
@@ -84,7 +85,7 @@ export type Recording = z.infer<typeof RecordingSchema>;
 export const HealthSchema = z.strictObject({
   status: z.enum(['ok', 'degraded']),
   buildId: z.string().min(1).max(128),
-  providers: z.strictObject({ ai: z.literal('mock'), haptics: z.literal('mock') }),
+  providers: z.strictObject({ ai: z.enum(['mock', 'openai']), haptics: z.literal('mock') }),
   storage: z.strictObject({ writable: z.boolean() }),
 });
 export type Health = z.infer<typeof HealthSchema>;
