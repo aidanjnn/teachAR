@@ -44,3 +44,13 @@ test-results/
 /artifacts/
 *.keystore
 *.jks
+
+# Portable native diagnostic outputs
+/tests/native-network/bin/
+/tests/native-network/obj/
+
+# Meta editor-generated local AgentBridge settings may contain a machine credential.
+/apps/quest/Assets/Resources/DevAgentSettings.asset
+/apps/quest/Assets/Resources/DevAgentSettings.asset.meta
+/apps/quest/Assets/Resources/OVRPlatformToolSettings.asset
+/apps/quest/Assets/Resources/OVRPlatformToolSettings.asset.meta

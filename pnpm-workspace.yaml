@@ -5,6 +5,7 @@ packages:
 # Dependency installation must not run arbitrary lifecycle scripts.
 allowBuilds:
   esbuild: true
+  sharp: true
 
 minimumReleaseAgeExclude:
   - '@types/node@22.20.4'
