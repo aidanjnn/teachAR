@@ -64,11 +64,22 @@ namespace Trail.Presentation
             for (var i = 0; i < buttons.Length; i++) if (Vector3.Distance(world, buttons[i].transform.position) < .025f) { selected = i; break; }
             if (observation.TimestampMs - lastSeenMs > 100 || observation.TimestampMs <= lastSeenMs) ResetTouch();
             lastSeenMs = observation.TimestampMs;
-            if (selected < 0) { ResetTouch(); return; }
-            if (touching != selected) { touching = selected; touchStarted = observation.TimestampMs; latched = false; }
-            if (!latched && observation.TimestampMs - touchStarted >= 600) { latched = true; actions[selected](); }
+            if (selected != touching)
+            {
+                // Only a fresh, tracked withdrawal from an armed label confirms; loss, stalls or drift cancel instead.
+                var armed = latched ? touching : -1;
+                ResetTouch();
+                if (selected >= 0) { touching = selected; touchStarted = observation.TimestampMs; }
+                if (armed >= 0) actions[armed]();
+                return;
+            }
+            if (touching >= 0 && !latched && observation.TimestampMs - touchStarted >= 600) { latched = true; buttons[touching].text = "◉ " + buttons[touching].name; }
         }
-        private void ResetTouch() { touching = -1; latched = false; }
+        private void ResetTouch()
+        {
+            if (touching >= 0 && buttons[touching] != null) buttons[touching].text = "● " + buttons[touching].name;
+            touching = -1; latched = false;
+        }
         private void Unsubscribe() { if (subscribed != null) subscribed.Observed -= OnObservation; subscribed = null; ResetTouch(); }
         private void OnDisable() => Unsubscribe();
     }
