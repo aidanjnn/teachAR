@@ -1,19 +1,20 @@
 # Trail validation routes
 
-Use [plan section 11](../../plan.md#11-verification-strategy-and-acceptance-checklist)
+Use [plan section 11](../../docs/plan.md#11-verification-strategy-and-acceptance-checklist)
 for exact scenarios and acceptance criteria, and [AGENTS.md](../../AGENTS.md) for
 invariants. This reference selects evidence; it does not claim tests exist.
 
 ## Select checks from the current repository
 
 1. Inspect manifests, test config, scripts, and CI for actual commands. The
-   plan-only scaffold has no package manifest or application tests yet.
+   application scaffold implements unit/API and built-app browser checks.
 2. For documentation/skills, check local links, discovery symlinks, frontmatter,
    and patch whitespace. Read new untracked files; `git diff` alone omits them.
 3. For application changes, run the smallest behavioral checks first. Once
    configured, `pnpm check` runs typecheck, unit tests, and build. PR preparation
    and signoff use this gate plus relevant fixture/desktop end-to-end checks.
-   `pnpm test:e2e` is the planned Playwright entry point, not a current guarantee.
+   `pnpm test:e2e` runs Playwright against the built app; run `pnpm build` or
+   `pnpm check` first and install Chromium with `pnpm exec playwright install chromium`.
 4. Reuse results for unchanged inputs; after repairs, rerun affected checks and
    the final gate when required. Record the tested SHA or say results are for
    an uncommitted worktree. Do not attribute results to a different revision.

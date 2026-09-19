@@ -1,0 +1,30 @@
+{
+  "name": "trail",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.3.0",
+  "engines": {
+    "node": ">=22.13.0 <23"
+  },
+  "scripts": {
+    "dev": "pnpm build:shared && concurrently -k -n shared,web,server \"pnpm dev:shared\" \"pnpm --filter @trail/web dev\" \"pnpm --filter @trail/server dev\"",
+    "build:shared": "pnpm --filter @trail/contracts build && pnpm --filter @trail/motion build",
+    "dev:shared": "concurrently -k \"pnpm --filter @trail/contracts dev\" \"pnpm --filter @trail/motion dev\"",
+    "build": "pnpm build:shared && pnpm --filter @trail/web build && pnpm --filter @trail/server build",
+    "typecheck": "pnpm build:shared && pnpm -r typecheck && tsc -p tsconfig.tools.json",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check": "pnpm typecheck && pnpm test && pnpm build",
+    "start": "node apps/server/dist/main.js",
+    "validate:fixtures": "pnpm build:shared && tsx scripts/validate-fixtures.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.4",
+    "concurrently": "9.2.1",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "vitest": "5.0.1"
+  }
+}

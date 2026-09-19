@@ -8,7 +8,7 @@ description: Produce a focused Trail manual QA or demo checklist for real headse
 Generate a runnable checklist for the current change or requested release tier.
 This is read-only checklist generation unless execution or recording results is
 also requested. Use [AGENTS.md](../../../../AGENTS.md), the diff, and
-[plan section 11](../../../../plan.md#11-verification-strategy-and-acceptance-checklist).
+[plan section 11](../../../../docs/plan.md#11-verification-strategy-and-acceptance-checklist).
 
 First inspect actual tests and [validation routes](../../../references/validation.md)
 so each item covers a remaining observation, not a duplicate assertion. Keep

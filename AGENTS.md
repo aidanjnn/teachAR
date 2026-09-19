@@ -1,17 +1,19 @@
 # Trail agent guide
 
 Trail records a physical demonstration and replays workspace-relative hand motion
-for a learner who progresses at their own pace. [plan.md](plan.md) is the product
+for a learner who progresses at their own pace. [plan.md](docs/plan.md) is the product
 and implementation reference. Read the sections relevant to the change; its
 planning snapshot, proposed versions, deadlines, thresholds, and hardware
 assumptions are not current verification evidence.
 
 ## Repository status and scope
 
-This scaffold supplies agent workflows. Application packages, scripts, CI, and
-headset validation are still planned. Inspect the current tree and manifests
-before using commands or claiming a capability exists. Implementation starts
-from the dependency-ordered tickets in plan section 17.
+The repository has a pnpm application scaffold, shared recording schemas and
+rigid transforms, a synthetic desktop replay, Fastify health/static serving,
+and automated checks/CI. Capture, calibration, guide progression, persistence,
+providers, and headset validation remain planned. Inspect the current tree and
+manifests before claiming a capability exists. Continue from the dependency-ordered
+tickets in plan section 17; docs/scaffold.md records the bootstrap scope.
 
 Implement the requested work and its necessary validation. Reuse passing checks
 while their inputs remain unchanged. A request to build does not itself request

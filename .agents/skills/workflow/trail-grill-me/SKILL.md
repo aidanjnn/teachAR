@@ -5,7 +5,7 @@ description: Challenge Trail's plan one consequential decision at a time, ground
 
 # Challenge the Trail plan
 
-Read [plan.md](../../../../plan.md), [AGENTS.md](../../../../AGENTS.md), and any
+Read [plan.md](../../../../docs/plan.md), [AGENTS.md](../../../../AGENTS.md), and any
 actual evidence for the decision at hand. Inspect the repository before asking
 a question the files can answer. Do not infer confirmed device behavior or
 remaining time from an old planning snapshot.

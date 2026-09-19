@@ -151,7 +151,6 @@ Vite and Vitest's documented runtime minimums are satisfied by the observed Node
 
 ~~~text
 trail/
-├── plan.md
 ├── README.md                    # fresh-clone and headset quickstart
 ├── AGENTS.md                    # boundaries, conventions, required checks
 ├── package.json                # private workspace; root scripts
@@ -192,6 +191,7 @@ trail/
 ├── tests/e2e/
 ├── scripts/                    # fixture validation, recording export
 ├── docs/
+│   ├── plan.md                  # product and implementation plan
 │   ├── device-check.md
 │   ├── contracts.md
 │   ├── demo.md
