@@ -1,3 +1,5 @@
+import { createPairingAuthority } from './auth/pairing.js';
+import { writePairingBootstrap } from './auth/bootstrap.js';
 import { access } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createApp } from './app.js';
@@ -12,7 +14,10 @@ if (!development) {
     throw new Error('Web build missing. Run pnpm build before pnpm start.');
   });
 }
-const app = await createApp(config, { logger: true, ...(development ? {} : { webRoot }) });
+const origins = config.pairing.allowedOrigins.length ? config.pairing.allowedOrigins : config.pairing.allowUsbLoopback ? [`http://127.0.0.1:${config.port}`] : [];
+const auth = origins.length ? createPairingAuthority({ ...config.pairing, allowedOrigins: origins }) : undefined;
+if (auth) await writePairingBootstrap(auth, config.dataDir);
+const app = await createApp(config, { logger: true, ...(auth ? { auth } : {}), ...(development ? {} : { webRoot }) });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     void app.close().catch(() => { process.exitCode = 1; });

@@ -32,3 +32,12 @@ Run `pnpm exec vitest run packages/contracts/test` and, with a .NET 8 SDK,
 `DOTNET=/path/to/dotnet pnpm --filter @trail/contracts test:native`. Regenerate
 synthetic examples with `pnpm exec tsx packages/contracts/tools/generate-fixtures.ts`.
 See [contract versions and native validation limits](../docs/contracts.md).
+
+Authoring envelopes in `contracts/` cover tutorial jobs/finalization, reviewed
+references, image-upload metadata, connected/disconnected spectators, label
+batches and native exact-byte chunks. Their golden valid/invalid cases run through
+both Zod and generated C# parsers. `reference-image-upload.json` deliberately
+contains synthetic placeholder bytes for wire-shape validation, not a decodable
+image; the server's decode gate is tested separately. `recording-byte-chunk.json`
+encodes the synthetic recording only. Compatibility notes are in
+[authoring transport compatibility](../docs/contracts.md#authoring-transport-compatibility-pr-11).

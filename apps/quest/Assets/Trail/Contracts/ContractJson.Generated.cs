@@ -696,6 +696,120 @@ namespace Trail.Contracts
             map["source"] = (object)value.Source;
             return map;
         }
+        public static RecordingByteChunk ParseRecordingByteChunk(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("RecordingByteChunk", raw); return ReadRecordingByteChunk(raw); }
+        public static string SerializeRecordingByteChunk(RecordingByteChunk value) { var json = StrictJson.Stringify(WriteRecordingByteChunk(value)); ParseRecordingByteChunk(json); return json; }
+        private static RecordingByteChunk ReadRecordingByteChunk(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new RecordingByteChunk();
+            if (map.ContainsKey("dataBase64")) result.DataBase64 = (string)map["dataBase64"];
+            if (map.ContainsKey("sha256")) result.Sha256 = (string)map["sha256"];
+            return result;
+        }
+        private static object WriteRecordingByteChunk(RecordingByteChunk value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["dataBase64"] = (object)value.DataBase64;
+            map["sha256"] = (object)value.Sha256;
+            return map;
+        }
+        public static ReferenceEdit ParseReferenceEdit(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("ReferenceEdit", raw); return ReadReferenceEdit(raw); }
+        public static string SerializeReferenceEdit(ReferenceEdit value) { var json = StrictJson.Stringify(WriteReferenceEdit(value)); ParseReferenceEdit(json); return json; }
+        private static ReferenceEdit ReadReferenceEdit(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new ReferenceEdit();
+            if (map.ContainsKey("baseRevision")) result.BaseRevision = (int)(double)map["baseRevision"];
+            if (map.ContainsKey("references")) result.References = ((List<object>)map["references"]).Select(item => ReadStepSceneReference(item)).ToArray();
+            return result;
+        }
+        private static object WriteReferenceEdit(ReferenceEdit value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["baseRevision"] = (object)value.BaseRevision;
+            map["references"] = (value.References == null ? null : value.References.Select(item => WriteStepSceneReference(item)).ToList());
+            return map;
+        }
+        public static StepSceneReference ParseStepSceneReference(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("StepSceneReference", raw); return ReadStepSceneReference(raw); }
+        public static string SerializeStepSceneReference(StepSceneReference value) { var json = StrictJson.Stringify(WriteStepSceneReference(value)); ParseStepSceneReference(json); return json; }
+        private static StepSceneReference ReadStepSceneReference(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new StepSceneReference();
+            if (map.ContainsKey("id")) result.Id = (string)map["id"];
+            if (map.ContainsKey("recordingId")) result.RecordingId = (string)map["recordingId"];
+            if (map.ContainsKey("recordingHash")) result.RecordingHash = (string)map["recordingHash"];
+            if (map.ContainsKey("tutorialId")) result.TutorialId = (string)map["tutorialId"];
+            if (map.ContainsKey("tutorialRevision")) result.TutorialRevision = (int)(double)map["tutorialRevision"];
+            if (map.ContainsKey("stepId")) result.StepId = (string)map["stepId"];
+            if (map.ContainsKey("assetId")) result.AssetId = (string)map["assetId"];
+            if (map.ContainsKey("source")) result.Source = (string)map["source"];
+            if (map.ContainsKey("visibleOutcome")) result.VisibleOutcome = (string)map["visibleOutcome"];
+            return result;
+        }
+        private static object WriteStepSceneReference(StepSceneReference value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["id"] = (object)value.Id;
+            map["recordingId"] = (object)value.RecordingId;
+            map["recordingHash"] = (object)value.RecordingHash;
+            map["tutorialId"] = (object)value.TutorialId;
+            map["tutorialRevision"] = (object)value.TutorialRevision;
+            map["stepId"] = (object)value.StepId;
+            map["assetId"] = (object)value.AssetId;
+            map["source"] = (object)value.Source;
+            map["visibleOutcome"] = (object)value.VisibleOutcome;
+            return map;
+        }
+        public static ReferenceImageUpload ParseReferenceImageUpload(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("ReferenceImageUpload", raw); return ReadReferenceImageUpload(raw); }
+        public static string SerializeReferenceImageUpload(ReferenceImageUpload value) { var json = StrictJson.Stringify(WriteReferenceImageUpload(value)); ParseReferenceImageUpload(json); return json; }
+        private static ReferenceImageUpload ReadReferenceImageUpload(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new ReferenceImageUpload();
+            if (map.ContainsKey("recordingId")) result.RecordingId = (string)map["recordingId"];
+            if (map.ContainsKey("recordingHash")) result.RecordingHash = (string)map["recordingHash"];
+            if (map.ContainsKey("frameIndex")) result.FrameIndex = (int)(double)map["frameIndex"];
+            if (map.ContainsKey("source")) result.Source = (string)map["source"];
+            if (map.ContainsKey("image")) result.Image = ReadReferenceImageUploadImage(map["image"]);
+            return result;
+        }
+        private static object WriteReferenceImageUpload(ReferenceImageUpload value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["recordingId"] = (object)value.RecordingId;
+            map["recordingHash"] = (object)value.RecordingHash;
+            map["frameIndex"] = (object)value.FrameIndex;
+            map["source"] = (object)value.Source;
+            map["image"] = WriteReferenceImageUploadImage(value.Image);
+            return map;
+        }
+        private static ReferenceImageUploadImage ReadReferenceImageUploadImage(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new ReferenceImageUploadImage();
+            if (map.ContainsKey("mimeType")) result.MimeType = (string)map["mimeType"];
+            if (map.ContainsKey("dataBase64")) result.DataBase64 = (string)map["dataBase64"];
+            if (map.ContainsKey("sha256")) result.Sha256 = (string)map["sha256"];
+            if (map.ContainsKey("width")) result.Width = (int)(double)map["width"];
+            if (map.ContainsKey("height")) result.Height = (int)(double)map["height"];
+            return result;
+        }
+        private static object WriteReferenceImageUploadImage(ReferenceImageUploadImage value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["mimeType"] = (object)value.MimeType;
+            map["dataBase64"] = (object)value.DataBase64;
+            map["sha256"] = (object)value.Sha256;
+            map["width"] = (object)value.Width;
+            map["height"] = (object)value.Height;
+            return map;
+        }
         public static SceneObservation ParseSceneObservation(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("SceneObservation", raw); return ReadSceneObservation(raw); }
         public static string SerializeSceneObservation(SceneObservation value) { var json = StrictJson.Stringify(WriteSceneObservation(value)); ParseSceneObservation(json); return json; }
         private static SceneObservation ReadSceneObservation(object value)
@@ -755,36 +869,54 @@ namespace Trail.Contracts
             map["references"] = (value.References == null ? null : value.References.Select(item => WriteStepSceneReference(item)).ToList());
             return map;
         }
-        public static StepSceneReference ParseStepSceneReference(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("StepSceneReference", raw); return ReadStepSceneReference(raw); }
-        public static string SerializeStepSceneReference(StepSceneReference value) { var json = StrictJson.Stringify(WriteStepSceneReference(value)); ParseStepSceneReference(json); return json; }
-        private static StepSceneReference ReadStepSceneReference(object value)
+        public static SpectatorState ParseSpectatorState(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("SpectatorState", raw); return ReadSpectatorState(raw); }
+        public static string SerializeSpectatorState(SpectatorState value) { var json = StrictJson.Stringify(WriteSpectatorState(value)); ParseSpectatorState(json); return json; }
+        private static SpectatorState ReadSpectatorState(object value)
         {
             var map = (Dictionary<string, object>)value;
-            var result = new StepSceneReference();
-            if (map.ContainsKey("id")) result.Id = (string)map["id"];
-            if (map.ContainsKey("recordingId")) result.RecordingId = (string)map["recordingId"];
-            if (map.ContainsKey("recordingHash")) result.RecordingHash = (string)map["recordingHash"];
-            if (map.ContainsKey("tutorialId")) result.TutorialId = (string)map["tutorialId"];
-            if (map.ContainsKey("tutorialRevision")) result.TutorialRevision = (int)(double)map["tutorialRevision"];
-            if (map.ContainsKey("stepId")) result.StepId = (string)map["stepId"];
-            if (map.ContainsKey("assetId")) result.AssetId = (string)map["assetId"];
-            if (map.ContainsKey("source")) result.Source = (string)map["source"];
-            if (map.ContainsKey("visibleOutcome")) result.VisibleOutcome = (string)map["visibleOutcome"];
+            var result = new SpectatorState();
+            if (map.ContainsKey("type")) result.Type = (string)map["type"];
+            if (map.ContainsKey("connected")) result.Connected = (bool)map["connected"];
+            if (map.ContainsKey("updatedAt")) result.UpdatedAt = (double)(double)map["updatedAt"];
+            if (map.ContainsKey("ageMs")) result.AgeMs = (double)(double)map["ageMs"];
+            if (map.ContainsKey("snapshot")) result.Snapshot = (map["snapshot"] == null ? (GuideEvent)null : ReadGuideEvent(map["snapshot"]));
+            if (map.ContainsKey("step")) result.Step = (map["step"] == null ? (SpectatorStateStep)null : ReadSpectatorStateStep(map["step"]));
             return result;
         }
-        private static object WriteStepSceneReference(StepSceneReference value)
+        private static object WriteSpectatorState(SpectatorState value)
         {
             if (value == null) return null;
             var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["id"] = (object)value.Id;
-            map["recordingId"] = (object)value.RecordingId;
-            map["recordingHash"] = (object)value.RecordingHash;
-            map["tutorialId"] = (object)value.TutorialId;
-            map["tutorialRevision"] = (object)value.TutorialRevision;
-            map["stepId"] = (object)value.StepId;
-            map["assetId"] = (object)value.AssetId;
+            map["type"] = (object)value.Type;
+            map["connected"] = (object)value.Connected;
+            map["updatedAt"] = (object)value.UpdatedAt;
+            map["ageMs"] = (object)value.AgeMs;
+            map["snapshot"] = (value.Snapshot == null ? null : WriteGuideEvent(value.Snapshot));
+            map["step"] = (value.Step == null ? null : WriteSpectatorStateStep(value.Step));
+            return map;
+        }
+        private static SpectatorStateStep ReadSpectatorStateStep(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new SpectatorStateStep();
+            if (map.ContainsKey("title")) result.Title = (string)map["title"];
+            if (map.ContainsKey("instruction")) result.Instruction = (string)map["instruction"];
+            if (map.ContainsKey("index")) result.Index = (long)(double)map["index"];
+            if (map.ContainsKey("total")) result.Total = (long)(double)map["total"];
+            if (map.ContainsKey("completionMode")) result.CompletionMode = (string)map["completionMode"];
+            if (map.ContainsKey("source")) result.Source = (string)map["source"];
+            return result;
+        }
+        private static object WriteSpectatorStateStep(SpectatorStateStep value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["title"] = (object)value.Title;
+            map["instruction"] = (object)value.Instruction;
+            map["index"] = (object)value.Index;
+            map["total"] = (object)value.Total;
+            map["completionMode"] = (object)value.CompletionMode;
             map["source"] = (object)value.Source;
-            map["visibleOutcome"] = (object)value.VisibleOutcome;
             return map;
         }
         public static Tutorial ParseTutorial(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("Tutorial", raw); return ReadTutorial(raw); }
@@ -928,6 +1060,102 @@ namespace Trail.Contracts
             map["completionMode"] = (object)value.CompletionMode;
             map["title"] = (object)value.Title;
             map["instruction"] = (object)value.Instruction;
+            return map;
+        }
+        public static TutorialFinalize ParseTutorialFinalize(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialFinalize", raw); return ReadTutorialFinalize(raw); }
+        public static string SerializeTutorialFinalize(TutorialFinalize value) { var json = StrictJson.Stringify(WriteTutorialFinalize(value)); ParseTutorialFinalize(json); return json; }
+        private static TutorialFinalize ReadTutorialFinalize(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TutorialFinalize();
+            if (map.ContainsKey("baseRevision")) result.BaseRevision = (int)(double)map["baseRevision"];
+            return result;
+        }
+        private static object WriteTutorialFinalize(TutorialFinalize value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["baseRevision"] = (object)value.BaseRevision;
+            return map;
+        }
+        public static TutorialJobCreate ParseTutorialJobCreate(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialJobCreate", raw); return ReadTutorialJobCreate(raw); }
+        public static string SerializeTutorialJobCreate(TutorialJobCreate value) { var json = StrictJson.Stringify(WriteTutorialJobCreate(value)); ParseTutorialJobCreate(json); return json; }
+        private static TutorialJobCreate ReadTutorialJobCreate(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TutorialJobCreate();
+            if (map.ContainsKey("recordingId")) result.RecordingId = (string)map["recordingId"];
+            if (map.ContainsKey("recordingHash")) result.RecordingHash = (string)map["recordingHash"];
+            if (map.ContainsKey("segmentationRevision")) result.SegmentationRevision = (int)(double)map["segmentationRevision"];
+            return result;
+        }
+        private static object WriteTutorialJobCreate(TutorialJobCreate value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["recordingId"] = (object)value.RecordingId;
+            map["recordingHash"] = (object)value.RecordingHash;
+            map["segmentationRevision"] = (object)value.SegmentationRevision;
+            return map;
+        }
+        public static TutorialLabelBatch ParseTutorialLabelBatch(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialLabelBatch", raw); return ReadTutorialLabelBatch(raw); }
+        public static string SerializeTutorialLabelBatch(TutorialLabelBatch value) { var json = StrictJson.Stringify(WriteTutorialLabelBatch(value)); ParseTutorialLabelBatch(json); return json; }
+        private static TutorialLabelBatch ReadTutorialLabelBatch(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TutorialLabelBatch();
+            if (map.ContainsKey("baseRevision")) result.BaseRevision = (int)(double)map["baseRevision"];
+            if (map.ContainsKey("recordingHash")) result.RecordingHash = (string)map["recordingHash"];
+            if (map.ContainsKey("labels")) result.Labels = ((List<object>)map["labels"]).Select(item => ReadTutorialLabelBatchLabelsItem(item)).ToArray();
+            if (map.ContainsKey("provenance")) result.Provenance = ReadTutorialLabelBatchProvenance(map["provenance"]);
+            return result;
+        }
+        private static object WriteTutorialLabelBatch(TutorialLabelBatch value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["baseRevision"] = (object)value.BaseRevision;
+            map["recordingHash"] = (object)value.RecordingHash;
+            map["labels"] = (value.Labels == null ? null : value.Labels.Select(item => WriteTutorialLabelBatchLabelsItem(item)).ToList());
+            map["provenance"] = WriteTutorialLabelBatchProvenance(value.Provenance);
+            return map;
+        }
+        private static TutorialLabelBatchLabelsItem ReadTutorialLabelBatchLabelsItem(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TutorialLabelBatchLabelsItem();
+            if (map.ContainsKey("id")) result.Id = (string)map["id"];
+            if (map.ContainsKey("title")) result.Title = (string)map["title"];
+            if (map.ContainsKey("instruction")) result.Instruction = (string)map["instruction"];
+            if (map.ContainsKey("narrationSpanIds")) result.NarrationSpanIds = ((List<object>)map["narrationSpanIds"]).Select(item => (string)item).ToArray();
+            return result;
+        }
+        private static object WriteTutorialLabelBatchLabelsItem(TutorialLabelBatchLabelsItem value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["id"] = (object)value.Id;
+            map["title"] = (object)value.Title;
+            map["instruction"] = (object)value.Instruction;
+            map["narrationSpanIds"] = (value.NarrationSpanIds == null ? null : value.NarrationSpanIds.Select(item => (object)item).ToList());
+            return map;
+        }
+        private static TutorialLabelBatchProvenance ReadTutorialLabelBatchProvenance(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TutorialLabelBatchProvenance();
+            if (map.ContainsKey("labels")) result.Labels = (string)map["labels"];
+            if (map.ContainsKey("model")) result.Model = (map["model"] == null ? (string)null : (string)map["model"]);
+            if (map.ContainsKey("promptVersion")) result.PromptVersion = (string)map["promptVersion"];
+            return result;
+        }
+        private static object WriteTutorialLabelBatchProvenance(TutorialLabelBatchProvenance value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["labels"] = (object)value.Labels;
+            map["model"] = (value.Model == null ? null : (object)value.Model);
+            map["promptVersion"] = (object)value.PromptVersion;
             return map;
         }
     }

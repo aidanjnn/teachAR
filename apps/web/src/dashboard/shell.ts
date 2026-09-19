@@ -6,11 +6,12 @@ export function mountShell(root: HTMLElement) {
       <span class="stage-label">Development preview</span>
     </header>
     <main>
-      <div class="introduction">
+      <div id="workbench"></div>
+      <div class="introduction" data-fixture-view>
         <div><h1>A movement, made visible.</h1><p>Explore a sample hand motion in workspace coordinates.</p></div>
         <span class="source-label">Synthetic fixture</span>
       </div>
-      <div class="workspace-layout">
+      <div class="workspace-layout" data-fixture-view>
         <section class="player" aria-label="Motion replay">
           <div class="scene-wrap"><div id="scene"></div><span class="scene-caption">50 × 35 cm workspace</span><span class="scene-axis">+Y up &nbsp; / &nbsp; +Z toward learner</span></div>
           <div class="transport">
@@ -29,6 +30,6 @@ export function mountShell(root: HTMLElement) {
         </aside>
       </div>
       <section class="diagnostics" aria-label="Runtime diagnostics"><div><span>Local server</span><strong id="health" role="status">Checking…</strong></div><div><span>Headset app</span><strong>Unity · device validation pending</strong></div><div><span>Integrations</span><strong id="providers">Checking…</strong></div><div><span>Vision backend</span><strong id="vision" role="status">Checking…</strong></div><button id="refresh-health" type="button">Recheck server</button></section>
-      <footer>Record once. Learn at your own pace.<span>Scaffold preview · Headset validation pending</span></footer>
+      <footer>Record once. Learn at your own pace.<span>Workspace preview · Headset validation pending</span></footer>
     </main>`;
 }

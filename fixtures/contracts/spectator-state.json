@@ -1,0 +1,8 @@
+{
+  "type": "spectator-state",
+  "connected": false,
+  "updatedAt": 0,
+  "ageMs": 0,
+  "snapshot": null,
+  "step": null
+}

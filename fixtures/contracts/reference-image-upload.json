@@ -1,0 +1,13 @@
+{
+  "recordingId": "contract-recording",
+  "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+  "frameIndex": 2,
+  "source": "workspace-webcam",
+  "image": {
+    "mimeType": "image/png",
+    "dataBase64": "c3ludGhldGlj",
+    "sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+    "width": 1,
+    "height": 1
+  }
+}

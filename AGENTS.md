@@ -157,7 +157,8 @@ checks. Existing `pnpm check`, fixture and Playwright checks cover web/server.
 Native changes additionally require the implemented Unity EditMode/PlayMode and
 Android ARM64/IL2CPP build gates; green pnpm checks cannot validate native code.
 `pnpm quest:setup` and `pnpm quest:test` require an installed editor;
-`pnpm check:quest-scaffold` checks files only. Native CI remains pending; inspect before invoking them and report editor
+`pnpm check:quest-scaffold` checks files only. Native CI is required by the Check
+workflow; hosted execution needs Unity activation secrets (docs/ci.md). Inspect before invoking checks and report editor
 activation/licensing or missing-check limitations explicitly. Do not invent scripts,
 claim unavailable checks passed, or install an application just to check docs.
 Normal edits use focused checks; complete signoff and code PR preparation use

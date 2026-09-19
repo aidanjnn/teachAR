@@ -1,0 +1,1 @@
+calibrating -> showing -> waiting-start -> guiding -> holding -> complete

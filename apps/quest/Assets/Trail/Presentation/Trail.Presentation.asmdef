@@ -2,7 +2,10 @@
   "name": "Trail.Presentation",
   "rootNamespace": "Trail.Presentation",
   "references": [
-    "Trail.Runtime"
+    "Trail.Runtime",
+    "Trail.Motion",
+    "Trail.Contracts",
+    "Trail.XR"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
