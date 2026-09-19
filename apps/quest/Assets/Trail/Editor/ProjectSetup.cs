@@ -154,6 +154,15 @@ namespace Trail.Editor
             if (!int.TryParse(raw, out var value) || value < 1) throw new BuildFailedException("Invalid " + name);
             return value;
         }
+        // GameCI forwards its documented inputs, not arbitrary TRAIL_* host variables.
+        public static void BuildAndroidCi()
+        {
+            var output = Path.GetFullPath(Path.Combine(Application.dataPath, "../../../artifacts/quest-ci/android"));
+            Environment.SetEnvironmentVariable("TRAIL_APK_PATH", Path.Combine(output, "Trail.apk"));
+            Environment.SetEnvironmentVariable("TRAIL_BUILD_REPORT_PATH", Path.Combine(output, "build.json"));
+            Environment.SetEnvironmentVariable("TRAIL_DEVELOPMENT_BUILD", "0");
+            BuildAndroid();
+        }
         [MenuItem("Trail/Build Android ARM64 APK")]
         public static void BuildAndroid()
         {

@@ -32,6 +32,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Run workspace checks
         run: pnpm check
+      - name: Test native evidence rejection
+        run: python3 -m unittest discover -s tests/native-ci -v
       - name: Validate recording fixtures
         run: pnpm validate:fixtures
 
@@ -88,10 +90,19 @@ jobs:
       - name: Validate all GitHub Actions workflows
         run: '"$RUNNER_TEMP/actionlint" -color'
 
+  native:
+    name: Native Unity gates
+    uses: ./.github/workflows/native-unity.yml
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+
   # Preserve the original check name for existing branch-protection rules.
   check:
     if: ${{ always() }}
-    needs: [quality, browser, workflows]
+    needs: [quality, browser, workflows, native]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -100,8 +111,9 @@ jobs:
           QUALITY_RESULT: ${{ needs.quality.result }}
           BROWSER_RESULT: ${{ needs.browser.result }}
           WORKFLOWS_RESULT: ${{ needs.workflows.result }}
+          NATIVE_RESULT: ${{ needs.native.result }}
         run: |
-          for result in "$QUALITY_RESULT" "$BROWSER_RESULT" "$WORKFLOWS_RESULT"; do
+          for result in "$QUALITY_RESULT" "$BROWSER_RESULT" "$WORKFLOWS_RESULT" "$NATIVE_RESULT"; do
             if [[ "$result" != success ]]; then
               echo "::error::A required job did not succeed ($result)."
               exit 1

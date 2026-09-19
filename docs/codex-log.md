@@ -422,3 +422,45 @@ headset, physical transfer or live-provider validation is claimed.
 - **Remaining limits / next step:** Routes are unauthenticated and trust the submitted `CoachContext` until pairing and tutorial storage (#11) land; no per-learner live-session cap; whisper-1 is deprecated for 2027-02-26. Next: register the voice routes behind pairing auth with server-side tutorial lookup, then prove native mic → WebRTC → Live on the Quest APK.
 
 Final stack repair cycle: PR #3 merged externally into main `6e7b5b5` during final verification. Merged that actual base into capture, preserving both activity histories. No native inputs changed; prior capture Unity/APK evidence remains applicable. New voice/server/browser inputs are covered by the new-head hosted full workspace/browser gate and final combined-stack checks. Review #11 additionally requested authoring transport fixtures and migration notes; that repair is scoped to the authoring tip.
+
+### 2026-09-19 — PR #6 Greptile native-gate repair
+
+Rechecked every Greptile thread on head 27411fd. The withdrawal-confirmation
+finding is already fixed with its PlayMode regression. The Unity dependency
+ownership finding is stale: integration PR #5 and contracts PR #8 are merged,
+and `git diff origin/main...HEAD -- apps/quest/Packages` is empty. No dependency
+or lockfile edit is needed or included in this repair.
+
+Added a reusable Unity workflow to the existing Check aggregate: actual full
+project EditMode and PlayMode (Android target), then the production Android
+ARM64/IL2CPP build. All must succeed; missing activation fails the prerequisite
+and aggregate explicitly. The existing standalone C# harnesses stay supplemental.
+The CI build entry point sets output paths and calls the unchanged production
+setup/build guard. A verifier rejects missing/empty/failed/skipped test reports,
+wrong build configuration, mismatched APK size and a non-ARM64 IL2CPP ELF binary.
+Four regression tests exercise both accepted results and these failure modes.
+Pinned the GameCI actions/CLI and verified the Android-capable image tag exists.
+Updated the CI runbook and validation guidance without relaxing native or
+physical acceptance requirements.
+
+Repository inspection found no Actions secrets, no self-hosted runners and no
+branch protection on main. The new hosted native gate is therefore blocked on
+Unity activation credentials. Adding the workflow does not itself configure
+those credentials or a branch rule. No activation data was read, copied or
+published. Local licensed Unity results remain separate from hosted CI evidence.
+
+Local repair validation passed: frozen-lockfile install, `pnpm check` (252 tests,
+typechecks, production builds, static native checks), fixture validation,
+Chromium 6/6 with synthetic/fake-microphone inputs, actionlint 1.7.12, and all
+four native-verifier regression tests. Real Unity 6000.3.24f1 passed 13/13
+EditMode (test-1b3cc3cf-f31b-422b-9ec0-c1bc38f85a2e) and 7/7 PlayMode
+(test-play-3ca6524b-499d-4c66-8b15-ff53fbdf8dc6). Directly executing the new
+BuildAndroidCi entry point succeeded with an isolated Gradle home: non-development
+ARM64/IL2CPP APK, 69,218,837 bytes, SHA256
+99aacc614a212920cf33c101a2b975e61a334e67a8453e008a32c68f95e78ba6.
+The verifier also checked its actual ELF architecture. The ignored
+artifacts/quest-ci directory retains the APK, build report, generated settings
+and 220 native/shared input hashes. Eight Unity-regenerated tracked settings
+were preserved there and restored, keeping dependency/platform assets outside
+this repair. Existing Vite chunk-size and vendor Android manifest warnings
+remain. No live-provider, headset or physical acceptance result is claimed.
