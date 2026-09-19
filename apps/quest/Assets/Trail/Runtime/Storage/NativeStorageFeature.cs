@@ -40,6 +40,7 @@ namespace Trail.Runtime.Storage
             if (Capture != null) Capture.RecordingCompleted += SaveCapture;
             if (guide != null) guide.Telemetry += OnTelemetry;
             connection.SessionInvalidated += Invalidated;
+            connection.StateChanged += ConnectionChanged;
             var panel = new GameObject("Tutorial storage controls"); panel.transform.SetParent(context.Root.transform, false); panel.transform.position = context.TrackingSpace.TransformPoint(new Vector3(.48f, 1.15f, .8f)); panel.AddComponent<StorageControlPanel>().Storage = this;
         }
         private void SaveCapture(Recording recording)
@@ -159,6 +160,10 @@ namespace Trail.Runtime.Storage
                 } catch(Exception) { busy=false; Status="Ready tutorial unavailable."; }
             });
         }
+        private void ConnectionChanged(ConnectionState state)
+        {
+            if (state == ConnectionState.Ready && connection.Role == "learner" && guide != null) guide.RebindTelemetrySession(connection.SessionId);
+        }
         private void OnTelemetry(GuideEvent value) { pendingTelemetry=value; }
         private void Update()
         {
@@ -167,7 +172,7 @@ namespace Trail.Runtime.Storage
             connection.Request("POST","/api/guide-events",ContractJson.SerializeGuideEvent(value),(status,text)=> { if(revision!=transportGeneration)return; telemetryInFlight=false; });
         }
         private void Invalidated() { generation++; transportGeneration++; busy=false; telemetryInFlight=false; pendingTelemetry=null; Status="Backend disconnected. Loaded guidance stays local; reconnect to sync."; }
-        private void OnDestroy() { if(Capture!=null)Capture.RecordingCompleted-=SaveCapture; if(guide!=null)guide.Telemetry-=OnTelemetry; if(connection!=null)connection.SessionInvalidated-=Invalidated; }
+        private void OnDestroy() { if(Capture!=null)Capture.RecordingCompleted-=SaveCapture; if(guide!=null)guide.Telemetry-=OnTelemetry; if(connection!=null) { connection.SessionInvalidated-=Invalidated; connection.StateChanged-=ConnectionChanged; } }
         [Serializable] private sealed class PendingUpload { public string id,json,hash; }
         [Serializable] private sealed class Created { public string id; }
         [Serializable] private sealed class Job { public string status; }

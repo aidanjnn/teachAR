@@ -405,3 +405,5 @@ passes both recovery cases; refreshed Unity tests include the paused re-pair pat
 Final contracts 3d629fa and capture capacity fixes are integrated. Native/source
 checks are rerunning for this last recovery change; prior native passes remain
 at their explicitly recorded revisions.
+
+Task 6 full software gate passed 199 tests, strict workspace/tool typechecks, production builds and scaffold checks with VITEST_MAX_WORKERS=2 (concurrency only; no omitted assertions). Fixture validation follows. Reviewed actual native re-pair recovery: added a call to the guide owner's tested RebindTelemetrySession on Ready, preserving local run/calibration/attempt and same-session sequence while allowing a new server session envelope. Native private-cache behavior is now part of a pinned .NET CI workflow. Native final combined candidate awaits the platform owner's generated settings/security update before the single coordinated ARM64/IL2CPP attempt.
