@@ -43,6 +43,9 @@ export function proposeSteps(input: Recording): { segmentation: 'explicit-marker
       const frame = recording.frames.findIndex(value => value.tMs >= marker.tMs);
       if (marker.kind === 'step-start') {
         if (start !== undefined || frame < 0) throw new Error('Markers must alternate start/end');
+        // An end and the next start resolving to the same frame stay contiguous: the earlier step yields that frame.
+        const last = ranges[ranges.length - 1];
+        if (last && last[1] > frame) { last[1] = frame; if (last[0] >= last[1]) throw new Error('Adjacent markers leave an empty step'); }
         start = frame;
       } else {
         if (start === undefined) throw new Error('End marker has no start');

@@ -36,6 +36,7 @@ namespace Trail.Runtime.Storage
         {
             connection = context.Connection; Capture = context.Root.GetComponentInChildren<CaptureReplaySession>(); guide = context.Root.GetComponentInChildren<GuideController>();
             cache = new PrivateTutorialCache(Application.persistentDataPath); cache.RecoverInterruptedWrites();
+            try { lastCapture = cache.LoadLatestCapture(); if (lastCapture != null) Status = "Saved recording restored. Upload as author to review on desktop."; } catch (Exception) { }
             pendingPath = Path.Combine(Application.persistentDataPath, "trail-pending-upload.json");
             if (Capture != null) Capture.RecordingCompleted += SaveCapture;
             if (guide != null) guide.Telemetry += OnTelemetry;

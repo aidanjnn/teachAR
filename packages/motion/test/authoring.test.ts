@@ -24,4 +24,12 @@ describe('offline authoring', () => {
     expect(() => deriveStep(recording, { ...step, startFrame: 30 })).toThrow('stable');
     recording.markers.pop(); expect(() => proposeSteps(recording)).toThrow('unfinished');
   });
+  it('keeps equal-time adjacent end/start markers as contiguous half-open steps', () => {
+    const recording = createAuthoringFixture();
+    const ends = recording.markers.filter(m => m.kind === 'step-end'); const starts = recording.markers.filter(m => m.kind === 'step-start');
+    for (let i = 1; i < starts.length; i++) ends[i - 1]!.tMs = starts[i]!.tMs;
+    const steps = proposeSteps(recording).steps;
+    for (let i = 1; i < steps.length; i++) expect(steps[i]!.startFrame).toBe(steps[i - 1]!.endFrameExclusive);
+    for (const step of steps) expect(step.endFrameExclusive).toBeGreaterThan(step.startFrame);
+  });
 });

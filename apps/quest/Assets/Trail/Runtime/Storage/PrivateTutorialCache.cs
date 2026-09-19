@@ -95,6 +95,21 @@ namespace Trail.Runtime.Storage
                 return name;
             }
         }
+        /// <summary>The most recently saved private capture, or null when none survives; unreadable files are skipped.</summary>
+        public Recording LoadLatestCapture()
+        {
+            lock (gate)
+            {
+                var files = Directory.GetFiles(root, "capture-*.json");
+                Array.Sort(files, (a, b) => File.GetLastWriteTimeUtc(b).CompareTo(File.GetLastWriteTimeUtc(a)));
+                foreach (var file in files)
+                {
+                    try { return ContractJson.ParseRecording(new UTF8Encoding(false, true).GetString(ReadBounded(file, MaximumRecordingBytes))); }
+                    catch (Exception) { }
+                }
+                return null;
+            }
+        }
         private static PreloadedTutorial Validate(byte[] tutorialJson, byte[] recordingJson, string expectedHash)
         {
             if (tutorialJson == null || recordingJson == null || tutorialJson.Length == 0 || tutorialJson.Length > MaximumTutorialBytes || recordingJson.Length == 0 || recordingJson.Length > MaximumRecordingBytes)

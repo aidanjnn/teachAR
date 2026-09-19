@@ -34,7 +34,8 @@ export function mountWorkbench(root: HTMLElement) {
   const status = (message: string) => { node(root, '#author-status').textContent = message; };
   const authorPanel = node(root, '#authoring-panel'); const spectatorPanel = node(root, '#spectator-panel');
   const busy = async (action: () => Promise<void>) => {
-    const controls = root.querySelectorAll<HTMLButtonElement>('button'); controls.forEach(control => { control.disabled = true; });
+    // Inputs are locked too: edits typed during an in-flight save would be replaced by the older server response.
+    const controls = root.querySelectorAll<HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('button, input, select, textarea'); controls.forEach(control => { control.disabled = true; });
     try { await action(); } catch (error) { status(error instanceof Error ? error.message : 'Operation failed.'); }
     finally { controls.forEach(control => { control.disabled = false; }); updateReadOnly(); }
   };
@@ -112,14 +113,17 @@ export function mountWorkbench(root: HTMLElement) {
     if (original.audio) throw new Error('This motion importer does not upload narration. Use a motion-only export.');
     const { frames, ...metadata } = original;
     const identity = await sha(original);
+    const uploads = await api('/api/recordings/uploads/query') as { id: string; metadata: unknown }[];
     const pending = localStorage.getItem('trail-pending-upload');
+    const saved = pending ? JSON.parse(pending) as { id: string; identity: string } : undefined;
+    // The local pointer is only trusted while the server still lists that upload as unfinished.
+    const resumable = saved && uploads.some(upload => upload.id === saved.id);
+    if (saved && !resumable) localStorage.removeItem('trail-pending-upload');
     let id: string;
-    if (pending) {
-      const saved = JSON.parse(pending) as { id: string; identity: string };
+    if (saved && resumable) {
       if (saved.identity !== identity) throw new Error('Another upload is unfinished. Re-import the same recording to resume.');
       id = saved.id;
     } else {
-      const uploads = await api('/api/recordings/uploads/query') as { id: string; metadata: unknown }[];
       const matching = uploads.find(upload => JSON.stringify(upload.metadata) === JSON.stringify(metadata));
       const created = matching ?? await api('/api/recordings', { metadata }) as { id: string }; id = created.id;
       localStorage.setItem('trail-pending-upload', JSON.stringify({ id, identity }));
@@ -161,7 +165,7 @@ export function mountWorkbench(root: HTMLElement) {
   node<HTMLInputElement>(root, '#recording-file').addEventListener('change', event => { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; void busy(async () => { if (file.size > 64 * 1024 * 1024) throw new Error('Recording exceeds 64 MiB.'); await importRecording(JSON.parse(await file.text())); }); });
   node(root, '#discard-upload').addEventListener('click', () => { void busy(async () => {
     const uploads = await api('/api/recordings/uploads/query') as { id: string }[];
-    if (!uploads.length) { status('No unfinished server upload. Re-import the same recording to finish compilation if needed.'); return; }
+    if (!uploads.length) { localStorage.removeItem('trail-pending-upload'); status('No unfinished server upload. Re-import the same recording to finish compilation if needed.'); return; }
     await api(`/api/recordings/${uploads[0]!.id}/discard`); localStorage.removeItem('trail-pending-upload'); status('Unfinished upload discarded. The local source file is unchanged.');
   }); });
   node(root, '#reload-library').addEventListener('click', () => { void busy(library); });

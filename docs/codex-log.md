@@ -501,3 +501,12 @@ TRAIL-04 review follow-up: capture panel labels now arm after a 0.6 s fresh inde
 TRAIL-05 review follow-up: `Preload` now loads the recording into capture before dispatching `Preloaded`, so capture's synchronous invalidation is absorbed by the Preload phase and the first attempt stays `attempt-1`, revision 1. Merged the capture-panel and contracts fixes from `codex/capture-calibration-replay`. Guide harness passed (.NET; not Unity/headset). The user-confirmed-while-occluded question (reviewer P1 versus the existing `ManualOcclusion` scenario) is left for a product decision.
 
 TRAIL-07 review follow-up: vision re-encodes uploads in their source format (JPEG stays JPEG at quality 92, PNG stays PNG) so a realistic 1280×960 camera JPEG is no longer rejected for exceeding the PNG size ceiling; a noisy-JPEG test covers it. The coordinator's retired live-session memory is a bounded FIFO instead of a hard `busy` after 64 transitions. Non-success provider responses cancel their body. A GPU readback error on the current ticket now releases the copy slot and reports `readback-failed` immediately instead of waiting for the inspection timeout (MonoBehaviour path; unverified in Unity). Merged the guide/capture/contracts fixes from `codex/local-guide-progression`. `pnpm check` and the .NET scene harness passed; Unity CI gates remain open for the platform owner.
+
+## 2026-09-19 — PR #11 babysit: authoring/storage review findings
+
+- Caught `codex/tutorial-authoring-storage` up with `codex/visual-inspection` (append-only log conflict kept both sides).
+- `PrivateTutorialCache.LoadLatestCapture` restores the newest valid `capture-*.json` at startup so a saved demonstration survives an app restart before upload; corrupt files are skipped. Covered by the .NET storage harness (14 checks).
+- `SpectatorRelay` evicts the oldest retired run instead of rejecting all new runs after 128; server test drives 140 runs and still rejects a retired run.
+- Authoring workbench disables all controls during async save/finalize/import, and only trusts `trail-pending-upload` while `/api/recordings/uploads/query` still lists it; stale pointers are cleared.
+- `authoring.ts` keeps adjacent equal-time markers contiguous as half-open ranges and rejects empty steps; motion test added.
+- Automated evidence: `pnpm check` green, storage and relay harnesses green. No Unity Editor/PlayMode, Android IL2CPP, or headset evidence.

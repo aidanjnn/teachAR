@@ -33,7 +33,8 @@ export class SpectatorRelay {
   accept(event: GuideEvent, sessionId: string) {
           if (event.sessionId !== sessionId || this.retired.has(event.runId)) throw new Error('Wrong session or retired run');
           if (event.runId !== this.runId) {
-            if (event.type !== 'snapshot' || this.retired.size >= 128) throw new Error('New run requires full snapshot');
+            if (event.type !== 'snapshot') throw new Error('New run requires full snapshot');
+            if (this.retired.size >= 128) this.retired.delete(this.retired.values().next().value!);
             if (this.runId) this.retired.add(this.runId);
             this.runId = event.runId; this.seq = -1; this.latest = null; this.step = null;
           }

@@ -41,6 +41,10 @@ class Program
             // Already loaded guide retains independent data through disk/network failure.
             Check(loaded.Recording.Frames.Length > 0 && loaded.Tutorial.Status == "ready", "open guide survives storage loss");
             var saved = cache.SaveCapture(loaded.Recording); Check(File.Exists(Path.Combine(root, "trail-cache", saved)), "capture atomically persisted");
+            var restored = new PrivateTutorialCache(root).LoadLatestCapture();
+            Check(restored != null && restored.Id == loaded.Recording.Id && restored.Frames.Length == loaded.Recording.Frames.Length, "saved capture restored after restart");
+            File.WriteAllText(Path.Combine(root, "trail-cache", "capture-corrupt.json"), "{");
+            Check(new PrivateTutorialCache(root).LoadLatestCapture() != null, "corrupt capture skipped in favour of valid one");
             Console.WriteLine("Native storage behavior: " + checks + " checks passed (.NET; no Unity/device claim)");
         }
         finally { if (Directory.Exists(root)) Directory.Delete(root,true); if (Directory.Exists(root + "-full")) Directory.Delete(root + "-full",true); }

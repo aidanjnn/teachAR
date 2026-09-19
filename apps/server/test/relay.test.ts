@@ -27,3 +27,18 @@ it('relays only native learner authority, restores a full snapshot and rejects s
     expect((await app.inject({method:'POST',url:'/api/guide-events',headers:{...headers,authorization:`Bearer ${spectator}`},payload:event})).statusCode).toBe(403);
   } finally { for(const socket of sockets)socket.terminate();await app.close(); }
 });
+it('keeps accepting new runs after the bounded retired-run memory fills', async () => {
+  const app=Fastify(); const auth=createPairingAuthority({allowedOrigins:['http://127.0.0.1:3406'],allowUsbLoopback:true}); const relay=new SpectatorRelay();
+  await relay.register(app,auth); registerPairingRoutes(app,auth); await app.ready();
+  const learner=(await app.inject({method:'POST',url:'/api/pair',headers:{host:'127.0.0.1:3406'},payload:{code:auth.issueCode('learner').code,client:'native'}})).json().token as string;
+  const headers={host:'127.0.0.1:3406',authorization:`Bearer ${learner}`};
+  try {
+    for (let i=0;i<140;i++) {
+      const runId=`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`;
+      const response=await app.inject({method:'POST',url:'/api/guide-events',headers,payload:{...fixture,sessionId:auth.sessionId,seq:0,runId}});
+      expect(response.statusCode,`run ${i}: ${response.body}`).toBe(204);
+    }
+    const retired=await app.inject({method:'POST',url:'/api/guide-events',headers,payload:{...fixture,sessionId:auth.sessionId,seq:1,runId:`00000000-0000-4000-8000-${String(138).padStart(12,'0')}`}});
+    expect(retired.statusCode).toBe(409);
+  } finally { await app.close(); }
+});
