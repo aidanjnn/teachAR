@@ -91,3 +91,33 @@ describe('scoped demo pairing', () => {
     } finally { await app.close(); await rm(dir, { recursive: true, force: true }); }
   });
 });
+
+it('applies the same gate to real WebSocket upgrades for native and browser clients', async () => {
+  const { default: websocket } = await import('@fastify/websocket');
+  const { default: WebSocket } = await import('ws');
+  const auth = createPairingAuthority({ allowedOrigins: ['http://localhost:3401'], allowUsbLoopback: true });
+  const app = Fastify();
+  await app.register(websocket);
+  registerPairingRoutes(app, auth);
+  app.get('/ws', { websocket: true, preValidation: auth.require({ roles: ['learner'] }) }, socket => { socket.send('authorized'); });
+  const address = await app.listen({ host: '127.0.0.1', port: 0 });
+  async function connect(headers: Record<string, string>) {
+    return new Promise<number>((resolve, reject) => {
+      const socket = new WebSocket(address.replace('http:', 'ws:') + '/ws', { headers });
+      socket.on('message', () => { socket.close(); resolve(101); });
+      socket.on('unexpected-response', (_request, response) => { response.resume(); socket.terminate(); resolve(response.statusCode!); });
+      socket.on('error', error => { if (!error.message.includes('closed before')) reject(error); });
+    });
+  }
+  try {
+    const pair = await app.inject({ method: 'POST', url: '/api/pair', payload: { code: auth.issueCode('learner').code, client: 'native' } });
+    const headers = { authorization: `Bearer ${pair.json().token}` };
+    expect(await connect(headers)).toBe(101);
+    expect(await connect({})).toBe(401);
+    expect(await connect({ ...headers, origin: 'http://evil.example' })).toBe(403);
+    const browser = await app.inject({ method: 'POST', url: '/api/pair', headers: { origin: 'http://localhost:3401' }, payload: { code: auth.issueCode('learner').code, client: 'browser' } });
+    const cookie = String(browser.headers['set-cookie']).split(';')[0]!;
+    expect(await connect({ cookie, origin: 'http://localhost:3401' })).toBe(101);
+    expect(await connect({ cookie })).toBe(401);
+  } finally { await app.close(); }
+});

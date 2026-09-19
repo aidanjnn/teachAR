@@ -2,7 +2,16 @@
   "name": "Trail.Editor",
   "rootNamespace": "Trail.Editor",
   "references": [
-    "Trail.Runtime"
+    "Trail.Runtime",
+    "Oculus.VR",
+    "Oculus.VR.Editor",
+    "Unity.XR.Management",
+    "Unity.XR.Management.Editor",
+    "Unity.XR.OpenXR",
+    "Unity.XR.OpenXR.Editor",
+    "Unity.XR.Hands",
+    "Unity.RenderPipelines.Core.Runtime",
+    "Unity.RenderPipelines.Universal.Runtime"
   ],
   "includePlatforms": [
     "Editor"
