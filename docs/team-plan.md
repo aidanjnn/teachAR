@@ -73,7 +73,7 @@ Build in this order:
 
 Build in this order:
 
-1. Validate `gpt-live-1` account/protocol, then prove native Android mic → WebRTC → Live → headset speaker. Test echo, interruption, permissions, data channel, ICE and cleanup with XR active. Browser/Editor success is a diagnostic only.
+1. Build the HTTP voice loop first — push-to-talk MediaRecorder clip → `whisper-1` → Responses → `audio/speech` → playback — as the guaranteed-baseline coach; it is testable from desktop with no headset and no WebRTC. Then validate `gpt-live-1` account/protocol and prove native Android mic → WebRTC → Live → headset speaker. Test echo, interruption, permissions, data channel, ICE and cleanup with XR active. Browser/Editor success is a diagnostic only.
 2. Freeze native audio interface with 1: one microphone owner, bounded sample buffers, common epoch, mute/end and playback generation control. Coordinate UPM dependency/settings with 4.
 3. Produce complete WAV narration with sample-clock mapping; test start/end drift before transcription/labels.
 4. Implement server-owned session creation/sideband/delegation, exact current-step context, stale audio suppression and unavailable state.
