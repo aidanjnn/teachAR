@@ -14,7 +14,7 @@ const EnvironmentSchema = z.object({
   BUILD_ID: z.string().min(1).max(128).default('development-uncommitted'),
   OPENAI_API_KEY: z.string().default(''),
   OPENAI_TRANSCRIBE_MODEL: ModelName.default('whisper-1'),
-  OPENAI_TEXT_MODEL: ModelName.default('gpt-4.1-mini'),
+  OPENAI_TEXT_MODEL: ModelName.default('gpt-4.1-mini-2025-04-14'),
   OPENAI_LIVE_MODEL: ModelName.default('gpt-live-1'),
   OPENAI_LIVE_BACKEND_MODEL: ModelName.default('gpt-5.6-luna'),
   OPENAI_LIVE_VOICE: z.string().min(1).max(64).default('marin'),

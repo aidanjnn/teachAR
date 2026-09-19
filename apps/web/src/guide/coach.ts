@@ -147,7 +147,7 @@ export function createCoach(options: CoachOptions): CoachApi {
             }
           },
           exchangeSdp: async (offer, signal) => {
-            const response = await fetchImpl('/api/coach/session', {
+            const response = await fetchImpl('/api/live/sessions', {
               method: 'POST', headers: { 'content-type': 'application/json' }, signal,
               body: JSON.stringify({ schemaVersion: 1, sdp: offer, context }),
             });

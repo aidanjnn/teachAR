@@ -100,18 +100,18 @@ describe('POST /api/coach', () => {
   });
 });
 
-describe('POST /api/coach/session', () => {
+describe('POST /api/live/sessions', () => {
   it('is unavailable in mock mode and returns the SDP answer from a live provider', async () => {
     const app = await mockApp();
     try {
-      const response = await app.inject({ method: 'POST', url: '/api/coach/session', headers: json, payload: { schemaVersion: 1, sdp: 'v=0 offer', context } });
+      const response = await app.inject({ method: 'POST', url: '/api/live/sessions', headers: json, payload: { schemaVersion: 1, sdp: 'v=0 offer', context } });
       expect(response.statusCode).toBe(503);
       expect(response.json().error).toBe('live_unavailable');
-      expect((await app.inject({ method: 'POST', url: '/api/coach/session', headers: json, payload: { schemaVersion: 1, context } })).statusCode).toBe(400);
+      expect((await app.inject({ method: 'POST', url: '/api/live/sessions', headers: json, payload: { schemaVersion: 1, context } })).statusCode).toBe(400);
     } finally { await app.close(); }
     const live = await createApp(readConfig({ DATA_DIR: await temp(), AI_PROVIDER: 'openai', OPENAI_API_KEY: 'sk-secret-value' }), { provider: stub({}) });
     try {
-      const response = await live.inject({ method: 'POST', url: '/api/coach/session', headers: json, payload: { schemaVersion: 1, sdp: 'v=0 offer', context } });
+      const response = await live.inject({ method: 'POST', url: '/api/live/sessions', headers: json, payload: { schemaVersion: 1, sdp: 'v=0 offer', context } });
       expect(response.statusCode).toBe(201);
       expect(response.json()).toEqual({ schemaVersion: 1, sessionId: 'live_1', sdp: 'v=0 answer', liveModel: 'gpt-live-1' });
       const health = await live.inject('/api/health');

@@ -190,11 +190,14 @@ Mock mode works with no credentials: transcription returns the synthetic fixture
 labels use the deterministic fallback, and the coach answers with the stored step
 text. To use OpenAI, set `AI_PROVIDER=openai` and `OPENAI_API_KEY=sk-...` in the
 root `.env`, restart `pnpm dev`, and open the Voice Lab. Keys never leave the
-server: the browser exchanges an SDP offer through `POST /api/coach/session`, and the
+server: the browser exchanges an SDP offer through `POST /api/live/sessions`, and the
 server creates the GPT-Live session. Live mode is verified manually; CI covers mock
 and text paths. Answers are grounded in the tutorial text and cannot advance a step.
 There is no pairing or per-session cap yet, and each live session bills at least
-15 seconds, so keep the server on loopback until pairing lands.
+15 seconds, so keep the server on loopback until pairing lands. The browser coach,
+recorder and Voice Lab are desktop diagnostics that validate the server protocol;
+the planned Unity client (TRAIL-16) reuses the same routes through a native WebRTC
+adapter, and native audio is verified only on the APK.
 
 ### Quest connection
 

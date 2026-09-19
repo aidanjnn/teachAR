@@ -4,6 +4,12 @@ Date: 2026-09-19. Branch: `codex/voice-ai`. Plan tickets: TRAIL-09 (narration
 capture) and TRAIL-10 (semantic labels, contextual voice help), software portions.
 Owner: voice/AI. Coordinated touch points with integration are listed in section 9.
 
+**Status note after the Unity + Meta XR decision (same day):** the contracts and server
+pieces below are unchanged targets. The browser coach, narration recorder and Voice Lab
+are desktop diagnostics that validate the server protocol with a real GPT-Live session;
+the Unity client (TRAIL-16) reuses `POST /api/live/sessions` through a native WebRTC
+adapter, and headset audio is verified only on the APK.
+
 ## 1. Purpose
 
 Give Trail its words. Three capabilities, each usable without the headset:
@@ -38,7 +44,7 @@ COMPILE browser/server ── POST /api/voice/transcriptions (audio bytes) ─�
                                                              (validated; fallback labels on any failure)
 
 GUIDE   browser guide/coach.ts
-          live path:  POST /api/coach/session {sdp, context} ──► server client.live.create(gpt-live-1) ──► SDP answer
+          live path:  POST /api/live/sessions {sdp, context} ──► server client.live.create(gpt-live-1) ──► SDP answer
                       WebRTC audio both ways; data channel allow-listed to mute/unmute/thinking.append/close
           text path:  POST /api/coach {context, question} ──► gpt-4.1-mini or mock ──► CoachAnswer (5 s deadline)
           local path: no server → answer = stored step instruction, source "fallback"
@@ -46,7 +52,7 @@ GUIDE   browser guide/coach.ts
 
 Provider selection is server-side via `AI_PROVIDER=mock|openai`. The browser never
 sees a provider key. The Live session is created by the server; the browser only
-exchanges an SDP offer for an answer through our own `/api/coach/session`.
+exchanges an SDP offer for an answer through our own `/api/live/sessions`.
 
 ## 4. Contracts (`packages/contracts/src/voice.ts`, re-exported from index)
 
@@ -145,7 +151,7 @@ identify both prompts.
 | `POST /api/voice/transcriptions` | raw audio, `Content-Type` in the Recording MIME enum, header `X-Audio-Start-Offset-Ms` | 20 MiB, 60 s | `TranscriptResult` or 413/415/503 `VoiceUnavailable` |
 | `POST /api/voice/labels` | `LabelRequest` JSON | 1 MiB, 30 s | `LabelResult` (fallback on failure, never 500 for provider errors) |
 | `POST /api/coach` | `CoachRequest` JSON | 64 KiB, 6 s | `CoachAnswer` |
-| `POST /api/coach/session` | `CoachSessionRequest` JSON | 128 KiB, 20 s | `CoachSessionResponse` or 503 `VoiceUnavailable` |
+| `POST /api/live/sessions` | `CoachSessionRequest` JSON | 128 KiB, 20 s | `CoachSessionResponse` or 503 `VoiceUnavailable` |
 
 Routes register through one Fastify plugin (`registerVoiceRoutes(app, provider)`)
 called from `createApp`. Provider construction lives in `ai/index.ts`. Responses
@@ -156,7 +162,7 @@ server logs event names and IDs only, never transcript text or audio.
 
 `AI_PROVIDER` `mock | openai` (default mock). When `openai`: `OPENAI_API_KEY`
 required (non-empty), `OPENAI_TRANSCRIBE_MODEL` (default `whisper-1`),
-`OPENAI_TEXT_MODEL` (default `gpt-4.1-mini`), `OPENAI_LIVE_MODEL` (default
+`OPENAI_TEXT_MODEL` (default `gpt-4.1-mini-2025-04-14`), `OPENAI_LIVE_MODEL` (default
 `gpt-live-1`), `OPENAI_LIVE_BACKEND_MODEL` (default `gpt-5.6-luna`),
 `OPENAI_LIVE_VOICE` (default `marin`). Validation errors report field names only.
 `.env.example` gains the new keys with comments.

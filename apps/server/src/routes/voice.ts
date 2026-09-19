@@ -69,7 +69,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
       return reply.header('Cache-Control', 'no-store').send(CoachAnswerSchema.parse(answer));
     });
 
-    voice.post('/api/coach/session', { bodyLimit: 128 * 1024 }, async (request, reply) => {
+    voice.post('/api/live/sessions', { bodyLimit: 128 * 1024 }, async (request, reply) => {
       const parsed = CoachSessionRequestSchema.safeParse(request.body);
       if (!parsed.success) return unavailable(reply, 400, { error: 'invalid_request', message: 'Session request failed validation.' });
       const result = await provider.createLiveSession(parsed.data, AbortSignal.timeout(SESSION_TIMEOUT_MS));
