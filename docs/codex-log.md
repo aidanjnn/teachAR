@@ -497,3 +497,16 @@ static scaffold validation passed 97 GUIDs. Reused passing hosted workspace,
 fixture, browser and workflow checks for unchanged inputs; final-head CI follows
 the push. Archived only this run's generated Unity settings/assets. Combined
 Android build remains with integration; no headset or provider evidence is claimed.
+
+PR10 repair verification: production source `f727100` passed full workspace
+checks (191 tests), synthetic fixtures, three Chromium scenarios, the Release
+.NET scene harness, actual Unity6000.3.24f1 EditMode17/17 and PlayMode5/5.
+Actual Android ARM64/IL2CPP build succeeded, producing a69,265,189-byte APK
+with SHA256 `d948fd9496be4a097561c47783d27fd518bb8bc24a830682a9b4826fd2c1d3db`.
+Build report and source hashes are retained in ignored artifact directory
+`build-85dd9b3e-b71f-4ffb-aeda-3141cea27e6f`. After normal base merge `c1cfc40`
+added two test assertions/docs only, actual PlayMode reran and passed5/5
+(`test-play-c37ea019-535d-414c-a792-76bfd08f0810`); player inputs are unchanged.
+Hosted executable gates passed at `c1cfc40`. Both sides of the shared log were
+preserved. Detailed commands and local evidence paths are in
+`docs/visual-inspection.md`; no hardware/provider success is claimed.

@@ -88,3 +88,39 @@ update before the feature's LateUpdate command buffer. The command buffer copies
 only that source texture to owned storage and reads it asynchronously. Check the
 sensor timestamp against resulting pixels on the actual headset; .NET tests prove
 request/sequence/lifecycle policy, not GPU or sensor behavior.
+
+## PR10 review validation on 2026-09-19
+
+Production source `f727100` replaces the Bloom filter with the server lease
+handshake. Base merge `c1cfc40` changes only documentation and two PlayMode
+assertions; player inputs are unchanged. Actual checks performed locally:
+
+| Gate | Result |
+| --- | --- |
+| `pnpm check` | Passed: 191 tests, typechecks, builds and static native checks |
+| `pnpm validate:fixtures` | Passed: synthetic 61-frame recording |
+| `E2E_PORT=3106 pnpm test:e2e --workers=1` | Passed: 3/3 Chromium scenarios |
+| Release .NET SceneHarness | Passed: freshness and strict native transport, including leases |
+| `pnpm quest:test` | Passed: 17/17 EditMode in Unity 6000.3.24f1 |
+| `pnpm quest:test:play` after base merge | Passed: 5/5 PlayMode, including the new assertions |
+| `pnpm quest:build` | Succeeded: Android ARM64, IL2CPP, non-development APK |
+
+Ignored local artifacts under `artifacts/quest/`:
+
+- EditMode: `test-421cc2ea-514e-4d94-b950-62ecea3b69d1/results.xml`.
+- Final PlayMode: `test-play-c37ea019-535d-414c-a792-76bfd08f0810/results.xml`.
+- Player: `build-85dd9b3e-b71f-4ffb-aeda-3141cea27e6f/`, containing
+  `build.json`, `unity.log`, `source-hashes.json` and `Trail.apk`.
+- APK size: 69,265,189 bytes; SHA-256:
+  `d948fd9496be4a097561c47783d27fd518bb8bc24a830682a9b4826fd2c1d3db`.
+  ZIP inspection confirms only `arm64-v8a` native libraries and `libil2cpp.so`.
+- Native input hash manifest SHA-256:
+  `da867c376886043661c14cc0eaf6a1d56a2bff4660c5f57ed46ebe1120ccb7ec`.
+  The only later native-tree difference was the two assertions in
+  `Tests/GuideRuntime/GuideLifecycleTests.cs`, covered by the final PlayMode run.
+
+These gates were invoked with the actual editor and Android tools. The hosted
+scene workflow continues to identify itself as a portable C# check, not Unity
+CI. Editor-generated configuration and binaries remain outside Git. This is
+software/build evidence; no headset, real camera timing, live provider or
+physical transfer result follows from it.
