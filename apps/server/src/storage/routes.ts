@@ -11,6 +11,12 @@ const ChunkId = Id.extend({ chunk: z.coerce.number().int().min(0).max(63) });
 export async function registerStorageRoutes(app: FastifyInstance, repository: TutorialRepository, auth: PairingAuthority) {
   const references = new ReferenceStore(repository);
   await app.register(async scope => {
+    const admitted = new WeakSet<object>(); let active = 0;
+    const release = (request: object) => { if (admitted.delete(request)) active--; };
+    scope.addHook('onRequest', async request => { if (active >= 8) throw new StoreError(429, 'Authoring request limit reached'); admitted.add(request); active++; });
+    scope.addHook('onResponse', async request => release(request));
+    scope.addHook('onRequestAbort', async request => release(request));
+    scope.addHook('onError', async request => release(request));
     scope.addHook('onSend', async (_request, reply) => { reply.header('Cache-Control', 'no-store'); });
     scope.setErrorHandler((error, _request, reply) => {
       if (error instanceof z.ZodError) { void reply.code(400).send({ error: 'Invalid authoring input', issues: error.issues.map(issue => ({ path: issue.path, message: issue.message })) }); return; }

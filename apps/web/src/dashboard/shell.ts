@@ -30,6 +30,6 @@ export function mountShell(root: HTMLElement) {
         </aside>
       </div>
       <section class="diagnostics" aria-label="Runtime diagnostics"><div><span>Local server</span><strong id="health" role="status">Checking…</strong></div><div><span>Headset app</span><strong>Unity · device validation pending</strong></div><div><span>Vision backend</span><strong id="vision" role="status">Checking…</strong></div><button id="refresh-health" type="button">Recheck server</button></section>
-      <footer>Record once. Learn at your own pace.<span>Scaffold preview · Headset validation pending</span></footer>
+      <footer>Record once. Learn at your own pace.<span>Workspace preview · Headset validation pending</span></footer>
     </main>`;
 }

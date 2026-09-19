@@ -30,7 +30,7 @@ export function mountWorkbench(root: HTMLElement) {
     </section>
     <section id="spectator-panel" hidden aria-label="Read-only spectator"><div class="author-heading"><div><h1>At the learner’s pace.</h1><p>A schematic view of headset progress. Movement matching does not verify assembly.</p></div><span id="spectator-connection" class="source-label">Disconnected</span></div><div class="spectator-stage"><span id="spectator-phase">Waiting for a learner</span><h2 id="spectator-step">No active step</h2><progress id="spectator-progress" max="1" value="0"></progress><p id="spectator-evidence">Only the headset can advance the guide.</p><div id="spectator-tracking"></div></div><button id="spectator-reconnect">Reconnect spectator</button></section>`;
   let tutorial: Tutorial | undefined; let recording: Recording | undefined; let draft: TutorialDraftEdit | undefined; let selected = 0; let dirty = false; let references: StepSceneReference[] = [];
-  let viewer: ReturnType<typeof createViewer> | undefined; let socket: WebSocket | undefined; let reconnect: ReturnType<typeof setTimeout> | undefined; let spectator: SpectatorState | undefined; let spectatorActive = false;
+  let viewer: ReturnType<typeof createViewer> | undefined; let socket: WebSocket | undefined; let reconnect: ReturnType<typeof setTimeout> | undefined; let spectator: SpectatorState | undefined; let spectatorActive = false; let spectatorReceivedAt = 0;
   const status = (message: string) => { node(root, '#author-status').textContent = message; };
   const authorPanel = node(root, '#authoring-panel'); const spectatorPanel = node(root, '#spectator-panel');
   const busy = async (action: () => Promise<void>) => {
@@ -70,6 +70,16 @@ export function mountWorkbench(root: HTMLElement) {
     node(root, '#reference-state').textContent = approved ? approved.visibleOutcome : 'No approved view for this step. Visual inspection is unavailable until a view is reviewed.';
     node<HTMLButtonElement>(root, '#review-reference').disabled = tutorial.status === 'ready' || dirty;
     node<HTMLImageElement>(root, '#reference-preview').hidden = true;
+    node<HTMLInputElement>(root, '#reference-outcome').value = approved?.visibleOutcome ?? '';
+    if (approved) {
+      const expectedId = tutorial.id; const expectedRevision = tutorial.revision; const expectedStep = step.id;
+      node<HTMLSelectElement>(root, '#reference-source').value = approved.source;
+      void api(`/api/reference-images/${approved.assetId}/query`).then(value => {
+        if (tutorial?.id !== expectedId || tutorial.revision !== expectedRevision || draft?.steps[selected]?.id !== expectedStep) return;
+        const asset = value as { image: { mimeType: string; dataBase64: string } };
+        const preview = node<HTMLImageElement>(root, '#reference-preview'); preview.src = `data:${asset.image.mimeType};base64,${asset.image.dataBase64}`; preview.hidden = false;
+      }).catch(() => { if (draft?.steps[selected]?.id === expectedStep) node(root, '#reference-state').textContent = 'Approved image unavailable. Reload before relying on visual guidance.'; });
+    }
     showFrame(step.startFrame); updateReadOnly();
   }
   function captureFields() {
@@ -87,6 +97,7 @@ export function mountWorkbench(root: HTMLElement) {
     if (tutorial) select.value = tutorial.id;
   }
   async function load(id: string) {
+    if (dirty) throw new Error('Save the current draft before switching guides.');
     tutorial = TutorialSchema.parse(await api(`/api/tutorials/${encodeURIComponent(id)}/query`));
     const result = await api(`/api/recordings/${encodeURIComponent(tutorial.recordingId)}/query`) as { recording: unknown };
     recording = RecordingSchema.parse(result.recording); references = await api(`/api/tutorials/${tutorial.id}/references/query`) as StepSceneReference[]; draft = editOf(tutorial); selected = 0; dirty = false;
@@ -96,6 +107,7 @@ export function mountWorkbench(root: HTMLElement) {
     renderSteps(); status(tutorial.status === 'ready' ? 'Finalized guide loaded. This version is immutable.' : 'Review each boundary, active hand and instruction, then save the draft.');
   }
   async function importRecording(input: unknown) {
+    if (dirty) throw new Error('Save the current draft before importing another recording.');
     const original = RecordingSchema.parse(input);
     if (original.audio) throw new Error('This motion importer does not upload narration. Use a motion-only export.');
     const { frames, ...metadata } = original;
@@ -182,7 +194,7 @@ export function mountWorkbench(root: HTMLElement) {
   node(root, '#show-checkpoint').addEventListener('click', () => { if (draft) showFrame(draft.steps[selected]!.checkpointFrame); });
   node<HTMLInputElement>(root, '#review-frame').addEventListener('input', event => showFrame(Number((event.target as HTMLInputElement).value)));
   function renderSpectator() {
-    const fresh = !!spectator?.connected && Date.now() - spectator.updatedAt < 3000 && socket?.readyState === WebSocket.OPEN;
+    const fresh = !!spectator?.connected && performance.now() - spectatorReceivedAt + spectator.ageMs < 3000 && socket?.readyState === WebSocket.OPEN;
     node(root, '#spectator-connection').textContent = fresh ? 'Live headset state' : 'Stale or disconnected';
     const snapshot = spectator?.snapshot;
     if (snapshot && 'state' in snapshot) {
@@ -190,13 +202,17 @@ export function mountWorkbench(root: HTMLElement) {
       node<HTMLProgressElement>(root, '#spectator-progress').value = snapshot.state.pathProgress;
       node(root, '#spectator-tracking').textContent = `Left hand ${snapshot.state.tracking.left}. Right hand ${snapshot.state.tracking.right}. Calibration ${snapshot.state.calibrationValid ? 'valid' : 'required'}.`;
       node(root, '#spectator-evidence').textContent = spectator?.step ? `${spectator.step.instruction} (${spectator.step.source}; ${spectator.step.completionMode})` : snapshot.state.phase === 'complete' ? 'Movement checkpoint reached. Physical outcome remains learner-confirmed.' : 'Only the headset can advance the guide.';
+    } else if (snapshot?.type === 'guide-ended') {
+      node(root, '#spectator-phase').textContent = snapshot.reason === 'completed' ? 'Run ended' : 'Run cancelled';
+      node(root, '#spectator-step').textContent = 'No active step';
+      node(root, '#spectator-evidence').textContent = 'The headset ended this run. Physical outcome is not verified by this display.';
     }
   }
   function connectSpectator() {
     clearTimeout(reconnect); if (socket) { socket.onclose = null; socket.close(); }
     socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/ws`);
     socket.onopen = () => socket?.send(JSON.stringify({ type: 'snapshot-request' }));
-    socket.onmessage = event => { try { const parsed = SpectatorStateSchema.safeParse(JSON.parse(String(event.data))); if (parsed.success) { const incoming = parsed.data; const before = spectator?.snapshot; if (incoming.snapshot && before && incoming.snapshot.runId === before.runId && incoming.snapshot.seq < before.seq) return; spectator = incoming; renderSpectator(); } } catch { socket?.close(); } };
+    socket.onmessage = event => { try { const parsed = SpectatorStateSchema.safeParse(JSON.parse(String(event.data))); if (parsed.success) { const incoming = parsed.data; const before = spectator?.snapshot; if (incoming.snapshot && before && incoming.snapshot.runId === before.runId && incoming.snapshot.seq < before.seq) return; spectator = incoming; spectatorReceivedAt = performance.now(); renderSpectator(); } } catch { socket?.close(); } };
     socket.onclose = () => { renderSpectator(); if (spectatorActive) reconnect = setTimeout(connectSpectator, 3000); };
   }
   node(root, '#spectator-reconnect').addEventListener('click', connectSpectator);

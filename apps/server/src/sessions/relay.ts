@@ -23,7 +23,7 @@ export class SpectatorRelay {
   private seq = -1;
   private lastBroadcast = 0;
   constructor(private readonly now: () => number = Date.now) {}
-  snapshot(): SpectatorState { return { type: 'spectator-state', connected: this.publisher !== null || (this.httpPrincipal !== null && this.now() - this.updatedAt < 3000), updatedAt: this.updatedAt, snapshot: this.latest, step: this.step }; }
+  snapshot(): SpectatorState { return { type: 'spectator-state', connected: this.publisher !== null || (this.httpPrincipal !== null && this.now() - this.updatedAt < 3000), updatedAt: this.updatedAt, ageMs: Math.max(0, this.now() - this.updatedAt), snapshot: this.latest, step: this.step }; }
   private send(socket: WebSocket) {
     if (socket.readyState !== socket.OPEN) return;
     if (socket.bufferedAmount > 64 * 1024) { socket.close(1013, 'Slow reader; reconnect for snapshot'); return; }

@@ -66,5 +66,10 @@ export class ReferenceStore {
     }
     return { references: result, approvedStep: { title: step.title, instruction: step.instruction, expectedVisibleOutcome: selected.map(reference => reference.visibleOutcome).join(' ') } };
   }
-  async image(id: string) { const asset = await this.repository.files.read<Asset>('assets', id); return asset; }
+  async image(id: string) {
+    const asset = await this.repository.files.read<Asset>('assets', id);
+    const { id: _id, ...value } = asset; const parsed = ReferenceImageUploadSchema.parse(value);
+    if (digest(Buffer.from(parsed.image.dataBase64, 'base64')) !== parsed.image.sha256) throw new StoreError(422, 'Reference integrity check failed');
+    return { ...parsed, id };
+  }
 }
