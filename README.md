@@ -249,15 +249,32 @@ readiness.
 ### Voice and AI diagnostics
 
 The browser Voice Lab at `http://127.0.0.1:5173/voice-lab.html` provides recorder,
-transcription, label and coach diagnostics. Mock mode is deterministic and needs
-no credentials. For the implemented OpenAI adapter, configure `AI_PROVIDER=openai`
-and your own `OPENAI_API_KEY` in the ignored root `.env`, then restart `pnpm dev`.
-The server handles the credentials and exchanges the browser SDP offer through
-`POST /api/live/sessions`; live calls use your provider account and require manual
-verification. Keep these diagnostic routes on loopback until paired application
-composition and per-session limits are integrated. The Unity WebRTC/audio adapter
-and on-headset voice validation remain separate work. See the
-[provider implementation notes](apps/server/src/ai/README.md).
+transcription, label and coach diagnostics.
+
+Mock mode works with no credentials: transcription returns the synthetic fixture,
+labels use the deterministic fallback, and the coach answers with the stored step
+text. To use OpenAI, set `AI_PROVIDER=openai` and `OPENAI_API_KEY=sk-...` in the
+root `.env`, restart `pnpm dev`, and open the Voice Lab. Keys never leave the
+server: the browser exchanges an SDP offer through `POST /api/live/sessions`, and the
+server creates the GPT-Live session. Live mode is verified manually; CI covers mock
+and text paths. Answers are grounded in the tutorial text and cannot advance a step.
+When pairing is configured (`PAIRING_ORIGINS` or `ALLOW_USB_LOOPBACK`), narration
+and label routes require an author token, the coach routes require a learner or
+author token on the current session, and the coach speaks only from the stored
+tutorial, rejecting unknown, stale, or draft tutorials for learners. Step changes
+reach the live model through the server's own channel: the client posts a step ID
+to `POST /api/live/sessions/:id/step` and the browser data channel can no longer
+append text. The Voice Lab then shows a pairing form: paste the author code from
+`data/<dir>/pairing.json` (or one minted in the authoring workbench) to record and
+label; its coach falls back to local text because the lab's steps are not a saved
+guide. Plain `pnpm dev` configures no pairing, stays open, trusts the client
+context, and must stay on loopback.
+There is no per-session cap yet, and each live session bills at least 15 seconds. The browser coach,
+recorder and Voice Lab are desktop diagnostics that validate the server protocol;
+the planned Unity client (TRAIL-16) reuses the same routes through a native WebRTC
+adapter, and native audio is verified only on the APK.
+
+See the [provider implementation notes](apps/server/src/ai/README.md).
 
 ## Prepare the Quest app
 

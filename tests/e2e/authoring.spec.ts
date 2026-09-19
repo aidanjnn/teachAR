@@ -1,12 +1,12 @@
-import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
+import { issueBrowserCode } from './pairing.js';
 
 test('browser pairing, import, four-step review, immutable finalize and reload', async ({ page, request, browser }) => {
   test.setTimeout(90_000);
   const errors: string[]=[]; page.on('pageerror',error=>errors.push(error.message));
-  const port=process.env.E2E_PORT ?? '3101'; const bootstrap=JSON.parse(await readFile(`data/e2e-${port}/pairing.json`,'utf8')) as {code:string};
+  const code=await issueBrowserCode('author');
   await page.goto('/'); await page.getByRole('button',{name:'Author a guide',exact:true}).click();
-  await page.getByLabel('Pairing code').fill(bootstrap.code); await page.getByRole('button',{name:'Connect workspace'}).click();
+  await page.getByLabel('Pairing code').fill(code); await page.getByRole('button',{name:'Connect workspace'}).click();
   await expect(page.locator('#pair-state')).toHaveText('Connected as author.');
   await page.getByRole('button',{name:'Import four-step sample'}).click();
   await expect(page.locator('#step-strip li')).toHaveCount(4,{timeout:30_000});
@@ -35,12 +35,12 @@ test('browser pairing, import, four-step review, immutable finalize and reload',
   await expect(page.locator('#step-strip li')).toHaveCount(4);
   await page.getByRole('button',{name:'Create pairing code',exact:true}).click();
   await expect(page.locator('#invite-code')).toHaveText(/^[0-9]{8}$/);
-  const code = (await page.locator('#invite-code').textContent())!;
-  const paired = await request.post('/api/pair', { data:{ code,client:'native' } }); const learner = await paired.json() as {token:string;sessionId:string};
+  const inviteCode = (await page.locator('#invite-code').textContent())!;
+  const paired = await request.post('/api/pair', { data:{ code:inviteCode,client:'native' } }); const learner = await paired.json() as {token:string;sessionId:string};
   await page.getByRole('combobox',{name:'New device',exact:true}).selectOption('spectator');
   await page.getByRole('combobox',{name:'Client',exact:true}).selectOption('browser');
   await page.getByRole('button',{name:'Create pairing code',exact:true}).click();
-  await expect(page.locator('#invite-code')).not.toHaveText(code);
+  await expect(page.locator('#invite-code')).not.toHaveText(inviteCode);
   const spectatorCode=(await page.locator('#invite-code').textContent())!;
   const spectatorContext=await browser.newContext();
   const spectator=await spectatorContext.newPage();

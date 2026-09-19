@@ -1,14 +1,24 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+import { issueBrowserCode } from './pairing.js';
 
 // Chromium's fake capture device misbehaves when several contexts call getUserMedia at once,
 // so this file runs its tests one after another in a single worker.
 test.describe.configure({ mode: 'default' });
+
+/** Narration and label routes need an author; the e2e server runs with pairing on, so pair through the page's own form. */
+async function pairAsAuthor(page: Page) {
+  await expect(page.locator('#pair-state')).toContainText('Pair this browser');
+  await page.getByLabel('Pairing code').fill(await issueBrowserCode('author'));
+  await page.getByRole('button', { name: 'Pair browser' }).click();
+  await expect(page.locator('#pair-state')).toHaveText('Connected as author.');
+}
 
 test('records narration with the fake microphone and transcribes it in mock mode', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/voice-lab.html');
   await expect(page.locator('#provider')).toHaveText('AI provider: mock');
+  await pairAsAuthor(page);
   await page.getByRole('button', { name: 'Record' }).click();
   await expect(page.locator('#narration-status')).toHaveText('Recording…');
   await page.waitForTimeout(1200);
@@ -25,6 +35,7 @@ test('records narration with the fake microphone and transcribes it in mock mode
 
 test('labels simulated segments with fallback provenance and coaches in text mode', async ({ page }) => {
   await page.goto('/voice-lab.html');
+  await pairAsAuthor(page);
   await page.getByRole('button', { name: 'Use fixture transcript' }).click();
   await page.locator('#segment-count').selectOption('3');
   await page.getByRole('button', { name: 'Generate labels' }).click();
@@ -32,6 +43,7 @@ test('labels simulated segments with fallback provenance and coaches in text mod
   await expect(page.locator('#labels-provenance')).toHaveText('fallback');
   await page.getByRole('button', { name: 'Connect coach' }).click();
   await expect(page.locator('#coach-mode')).toHaveText('text');
+  await expect(page.locator('#coach-note')).toContainText('not a saved guide');
   await page.locator('#question').fill('What now?');
   await page.getByRole('button', { name: 'Ask by text' }).click();
   await expect(page.locator('#coach-answer')).toContainText('Step 1.');
@@ -51,6 +63,7 @@ test('labels simulated segments with fallback provenance and coaches in text mod
 test('coach answers locally when the server cannot be reached and fits a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/voice-lab.html');
+  await expect(page.locator('#pair-state')).toContainText('Pair this browser');
   await page.getByRole('button', { name: 'Connect coach' }).click();
   await expect(page.locator('#coach-mode')).toHaveText('text');
   await page.route('**/api/coach', route => route.abort());

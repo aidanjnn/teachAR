@@ -24,8 +24,14 @@ function fakeTransport(behaviour: { fail?: boolean } = {}) {
   };
   return { transport, sent, emit: (event: LiveServerEvent) => handlers?.onEvent(event), closeFromServer: () => handlers?.onClosed() };
 }
-function okFetch(body: unknown, status = 200): typeof fetch {
-  return async () => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+type RecordingFetch = typeof fetch & { calls: { url: string; init: RequestInit | undefined }[] };
+function okFetch(body: unknown, status = 200): RecordingFetch {
+  const calls: { url: string; init: RequestInit | undefined }[] = [];
+  const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push({ url: String(input), init });
+    return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
+  return Object.assign(impl, { calls });
 }
 const sessionOk = { schemaVersion: 1, sessionId: 'live_1', sdp: 'v=0 answer', liveModel: 'gpt-live-1' };
 const started = { type: 'session.started', event_id: 'e1', session: { id: 'live_1', model: 'gpt-live-1' } } as unknown as LiveServerEvent;
@@ -37,9 +43,10 @@ beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { vi.useRealTimers(); });
 
 describe('coach live path', () => {
-  it('connects, waits for session.started, mutes, toggles listening, and pushes step context', async () => {
+  it('connects, waits for session.started, mutes, toggles listening, and reports step changes to the server', async () => {
     const fake = fakeTransport();
-    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake.transport, listenTimeoutMs: 1_000 });
+    const fetchImpl = okFetch(sessionOk);
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async () => stream, transportFactory: () => fake.transport, listenTimeoutMs: 1_000 });
     const connecting = coach.connect();
     await vi.advanceTimersByTimeAsync(0);
     fake.emit(started);
@@ -52,9 +59,10 @@ describe('coach live path', () => {
     expect(coach.state.mode).toBe('live');
     expect(fake.sent.at(-1)?.type).toBe('session.input_audio.mute');
     coach.setStep('s2', 1);
-    const last = fake.sent.at(-1);
-    expect(last?.type).toBe('session.thinking.append');
-    if (last?.type === 'session.thinking.append') expect(last.content).toContain('"Insert the support"');
+    expect(fake.sent.some(event => event.type === 'session.thinking.append')).toBe(false);
+    const report = fetchImpl.calls.at(-1);
+    expect(report?.url).toBe('/api/live/sessions/live_1/step');
+    expect(JSON.parse(String(report?.init?.body))).toMatchObject({ generation: 1, currentStepId: 's2', stepRevision: 1 });
     fake.closeFromServer();
     expect(coach.state).toMatchObject({ mode: 'text', liveClosed: true });
     coach.dispose();
@@ -122,9 +130,10 @@ describe('coach microphone lifecycle', () => {
     expect(fake.sent).toEqual([]);
     expect(notifications).toBe(before);
   });
-  it('surfaces live error events and sends context on a new attempt', async () => {
+  it('surfaces live error events and reports a new attempt to the server', async () => {
     const fake = fakeTransport();
-    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake.transport });
+    const fetchImpl = okFetch(sessionOk);
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async () => stream, transportFactory: () => fake.transport });
     const errors: string[] = [];
     coach.onLiveError(error => errors.push(error.code));
     const connecting = coach.connect();
@@ -134,7 +143,7 @@ describe('coach microphone lifecycle', () => {
     fake.emit({ type: 'error', event_id: 'e9', error: { code: 'data_channel_permissions', message: 'denied', type: 'invalid_request_error' } });
     expect(errors).toEqual(['data_channel_permissions']);
     coach.setAttempt('attempt-2');
-    expect(fake.sent.at(-1)?.type).toBe('session.thinking.append');
+    expect(JSON.parse(String(fetchImpl.calls.at(-1)?.init?.body))).toMatchObject({ currentStepId: 's1', attemptId: 'attempt-2' });
     expect(coach.state.attemptId).toBe('attempt-2');
   });
 });
@@ -172,6 +181,8 @@ describe('coach startup and output gating', () => {
     coach.setStep('s2', 1);
     expect(sink.muted).toBe(true);
     fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'Slide base.', start_ms: 100, end_ms: 200 });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state.contextSync).toBe('idle');
     fake.emit({ type: 'session.input_transcript.delta', event_id: 'i2', delta: 'and now', start_ms: 300, end_ms: 400 });
     expect(sink.muted).toBe(false);
     fake.emit({ type: 'session.output_transcript.delta', event_id: 'o2', delta: 'Drop it.', start_ms: 400, end_ms: 500 });
@@ -202,6 +213,76 @@ describe('coach startup and output gating', () => {
     fake2.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'Drop it.', start_ms: 0, end_ms: 100 });
     expect(seen).toEqual([false]);
     expect(sink.muted).toBe(false);
+  });
+  it('keeps the mic and playback closed until the server acknowledges a step change, and leaves live if it is refused', async () => {
+    const sink = { muted: false, srcObject: null as MediaStream | null, play: async () => undefined } as unknown as HTMLAudioElement;
+    const gate = { release: null as (() => void) | null, status: 200 };
+    const fetchImpl: typeof fetch = async input => {
+      if (String(input).endsWith('/step')) {
+        await new Promise<void>(resolve => { gate.release = resolve; });
+        return new Response(gate.status === 200 ? null : JSON.stringify({ error: 'stale_update', message: 'old' }), { status: gate.status });
+      }
+      return new Response(JSON.stringify(sessionOk), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const fake = fakeTransport();
+    const { stream: mic, track } = trackedStream();
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async () => mic, transportFactory: () => fake.transport, audioSink: sink });
+    const seen: string[] = [];
+    coach.onTranscript(entry => seen.push(`${entry.stale ? 'stale' : 'live'}:${entry.delta}`));
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    coach.setStep('s2', 1);
+    expect(coach.state.contextSync).toBe('pending');
+    coach.ask();
+    expect(coach.state.mode).toBe('live');
+    expect(track.enabled).toBe(false);
+    fake.emit({ type: 'session.input_transcript.delta', event_id: 'i1', delta: 'hello', start_ms: 0, end_ms: 100 });
+    expect(sink.muted).toBe(true);
+    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'old step words', start_ms: 100, end_ms: 200 });
+    expect(seen.at(-1)).toBe('stale:old step words');
+    gate.release?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state.contextSync).toBe('idle');
+    coach.ask();
+    expect(coach.state.mode).toBe('listening');
+    coach.ask();
+    gate.status = 503;
+    coach.setStep('s1', 2);
+    gate.release?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state).toMatchObject({ mode: 'text', liveClosed: true });
+    expect(track.stopped).toBe(true);
+  });
+  it('ignores a late refusal for a step update that a newer one has already superseded', async () => {
+    const stepCalls: ((status: number) => void)[] = [];
+    const fetchImpl: typeof fetch = async input => {
+      if (String(input).endsWith('/step')) {
+        const status = await new Promise<number>(resolve => { stepCalls.push(resolve); });
+        return new Response(status === 204 ? null : JSON.stringify({ error: 'stale_update', message: 'old' }), { status });
+      }
+      return new Response(JSON.stringify(sessionOk), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const fake = fakeTransport();
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async () => stream, transportFactory: () => fake.transport });
+    const errors: string[] = [];
+    coach.onLiveError(error => errors.push(error.code));
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    coach.setStep('s2', 1);
+    coach.setAttempt('attempt-2');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stepCalls).toHaveLength(2);
+    stepCalls[1]?.(204);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state).toMatchObject({ mode: 'live', contextSync: 'idle', contextGeneration: 2 });
+    stepCalls[0]?.(409);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state).toMatchObject({ mode: 'live', contextSync: 'idle', liveClosed: false });
+    expect(errors).toEqual([]);
   });
   it('settles connect() when the session closes or is disposed before session.started', async () => {
     const fake = fakeTransport();

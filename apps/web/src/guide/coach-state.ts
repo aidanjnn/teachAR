@@ -12,6 +12,10 @@ export interface CoachState {
   attemptId: string;
   stepId: string;
   stepRevision: number;
+  /** Increases on every step or attempt change; the server orders live context updates by it. */
+  contextGeneration: number;
+  /** A live context update is in flight; the coach must not listen or play output until it is acknowledged. */
+  contextSync: 'idle' | 'pending';
   /** The step or attempt changed while the live session was still connecting; resync on ready. */
   contextDirty: boolean;
   pendingRequestId: string | null;
@@ -27,6 +31,10 @@ export type CoachEvent =
   | { type: 'listen-timeout' }
   | { type: 'step-changed'; stepId: string; stepRevision: number }
   | { type: 'attempt-changed'; attemptId: string }
+  /** The server accepted the context update for this generation. */
+  | { type: 'context-synced'; generation: number }
+  /** The server rejected the update or could not be reached; live coaching is no longer trustworthy. */
+  | { type: 'context-sync-failed'; generation: number }
   | { type: 'text-asked'; requestId: string }
   | { type: 'answer-received'; answer: CoachAnswer };
 
@@ -49,41 +57,49 @@ export function initialCoachState(input: {
 }): CoachState {
   return {
     mode: 'idle', liveClosed: false, runId: input.runId, tutorialId: input.tutorialId, tutorialRevision: input.tutorialRevision,
-    attemptId: input.attemptId, stepId: input.stepId, stepRevision: input.stepRevision, contextDirty: false,
-    pendingRequestId: null, seenRequestIds: [],
+    attemptId: input.attemptId, stepId: input.stepId, stepRevision: input.stepRevision, contextGeneration: 0, contextSync: 'idle',
+    contextDirty: false, pendingRequestId: null, seenRequestIds: [],
   };
 }
 
 /** Step and attempt changes share one shape: in-flight answers become stale and a live session needs fresh context. */
 function contextChanged(state: CoachState, next: CoachState): { state: CoachState; effects: CoachEffect[] } {
-  const cleared: CoachState = { ...next, pendingRequestId: null };
-  if (state.mode === 'listening') return { state: { ...cleared, mode: 'live' }, effects: [{ type: 'mute' }, { type: 'invalidate-live-output' }, { type: 'send-step-context' }] };
-  if (state.mode === 'live') return { state: cleared, effects: [{ type: 'invalidate-live-output' }, { type: 'send-step-context' }] };
+  const cleared: CoachState = { ...next, pendingRequestId: null, contextGeneration: state.contextGeneration + 1 };
+  if (state.mode === 'listening') {
+    return { state: { ...cleared, mode: 'live', contextSync: 'pending' }, effects: [{ type: 'mute' }, { type: 'invalidate-live-output' }, { type: 'send-step-context' }] };
+  }
+  if (state.mode === 'live') return { state: { ...cleared, contextSync: 'pending' }, effects: [{ type: 'invalidate-live-output' }, { type: 'send-step-context' }] };
   if (state.mode === 'connecting') return { state: { ...cleared, contextDirty: true }, effects: none };
   return { state: cleared, effects: none };
+}
+
+function leaveLive(state: CoachState): { state: CoachState; effects: CoachEffect[] } {
+  return { state: { ...state, mode: 'text', liveClosed: true, contextSync: 'idle' }, effects: [{ type: 'release-live' }] };
 }
 
 /** Pure transition. The coach never touches guide progression; it only decides mute state and which answers to surface. */
 export function reduceCoach(state: CoachState, event: CoachEvent): { state: CoachState; effects: CoachEffect[] } {
   switch (event.type) {
     case 'connect-started':
-      return { state: { ...state, mode: 'connecting', contextDirty: false }, effects: none };
+      return { state: { ...state, mode: 'connecting', contextDirty: false, contextSync: 'idle' }, effects: none };
     case 'live-ready': {
       // A late session.started after the channel already closed must not revive a dead session.
       if (state.mode !== 'connecting') return { state, effects: none };
-      const effects: CoachEffect[] = state.contextDirty
-        ? [{ type: 'mute' }, { type: 'invalidate-live-output' }, { type: 'send-step-context' }]
-        : [{ type: 'mute' }];
-      return { state: { ...state, mode: 'live', liveClosed: false, contextDirty: false }, effects };
+      if (state.contextDirty) {
+        return {
+          state: { ...state, mode: 'live', liveClosed: false, contextDirty: false, contextSync: 'pending' },
+          effects: [{ type: 'mute' }, { type: 'invalidate-live-output' }, { type: 'send-step-context' }],
+        };
+      }
+      return { state: { ...state, mode: 'live', liveClosed: false }, effects: [{ type: 'mute' }] };
     }
     case 'live-failed':
-      return { state: { ...state, mode: 'text' }, effects: [{ type: 'release-live' }] };
+      return { state: { ...state, mode: 'text', contextSync: 'idle' }, effects: [{ type: 'release-live' }] };
     case 'live-closed':
-      return state.mode === 'connecting' || state.mode === 'live' || state.mode === 'listening'
-        ? { state: { ...state, mode: 'text', liveClosed: true }, effects: [{ type: 'release-live' }] }
-        : { state, effects: none };
+      return state.mode === 'connecting' || state.mode === 'live' || state.mode === 'listening' ? leaveLive(state) : { state, effects: none };
     case 'listen-toggled':
-      if (state.mode === 'live') return { state: { ...state, mode: 'listening' }, effects: [{ type: 'unmute' }] };
+      // Never open the microphone while the model may still hold the previous step.
+      if (state.mode === 'live' && state.contextSync === 'idle') return { state: { ...state, mode: 'listening' }, effects: [{ type: 'unmute' }] };
       if (state.mode === 'listening') return { state: { ...state, mode: 'live' }, effects: [{ type: 'mute' }] };
       return { state, effects: none };
     case 'listen-timeout':
@@ -92,6 +108,12 @@ export function reduceCoach(state: CoachState, event: CoachEvent): { state: Coac
       return contextChanged(state, { ...state, stepId: event.stepId, stepRevision: event.stepRevision });
     case 'attempt-changed':
       return contextChanged(state, { ...state, attemptId: event.attemptId });
+    case 'context-synced':
+      if (state.contextSync !== 'pending' || event.generation !== state.contextGeneration) return { state, effects: none };
+      return { state: { ...state, contextSync: 'idle' }, effects: none };
+    case 'context-sync-failed':
+      if (event.generation !== state.contextGeneration || !(state.mode === 'live' || state.mode === 'listening')) return { state, effects: none };
+      return leaveLive(state);
     case 'text-asked':
       return { state: { ...state, pendingRequestId: event.requestId }, effects: none };
     case 'answer-received': {

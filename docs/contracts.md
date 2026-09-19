@@ -222,3 +222,9 @@ valid decoded image or camera evidence; image decoding remains a separate server
 test. Recording-byte fixtures contain only the synthetic canonical recording.
 Run the existing fixture/C# regeneration and parity commands above. Generated
 C# remains pure and AOT-safe, without Unity, provider, file or network dependencies.
+
+`VoiceUnavailable.error` additionally carries `unauthorized`, `forbidden`, `unknown_tutorial`,
+`stale_tutorial`, and `unknown_session` for paired, server-grounded coaching (additive;
+clients treat unknown codes as a failed request). `LiveStepUpdate` is the client's
+step/attempt report for an open live session; `MAX_COACH_STEPS` now equals the
+tutorial step limit so coach numbering matches the tutorial.

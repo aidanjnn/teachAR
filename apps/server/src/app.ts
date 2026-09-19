@@ -16,7 +16,7 @@ import { join } from 'node:path';
 import { createProvider } from './ai/index.js';
 import type { AiProvider } from './ai/provider.js';
 import type { ServerConfig } from './config.js';
-import { registerVoiceRoutes } from './routes/voice.js';
+import { registerVoiceRoutes, type CoachTutorialLookup } from './routes/voice.js';
 
 async function storageWritable(dataDir: string): Promise<boolean> {
   const probe = join(dataDir, `.health-${randomUUID()}`);
@@ -31,7 +31,11 @@ async function storageWritable(dataDir: string): Promise<boolean> {
   }
 }
 
-export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider } = {}) {
+export async function createApp(
+  config: ServerConfig,
+  options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
+) {
+  let resolveTutorial = options.resolveTutorial;
   const https = config.tls ? { cert: await readFile(config.tls.certFile), key: await readFile(config.tls.keyFile) } : null;
   const app = Fastify({
     ...(https ? { https } : {}),
@@ -51,6 +55,17 @@ export async function createApp(config: ServerConfig, options: { webRoot?: strin
     registerPairingRoutes(app, options.auth);
     const repository = new TutorialRepository(config.dataDir);
     await repository.recover();
+    // The coach speaks only from stored tutorials once pairing is on; unknown or malformed IDs read as "no tutorial".
+    resolveTutorial ??= async id => {
+      try {
+        const tutorial = await repository.tutorial(id);
+        return { id: tutorial.id, revision: tutorial.revision, status: tutorial.status, steps: tutorial.steps.map(step => ({ id: step.id, title: step.title, instruction: step.instruction })) };
+      } catch (error) {
+        const status = (error as { statusCode?: number }).statusCode;
+        if (status === 404 || status === 400) return null;
+        throw error;
+      }
+    };
     relay.bindTutorials(repository);
     await registerStorageRoutes(app, repository, options.auth);
     const references = new ReferenceStore(repository);
@@ -77,7 +92,10 @@ export async function createApp(config: ServerConfig, options: { webRoot?: strin
     reply.header('Cache-Control', 'no-store');
     return probeVision(config.vision);
   });
-  await registerVoiceRoutes(app, options.provider ?? createProvider(config));
+  await registerVoiceRoutes(app, options.provider ?? createProvider(config), {
+    ...(options.auth ? { auth: options.auth } : {}),
+    ...(resolveTutorial ? { resolveTutorial } : {}),
+  });
   if (options.webRoot) {
     await app.register(fastifyStatic, { root: options.webRoot, dotfiles: 'deny' });
   }

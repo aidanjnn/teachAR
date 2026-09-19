@@ -22,6 +22,7 @@ function gateway(overrides: Partial<OpenAiGateway>): OpenAiGateway {
     transcribeVerbose: async () => ({ durationSeconds: 12, language: 'en', segments: [{ start: 0.5, end: 2, text: 'hello' }] }),
     parseJson: (async () => ({ status: 'unparsed' })) as OpenAiGateway['parseJson'],
     createLiveSession: async () => ({ session: { id: 'live_1' }, transport: { type: 'webrtc', sdp: 'v=0 answer' } }),
+    openSideband: () => ({ ready: Promise.resolve(), send: () => undefined, close: () => undefined, onClose: () => undefined, onError: () => undefined }),
     ...overrides,
   };
 }
@@ -84,12 +85,16 @@ describe('openai provider live sessions', () => {
     expect(params.session.client?.data_channel.allowed_client_events).toEqual(BROWSER_CLIENT_EVENTS);
     expect(BROWSER_CLIENT_EVENTS).not.toContain('session.instructions.append');
     expect(BROWSER_CLIENT_EVENTS).not.toContain('session.update');
+    expect(BROWSER_CLIENT_EVENTS).not.toContain('session.thinking.append');
   });
   it('returns the answer SDP or a typed unavailable result', async () => {
     const provider = createOpenAiProvider({ ...models, gateway: gateway({}) });
     expect(await provider.createLiveSession({ schemaVersion: 1, sdp: 'v=0', context: coachRequest.context }, signal)).toEqual({ schemaVersion: 1, sessionId: 'live_1', sdp: 'v=0 answer', liveModel: 'gpt-live-1' });
     const broken = createOpenAiProvider({ ...models, gateway: gateway({ createLiveSession: async () => { throw new Error('402'); } }) });
     expect(await broken.createLiveSession({ schemaVersion: 1, sdp: 'v=0', context: coachRequest.context }, signal)).toMatchObject({ error: 'live_unavailable' });
+    expect(provider.openLiveControl('live_1')).not.toBeNull();
+    const noSideband = createOpenAiProvider({ ...models, gateway: gateway({ openSideband: () => { throw new Error('ws unavailable'); } }) });
+    expect(noSideband.openLiveControl('live_1')).toBeNull();
   });
 });
 

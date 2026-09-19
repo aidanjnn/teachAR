@@ -6,7 +6,8 @@ export const MAX_NARRATION_BYTES = 20 * 1024 * 1024;
 export const MAX_TRANSCRIPT_SPANS = 2_000;
 export const MAX_TRANSCRIPT_MS = MAX_RECORDING_DURATION_MS + 10_000;
 export const MAX_LABEL_SEGMENTS = 64;
-export const MAX_COACH_STEPS = 16;
+/** Matches the tutorial contract so the coach always sees the whole approved step list. */
+export const MAX_COACH_STEPS = 128;
 export const MAX_TITLE_CHARS = 60;
 export const MAX_INSTRUCTION_CHARS = 240;
 export const MAX_ANSWER_CHARS = 600;
@@ -137,10 +138,22 @@ export const CoachSessionResponseSchema = z.strictObject({
 export type CoachSessionResponse = z.infer<typeof CoachSessionResponseSchema>;
 
 export const VoiceUnavailableSchema = z.strictObject({
-  error: z.enum(['live_unavailable', 'provider_unavailable', 'payload_too_large', 'unsupported_media_type', 'invalid_request']),
+  error: z.enum([
+    'live_unavailable', 'provider_unavailable', 'payload_too_large', 'unsupported_media_type', 'invalid_request',
+    'unauthorized', 'forbidden', 'unknown_tutorial', 'stale_tutorial', 'unknown_session', 'stale_update',
+  ]),
   message: z.string().min(1).max(300),
 });
 export type VoiceUnavailable = z.infer<typeof VoiceUnavailableSchema>;
+
+/** Client report that the learner moved to another step or attempt in an open live session; the server pushes the context. */
+export const LiveStepUpdateSchema = z.strictObject({
+  schemaVersion: z.literal(1),
+  /** Client-side counter that increases on every step or attempt change; the server rejects older updates. */
+  generation: Revision,
+  currentStepId: IdSchema, stepRevision: Revision, attemptId: IdSchema.optional(),
+});
+export type LiveStepUpdate = z.infer<typeof LiveStepUpdateSchema>;
 
 export const NarrationCaptureSchema = z.strictObject({
   mimeType: AudioMimeTypeSchema,
