@@ -240,3 +240,14 @@ Append a dated entry after each substantive Codex session. Keep historical resul
 ## 2026-09-19 — TRAIL-03 shared contract freeze (task 2)
 
 Added strict tutorial/draft, guide-event, native sidecar/calibration v2, scene-reference/inspection and upload boundary schemas. Recording v1 exports and audio sync enum remain compatible; native provenance stays separate. Tutorial binding verifies recording/hash/workspace identity and targets against valid recorded wrists. Initial focused validation: contracts TypeScript build and 15 existing recording tests passed. Strict native parser and shared corpus validation are in progress; this entry is not Unity, provider or headset evidence.
+
+### 2026-09-19 — Task 4 deterministic guide core
+
+Implemented a pure C# guide reducer/matcher and input-driven runtime session for
+TRAIL-06/07: start gating, ordered intermediate gates, bounded fresh-sample dwell,
+tracking reacquisition, pause/reset/repeat and distinct user-confirmed completion.
+Adaptive cue progress cannot pass gates. The shared temporary .NET 8.0.425 SDK
+compiled the actual sources and passed 19 synthetic scenarios, including a full
+multi-step effect trace without any backend. Unity EditMode, APK and physical
+LEGO/headset validation remain unavailable. Native DTO/capture integration is
+being completed on this task branch; this core result does not claim that wiring.
