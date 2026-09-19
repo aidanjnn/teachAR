@@ -242,8 +242,9 @@ follow the [vision service setup](apps/vision/README.md).
 | `pnpm test:native-network` | Run the pure C# network-policy harness; requires .NET 8 SDK |
 
 For browser tests, install Chromium once with `pnpm exec playwright install chromium`,
-then run `pnpm check` and `pnpm test:e2e`. CI runs the automated gates; these do
-not establish native or physical readiness.
+then run `pnpm check` and `pnpm test:e2e`. CI runs the hosted web/server gates;
+native checks run locally. Hosted checks do not establish native or physical
+readiness.
 
 ### Voice and AI diagnostics
 
