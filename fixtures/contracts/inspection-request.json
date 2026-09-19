@@ -1,0 +1,17 @@
+{
+  "runId": "run-1",
+  "tutorialId": "tutorial-1",
+  "tutorialRevision": 1,
+  "stepId": "step-1",
+  "stepRevision": 1,
+  "attemptId": "attempt-1",
+  "requestId": "request-1",
+  "liveSessionId": "session-1",
+  "sessionGeneration": 1,
+  "requestEpoch": 1,
+  "delegationId": null,
+  "question": "Is the block beside the square?",
+  "referenceIds": [
+    "reference-1"
+  ]
+}

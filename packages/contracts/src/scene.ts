@@ -1,0 +1,35 @@
+import { z } from 'zod';
+import { CounterSchema, HashSchema, IdSchema, RevisionSchema, unique } from './common.js';
+import { GuideContextRefSchema } from './guide.js';
+export const SceneSourceSchema = z.enum(['quest-camera', 'workspace-webcam']);
+export const StepSceneReferenceSchema = z.strictObject({
+  id: IdSchema, recordingId: IdSchema, recordingHash: HashSchema, tutorialId: IdSchema, tutorialRevision: RevisionSchema,
+  stepId: IdSchema, assetId: IdSchema, source: SceneSourceSchema, visibleOutcome: z.string().min(1).max(2000),
+});
+export type StepSceneReference = z.infer<typeof StepSceneReferenceSchema>;
+export const SceneReferenceManifestSchema = z.strictObject({
+  schemaVersion: z.literal(1), recordingId: IdSchema, recordingHash: HashSchema, tutorialId: IdSchema, tutorialRevision: RevisionSchema,
+  references: z.array(StepSceneReferenceSchema).max(256),
+}).refine(m => unique(m.references.map(r => r.id)) && m.references.every(r => r.recordingId === m.recordingId && r.recordingHash === m.recordingHash && r.tutorialId === m.tutorialId && r.tutorialRevision === m.tutorialRevision), 'Reference identity mismatch or duplicate ID');
+export type SceneReferenceManifest = z.infer<typeof SceneReferenceManifestSchema>;
+export const InspectionRequestSchema = GuideContextRefSchema.extend({
+  requestId: IdSchema, liveSessionId: IdSchema, sessionGeneration: RevisionSchema, requestEpoch: RevisionSchema,
+  delegationId: IdSchema.nullable(), question: z.string().min(1).max(4000), referenceIds: z.array(IdSchema).max(2).refine(unique, 'Duplicate reference ID'),
+});
+export type InspectionRequest = z.infer<typeof InspectionRequestSchema>;
+export const SceneObservationSchema = z.strictObject({
+  id: IdSchema, requestId: IdSchema, captureNonce: IdSchema, sourceSessionId: IdSchema, source: SceneSourceSchema,
+  assetId: IdSchema, sourceFrameSeq: CounterSchema, captureAgeAtSendMs: z.number().min(0).max(120_000), receivedAtServerMonoMs: z.number().min(0),
+});
+export type SceneObservation = z.infer<typeof SceneObservationSchema>;
+export const CoachAssessmentSchema = z.strictObject({
+  verdict: z.enum(['visible-match', 'adjustment-needed', 'uncertain', 'motion-only']), observedEvidence: z.array(z.string().min(1).max(1000)).max(8),
+  limitation: z.string().min(1).max(2000), feedback: z.string().min(1).max(2000), suggestedAction: z.enum(['none', 'show-another-view', 'replay', 'slower-preview']),
+}).refine(a => (a.verdict !== 'visible-match' && a.verdict !== 'adjustment-needed') || a.observedEvidence.length > 0, 'Visual verdict requires observed evidence');
+export type CoachAssessment = z.infer<typeof CoachAssessmentSchema>;
+export const InspectionResultSchema = z.strictObject({
+  request: InspectionRequestSchema, observationId: IdSchema.nullable(), referenceIds: z.array(IdSchema).max(2).refine(unique, 'Duplicate reference ID'),
+  assessment: CoachAssessmentSchema, provenance: z.enum(['model', 'fallback', 'mock']),
+}).refine(r => r.referenceIds.length === r.request.referenceIds.length && r.referenceIds.every((id, i) => id === r.request.referenceIds[i]) &&
+  ((r.assessment.verdict !== 'visible-match' && r.assessment.verdict !== 'adjustment-needed') || (r.observationId !== null && r.referenceIds.length > 0)), 'Result references must match request; visual verdict needs observation and reference');
+export type InspectionResult = z.infer<typeof InspectionResultSchema>;

@@ -257,3 +257,9 @@ recorded separately. SDK APIs were checked against Unity XR Hands documentation;
 [native capture runbook](native-capture.md) for interfaces, controls and evidence
 limits. No headset, physical LEGO, live sensor, shader/Unity import, Android or
 independent human transfer evidence is claimed.
+
+## 2026-09-19 — TRAIL-03 shared contract freeze (task 2)
+
+Added strict tutorial/draft, guide-event, native sidecar/calibration v2, scene-reference/inspection and upload boundary schemas. Recording v1 exports and audio sync enum remain compatible; native provenance stays separate. Tutorial binding verifies recording/hash/workspace identity and targets against valid recorded wrists. Initial focused validation: contracts TypeScript build and 15 existing recording tests passed. Strict native parser and shared corpus validation are in progress; this entry is not Unity, provider or headset evidence.
+
+TRAIL-03 native implementation update: explicit generated DTO readers/writers now compile with the task-scoped .NET 8 SDK. A dependency-free bounded JSON reader rejects duplicate keys, malformed input and nonfinite exponents; generated structural validation and handwritten semantic validation share the TS corpus. 112 TS contract tests and 99 pure C# corpus/binding/legacy/joint/basis checks passed. This is actual .NET behavior, not Unity import or IL2CPP proof. OpenXR enum names were verified against the Khronos XrHandJointEXT reference; palm is excluded explicitly.

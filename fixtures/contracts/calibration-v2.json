@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "id": "calibration-1",
+  "referenceSpaceType": "native-device",
+  "trackingSessionId": "tracking-1",
+  "originRevision": 1,
+  "referenceFromWorkspace": {
+    "positionM": [
+      1,
+      2,
+      3
+    ],
+    "orientationXyzw": [
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  "sampledReferencePointsM": [
+    [
+      1,
+      2,
+      3
+    ],
+    [
+      1.6,
+      2,
+      3
+    ],
+    [
+      1,
+      2,
+      2.6
+    ]
+  ],
+  "verificationErrorM": 0,
+  "valid": true
+}

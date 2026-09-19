@@ -1,0 +1,17 @@
+{
+  "baseRevision": 1,
+  "steps": [
+    {
+      "id": "step-1",
+      "startFrame": 0,
+      "endFrameExclusive": 3,
+      "checkpointFrame": 2,
+      "activeHands": [
+        "right"
+      ],
+      "completionMode": "path-and-pose",
+      "title": "Move",
+      "instruction": "Move and hold."
+    }
+  ]
+}
