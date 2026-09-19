@@ -54,3 +54,8 @@ test-results/
 /apps/quest/Assets/Resources/DevAgentSettings.asset.meta
 /apps/quest/Assets/Resources/OVRPlatformToolSettings.asset
 /apps/quest/Assets/Resources/OVRPlatformToolSettings.asset.meta
+
+# Android native compiler scratch output and generated Meta build metadata.
+/apps/quest/.utmp/
+/apps/quest/Assets/Resources/OVRBuildConfig.asset
+/apps/quest/Assets/Resources/OVRBuildConfig.asset.meta
