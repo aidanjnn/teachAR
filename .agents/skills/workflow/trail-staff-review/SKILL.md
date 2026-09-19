@@ -6,7 +6,7 @@ description: Review Trail branch or PR readiness at staff level, with an evidenc
 # Staff review for Trail
 
 Judge the changed behavior against [AGENTS.md](../../../../AGENTS.md) and the
-relevant sections of [plan.md](../../../../plan.md). Be direct and specific.
+relevant sections of [plan.md](../../../../docs/plan.md). Be direct and specific.
 Optimize for a small, trustworthy physical demo, not speculative production
 infrastructure. Review does not authorize edits, commits, pushes, or posted
 GitHub reviews. Keep the report in this conversation unless posting is requested.

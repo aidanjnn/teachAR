@@ -8,10 +8,12 @@ narration. Trail turns the recording into a reviewed tutorial, then guides a
 different person with articulated ghost hands, spatial path cues, and movement
 checkpoints aligned to their workspace.
 
-**Current status:** planning and agent-workflow scaffold. The repository has an
-implementation plan and development skills; the application, package manifests,
-lockfile, CI, and headset validation are not implemented yet. The capabilities
-and setup below describe the intended build, not a working release.
+**Current status:** runnable local application scaffold (the software portion of
+TRAIL-02). The workspace includes a synthetic Three.js hand replay, recording
+schemas, rigid transforms, a Fastify health route, unit/browser checks, and CI.
+Recording, calibration, learner progression, persistence, live AI, pairing, and
+headset validation remain planned. The experience below describes the target
+product; the current screen is a diagnostic fixture.
 
 ## The experience
 
@@ -38,7 +40,7 @@ Trail provides **spatial motion guidance**. “Movement checkpoint reached” me
 the tracked hand satisfied the configured movement conditions. It does not
 verify that an object was grasped or assembled correctly.
 
-## Planned architecture
+## Target architecture
 
 ```mermaid
 flowchart LR
@@ -79,12 +81,12 @@ native proof demonstrates a viable improvement.
 
 Available now:
 
-- [plan.md](plan.md) — product scope, contracts, algorithms, build sequence, and acceptance criteria.
+- [plan.md](docs/plan.md) — product scope, contracts, algorithms, build sequence, and acceptance criteria.
 - [AGENTS.md](AGENTS.md) — coding conventions, package boundaries, and agent workflow index.
 - [.agents/skills/workflow/](.agents/skills/workflow/) — commit, PR, review, cleanup, verification, and QA skills.
 - [.agents/references/validation.md](.agents/references/validation.md) — guidance for selecting and reporting evidence.
 
-Planned application layout:
+Application layout (module responsibilities beyond the scaffold remain planned):
 
 ```text
 apps/web/             XR, recording, guidance, replay, review, and spectator UI
@@ -99,14 +101,8 @@ data/                Private local recordings and generated assets; ignored by G
 
 ## Development setup
 
-**The following is the planned setup after the application scaffold is built.**
-These commands are not runnable against the current repository. Bootstrap work
-is specified in [plan section 4](plan.md#4-stack-and-repository-setup).
-
-The plan selects Node **22.23.1** and pnpm **11.3.0**. Application dependency
-versions remain proposed until the workspace is installed and tested together.
-
-Once manifests, scripts, the lockfile, and `.env.example` exist:
+Use Node **22.23.1** (see `.node-version`) and pnpm **11.3.0**. The dependency
+versions are pinned exactly in the package manifests and one `pnpm-lock.yaml`.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -114,20 +110,50 @@ cp .env.example .env
 pnpm dev
 ```
 
-The intended development server is `http://localhost:5173`, with `/api` and `/ws`
-proxied to Fastify on `127.0.0.1:3001`. The default configuration uses mock AI and
-haptics. Live integrations require server-side credentials. Provider keys must
-never enter `VITE_*` variables, client bundles, or source control.
+Open `http://localhost:5173`. The synthetic fixture supports Play/Pause, Reset,
+keyboard scrubbing, and an explicit tracking gap. It is diagnostic joint replay,
+not live capture, an articulated hand mesh, or learner progression.
 
-Planned commands:
+Vite binds to `127.0.0.1:5173` with a fixed port and proxies `/api` and `/ws` to
+Fastify on `127.0.0.1:3001`. Only `/api/health` is implemented; the `/ws` proxy
+reserves the future relay path. In the scaffold, keep `PORT=3001` for development.
+Server startup loads the root `.env` regardless of the package working directory;
+existing process environment values take precedence. Relative `DATA_DIR` paths
+resolve from the repository root. No credentials are required. Unsupported live
+AI/haptic modes fail configuration validation instead of reporting mock success.
+Provider keys must never enter `VITE_*` variables or client bundles.
+
+For separate web and server terminals, first run `pnpm build:shared`, then:
+
+```sh
+# Terminal 1: shared package watchers and web
+pnpm exec concurrently -k "pnpm dev:shared" "pnpm --filter @trail/web dev"
+# Terminal 2: API
+pnpm --filter @trail/server dev
+```
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev` | Build shared packages, then start development watchers and both apps |
-| `pnpm check` | Typecheck, unit tests, and production build |
-| `pnpm test:e2e` | Desktop fixture and browser flows |
-| `pnpm build` | Build shared packages, web, and server |
-| `pnpm start` | Serve the built application and API from Fastify |
+| `pnpm dev` | Build shared packages, then start shared/web/server watchers |
+| `pnpm check` | Strict typecheck (including tests/config), unit tests, production build |
+| `pnpm test` | Contract, pure motion, architecture boundary, and Fastify checks; build shared packages first |
+| `pnpm validate:fixtures` | Build shared packages and validate the committed synthetic recording |
+| `pnpm test:e2e` | Test the **built** application on port 3101; run `pnpm build` or `pnpm check` first |
+| `pnpm build` | Build shared ESM/declarations, web assets, and server |
+| `pnpm start` | Serve built assets and API together on `http://localhost:3001` |
+
+Install the browser once before desktop end-to-end tests:
+
+```sh
+pnpm exec playwright install chromium
+pnpm check
+pnpm test:e2e
+```
+
+CI installs Chromium with its Linux dependencies, runs the same checks, and
+retains failure traces. No secrets or headset are needed. See
+[scaffold notes](docs/scaffold.md) for module entry points, scope, and evidence;
+[contracts](docs/contracts.md) describes the implemented subset and version policy.
 
 ### Quest connection
 
@@ -136,7 +162,7 @@ Browser versions, hand-tracking behavior, and application compatibility still
 need device validation. Controllers support setup and recovery; they do not
 provide a bare-hand skeleton.
 
-After the application runs locally, the planned wired development path is:
+The following wired connection procedure is **not yet verified on a headset**:
 
 1. Enable developer mode, connect a data-capable USB cable, and accept the
    headset's debugging prompt. Install Android platform tools or Meta Quest
@@ -148,15 +174,15 @@ After the application runs locally, the planned wired development path is:
    adb reverse tcp:5173 tcp:5173
    ```
 
-3. Open `http://localhost:5173` **in the headset browser**. Verify the secure
-   context, XR availability, and health route before entering AR.
-4. Grant microphone permission before entering XR. Switch from controllers to
-   bare hands, calibrate the mat, and verify the held-out mark.
+3. Open `http://localhost:5173` **in the headset browser**. Inspect the AR support
+   diagnostic and local-server status. `/api/health` should report writable storage.
+4. AR session entry, microphone capture, hand capture, and calibration are later
+   tickets. This scaffold only queries AR support; it cannot pass those gates.
 
-For the built wired demo, the plan serves the app and API together on port 3001
-and reverses that port instead. Untethered use requires trusted HTTPS/WSS and
-session pairing. These connection paths must be verified on the actual device;
-no known-good application commit has been established yet.
+For the built app, run `pnpm build && pnpm start`, then reverse port 3001 instead.
+The scaffold deliberately binds to loopback. Pairing and Origin enforcement must
+be implemented before exposing a tunnel. No headset-verified commit exists yet;
+see [device check](docs/device-check.md) for the pending hardware gate.
 
 ## Build milestones
 
@@ -173,20 +199,21 @@ recovery milestone, with any reduced capabilities disclosed.
 | Quality and acceptance | Clear articulated ghost and feedback, finished review/spectator UI, recovery drills, three clean runs, and a non-builder trial |
 
 Implementation tickets and dependencies live in
-[plan section 17](plan.md#17-immediate-tickets-to-create). Scene vision, optional
+[plan section 17](docs/plan.md#17-immediate-tickets-to-create). Scene vision, optional
 sponsor integrations, and real haptics follow the core quality gates.
 
 ## Validation and limits
 
-Automated checks will cover transforms, invalid calibration, slow learners,
-ordered gates, interrupted dwell, stale replies, bounded uploads, persistence,
-and reconnect behavior. Desktop fixtures cannot establish real hand accuracy,
+Current automated checks cover recording validation, transform round trips,
+shared-package boundaries, health/storage failures, static serving, and desktop
+fixture controls. Calibration, slow learners, ordered gates, dwell, stale replies,
+uploads, persistence, and reconnect checks remain tied to later implementation. Desktop fixtures cannot establish real hand accuracy,
 cross-user alignment, simultaneous microphone/XR/casting behavior, or usability.
 
 Record actual device results separately in `docs/validation.md` when testing
 starts, including the commit, device/software versions, scenario, measurements,
 and remaining issues. The complete criteria are in
-[plan section 11](plan.md#11-verification-strategy-and-acceptance-checklist).
+[plan section 11](docs/plan.md#11-verification-strategy-and-acceptance-checklist).
 
 - Guidance must pause safely on tracking loss, session interruption, or invalid
   calibration. It must never advance from stale poses or elapsed time in a gap.
