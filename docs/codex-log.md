@@ -762,3 +762,34 @@ A new APK build is required for these generated C#/serializer changes; earlier
 APK evidence is not attributed to this source. No provider or headset test ran.
 
 Fixture repair scope refinement: retained the existing native upload construction instead of adding full JSON parse/regex validation to every outgoing one-MiB chunk. Generated authoring codecs remain covered by the shared corpus and Unity boundary test; production upload fields and behavior remain unchanged. This supersedes the earlier note about replacing native upload construction.
+
+## 2026-09-19 — Published stack candidate native evidence
+
+Final source `0e16f4e` passed actual Unity 6000.3.24f1 EditMode **21/21**
+and PlayMode **8/8** after preserving the original production upload construction.
+The isolated babysit worktree retains XML under
+`artifacts/quest/test-de3b9ad4-514e-4f1b-8951-0d99711a248f/results.xml` and
+`artifacts/quest/test-play-7199a975-b6f4-4feb-8ee0-292f2b53c7ae/results.xml`.
+Previously passing 333 workspace tests, seven synthetic Chromium scenarios,
+180 Zod contract checks, 151 pure C# checks and 14 storage checks are reused for
+unchanged inputs. The post-editor static scaffold check also passed.
+
+Standard `pnpm quest:build` succeeded on this source using an isolated Gradle
+home in `/Users/aidanjeon/.codex/worktrees/198f/trail`. Artifact directory:
+`artifacts/quest/build-ecf08911-2135-4ae8-b353-7deaa54d688f`.
+The non-development Android ARM64/IL2CPP APK is **69,327,117 bytes**, SHA256
+`17c52461c5ce39115b1f71ef4e20146df2692696658e4984b789bdf74528c965`.
+ZIP inspection confirms only `arm64-v8a` native libraries and `libil2cpp.so`.
+`build.json`, `unity.log`, a 301-file committed/built-worktree hash manifest,
+and the seven generated settings/assets plus patch are preserved beside the APK.
+Generated tracked state was archived and restored; artifacts remain outside Git.
+The earlier interrupted build of superseded source is not passing evidence.
+
+Current published heads for capture `27411fd`, guide `f2ab1d0`, and inspection
+`d7ef1d2` have passing executable hosted checks. Authoring CI is checked after
+this evidence-only commit is published. Hosted native enforcement remains an
+infrastructure gap: repository Actions currently lists no secrets and no
+self-hosted runners. Local editor/player gates do not establish hosted gating.
+No headset, physical transfer, or new live provider run was performed. Open
+review threads are left for user disposition; no replies/resolutions or merges
+were performed by this repair.
