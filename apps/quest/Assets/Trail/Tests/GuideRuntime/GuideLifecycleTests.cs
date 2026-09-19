@@ -42,7 +42,8 @@ namespace Trail.Tests.GuideRuntime
             var ghost = root.AddComponent<GhostPresentation>(); ghost.Session = capture;
             var guide = root.AddComponent<GuideController>(); guide.Capture = capture; guide.Ghost = ghost;
             var now = 0d; var sequence = 0L; capture.Clock = () => now; guide.Clock = () => now;
-            var completions = new List<GuideEvent>(); guide.Telemetry += e => { if (e.Type == "step-completed") completions.Add(e); };
+            var completions = new List<GuideEvent>(); var snapshots = new List<GuideEvent>();
+            guide.Telemetry += e => { ContractJson.ParseGuideEvent(ContractJson.SerializeGuideEvent(e)); if (e.Type == "step-completed") completions.Add(e); else if (e.Type == "snapshot") snapshots.Add(e); };
             try
             {
                 root.SetActive(true); guide.Preload(tutorial, recording, tutorial.RecordingHash, "fixture-paired", true);
@@ -64,6 +65,7 @@ namespace Trail.Tests.GuideRuntime
                 var acknowledgment = guide.PauseForInspection();
                 Assert.AreEqual("paused", ContractJson.ParseGuideEvent(ContractJson.SerializeGuideEvent(acknowledgment)).State.Phase);
                 Assert.AreEqual(0, guide.Session.State.DwellMs);
+                Assert.IsTrue(snapshots.Any(e => e.State.Phase == "paused"), "pause is published immediately");
                 now += 1000; source.Emit(now, ++sequence, recording.Frames[2].Hands.Right); yield return null;
                 Assert.AreEqual(0, completions.Count);
                 guide.Resume(); yield return null;
