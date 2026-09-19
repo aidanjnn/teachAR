@@ -191,9 +191,9 @@ The existing authoring HTTP/WS envelopes are now explicitly included in the
 shared Zod-to-C# registry and golden corpus. This adds native DTO/parser/serializer
 coverage without changing any wire field, endpoint, Recording v1, Tutorial v1,
 or native capture sidecar. No stored recording/tutorial migration is required.
-Native uploads use generated `TutorialJobCreate` and `RecordingByteChunk`
-serializers instead of assembling JSON strings; the server continues validating
-hashes, actual decoded images, revisions, and permissions at its own boundary.
+Native upload wire construction remains unchanged; generated `TutorialJobCreate`
+and `RecordingByteChunk` codecs provide explicit C#/Zod fixture parity. The server
+continues validating hashes, decoded images, revisions and permissions at its boundary.
 The other generated DTOs establish wire parity and do not imply new native UI.
 
 | Contract | Existing transport | Current consumer |

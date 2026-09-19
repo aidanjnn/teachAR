@@ -100,7 +100,7 @@ namespace Trail.Runtime.Storage
                     {
                         if (revision != generation) return;
                         if (status != 200) { busy = false; Status = "Upload finalization failed. Retry preserves the saved recording."; return; }
-                        connection.Request("POST", "/api/tutorial-jobs", ContractJson.SerializeTutorialJobCreate(new TutorialJobCreate { RecordingId = pending.id, RecordingHash = pending.hash, SegmentationRevision = 1 }), (jobStatus,jobText) =>
+                        connection.Request("POST", "/api/tutorial-jobs", "{\"recordingId\":\"" + pending.id + "\",\"recordingHash\":\"" + pending.hash + "\",\"segmentationRevision\":1}", (jobStatus,jobText) =>
                         {
                             if (revision != generation) return; busy = false;
                             if (jobStatus != 202) { Status = "Recording saved on server; retry compilation from desktop."; return; }
@@ -112,7 +112,7 @@ namespace Trail.Runtime.Storage
                 }
                 var length = Math.Min(1024 * 1024, bytes.Length-index*1024*1024); var part = new byte[length]; Buffer.BlockCopy(bytes,index*1024*1024,part,0,length);
                 Status = "Uploading motion " + (index+1) + "/" + count;
-                var body = ContractJson.SerializeRecordingByteChunk(new RecordingByteChunk { DataBase64 = Convert.ToBase64String(part), Sha256 = PrivateTutorialCache.Hash(part) });
+                var body = "{\"dataBase64\":\""+Convert.ToBase64String(part)+"\",\"sha256\":\""+PrivateTutorialCache.Hash(part)+"\"}";
                 connection.Request("PUT", "/api/recordings/"+pending.id+"/bytes/"+index,body,(status,text) => { if (revision != generation) return; if (status != 200) { busy=false; Status="Upload interrupted. Tap Upload to retry identical chunks."; return; } send(index+1); });
             };
             send(0);

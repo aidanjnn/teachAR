@@ -760,3 +760,5 @@ in `artifacts/quest/test-13b3c32d-7c16-49e1-ad68-563f51a5e0cc` and
 `artifacts/quest/test-play-955f651f-0d31-403f-954f-0c7104e6f620`.
 A new APK build is required for these generated C#/serializer changes; earlier
 APK evidence is not attributed to this source. No provider or headset test ran.
+
+Fixture repair scope refinement: retained the existing native upload construction instead of adding full JSON parse/regex validation to every outgoing one-MiB chunk. Generated authoring codecs remain covered by the shared corpus and Unity boundary test; production upload fields and behavior remain unchanged. This supersedes the earlier note about replacing native upload construction.
