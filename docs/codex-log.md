@@ -489,10 +489,6 @@ scenario. Archived only this rerun's generated platform assets/settings. EditMod
 - **Task 5 final stack synchronization:** Merged guide88508b2 non-rewriting and preserved both work-log histories. Incoming changes add the capture prefab/control PlayMode test and validation documentation; no production runtime source changes. The expanded PlayMode suite and hosted executable gates are being verified on this merge; prior EditMode/software results are reused only where inputs are unchanged.
 
 Task 6 final stack synchronization: merged inspection7aba4b2 at `705bb5c`, retaining all work-log entries. All306 previously tested native/shared hashes still match APK candidate d9f177f; only the five new CapturePresentation test/assembly/meta files were added. Re-ran the affected expanded Unity PlayMode suite:7/7 passed (`artifacts/quest/test-play-4629a968-2aba-4238-8bc6-79abfaa850a1/results.xml`). Production/settings/shared inputs are unchanged, so the verified APK and EditMode20/20/software evidence remain applicable. PR11 remains ready and mergeable against the synchronized inspection base. Generated editor whitespace/metadata was preserved outside tracked source and restored.
-||||||| 7aba4b2
-||||||| 88508b2
-||||||| 9cf0bd7
-||||||| 3d629fa
 
 TRAIL-03 review follow-up: `MotionChunk` now rejects non-increasing `tMs` within a chunk in both Zod (`refine`) and pure C# (`ContractValidation.Validate(MotionChunk)`, wired through the generator's semantic set); cross-chunk ordering remains a storage-coordinator concern. Two corpus cases (duplicate and decreasing chunk timestamps) cover parity. `pnpm check` passed (150 tests) and the .NET harness passed 115 checks; no Unity, IL2CPP or headset claim.
 
@@ -510,8 +506,6 @@ TRAIL-07 review follow-up: vision re-encodes uploads in their source format (JPE
 - Authoring workbench disables all controls during async save/finalize/import, and only trusts `trail-pending-upload` while `/api/recordings/uploads/query` still lists it; stale pointers are cleared.
 - `authoring.ts` keeps adjacent equal-time markers contiguous as half-open ranges and rejects empty steps; motion test added.
 - Automated evidence: `pnpm check` green, storage and relay harnesses green. No Unity Editor/PlayMode, Android IL2CPP, or headset evidence.
-||||||| 4c88639
-||||||| 6d500aa
 
 ## 2026-09-19 — PR #7 babysit: tracking loss cannot confirm
 
