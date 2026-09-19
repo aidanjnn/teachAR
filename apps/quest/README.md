@@ -53,18 +53,21 @@ UPM lock, tests or build artifacts fails. `TRAIL_ANDROID_VERSION_CODE` optionall
 sets a positive version code (default 1). Application ID is `com.trail.guide`.
 The wrapper selects Android before script compilation to avoid the wrong platform
 symbols. Setup generates URP assets, enables a single OpenXR loader, the Meta XR,
-Meta Quest and Hand Tracking Subsystem features, Vulkan, linear color and a
+Meta Quest, Hand Tracking Subsystem and Oculus Touch input-profile features,
+Vulkan, linear color and a
 HandsOnly/required-passthrough Android manifest. Check Meta Project Setup Tool
 and permissions on the actual resolved project before hardware acceptance.
 
 The checked-in `Trail.unity` runs `NativeBootstrap`: it waits for OpenXR, refuses
 an existing competing rig/camera, creates one `OVRCameraRig` with Stage origin,
-transparent camera and passthrough underlay, and supplies its `trackingSpace` to
+transparent camera and passthrough underlay, disables app-requested recentering,
+and supplies its `trackingSpace` to
 feature assemblies. It does not create controller/synthetic hand data or
 locomotion. Features register a concrete installer through `PlatformFeatures`
 before scene load, then implement `IPlatformFeature.Initialize(PlatformContext)`.
 This preserves assembly ownership without runtime reflection or guessed types.
-Tasks compose capture at order 10, guide 20, scene 30 and storage/UI 40. A missing
+The Touch profile satisfies Meta Core OVRInput setup requirements; it does not
+provide recorded hand samples or spawn controller visuals. Tasks compose capture at order 10, guide 20, scene 30 and storage/UI 40. A missing
 feature is not represented as successful hardware capability.
 
 ## Pair and reach the API
