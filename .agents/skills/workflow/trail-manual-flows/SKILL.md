@@ -5,6 +5,32 @@ description: Produce a focused Trail manual QA or demo checklist for real headse
 
 # Trail manual flows
 
+## Local desktop execution notes
+
+- Activate the installed Node 22 toolchain before every independent shell:
+  `export PATH="$HOME/.local/share/fnm:$PATH" && eval "$(fnm env)"`.
+  Run `pnpm build:shared && pnpm build` before production `pnpm start`.
+- Isolate data and ports per branch; stop the old server before switching.
+  Authoring needs `ALLOW_USB_LOOPBACK=true PORT=<port> DATA_DIR=<private-dir>`
+  and the exact `http://127.0.0.1:<port>` origin. Pair via the UI with the
+  short-lived code in `<private-dir>/pairing.json`; never publish that file.
+- Authoring supports numeric boundary edits and recording-file import, not
+  desktop marker insertion. Test coincident end/start markers using a disclosed
+  synthetic JSON import; inspect all half-open boundaries in the review UI.
+- Where `/voice-lab.html` exists, launch headed Chromium with
+  `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream`.
+  Keep fake microphone, mock transcript and fallback provenance explicit.
+- For duplicate-request guards, delay a real request rather than fabricating
+  its response; capture disabled controls and count requests. To demonstrate
+  loaded local fallback, stop the actual backend without reloading the page.
+- Use `#step-mode` or a combobox role for the authoring completion control;
+  an exact label lookup may not resolve consistently.
+
+### Devin Secrets Needed
+
+None for local synthetic/mock flows. Real provider testing requires separately
+authorized server-side credentials; do not substitute mock evidence for it.
+
 Generate a runnable checklist for the current change or requested release tier.
 This is read-only checklist generation unless execution or recording results is
 also requested. Use [AGENTS.md](../../../../AGENTS.md), the diff, and
