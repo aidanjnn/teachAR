@@ -53,6 +53,9 @@ importers:
       '@trail/motion':
         specifier: workspace:*
         version: link:../../packages/motion
+      openai:
+        specifier: 7.19.0
+        version: 7.19.0(zod@4.6.5)
       three:
         specifier: 0.186.0
         version: 0.186.0
