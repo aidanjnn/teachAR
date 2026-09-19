@@ -343,3 +343,35 @@ claim follows from these editor/synthetic checks. No voice implementation change
 TRAIL-03 review follow-up: `MotionChunk` now rejects non-increasing `tMs` within a chunk in both Zod (`refine`) and pure C# (`ContractValidation.Validate(MotionChunk)`, wired through the generator's semantic set); cross-chunk ordering remains a storage-coordinator concern. Two corpus cases (duplicate and decreasing chunk timestamps) cover parity. `pnpm check` passed (150 tests) and the .NET harness passed 115 checks; no Unity, IL2CPP or headset claim.
 
 TRAIL-04 review follow-up: capture panel labels now arm after a 0.6 s fresh index-tip dwell and execute only on a tracked withdrawal, matching the on-screen instruction; tracking loss, stale or non-monotonic samples and drift to another label cancel the armed state. Merged the contracts chunk-order fix from `codex/shared-contracts`. `pnpm check` and the .NET capture harness passed; the panel is a MonoBehaviour, so this is unverified in Unity/headset. Manifest/lockfile ownership and Unity CI gates remain open for the platform owner.
+
+## 2026-09-19 — PR 6 babysit: control withdrawal regression
+
+Verified the current review findings against head dba0886. The package manifest
+and lockfile changes originate in native-platform commits f626cd3, 5250e30 and
+d23754a; both files exactly match platform PR #5. They are inherited dependencies
+of this stacked PR, already owned separately by integration. PR #5 and the
+shared-contracts base PR #8 remain prerequisites; the ownership thread needs
+reviewer resolution rather than duplicated dependency edits here.
+
+The follow-up control fix still executed the armed action when the next sample
+hit another button. Added a synthetic PlayMode regression that failed on that
+behavior, then required an outside-all-buttons sample to confirm withdrawal.
+The regression also verifies dwell alone does not execute, confirmation happens
+once, and tracking loss, gaps over 100 ms and non-increasing timestamps cancel.
+Actual full-project Unity 6000.3.24f1 passed 5/5 PlayMode and 11/11 EditMode after
+the fix. Results are in ignored artifacts/quest/test-play-f62733a5-3078-4b83-9c60-c3009593179b
+and artifacts/quest/test-c30e20fd-998a-47ad-9e70-95c8526f9bf8. Generated settings
+and assets were preserved outside Git; no platform configuration was changed.
+
+The native-CI review remains an integration prerequisite: hosted workflows run
+the pure C# harnesses, not Unity/Android, and GitHub currently reports no repository
+Actions secrets or self-hosted runners. Local Editor tests are distinct from
+hosted enforcement. The earlier combined APK predates this panel change and is
+not claimed as current-revision ARM64/IL2CPP evidence. No headset or physical
+transfer evidence, review reply, thread resolution, merge or deployment occurred.
+
+Final local workspace gate passed `pnpm check` (159 tests, typechecks, production
+builds and 78-GUID static check) and `pnpm validate:fixtures` (61-frame synthetic
+recording). The existing Vite chunk-size warning remains. Desktop inputs are
+unchanged by this C# panel repair; current-head hosted browser evidence is checked
+separately after publication.
