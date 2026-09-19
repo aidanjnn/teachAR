@@ -97,3 +97,19 @@ describe('bounded image inspection', () => {
     await expect(provider.assess(await input(), new AbortController().signal)).rejects.toThrow('invalid-assessment');
   });
 });
+it('rejects duplicate JSON keys at the service boundary before provider work', async () => {
+  let calls = 0;
+  const app = createVisionApp(config(), { provider: { name: 'mock', model: 'test', assess: async () => { calls++; return assessment(); } } });
+  try {
+    const json = JSON.stringify(await input()).replace('"schemaVersion":1', '"schemaVersion":1,"schemaVersion":1');
+    const response = await app.inject({ method: 'POST', url: '/internal/v1/inspections', headers: { ...auth, 'content-type': 'application/json' }, payload: json });
+    expect(response.statusCode).toBe(400); expect(calls).toBe(0);
+  } finally { await app.close(); }
+});
+it('rejects animated PNG control chunks before decoding', async () => {
+  const img = await image(); const raw = Buffer.from(img.dataBase64, 'base64');
+  const animation = Buffer.alloc(20); animation.writeUInt32BE(8, 0); animation.write('acTL', 4, 'ascii');
+  const data = Buffer.concat([raw.subarray(0, 33), animation, raw.subarray(33)]);
+  await expect(validateImage({ ...img, dataBase64: data.toString('base64'), sha256: createHash('sha256').update(data).digest('hex') }, new AbortController().signal))
+    .rejects.toMatchObject({ code: 'invalid-image' });
+});

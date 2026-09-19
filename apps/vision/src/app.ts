@@ -1,6 +1,7 @@
+import { z } from 'zod';
 import Fastify, { LogController } from 'fastify';
 import { timingSafeEqual } from 'node:crypto';
-import { VisionHealthSchema, VisionReadinessSchema, InspectionCancelSchema } from '@trail/contracts';
+import { VisionHealthSchema, VisionReadinessSchema, InspectionCancelSchema, VisionInspectionInputSchema, parseContractJson } from '@trail/contracts';
 import type { VisionConfig } from './config.js';
 import { MAX_BODY_BYTES } from './images.js';
 import { InspectionJobs } from './jobs.js';
@@ -12,6 +13,10 @@ export function createVisionApp(config: VisionConfig, options: { logger?: boolea
     logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: MAX_BODY_BYTES, requestTimeout: 10_000, connectionTimeout: 10_000,
   });
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_request, body, done) => {
+    try { done(null, parseContractJson(z.unknown(), body as string)); } catch { done(new VisionError('invalid-input')); }
+  });
   const provider = options.provider ?? (config.provider === 'openai' && config.apiKey && config.model
     ? createOpenAIProvider(config.apiKey, config.model) : null);
   const jobs = new InspectionJobs(provider);
@@ -22,7 +27,7 @@ export function createVisionApp(config: VisionConfig, options: { logger?: boolea
     reply.header('Cache-Control', 'no-store');
     const received = Buffer.from(request.headers.authorization ?? '');
     if (received.length !== expected.length || !timingSafeEqual(received, expected)) return reply.code(401).send({ error: 'unauthorized' });
-    if (request.method === 'POST' && request.url === '/internal/v1/inspections') {
+    if (request.method === 'POST' && request.routeOptions.url === '/internal/v1/inspections') {
       if (!provider) return reply.code(503).send({ schemaVersion: 1, error: 'provider-unavailable' });
       if (uploads >= 4) return reply.code(429).send({ schemaVersion: 1, error: 'busy' });
       uploads++; admitted.add(request);
@@ -47,7 +52,15 @@ export function createVisionApp(config: VisionConfig, options: { logger?: boolea
       reason: ready ? 'ready' : jobs.configured ? 'busy' : config.provider === 'mock' ? 'mock-provider' : 'provider-unconfigured',
     }));
   });
-  app.post('/internal/v1/inspections', async request => jobs.inspect(request.body));
+  app.post('/internal/v1/inspections', async (request, reply) => {
+    const parsed = VisionInspectionInputSchema.safeParse(request.body);
+    if (!parsed.success) throw new VisionError('invalid-input');
+    const closed = () => {
+      if (!reply.raw.writableFinished) { try { jobs.cancel(parsed.data.request.requestId, parsed.data.request.requestEpoch); } catch { /* already finished */ } }
+    };
+    reply.raw.once('close', closed);
+    try { return await jobs.inspect(parsed.data); } finally { reply.raw.removeListener('close', closed); }
+  });
   app.delete('/internal/v1/inspections/:requestId', async (request, reply) => {
     const params = request.params as Record<string, unknown>;
     const query = request.query as Record<string, unknown>;

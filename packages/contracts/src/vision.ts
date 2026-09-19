@@ -34,7 +34,8 @@ export const VisionInspectionInputSchema = z.strictObject({
   unique(value.references.map(entry => entry.reference.id)) && value.references.length === value.request.referenceIds.length &&
   value.references.every((entry, index) => entry.reference.id === value.request.referenceIds[index] &&
     entry.reference.tutorialId === value.request.tutorialId && entry.reference.tutorialRevision === value.request.tutorialRevision &&
-    entry.reference.stepId === value.request.stepId), 'Inspection evidence identity or freshness mismatch');
+    entry.reference.stepId === value.request.stepId && entry.reference.recordingId === value.references[0]?.reference.recordingId &&
+    entry.reference.recordingHash === value.references[0]?.reference.recordingHash), 'Inspection evidence identity or freshness mismatch');
 export type VisionInspectionInput = z.infer<typeof VisionInspectionInputSchema>;
 export const VisionInspectionResultSchema = z.strictObject({
   schemaVersion: z.literal(1), requestId: IdSchema, requestEpoch: RevisionSchema, observationId: IdSchema,

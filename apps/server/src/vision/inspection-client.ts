@@ -1,4 +1,5 @@
-import { VisionFailureSchema, VisionInspectionResultSchema, type VisionInspectionInput, type VisionInspectionResult } from '@trail/contracts';
+import { parseContractJson, VisionFailureSchema, VisionInspectionResultSchema, type VisionInspectionInput, type VisionInspectionResult } from '@trail/contracts';
+import { z } from 'zod';
 import type { VisionConnection } from './client.js';
 
 export class InspectionError extends Error {
@@ -14,7 +15,7 @@ async function boundedJson(response: Response): Promise<unknown> {
       if (length > 32 * 1024) throw new InspectionError('invalid-assessment', 502);
       chunks.push(next.value);
     }
-    return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
+    return parseContractJson(z.unknown(), Buffer.concat(chunks).toString('utf8'));
   } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
 }
 /** No retry: a crash/timeout must not silently inspect the old image again. */
