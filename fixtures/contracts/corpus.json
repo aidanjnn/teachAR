@@ -517,6 +517,38 @@
       ]
     },
     {
+      "name": "motion-chunk timestamp duplicate",
+      "contract": "MotionChunk",
+      "valid": false,
+      "file": "motion-chunk.json",
+      "patches": [
+        {
+          "path": [
+            "frames",
+            1,
+            "tMs"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "motion-chunk timestamp decreasing",
+      "contract": "MotionChunk",
+      "valid": false,
+      "file": "motion-chunk.json",
+      "patches": [
+        {
+          "path": [
+            "frames",
+            2,
+            "tMs"
+          ],
+          "value": 20
+        }
+      ]
+    },
+    {
       "name": "finalize-recording unknown field",
       "contract": "FinalizeRecordingRequest",
       "file": "finalize-recording.json",
