@@ -19,7 +19,7 @@ export interface ParseJsonInput<T> {
 
 /** The only surface the provider uses. Tests substitute a fake; the real one wraps the SDK. */
 export interface OpenAiGateway {
-  transcribeVerbose(input: { bytes: Uint8Array; mimeType: string; model: string; signal: AbortSignal }): Promise<VerboseTranscript>;
+  transcribeVerbose(input: { bytes: Uint8Array<ArrayBuffer>; mimeType: string; model: string; signal: AbortSignal }): Promise<VerboseTranscript>;
   parseJson<T>(input: ParseJsonInput<T>): Promise<ParsedJson<T>>;
   createLiveSession(params: LiveCreateParams, signal: AbortSignal): Promise<LiveCreateResponse>;
 }
@@ -35,7 +35,7 @@ export function createOpenAiGateway(apiKey: string): OpenAiGateway {
   const client = new OpenAI({ apiKey, maxRetries: 1 });
   return {
     async transcribeVerbose({ bytes, mimeType, model, signal }) {
-      const file = new File([new Uint8Array(bytes)], fileNameFor(mimeType), { type: mimeType });
+      const file = new File([bytes], fileNameFor(mimeType), { type: mimeType });
       const result = await client.audio.transcriptions.create(
         { file, model, response_format: 'verbose_json', timestamp_granularities: ['segment'] },
         { signal },

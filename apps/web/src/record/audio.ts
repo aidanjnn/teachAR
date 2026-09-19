@@ -68,7 +68,13 @@ export function createNarrationRecorder(options: NarrationRecorderOptions): Narr
       } catch {
         throw new NarrationError('permission-denied', 'Microphone permission was denied or no microphone is available.');
       }
-      const active = createRecorder(stream, selected);
+      let active: MediaRecorder;
+      try {
+        active = createRecorder(stream, selected);
+      } catch {
+        stopTracks();
+        throw new NarrationError('unsupported', 'This browser cannot record in the selected audio format.');
+      }
       recorder = active;
       chunks = [];
       active.ondataavailable = event => { if (event.data.size > 0) chunks.push(event.data); };
@@ -88,7 +94,12 @@ export function createNarrationRecorder(options: NarrationRecorderOptions): Narr
     async stop() {
       if (state !== 'recording' || !recorder || !selected) throw new NarrationError('not-recording', 'Nothing is recording.');
       const active = recorder;
-      await new Promise<void>(resolve => { active.onstop = () => resolve(); active.stop(); });
+      // A recorder can already be inactive (device unplugged); stop() then throws and onstop never fires.
+      await new Promise<void>(resolve => {
+        if (active.state === 'inactive') { resolve(); return; }
+        active.onstop = () => resolve();
+        try { active.stop(); } catch { resolve(); }
+      });
       const stopAt = now();
       state = 'stopped';
       stopTracks();

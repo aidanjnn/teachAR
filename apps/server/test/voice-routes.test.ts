@@ -78,6 +78,9 @@ describe('POST /api/voice/labels', () => {
       expect(bad.statusCode).toBe(400);
       expect(bad.json().error).toBe('invalid_request');
       expect((await app.inject({ method: 'POST', url: '/api/voice/labels', headers: json, payload: '{not json' })).statusCode).toBe(400);
+      const huge = await app.inject({ method: 'POST', url: '/api/voice/labels', headers: json, payload: JSON.stringify({ schemaVersion: 1, pad: 'x'.repeat(1024 * 1024 + 1) }) });
+      expect(huge.statusCode).toBe(413);
+      expect(huge.json()).toEqual({ error: 'payload_too_large', message: expect.not.stringContaining('Narration') });
     } finally { await app.close(); }
   });
 });

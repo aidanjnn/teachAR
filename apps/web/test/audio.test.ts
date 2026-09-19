@@ -28,3 +28,39 @@ describe('createNarrationRecorder', () => {
     await expect(denied.stop()).rejects.toMatchObject({ code: 'not-recording' });
   });
 });
+
+describe('createNarrationRecorder failure handling', () => {
+  function fakeStream() {
+    const stopped: string[] = [];
+    const track = { stop: () => { stopped.push('audio'); } };
+    return { stream: { getTracks: () => [track], getAudioTracks: () => [track] } as unknown as MediaStream, stopped };
+  }
+  it('releases the microphone when the recorder cannot be created', async () => {
+    const { stream, stopped } = fakeStream();
+    const recorder = createNarrationRecorder({
+      epochMs: 0, now: () => 0, isTypeSupported: () => true, getUserMedia: async () => stream,
+      createRecorder: () => { throw new DOMException('nope', 'NotSupportedError'); },
+    });
+    await expect(recorder.start()).rejects.toMatchObject({ code: 'unsupported' });
+    expect(stopped).toEqual(['audio']);
+  });
+  it('does not hang when the recorder is already inactive at stop time', async () => {
+    const { stream } = fakeStream();
+    let clock = 0;
+    const fake = {
+      state: 'inactive' as RecordingState, mimeType: 'audio/webm',
+      ondataavailable: null as ((event: BlobEvent) => void) | null, onstart: null as (() => void) | null,
+      onstop: null as (() => void) | null, onerror: null as (() => void) | null,
+      start() { this.state = 'recording'; this.ondataavailable?.({ data: new Blob(['x']) } as BlobEvent); this.onstart?.(); this.state = 'inactive'; },
+      stop() { throw new DOMException('inactive', 'InvalidStateError'); },
+    };
+    const recorder = createNarrationRecorder({
+      epochMs: 0, now: () => (clock += 500), isTypeSupported: () => true, getUserMedia: async () => stream,
+      createRecorder: () => fake as unknown as MediaRecorder,
+    });
+    await recorder.start();
+    const result = await recorder.stop();
+    expect(result.capture.durationMs).toBeGreaterThan(0);
+    expect(result.blob.size).toBe(1);
+  });
+});

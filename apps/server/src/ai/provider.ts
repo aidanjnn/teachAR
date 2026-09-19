@@ -3,7 +3,8 @@ import type {
 } from '@trail/contracts';
 
 export interface TranscribeInput {
-  bytes: Uint8Array;
+  /** ArrayBuffer-backed so it can be wrapped in a File without another copy. */
+  bytes: Uint8Array<ArrayBuffer>;
   mimeType: string;
   audioStartOffsetMs: number;
   /** Client-reported duration; the mock provider scales its fixture to it. */

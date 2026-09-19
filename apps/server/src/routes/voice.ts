@@ -29,7 +29,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
     voice.addContentTypeParser(AUDIO_ESSENCES, { parseAs: 'buffer', bodyLimit: MAX_NARRATION_BYTES }, (_request, body, done) => { done(null, body); });
 
     voice.setErrorHandler((error: Error & { code?: string; statusCode?: number }, request, reply) => {
-      if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') return unavailable(reply, 413, { error: 'payload_too_large', message: 'Narration must be 20 MiB or smaller.' });
+      if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') return unavailable(reply, 413, { error: 'payload_too_large', message: 'Request body is too large for this route.' });
       if (error.code === 'FST_ERR_CTP_INVALID_MEDIA_TYPE') return unavailable(reply, 415, { error: 'unsupported_media_type', message: 'Send webm, ogg, mp4, or wav audio.' });
       if (error.statusCode === 400 || error.code?.startsWith('FST_ERR_CTP_')) return unavailable(reply, 400, { error: 'invalid_request', message: 'The request body could not be read.' });
       request.log.error({ code: error.code ?? error.name }, 'voice route failed');
