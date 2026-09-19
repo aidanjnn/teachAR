@@ -1,8 +1,11 @@
-import { CoachAnswerSchema, CoachSessionResponseSchema, type CoachAnswer, type CoachContext, type CoachStep } from '@trail/contracts';
+import {
+  CoachAnswerSchema, CoachSessionResponseSchema, describeStepChange, type CoachAnswer, type CoachContext, type CoachStep,
+} from '@trail/contracts';
 import { initialCoachState, reduceCoach, type CoachEffect, type CoachEvent, type CoachState } from './coach-state.js';
 import { createWebRtcLiveTransport, type LiveClientEvent, type LiveServerEvent, type LiveTransport } from './live-transport.js';
 
 export interface TranscriptEntry { role: 'learner' | 'coach'; delta: string; stepRevision: number }
+export interface LiveError { code: string; message: string }
 export interface CoachOptions {
   context: CoachContext;
   fetchImpl?: typeof fetch;
@@ -20,22 +23,19 @@ export interface CoachApi {
   ask(): void;
   askText(question: string): Promise<CoachAnswer | null>;
   setStep(stepId: string, stepRevision: number): void;
+  /** Repeat starts a new attempt: in-flight answers for the old attempt are dropped. */
+  setAttempt(attemptId: string): void;
   dispose(): void;
   onState(handler: (state: CoachState) => void): () => void;
   onTranscript(handler: (entry: TranscriptEntry) => void): () => void;
   onAnswer(handler: (answer: CoachAnswer) => void): () => void;
+  onLiveError(handler: (error: LiveError) => void): () => void;
 }
 
 function stepOf(context: CoachContext): CoachStep {
   const step = context.steps.find(item => item.id === context.currentStepId);
   if (!step) throw new Error('Coach context has no current step');
   return step;
-}
-/** Mirrors the server's stepChangeContext wording; the web bundle cannot import server code. */
-function stepContextText(context: CoachContext): string {
-  const index = context.steps.findIndex(item => item.id === context.currentStepId);
-  const step = stepOf(context);
-  return `The learner is now on step ${index + 1} of ${context.steps.length}: "${step.title}". Instruction: ${step.instruction} Questions about earlier steps are stale; answer for this step.`;
 }
 function newId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -50,7 +50,11 @@ export function createCoach(options: CoachOptions): CoachApi {
   const liveStartTimeoutMs = options.liveStartTimeoutMs ?? 15_000;
   const textDeadlineMs = options.textDeadlineMs ?? 5_000;
   let context: CoachContext = { ...options.context };
-  let state = initialCoachState({ runId: context.runId, stepId: context.currentStepId, stepRevision: context.stepRevision });
+  let state = initialCoachState({
+    runId: context.runId, tutorialId: context.tutorialId, tutorialRevision: context.tutorialRevision,
+    attemptId: context.attemptId, stepId: context.currentStepId, stepRevision: context.stepRevision,
+  });
+  let disposed = false;
   let transport: LiveTransport | null = null;
   let stream: MediaStream | null = null;
   let listenTimer: ReturnType<typeof setTimeout> | null = null;
@@ -60,22 +64,43 @@ export function createCoach(options: CoachOptions): CoachApi {
   const stateHandlers = new Set<(state: CoachState) => void>();
   const transcriptHandlers = new Set<(entry: TranscriptEntry) => void>();
   const answerHandlers = new Set<(answer: CoachAnswer) => void>();
+  const errorHandlers = new Set<(error: LiveError) => void>();
 
   const eventId = (prefix: string) => `${prefix}-${++eventCounter}`;
-  const send = (event: LiveClientEvent) => { try { transport?.send(event); } catch { /* channel closed; live-closed follows */ } };
   const clearListenTimer = () => { if (listenTimer) { clearTimeout(listenTimer); listenTimer = null; } };
   const armListenTimer = () => { clearListenTimer(); listenTimer = setTimeout(() => { dispatch({ type: 'listen-timeout' }); }, listenTimeoutMs); };
+  /** Local backstop: the track is disabled regardless of whether the server accepted the mute event. */
+  const setMicEnabled = (enabled: boolean) => { stream?.getAudioTracks().forEach(track => { track.enabled = enabled; }); };
+  const send = (event: LiveClientEvent) => {
+    try {
+      transport?.send(event);
+    } catch {
+      errorHandlers.forEach(handler => handler({ code: 'send_failed', message: `Could not send ${event.type} to the live session.` }));
+    }
+  };
+  const stopStream = () => { stream?.getTracks().forEach(track => track.stop()); stream = null; };
+  function releaseLive() {
+    clearListenTimer();
+    if (startTimer) { clearTimeout(startTimer); startTimer = null; }
+    startedResolve = null;
+    const active = transport;
+    transport = null;
+    active?.close();
+    stopStream();
+  }
 
   function runEffect(effect: CoachEffect) {
     switch (effect.type) {
-      case 'mute': clearListenTimer(); send({ type: 'session.input_audio.mute', event_id: eventId('mute') }); break;
-      case 'unmute': send({ type: 'session.input_audio.unmute', event_id: eventId('unmute') }); armListenTimer(); break;
-      case 'send-step-context': send({ type: 'session.thinking.append', event_id: eventId('ctx'), delegation_id: null, content: stepContextText(context) }); break;
+      case 'mute': clearListenTimer(); setMicEnabled(false); send({ type: 'session.input_audio.mute', event_id: eventId('mute') }); break;
+      case 'unmute': setMicEnabled(true); send({ type: 'session.input_audio.unmute', event_id: eventId('unmute') }); armListenTimer(); break;
+      case 'send-step-context': send({ type: 'session.thinking.append', event_id: eventId('ctx'), delegation_id: null, content: describeStepChange(context) }); break;
+      case 'release-live': releaseLive(); break;
       case 'emit-answer': answerHandlers.forEach(handler => handler(effect.answer)); break;
       case 'drop-answer': break;
     }
   }
   function dispatch(event: CoachEvent): CoachEffect[] {
+    if (disposed) return [];
     const result = reduceCoach(state, event);
     state = result.state;
     result.effects.forEach(runEffect);
@@ -83,6 +108,7 @@ export function createCoach(options: CoachOptions): CoachApi {
     return result.effects;
   }
   function handleLiveEvent(event: LiveServerEvent) {
+    if (disposed) return;
     switch (event.type) {
       case 'session.started':
         if (startTimer) { clearTimeout(startTimer); startTimer = null; }
@@ -99,6 +125,9 @@ export function createCoach(options: CoachOptions): CoachApi {
       case 'session.closed':
         dispatch({ type: 'live-closed' });
         break;
+      case 'error':
+        errorHandlers.forEach(handler => handler({ code: event.error.code, message: event.error.message }));
+        break;
       default:
         break;
     }
@@ -111,23 +140,17 @@ export function createCoach(options: CoachOptions): CoachApi {
       answer: `${step.title}. ${step.instruction}`.slice(0, 600), grounded: true, source: 'fallback', model: null,
     });
   }
-  function releaseLive() {
-    clearListenTimer();
-    if (startTimer) { clearTimeout(startTimer); startTimer = null; }
-    transport?.close();
-    transport = null;
-    stream?.getTracks().forEach(track => track.stop());
-    stream = null;
-  }
 
   return {
     get state() { return state; },
     get context() { return context; },
     async connect() {
-      if (state.mode !== 'idle') return state.mode;
+      if (disposed || state.mode !== 'idle') return state.mode;
       dispatch({ type: 'connect-started' });
       try {
-        stream = await getUserMedia({ audio: true });
+        const acquired = await getUserMedia({ audio: true });
+        if (disposed) { acquired.getTracks().forEach(track => track.stop()); return state.mode; }
+        stream = acquired;
         const active = transportFactory();
         transport = active;
         const started = new Promise<void>((resolve, reject) => {
@@ -136,15 +159,14 @@ export function createCoach(options: CoachOptions): CoachApi {
         });
         void started.catch(() => undefined);
         await active.connect({
-          localStream: stream,
+          localStream: acquired,
           timeoutMs: liveStartTimeoutMs,
           onEvent: handleLiveEvent,
           onClosed: () => { dispatch({ type: 'live-closed' }); },
           onRemoteStream: remote => {
-            if (options.audioSink) {
-              options.audioSink.srcObject = remote;
-              void options.audioSink.play().catch(() => undefined);
-            }
+            if (disposed || transport !== active || !options.audioSink) return;
+            options.audioSink.srcObject = remote;
+            void options.audioSink.play().catch(() => undefined);
           },
           exchangeSdp: async (offer, signal) => {
             const response = await fetchImpl('/api/live/sessions', {
@@ -156,9 +178,10 @@ export function createCoach(options: CoachOptions): CoachApi {
           },
         });
         await started;
+        if (disposed) { releaseLive(); return state.mode; }
         dispatch({ type: 'live-ready' });
       } catch {
-        releaseLive();
+        if (disposed) { releaseLive(); return state.mode; }
         dispatch({ type: 'live-failed' });
       }
       return state.mode;
@@ -186,15 +209,23 @@ export function createCoach(options: CoachOptions): CoachApi {
       context = { ...context, currentStepId: stepId, stepRevision };
       dispatch({ type: 'step-changed', stepId, stepRevision });
     },
+    setAttempt(attemptId) {
+      context = { ...context, attemptId };
+      dispatch({ type: 'attempt-changed', attemptId });
+    },
     dispose() {
-      if (transport) send({ type: 'session.close', event_id: eventId('close') });
-      releaseLive();
+      if (disposed) return;
+      disposed = true;
       stateHandlers.clear();
       transcriptHandlers.clear();
       answerHandlers.clear();
+      errorHandlers.clear();
+      if (transport) { try { transport.send({ type: 'session.close', event_id: eventId('close') }); } catch { /* already closed */ } }
+      releaseLive();
     },
     onState(handler) { stateHandlers.add(handler); return () => { stateHandlers.delete(handler); }; },
     onTranscript(handler) { transcriptHandlers.add(handler); return () => { transcriptHandlers.delete(handler); }; },
     onAnswer(handler) { answerHandlers.add(handler); return () => { answerHandlers.delete(handler); }; },
+    onLiveError(handler) { errorHandlers.add(handler); return () => { errorHandlers.delete(handler); }; },
   };
 }

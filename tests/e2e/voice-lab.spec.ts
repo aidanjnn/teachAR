@@ -39,6 +39,13 @@ test('labels simulated segments with fallback provenance and coaches in text mod
   await page.locator('#steps').selectOption({ index: 1 });
   await page.getByRole('button', { name: 'Ask by text' }).click();
   await expect(page.locator('#coach-answer')).toContainText('Step 2.');
+  await page.getByRole('button', { name: 'Ask by text' }).dblclick();
+  await expect(page.locator('#coach-answer')).toContainText('Step 2.');
+  await expect(page.locator('#coach-answer')).not.toContainText('dropped');
+  await page.getByRole('button', { name: 'Repeat step' }).click();
+  await expect(page.locator('#coach-answer')).toContainText('New attempt');
+  await page.getByRole('button', { name: 'Ask by text' }).click();
+  await expect(page.locator('#coach-answer')).toContainText('Step 2.');
 });
 
 test('coach answers locally when the server cannot be reached and fits a narrow screen', async ({ page }) => {

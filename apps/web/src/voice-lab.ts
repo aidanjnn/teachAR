@@ -80,6 +80,7 @@ element('#app').innerHTML = `
         <select id="steps"></select>
         <button id="coach-connect" class="primary" type="button">Connect coach</button>
         <button id="coach-ask" type="button" disabled>Ask by voice</button>
+        <button id="coach-repeat" type="button" disabled>Repeat step</button>
         <span class="badge" id="coach-mode" data-mode="idle">idle</span>
         <span id="coach-note" class="status"></span>
       </div>
@@ -197,12 +198,16 @@ element('#use-fixture').addEventListener('click', () => {
 
 // ---- Labels ---------------------------------------------------------------
 let labels: LabelResult | null = null;
-function simulatedSegments(durationMs: number, count: number): LabelSegment[] {
-  const total = Math.max(count, Math.round(durationMs));
+/** Equal slices over the span the narration actually covers (spans are shifted by the audio start offset). */
+function simulatedSegments(result: TranscriptResult, count: number): LabelSegment[] {
+  const first = result.spans.length ? Math.min(...result.spans.map(span => span.startMs)) : 0;
+  const last = result.spans.length ? Math.max(...result.spans.map(span => span.endMs)) : result.audioDurationMs;
+  const start = Math.max(0, first);
+  const end = Math.max(start + count, last);
   return Array.from({ length: count }, (_, index) => ({
     id: `sim-${index + 1}`,
-    startMs: Math.round((total * index) / count),
-    endMs: index === count - 1 ? total : Math.round((total * (index + 1)) / count),
+    startMs: start + Math.round(((end - start) * index) / count),
+    endMs: index === count - 1 ? end : start + Math.round(((end - start) * (index + 1)) / count),
   }));
 }
 element('#label').addEventListener('click', async () => {
@@ -210,7 +215,7 @@ element('#label').addEventListener('click', async () => {
   const status = element('#labels-status');
   setStatus(status, 'Generating…');
   try {
-    const segments = simulatedSegments(transcript.audioDurationMs, Number(element<HTMLSelectElement>('#segment-count').value));
+    const segments = simulatedSegments(transcript, Number(element<HTMLSelectElement>('#segment-count').value));
     const response = await fetch('/api/voice/labels', {
       method: 'POST', headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(35_000),
       body: JSON.stringify({ schemaVersion: 1, segments, transcript, taskContext: 'Four large lightweight parts assembled on a 50 by 35 cm mat.' }),
@@ -230,6 +235,8 @@ element('#label').addEventListener('click', async () => {
 // ---- Coach ----------------------------------------------------------------
 let coach: CoachApi | null = null;
 let stepRevision = 0;
+let attemptCounter = 1;
+let askInFlight = false;
 const stepsSelect = element<HTMLSelectElement>('#steps');
 const askButton = element<HTMLButtonElement>('#coach-ask');
 const askTextButton = element<HTMLButtonElement>('#coach-ask-text');
@@ -249,7 +256,8 @@ function renderMode(mode: string, note = '') {
   element('#coach-note').textContent = note;
   askButton.disabled = !(mode === 'live' || mode === 'listening');
   askButton.textContent = mode === 'listening' ? 'Stop listening' : 'Ask by voice';
-  askTextButton.disabled = mode === 'idle' || mode === 'connecting';
+  element<HTMLButtonElement>('#coach-repeat').disabled = mode === 'idle' || mode === 'connecting';
+  askTextButton.disabled = askInFlight || mode === 'idle' || mode === 'connecting';
 }
 function appendLog(role: 'learner' | 'coach', delta: string) {
   const log = element('#coach-log');
@@ -284,6 +292,7 @@ element('#coach-connect').addEventListener('click', async () => {
   coach = createCoach({ context: buildContext(), audioSink: element<HTMLAudioElement>('#coach-audio') });
   coach.onState(state => renderMode(state.mode, state.liveClosed ? 'Live session ended; text answers continue.' : ''));
   coach.onTranscript(entry => appendLog(entry.role, entry.delta));
+  coach.onLiveError(error => { element('#coach-note').textContent = `Live session error: ${error.code}`; });
   coach.onAnswer(answer => {
     element('#coach-answer').textContent = answer.answer;
     element('#coach-source').textContent = `${answer.source}${answer.model ? ` (${answer.model})` : ''}`;
@@ -295,11 +304,19 @@ element('#coach-connect').addEventListener('click', async () => {
 askButton.addEventListener('click', () => { coach?.ask(); });
 askTextButton.addEventListener('click', async () => {
   const question = element<HTMLInputElement>('#question').value.trim();
-  if (!coach || !question) return;
-  askTextButton.disabled = true;
+  if (!coach || !question || askInFlight) return;
+  askInFlight = true;
+  renderMode(coach.state.mode);
   const answer = await coach.askText(question);
-  askTextButton.disabled = false;
+  askInFlight = false;
+  renderMode(coach.state.mode);
   if (!answer) element('#coach-answer').textContent = 'Answer dropped: the step changed before it arrived.';
+});
+element('#coach-repeat').addEventListener('click', () => {
+  if (!coach) return;
+  attemptCounter += 1;
+  coach.setAttempt(`attempt-${attemptCounter}`);
+  element('#coach-answer').textContent = 'New attempt started. Earlier answers no longer apply.';
 });
 stepsSelect.addEventListener('change', () => {
   if (!coach) return;

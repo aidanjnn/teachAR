@@ -53,12 +53,6 @@ export function backendInstructions(context: CoachContext): string {
   ].join('\n');
 }
 
-/** Content for session.thinking.append after a step change. Stays far below the 500-token limit. */
-export function stepChangeContext(context: CoachContext): string {
-  const { step, index } = currentStep(context);
-  return `The learner is now on step ${index + 1} of ${context.steps.length}: "${step.title}". Instruction: ${step.instruction} Questions about earlier steps are stale; answer for this step.`;
-}
-
 export const CoachModelOutputSchema = z.object({ answer: z.string(), grounded: z.boolean() });
 export type CoachModelOutput = z.infer<typeof CoachModelOutputSchema>;
 

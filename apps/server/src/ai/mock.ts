@@ -13,7 +13,9 @@ export interface MockProviderOptions {
 /** Deterministic provider for tests and keyless development. It never reports model provenance. */
 export function createMockProvider(options: MockProviderOptions): AiProvider {
   let fixture: Promise<TranscriptResult> | null = null;
-  const loadFixture = () => (fixture ??= readFile(options.transcriptFixturePath, 'utf8').then(text => TranscriptResultSchema.parse(JSON.parse(text))));
+  const loadFixture = () => (fixture ??= readFile(options.transcriptFixturePath, 'utf8')
+    .then(text => TranscriptResultSchema.parse(JSON.parse(text)))
+    .catch((error: unknown) => { fixture = null; throw error; }));
   return {
     name: 'mock',
     async transcribe(input: TranscribeInput) {

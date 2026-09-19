@@ -11,7 +11,8 @@ import type { AiProvider } from '../ai/provider.js';
 export const AUDIO_ESSENCES = [...new Set(AUDIO_MIME_TYPES.map(type => type.split(';')[0] ?? type))];
 const TRANSCRIBE_TIMEOUT_MS = 60_000;
 const LABEL_ROUTE_TIMEOUT_MS = 30_000;
-const SESSION_TIMEOUT_MS = 20_000;
+/** Shorter than the browser's 15 s live-start deadline so an abandoned request cannot leave a billed session behind. */
+const SESSION_TIMEOUT_MS = 12_000;
 
 function unavailable(reply: FastifyReply, status: number, body: VoiceUnavailable) {
   return reply.code(status).header('Cache-Control', 'no-store').send(body);
@@ -44,8 +45,10 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
       const duration = headerNumber(request.headers['x-audio-duration-ms'], { min: 1, max: MAX_RECORDING_DURATION_MS });
       if (offset === 'invalid' || duration === 'invalid') return unavailable(reply, 400, { error: 'invalid_request', message: 'Audio offset or duration header is out of range.' });
       const mimeType = String(request.headers['content-type'] ?? '').replace(/\s+/g, '').toLowerCase();
+      // A view over the parsed body; File() honours the offset/length so nothing is copied again.
+      const bytes = new Uint8Array(body.buffer as ArrayBuffer, body.byteOffset, body.byteLength);
       const result = await provider.transcribe({
-        bytes: new Uint8Array(body), mimeType, audioStartOffsetMs: offset ?? 0, audioDurationHintMs: duration, signal: AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS),
+        bytes, mimeType, audioStartOffsetMs: offset ?? 0, audioDurationHintMs: duration, signal: AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS),
       });
       return reply.header('Cache-Control', 'no-store').send(TranscriptResultSchema.parse(result));
     });
@@ -62,7 +65,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
       if (!parsed.success) return unavailable(reply, 400, { error: 'invalid_request', message: 'Coach request failed validation.' });
       let answer: CoachAnswer;
       try {
-        answer = await provider.coachText(parsed.data, AbortSignal.timeout(COACH_TEXT_DEADLINE_MS + 500));
+        answer = await provider.coachText(parsed.data, AbortSignal.timeout(COACH_TEXT_DEADLINE_MS - 500));
       } catch {
         answer = fallbackAnswer(parsed.data);
       }
@@ -72,7 +75,16 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
     voice.post('/api/live/sessions', { bodyLimit: 128 * 1024 }, async (request, reply) => {
       const parsed = CoachSessionRequestSchema.safeParse(request.body);
       if (!parsed.success) return unavailable(reply, 400, { error: 'invalid_request', message: 'Session request failed validation.' });
-      const result = await provider.createLiveSession(parsed.data, AbortSignal.timeout(SESSION_TIMEOUT_MS));
+      // Stop talking to OpenAI as soon as the client gives up, so no session is created for nobody.
+      const clientGone = new AbortController();
+      const onClose = () => { clientGone.abort(new DOMException('Client disconnected', 'AbortError')); };
+      reply.raw.once('close', onClose);
+      let result;
+      try {
+        result = await provider.createLiveSession(parsed.data, AbortSignal.any([clientGone.signal, AbortSignal.timeout(SESSION_TIMEOUT_MS)]));
+      } finally {
+        reply.raw.off('close', onClose);
+      }
       if ('error' in result) return unavailable(reply, 503, result);
       return reply.code(201).header('Cache-Control', 'no-store').send(CoachSessionResponseSchema.parse(result));
     });

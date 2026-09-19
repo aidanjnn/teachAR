@@ -81,6 +81,64 @@ describe('coach live path', () => {
   });
 });
 
+function trackedStream() {
+  const track = { enabled: true, stopped: false, stop() { this.stopped = true; } };
+  const stream = { getAudioTracks: () => [track], getTracks: () => [track] } as unknown as MediaStream;
+  return { stream, track };
+}
+
+describe('coach microphone lifecycle', () => {
+  it('disables the local track while muted and releases it when the session closes', async () => {
+    const fake = fakeTransport();
+    const { stream: mic, track } = trackedStream();
+    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => mic, transportFactory: () => fake.transport });
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    expect(track.enabled).toBe(false);
+    coach.ask();
+    expect(track.enabled).toBe(true);
+    coach.ask();
+    expect(track.enabled).toBe(false);
+    fake.closeFromServer();
+    expect(track.stopped).toBe(true);
+    expect(coach.state.mode).toBe('text');
+  });
+  it('releases a stream acquired after dispose and stops notifying', async () => {
+    const fake = fakeTransport();
+    const { stream: mic, track } = trackedStream();
+    let grant: ((stream: MediaStream) => void) | null = null;
+    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: () => new Promise(resolve => { grant = resolve; }), transportFactory: () => fake.transport });
+    let notifications = 0;
+    coach.onState(() => { notifications += 1; });
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    const before = notifications;
+    coach.dispose();
+    (grant as ((stream: MediaStream) => void) | null)?.(mic);
+    await connecting;
+    expect(track.stopped).toBe(true);
+    expect(fake.sent).toEqual([]);
+    expect(notifications).toBe(before);
+  });
+  it('surfaces live error events and sends context on a new attempt', async () => {
+    const fake = fakeTransport();
+    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake.transport });
+    const errors: string[] = [];
+    coach.onLiveError(error => errors.push(error.code));
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    fake.emit({ type: 'error', event_id: 'e9', error: { code: 'data_channel_permissions', message: 'denied', type: 'invalid_request_error' } });
+    expect(errors).toEqual(['data_channel_permissions']);
+    coach.setAttempt('attempt-2');
+    expect(fake.sent.at(-1)?.type).toBe('session.thinking.append');
+    expect(coach.state.attemptId).toBe('attempt-2');
+  });
+});
+
 describe('coach text path', () => {
   it('returns the server answer for the current step and drops one that arrives after a step change', async () => {
     const gate = { release: null as (() => void) | null };

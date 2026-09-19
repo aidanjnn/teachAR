@@ -27,7 +27,8 @@ export async function createApp(config: ServerConfig, options: { webRoot?: strin
   const app = Fastify({
     logger: options.logger ?? false,
     logController: new LogController({ disableRequestLogging: true }),
-    bodyLimit: 64 * 1024, requestTimeout: 10_000,
+    // requestTimeout bounds receiving the whole request; narration uploads of up to 20 MiB need more than 10 s on Wi-Fi.
+    bodyLimit: 64 * 1024, requestTimeout: 60_000,
   });
   app.get('/api/health', async (_request, reply) => {
     const writable = await storageWritable(config.dataDir);

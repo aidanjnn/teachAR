@@ -1,4 +1,6 @@
-import { resolve } from 'node:path';
+import { copyFile, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CoachRequestSchema, LabelRequestSchema } from '@trail/contracts';
 import { createMockProvider } from '../../src/ai/mock.js';
@@ -31,6 +33,16 @@ describe('mock provider', () => {
     const result = await provider.label(LabelRequestSchema.parse({ schemaVersion: 1, segments: segmentsRaw.segments, transcript: transcriptRaw }), signal);
     expect(result.provenance.labels).toBe('fallback');
     expect(result.labels).toHaveLength(3);
+  });
+  it('retries the fixture read after a failure instead of caching the rejection', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'trail-mock-'));
+    const path = join(dir, 'transcript.json');
+    const flaky = createMockProvider({ transcriptFixturePath: path });
+    const input = { bytes: new Uint8Array(4), mimeType: 'audio/webm', audioStartOffsetMs: 0, audioDurationHintMs: null, signal };
+    await expect(flaky.transcribe(input)).rejects.toBeTruthy();
+    await copyFile(resolve(repositoryRoot, 'fixtures/narration-transcript.v1.json'), path);
+    expect((await flaky.transcribe(input)).spans).toHaveLength(4);
+    await rm(dir, { recursive: true, force: true });
   });
   it('answers coach questions with the stored step and refuses live sessions', async () => {
     const answer = await provider.coachText(coach, signal);

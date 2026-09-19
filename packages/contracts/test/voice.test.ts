@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CoachAnswerSchema, CoachContextSchema, CoachRequestSchema, CoachSessionRequestSchema, HealthSchema,
-  LabelRequestSchema, LabelResultSchema, LabelSegmentsSchema, NarrationCaptureSchema, TranscriptResultSchema,
+  LabelRequestSchema, LabelResultSchema, LabelSegmentsSchema, NarrationCaptureSchema, TranscriptResultSchema, describeStepChange,
 } from '../src/index.js';
 import transcriptRaw from '../../../fixtures/narration-transcript.v1.json';
 import segmentsRaw from '../../../fixtures/label-segments.v1.json';
@@ -80,6 +80,10 @@ describe('voice contracts', () => {
     expect(NarrationCaptureSchema.safeParse(capture).success).toBe(true);
     expect(NarrationCaptureSchema.safeParse({ ...capture, mimeType: 'audio/flac' }).success).toBe(false);
     expect(NarrationCaptureSchema.safeParse({ ...capture, sizeBytes: 0 }).success).toBe(false);
+  });
+
+  it('describes a step change for the coach in one shared sentence', () => {
+    expect(describeStepChange({ ...context, currentStepId: 'seg-2' })).toBe('The learner is now on step 2 of 2: "Insert the support". Instruction: Drop the support into the base. Questions about earlier steps are stale; answer for this step.');
   });
 
   it('lets health report the openai provider but nothing else', () => {

@@ -45,7 +45,8 @@ export function buildLiveSessionParams(
 
 export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider {
   const labelTimeoutMs = options.labelTimeoutMs ?? LABEL_TIMEOUT_MS;
-  const coachTimeoutMs = options.coachTimeoutMs ?? COACH_TEXT_DEADLINE_MS;
+  // Finish before the browser's own deadline so the server fallback can still reach the client.
+  const coachTimeoutMs = options.coachTimeoutMs ?? COACH_TEXT_DEADLINE_MS - 1_000;
   return {
     name: 'openai',
     async transcribe(input: TranscribeInput) {
