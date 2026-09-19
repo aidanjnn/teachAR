@@ -146,6 +146,9 @@ namespace Trail.Runtime.Record
         }
         public void StartRecording(double durationMs = 5000)
         {
+            if (capture != null) { Status = "Recording is already active; stop before starting another capture."; return; }
+            if (string.IsNullOrWhiteSpace(LayoutId) || LayoutId.Length > 124)
+            { Status = "A layout ID of 1–124 characters is required."; return; }
             if (Registration == null || Source == null || LatestWorkspaceObservation == null ||
                 Clock() - LatestWorkspaceObservation.TimestampMs > 100 ||
                 (UseLeftHand ? LatestWorkspaceObservation.Left : LatestWorkspaceObservation.Right).Status != "valid")
@@ -172,7 +175,7 @@ namespace Trail.Runtime.Record
                 Status = "Captured " + LastRecording.Frames.Length + " frames. Save through the recording store, or Replay.";
                 RecordingCompleted?.Invoke(LastRecording);
             }
-            catch (InvalidOperationException error) { Status = error.Message; }
+            catch (Exception error) when (error is InvalidOperationException || error is ContractException || error is ArgumentException) { Status = "Capture could not be finalized: " + error.Message; }
         }
         public void LoadRecording(Recording recording)
         {
