@@ -426,3 +426,8 @@ TRAIL-03 review follow-up: `MotionChunk` now rejects non-increasing `tMs` within
 TRAIL-04 review follow-up: capture panel labels now arm after a 0.6 s fresh index-tip dwell and execute only on a tracked withdrawal, matching the on-screen instruction; tracking loss, stale or non-monotonic samples and drift to another label cancel the armed state. Merged the contracts chunk-order fix from `codex/shared-contracts`. `pnpm check` and the .NET capture harness passed; the panel is a MonoBehaviour, so this is unverified in Unity/headset. Manifest/lockfile ownership and Unity CI gates remain open for the platform owner.
 
 TRAIL-05 review follow-up: `Preload` now loads the recording into capture before dispatching `Preloaded`, so capture's synchronous invalidation is absorbed by the Preload phase and the first attempt stays `attempt-1`, revision 1. Merged the capture-panel and contracts fixes from `codex/capture-calibration-replay`. Guide harness passed (.NET; not Unity/headset). The user-confirmed-while-occluded question (reviewer P1 versus the existing `ManualOcclusion` scenario) is left for a product decision.
+
+## 2026-09-19 — PR #7 babysit: tracking loss cannot confirm
+
+- `GuideReducer.Confirm` and `GuideControlPanel` no longer accept user confirmation in `TrackingLost`; confirmation resumes after reacquisition (Guiding/Holding). The `ManualOcclusion` scenario previously asserted the opposite and was realigned with the product invariant that tracking loss cannot complete a step.
+- Automated evidence: guide-harness (.NET) green. No Unity Editor/PlayMode or headset evidence.
