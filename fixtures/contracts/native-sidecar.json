@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "recordingId": "contract-recording",
+  "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+  "trackingSessionId": "tracking-1",
+  "originRevision": 1,
+  "provider": "synthetic",
+  "editorVersion": "fixture",
+  "sdkVersion": "fixture",
+  "skeleton": "openxr-26",
+  "adapterVersion": "canonical-v1",
+  "clock": {
+    "source": "native-monotonic",
+    "offsetToMonotonicMs": 0,
+    "uncertaintyMs": 0
+  },
+  "confidencePolicy": "all-required-joints-valid",
+  "source": "synthetic-fixture"
+}
