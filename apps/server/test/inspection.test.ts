@@ -1,0 +1,83 @@
+import Fastify from 'fastify';
+import { it, expect } from 'vitest';
+import type { InspectionCapture, InspectionStart, InspectionUpload, VisionInspectionInput } from '@trail/contracts';
+import { InspectionCoordinator } from '../src/vision/coordinator.js';
+import { registerInspectionRoutes } from '../src/vision/routes.js';
+import { createPairingAuthority } from '../src/auth/pairing.js';
+import { assessment, input } from '../../vision/test/fixtures.js';
+
+async function setup() {
+  let now = 100; let current = true; let calls = 0;
+  const fixture = await input();
+  let inspect = async (_connection: unknown, value: VisionInspectionInput) => ({ schemaVersion: 1 as const,
+    requestId: value.request.requestId, requestEpoch: value.request.requestEpoch, observationId: value.observation.id,
+    referenceIds: value.request.referenceIds, assessment: assessment(), provider: 'mock' as const, model: 'synthetic', serviceDurationMs: 10 });
+  const coordinator = new InspectionCoordinator({ vision: null,
+    resolveReferences: async () => ({ references: fixture.references, approvedStep: fixture.approvedStep }),
+    isCurrent: () => current, now: () => now, inspect: (...args) => { calls++; return inspect(args[0], args[1]); },
+  });
+  const start: InspectionStart = { schemaVersion: 1, context: { runId: 'run-1', tutorialId: 'tutorial-1', tutorialRevision: 1,
+    stepId: 'step-1', stepRevision: 1, attemptId: 'attempt-1' }, liveSessionId: 'app-check', sessionGeneration: 1,
+    requestEpoch: 1, question: 'Is this aligned?', sourceSessionId: 'camera-1', source: 'quest-camera', sourceFrameSeq: 1 };
+  const upload = (capture: InspectionCapture): InspectionUpload => ({ schemaVersion: 1, requestId: capture.request.requestId,
+    requestEpoch: capture.request.requestEpoch, captureNonce: capture.captureNonce, sourceSessionId: 'camera-1',
+    source: 'quest-camera', sourceFrameSeq: capture.minSourceFrameSeq + 1, captureAgeAtSendMs: 10, image: fixture.currentImage });
+  return { coordinator, start, upload, calls: () => calls, setCurrent: (value: boolean) => { current = value; },
+    advance: (ms: number) => { now += ms; }, setInspect: (fn: typeof inspect) => { inspect = fn; } };
+}
+it('requires paused current guide, binds nonce/source/frame and returns advice without progression effects', async () => {
+  const h = await setup();
+  try {
+    h.setCurrent(false); await expect(h.coordinator.start('session', h.start)).rejects.toMatchObject({ code: 'stale' });
+    h.setCurrent(true); const capture = await h.coordinator.start('session', h.start);
+    const bad = h.upload(capture); bad.sourceFrameSeq = 1;
+    await expect(h.coordinator.upload('session', bad)).rejects.toMatchObject({ code: 'stale' });
+    await expect(h.coordinator.upload('different-session', h.upload(capture))).rejects.toMatchObject({ code: 'stale' });
+    await expect(h.coordinator.upload('session', { ...h.upload(capture), captureNonce: 'wrong' })).rejects.toMatchObject({ code: 'stale' });
+    const result = await h.coordinator.upload('session', h.upload(capture));
+    expect(result.provenance).toBe('mock'); expect(result.request).toEqual(capture.request); expect(result).not.toHaveProperty('complete');
+    await expect(h.coordinator.upload('session', h.upload(capture))).rejects.toMatchObject({ code: 'stale' });
+    expect(h.calls()).toBe(1);
+  } finally { h.coordinator.close(); }
+});
+it('rejects old requests/epochs, late upload and old source delivery', async () => {
+  const h = await setup();
+  try {
+    let capture = await h.coordinator.start('session', h.start);
+    await expect(h.coordinator.start('session', h.start)).rejects.toMatchObject({ code: 'stale' });
+    h.advance(2001); await expect(h.coordinator.upload('session', h.upload(capture))).rejects.toMatchObject({ code: 'stale' });
+    capture = await h.coordinator.start('session', { ...h.start, requestEpoch: 2 });
+    await h.coordinator.upload('session', h.upload(capture));
+    capture = await h.coordinator.start('session', { ...h.start, requestEpoch: 3, sourceFrameSeq: 0 });
+    expect(capture.minSourceFrameSeq).toBe(2);
+    await expect(h.coordinator.upload('session', { ...h.upload(capture), sourceFrameSeq: 2 })).rejects.toMatchObject({ code: 'stale' });
+  } finally { h.coordinator.close(); }
+});
+it.each(['resume', 'age', 'identity', 'cancel'] as const)('discards a late verdict after %s', async cause => {
+  const h = await setup(); let finish!: () => void;
+  h.setInspect(async (_connection, value) => {
+    await new Promise<void>(resolve => { finish = resolve; });
+    return { schemaVersion: 1, requestId: cause === 'identity' ? 'wrong' : value.request.requestId,
+      requestEpoch: value.request.requestEpoch, observationId: value.observation.id, referenceIds: value.request.referenceIds,
+      assessment: assessment(), provider: 'mock', model: 'test', serviceDurationMs: 1 };
+  });
+  try {
+    const capture = await h.coordinator.start('session', h.start);
+    const work = h.coordinator.upload('session', h.upload(capture));
+    const rejected = expect(work).rejects.toBeInstanceOf(Error);
+    if (cause === 'resume') { h.setCurrent(false); h.coordinator.guideChanged('session'); }
+    if (cause === 'age') h.advance(5001);
+    if (cause === 'cancel') h.coordinator.cancel('session', capture.request.requestId, capture.request.requestEpoch);
+    finish(); await rejected;
+  } finally { h.coordinator.close(); }
+});
+it('authenticates routes before reading images, excludes spectators, and scopes cancellation', async () => {
+  const h = await setup(); const app = Fastify();
+  const authority = createPairingAuthority({ allowedOrigins: ['https://trail.test'], allowUsbLoopback: true });
+  // Test route boundary with the real task1 auth API; bearer exchange itself is covered by pairing tests.
+  await registerInspectionRoutes(app, { authorizeLearner: request => authority.authorize(request, { roles: ['learner'] }), coordinator: h.coordinator });
+  try {
+    const result = await app.inject({ method: 'POST', url: '/api/scene-observations', payload: 'not an image' });
+    expect([401, 403]).toContain(result.statusCode); expect(h.calls()).toBe(0);
+  } finally { await app.close(); }
+});

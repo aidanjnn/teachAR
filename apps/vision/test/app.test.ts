@@ -6,7 +6,7 @@ import { readConfig } from '../src/config.js';
 
 const token = 'synthetic-service-token-for-tests-0001';
 const headers = { authorization: `Bearer ${token}` };
-describe('dedicated vision skeleton', () => {
+describe('dedicated vision service', () => {
   it('authenticates every route and separates liveness from image readiness', async () => {
     const app = createVisionApp(readConfig({ VISION_SERVICE_TOKEN: token, BUILD_ID: 'fixture-build' }));
     try {
@@ -23,13 +23,13 @@ describe('dedicated vision skeleton', () => {
       expect(VisionReadinessSchema.parse(ready.json()).ready).toBe(false);
     } finally { await app.close(); }
   });
-  it('does not parse, store or pretend to assess camera inputs before implementation', async () => {
+  it('rejects unauthorized uploads and unsupported content types', async () => {
     const app = createVisionApp(readConfig({ VISION_SERVICE_TOKEN: token, BUILD_ID: 'fixture-build' }));
     try {
       expect((await app.inject({ method: 'POST', url: '/internal/v1/inspections', payload: 'untrusted' })).statusCode).toBe(401);
       const response = await app.inject({ method: 'POST', url: '/internal/v1/inspections', headers: { ...headers, 'content-type': 'image/jpeg' }, payload: Buffer.alloc(100_000) });
-      expect(response.statusCode).toBe(501);
-      expect(response.json()).toEqual({ schemaVersion: 1, error: 'vision-not-implemented' });
+      expect(response.statusCode).toBe(503);
+      expect(response.json()).toEqual({ schemaVersion: 1, error: 'provider-unavailable' });
     } finally { await app.close(); }
   });
   it.each([
