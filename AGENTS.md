@@ -26,7 +26,7 @@ again at each workflow boundary. Keep unrelated changes intact.
 Canonical skills live in `.agents/skills/workflow/`. `.claude/skills/` and
 `.cursor/skills/` contain relative discovery links; edit the canonical files.
 `CLAUDE.md` points here so guidance has one owner. These workflows are adapted
-from Copperlane's delivery skills for Trail's smaller TypeScript/WebXR project.
+from Copperlane's delivery skills for Trail's Unity headset and TypeScript web/server project.
 
 | Request | Skill |
 | --- | --- |
@@ -48,31 +48,42 @@ authorized by applicable instructions.
 
 ## Intended stack and ownership
 
-Use the plan's pnpm workspace: strict TypeScript, Vite with plain HTML/CSS and
-Three.js, one Fastify server, Zod contracts, and pure motion logic. Keep the
-baseline small: local files and IndexedDB, no accounts/cloud database, Unity,
-React framework, ORM, or separate worker service without an agreed scope change.
+The user-approved target is **Unity + Meta XR** for a standalone Quest 3S
+Android app in `apps/quest`, with the existing pnpm TypeScript/Fastify workspace
+for server, authoring, desktop diagnostics and spectator. Unity setup is planned
+in TRAIL-18, not implemented. Do not install IWSDK/Spatial SDK or downgrade Vite.
+Use Unity OpenXR, Meta XR Core/Interaction and MRUK with a tested native WebRTC
+adapter; freeze compatible exact versions during setup. Keep accounts/cloud DB,
+ORM, React framework and separate worker services out of the baseline.
 
 | Planned location | Responsibility / owner |
 | --- | --- |
-| `packages/contracts/src/` | Zod schemas and inferred types; integration coordinates changes |
-| `packages/motion/src/` | Pure transforms, segmentation, matcher, guide reducer; motion |
-| `apps/web/src/xr/`, `record/` | XR session, named hand joints, calibration, capture; XR/spatial |
-| `apps/web/src/guide/`, `replay/` | Runtime adapters and desktop fixtures; XR + motion |
-| `apps/web/src/dashboard/`, `storage/` | Small review/guide/spectator UI and IndexedDB; integration |
-| `apps/server/src/ai/`, browser audio capture | Transcription and bounded semantic labeling; voice/AI |
-| Other server code, manifests, lockfile, CI | Routes, files, relay, known-good build; integration |
+| `packages/contracts/src/` | Zod wire schemas; integration coordinates serialized changes |
+| `packages/motion/src/` | Existing math and offline authoring/reference logic; motion |
+| `apps/quest/Assets/Trail/Contracts/`, `Motion/` | Pure C# DTO validation/calibration/matcher/reducer; motion |
+| `apps/quest/Assets/Trail/Runtime/XR/`, `Record/`, `Guide/` | Native tracking, calibration UI, capture, guide integration; XR, voice owns narration files |
+| `apps/quest/Assets/Trail/Runtime/Scene/`, `Presentation/` | MRUK snapshots, separate ghost and world-space UI; XR |
+| `apps/quest/Assets/Trail/Runtime/Coach/`, server `ai/` | Native mic/WebRTC, Live, labels and Responses assessment; voice/AI |
+| `apps/quest/Assets/Trail/Runtime/Network/`, `Storage/` | Native pairing/API and private-file persistence; integration |
+| `apps/quest/Packages/`, `ProjectSettings/`, main scene/build scripts | Compatible Unity packages/settings and build; integration |
+| `apps/web/`, other server code, manifests, CI | Desktop review/replay/spectator, files, relay and checks; integration |
 
-`contracts` imports Zod only. `motion` imports contracts and pure math only.
-Both stay independent of DOM/WebXR types, Three.js, Node filesystem, provider
-SDKs, and hardware. Web/server adapters execute effects outside the reducer.
-The reducer receives time and observations; it owns no timers or I/O.
+C# Contracts/Motion must not reference UnityEngine, Meta SDKs, networking, files,
+provider SDKs or hardware. TypeScript contracts import Zod only; TypeScript
+motion imports contracts/pure math only. Runtime adapters execute effects. The
+reducer receives time and fresh observations, with no timers/I/O. Unity alone
+owns live learner progression; server/desktop logic does not compete with it.
 
-Coordinate shared-schema changes with their consumers; include a fixture and
-version/migration note for serialized changes. Keep integration ownership of
-dependency and lockfile changes; avoid unrelated upgrades or refactors in
-another workstream. Freeze exact working dependencies and one lockfile after
-setup. Use `workspace:*` internally.
+Preserve the existing canonical 25-joint wire format and v1 imports. Map native
+OpenXR joints explicitly; keep provider/session/clock metadata in a versioned
+sidecar. Serialized changes require fixtures/migration notes and C#/Zod agreement.
+Use golden expected-result fixtures for shared math and strict parsing.
+
+Integration owns pnpm and Unity dependency/lockfile changes separately. Preserve
+`.meta` GUIDs, Force Text serialization and feature-owned prefabs; integration
+composes the main scene to avoid concurrent scene edits. Freeze exact editor/UPM
+versions in ProjectVersion/manifest/packages-lock and retain pnpm-lock.yaml for
+web/server. Use `workspace:*` only for internal pnpm packages.
 
 ## Product invariants
 
@@ -85,54 +96,75 @@ setup. Use `workspace:*` internally.
   registration, clears dwell, and requires recalibration. Verify transfer on a
   fourth mark excluded from fitting; never scale the motion or hide bad
   calibration with a larger tolerance.
-- The browser is the sole progression authority. The start gate precedes
+- Use one native XR provider/camera rig and tracking origin with locomotion off.
+  Sample fresh live hand data, never cached skins, synthetic/controller hands
+  or the expert ghost. Map 26 native OpenXR joints to 25 canonical names.
+  Explicitly convert Unity handedness, bone axes and native/audio/camera clocks;
+  test round trips and tracking gaps. Simulator/Editor input is synthetic.
+- The Unity headset is the sole progression authority. The start gate precedes
   checkpoint dwell; only consecutive fresh, valid active-hand samples count.
-  Tracking loss, stalls, pause, or visibility loss cannot complete a step.
+  Tracking loss, stalls, pause or focus loss cannot complete a step.
   Completion is once per run/step/attempt; Repeat starts a new attempt/revision.
 - AI labels fixed movement segments and answers from approved context. It cannot
   invent coordinates or advance the guide. Validate semantics as well as JSON;
   discard stale replies across request/run/tutorial/step/attempt revisions.
   Preserve model/manual/fallback provenance.
+- GPT Live conversation and on-demand visual coaching are required targets.
+  Live handles audio/text; a separate image-capable Responses request inspects
+  fresh source-labelled Quest MRUK frames against reviewed expert references.
+  A webcam is a disclosed reduced demo and does not pass headset-camera acceptance. Enforce
+  capture freshness and session/request generations; visible agreement is advice,
+  never a completion event or proof of hidden assembly properties.
 - Loaded guidance survives loss of AI/backend. This promises continued use of
-  an open, preloaded guide, not an untested cold offline browser launch.
+  an open, preloaded guide, not an untested cold offline app launch.
 - Say “Movement checkpoint reached.” Endpoint matching does not verify grasp,
   assembly, or the entire trajectory. Keep user-confirmed completion visible.
   Controller replay, fixtures, and manually edited labels have explicit limits.
 - Prioritize capture → calibration → replay → one local interactive step →
-  fresh multi-step transfer. Optional vision, conversation, telemetry, and haptics
-  follow demonstrated core gates. Thresholds in the plan need hardware tuning.
+  fresh multi-step transfer. Prove GPT Live audio and a fresh scene source in
+  parallel from the start. Extra sponsor integrations, continuous video and
+  haptics follow core gates. Thresholds in the plan need hardware tuning.
 - Keep physical demonstrations safe and forgiving: large lightweight parts,
   no dangerous tasks or precision-tool use.
 
 ## Boundaries and data
 
-Provider credentials stay on the server, never in `VITE_*`, browser bundles, or
-logs. Default optional providers/haptics to mocks. Keep raw narration, camera
+Provider credentials stay on the server, never in `VITE_*`, browser bundles,
+Unity assets/client configuration/APKs or logs. Default optional providers/haptics to mocks. Keep raw narration, camera
 frames, personal recordings, traces, and secrets out of Git; small real fixtures
 require explicit consent and inspection. Synthetic fixtures are preferred.
 
 Validate HTTP, WebSocket, import, and model inputs at their boundaries. Enforce
 bounded uploads/queues, server-generated storage IDs, path containment, atomic
 finalization, idempotent retries, immutable ready tutorials, and revision checks.
-Pair the demo session and check Origin, including on WebSocket upgrade, before
-exposing a tunnel. Spectators cannot control progression. See plan sections 6–8
+Pair the demo session before exposure: browser cookies require Origin checks,
+including WebSocket upgrade; native HTTP/WS requires a scoped bearer token even
+when Origin is absent. Use HTTPS/WSS except explicitly scoped USB-loopback dev
+configuration. Missing Origin never bypasses authentication. Spectators cannot control progression. See plan sections 6–8
 for exact contracts and limits.
 
 ## Checks and evidence
 
 Use [.agents/references/validation.md](.agents/references/validation.md) to select
-checks. Once implemented, `pnpm check` is the shared typecheck/test/build gate;
-run relevant fixture and `pnpm test:e2e` checks as well. Do not invent scripts,
+checks. Existing `pnpm check`, fixture and Playwright checks cover web/server.
+Native changes additionally require the implemented Unity EditMode/PlayMode and
+Android ARM64/IL2CPP build gates; green pnpm checks cannot validate native code.
+Unity wrappers/CI remain planned; inspect before invoking them and report editor
+activation/licensing or missing-check limitations explicitly. Do not invent scripts,
 claim unavailable checks passed, or install an application just to check docs.
 Normal edits use focused checks; complete signoff and code PR preparation use
 the full available gate. Existing applicable checks must pass or be reported as
 failing/unavailable; never weaken a check to pass it.
 
 Report automated, desktop fixture, live provider, and headset/human evidence
-separately. When hardware tests run, record commit, actual device/Browser/OS,
+separately. When hardware tests run, record commit, actual device/OS/APK/editor/SDK versions,
 scenario, measured result, and remaining issues in `docs/validation.md`. That
-file is created when evidence exists. Desktop tests cannot prove physical
+file is created when evidence exists. Editor, simulator and desktop tests cannot prove physical
 transfer, simultaneous mic/XR/hands/casting, or a novice's successful run.
+
+Keep `docs/codex-log.md` current with substantive research, decisions, edits and
+validation; preserve historical entries and distinguish planned, automated,
+live-provider and headset evidence. Do not log secrets or raw media.
 
 ## Git and delivery
 

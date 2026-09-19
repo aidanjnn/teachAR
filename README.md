@@ -15,6 +15,12 @@ Recording, calibration, learner progression, persistence, live AI, pairing, and
 headset validation remain planned. The experience below describes the target
 product; the current screen is a diagnostic fixture.
 
+**Selected headset stack:** Unity + Meta XR, using C#, Unity OpenXR,
+Core/Interaction SDK and MRUK camera access. The native project is planned at
+`apps/quest`; it does not exist yet. The current Three.js app remains a desktop
+diagnostic. [The migration plan](docs/plan.md#unity-migration-sequence-owned-by-integration-and-xr)
+preserves the web/server while adding native build, capture, guidance and voice.
+
 ## The experience
 
 1. **Record.** The expert calibrates a marked mat, then performs and narrates a
@@ -27,18 +33,22 @@ product; the current screen is a diagnostic fixture.
 4. **Follow.** A translucent articulated ghost demonstrates each movement.
    Guidance responds to the learner's progress through the required motion
    gates and waits for a valid checkpoint hold before advancing.
-5. **Recover and ask.** Repeat, Pause, and Help remain accessible. Contextual
-   push-to-talk answers use the approved instructions; the local guide continues
-   if AI or the server disconnects after preload.
+5. **Talk and check.** Start a GPT Live conversation, then ask hands-free while
+   working. “Am I doing this right?” checks a fresh scene image against the
+   demonstrated step and gives spoken feedback. Repeat, Pause, and Resume stay
+   local; guidance continues if AI or the server disconnects after preload.
 
-The first demonstration uses four large, lightweight pieces on a rigid
-50 × 35 cm mat: place a base, insert a support, add a crosspiece, and fit a cap.
-Both people use the same layout and dominant hand. Three marks establish the
-workspace; a fourth independently checks alignment.
+The first two acceptance tasks are simple bottle and large LEGO-style assemblies
+on a rigid marked mat. Each uses a fresh recording and reviewed expert images
+through the same engine, without task-specific code. The storyboard's four-piece
+stand is a fallback. Expert and learner use the same starting layout and dominant
+hand within each tutorial. Three marks establish the workspace; a fourth checks alignment.
 
-Trail provides **spatial motion guidance**. “Movement checkpoint reached” means
-the tracked hand satisfied the configured movement conditions. It does not
-verify that an object was grasped or assembled correctly.
+Trail combines **spatial motion guidance and spoken visual coaching**.
+“Movement checkpoint reached” reports movement conditions. Camera feedback can
+assess visible placement, with uncertainty; it cannot prove hidden attachment,
+tightness, or a watertight seal. The [storyboard](docs/mockups/translucent-assembly-2026-09-19/guidance-sequence.png)
+is the intended visual direction, not a headset-validated screenshot.
 
 ## Target architecture
 
@@ -54,34 +64,46 @@ flowchart LR
     Hands[Live learner hand poses] --> Guide
     Guide --> Feedback[Ghost hands, path cues, checkpoints]
     Guide -. state snapshots .-> Spectator[Laptop spectator view]
-    Guide -. optional request .-> Coach[Contextual voice help]
+    Guide -. current step .-> Coach[Fastify coaching coordinator]
+    Headset[Quest microphone and speaker] <-->|WebRTC| Live[GPT Live conversation]
+    Live <-->|sideband| Coach
+    Scene[Fresh camera image and expert reference] --> Vision[Responses visual assessor]
+    Vision --> Coach
 ```
 
 | Layer | Planned technology and responsibility |
 | --- | --- |
-| Headset and desktop UI | TypeScript, Vite, HTML/CSS, Three.js, WebXR in Meta Browser |
-| Shared contracts | Zod schemas and inferred TypeScript types |
-| Motion runtime | Pure TypeScript transforms, segmentation, ordered gates, and guide reducer |
+| Headset runtime/UI | Unity + Meta XR, OpenXR, C#, world-space controls and separate articulated ghost |
+| Desktop UI | Existing TypeScript/Vite/HTML/CSS and Three.js for review, diagnostics and spectator |
+| Wire contracts | Zod schemas and strict C# DTO validators; shared versioned JSON fixtures |
+| Motion runtime | Pure C# headset engine; TypeScript offline authoring/math retained with golden fixtures |
 | Backend | One Fastify process for uploads, storage, jobs, AI, and WebSocket relay |
-| Persistence | Local files on the demo laptop and browser IndexedDB |
-| AI | OpenAI transcription, structured instruction labels, and contextual help |
-| Verification | Vitest, Fastify API tests, Playwright desktop flows, and separate headset trials |
+| Persistence | Laptop files and Unity private-file cache; optional desktop IndexedDB |
+| AI | Transcription/labels, GPT Live WebRTC conversation, and a separate Responses visual assessor |
+| Verification | Existing web tests plus planned Unity EditMode/PlayMode, APK builds and real headset trials |
 
-The browser owns progression. AI supplies semantics, never authoritative spatial
+The Unity headset owns progression. AI supplies semantics, never authoritative spatial
 coordinates or permission to advance a step. Shared motion logic receives time
 and observations explicitly; rendering, network, audio, and hardware stay in
 adapters. Calibration belongs to the current XR session and must be repeated
 after a reference-space reset or session restart.
 
-WebXR is the planned runtime. A native alternative is considered only if a
-measured browser limitation blocks a required core capability and a bounded
-native proof demonstrates a viable improvement.
+Unity supplies rendering/input components; Trail still implements recording,
+calibration, motion matching and AI coaching. Native coordinate/joint mapping and
+voice transport must pass the first standalone APK test; engine selection alone
+is not hardware evidence.
+
+GPT Live handles audio/text. Fresh native MRUK camera images go to a separate
+image-capable Responses request, with its findings returned to voice. A paired
+webcam is a development or disclosed reduced-demo source; headset-camera feedback
+is the target. See the [Live and scene design](docs/plan.md#gpt-live-conversation-and-fresh-visual-coaching).
 
 ## Repository map
 
 Available now:
 
 - [plan.md](docs/plan.md) — product scope, contracts, algorithms, build sequence, and acceptance criteria.
+- [team-plan.md](docs/team-plan.md) — four-person ownership, parallel assignments, handoffs, schedule, and integration gates.
 - [AGENTS.md](AGENTS.md) — coding conventions, package boundaries, and agent workflow index.
 - [.agents/skills/workflow/](.agents/skills/workflow/) — commit, PR, review, cleanup, verification, and QA skills.
 - [.agents/references/validation.md](.agents/references/validation.md) — guidance for selecting and reporting evidence.
@@ -89,10 +111,11 @@ Available now:
 Application layout (module responsibilities beyond the scaffold remain planned):
 
 ```text
-apps/web/             XR, recording, guidance, replay, review, and spectator UI
+apps/quest/           Planned Unity headset app: capture, guidance, camera and native voice
+apps/web/             Desktop review, synthetic replay and spectator UI
 apps/server/          Fastify routes, storage, AI, and session relay
 packages/contracts/  Versioned schemas and shared types
-packages/motion/     Pure calibration, segmentation, and progression logic
+packages/motion/     Existing pure math; planned offline authoring/reference logic
 fixtures/            Synthetic and explicitly approved real test recordings
 tests/e2e/           Desktop browser acceptance flows
 docs/                Device checks, contracts, demo instructions, and validation
@@ -103,6 +126,9 @@ data/                Private local recordings and generated assets; ignored by G
 
 Use Node **22.23.1** (see `.node-version`) and pnpm **11.3.0**. The dependency
 versions are pinned exactly in the package manifests and one `pnpm-lock.yaml`.
+The commands below describe the existing web/server scaffold. Unity requires a
+separate editor, Android tooling and UPM lockfile; pnpm does not build the headset
+app. Exact native setup and check commands are added when TRAIL-18 is implemented.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -157,32 +183,17 @@ retains failure traces. No secrets or headset are needed. See
 
 ### Quest connection
 
-The confirmed hardware is a **Meta Quest 3S with controllers**. Installed OS and
-Browser versions, hand-tracking behavior, and application compatibility still
-need device validation. Controllers support setup and recovery; they do not
-provide a bare-hand skeleton.
+Hardware is **Meta Quest 3S with controllers**. Native setup remains planned:
+install Unity with Android build support, create the pinned OpenXR/Meta project,
+build an ARM64 APK and install it using ADB/MQDH. Controllers do not substitute
+for bare-hand capture. See [the setup plan](docs/plan.md#device-connection-and-runtime-validation)
+and [pending device gate](docs/device-check.md).
 
-The following wired connection procedure is **not yet verified on a headset**:
-
-1. Enable developer mode, connect a data-capable USB cable, and accept the
-   headset's debugging prompt. Install Android platform tools or Meta Quest
-   Developer Hub on the laptop.
-2. Confirm the device is authorized and reverse the development port:
-
-   ```sh
-   adb devices
-   adb reverse tcp:5173 tcp:5173
-   ```
-
-3. Open `http://localhost:5173` **in the headset browser**. Inspect the AR support
-   diagnostic and local-server status. `/api/health` should report writable storage.
-4. AR session entry, microphone capture, hand capture, and calibration are later
-   tickets. This scaffold only queries AR support; it cannot pass those gates.
-
-For the built app, run `pnpm build && pnpm start`, then reverse port 3001 instead.
-The scaffold deliberately binds to loopback. Pairing and Origin enforcement must
-be implemented before exposing a tunnel. No headset-verified commit exists yet;
-see [device check](docs/device-check.md) for the pending hardware gate.
+For the planned wired API path, `adb reverse tcp:3001 tcp:3001` connects the
+installed app to the laptop Fastify server. Native pairing, scoped development
+cleartext policy and camera/mic permissions must be implemented and tested first.
+Opening the existing site in Quest Browser remains only a scaffold diagnostic;
+it does not launch the Unity app. Keep the unpaired scaffold on loopback.
 
 ## Build milestones
 
@@ -192,15 +203,18 @@ recovery milestone, with any reduced capabilities disclosed.
 | Milestone | Required evidence |
 | --- | --- |
 | Workspace and device baseline | Reproducible install/check, desktop fixture, headset health and AR entry |
+| Unity migration | Pinned editor/SDKs, standalone APK, C#/TS fixture compatibility, preserved web checks, native hand/camera/audio proof |
 | Spatial proof | Fresh real hand recording replays after a second person's independent calibration |
 | One interactive step | Learner advances at their own pace; tracking loss cannot falsely complete a step |
 | Multi-step transfer | Fresh 3–5-step recording saves/reloads; required motion gates cannot be skipped |
-| Natural authoring and help | Motion proposals and narration produce reviewed steps; contextual voice help works on a fresh run |
+| Natural authoring and coaching | Reviewed steps/references, GPT Live conversation and fresh-scene feedback work on headset |
+| Reusable engine | Two freshly recorded task families work without application code changes |
 | Quality and acceptance | Clear articulated ghost and feedback, finished review/spectator UI, recovery drills, three clean runs, and a non-builder trial |
 
 Implementation tickets and dependencies live in
-[plan section 17](docs/plan.md#17-immediate-tickets-to-create). Scene vision, optional
-sponsor integrations, and real haptics follow the core quality gates.
+[plan section 17](docs/plan.md#17-immediate-tickets-to-create). Live conversation
+and bounded scene inspection are core targets; additional sponsor integrations,
+continuous video analysis and real haptics follow the quality gates.
 
 ## Validation and limits
 
@@ -218,7 +232,7 @@ and remaining issues. The complete criteria are in
 - Guidance must pause safely on tracking loss, session interruption, or invalid
   calibration. It must never advance from stale poses or elapsed time in a gap.
 - Continuing a preloaded guide without the backend is a design requirement;
-  a cold offline browser launch is not promised.
+  cold offline native startup is a separate unverified acceptance case.
 - Manual labels, explicit markers, controller-only replay, and fixtures retain
   their provenance and cannot stand in for untested target capabilities.
 - Raw narration, camera frames, personal recordings, and secrets stay out of
