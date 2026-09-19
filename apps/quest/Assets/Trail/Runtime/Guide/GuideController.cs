@@ -28,6 +28,8 @@ namespace Trail.Runtime.Guide
         private GuideTelemetry telemetry;
         private double demoStartedMs, lastSnapshotMs;
         private int demoRevision;
+        private GuidePhase? publishedPhase;
+        private int publishedRevision = -1;
         private readonly Queue<GuideAction> actions = new Queue<GuideAction>();
         private List<int> cueFrames;
         private void OnEnable() => Bind();
@@ -56,7 +58,7 @@ namespace Trail.Runtime.Guide
             if (definition.Steps.Any(s => s.Targets.Any(t => t.Gesture != GuideGesture.Any)))
                 throw new NotSupportedException("Pinch/open matcher needs a device-validated gesture adapter. Review this tutorial with gesture any.");
             if (Session != null) Session.Transitioned -= OnTransition;
-            Ghost.ClearGuideFrame(); actions.Clear(); LastCompletion = "";
+            Ghost.ClearGuideFrame(); actions.Clear(); LastCompletion = ""; publishedPhase = null; publishedRevision = -1;
             tutorial = loadedTutorial; recording = loadedRecording; replay = new MotionReplay(recording);
             Session = new GuideSession(definition, Guid.NewGuid().ToString("N"));
             telemetry = new GuideTelemetry(pairedSessionId, Clock());
@@ -86,6 +88,14 @@ namespace Trail.Runtime.Guide
                     Wrist(observation.Left), Wrist(observation.Right))));
         }
         private static CanonicalPose? Wrist(HandSample hand) => hand != null && hand.Status == "valid" && hand.Joints != null && hand.Joints.TryGetValue("wrist", out var pose) ? pose : (CanonicalPose?)null;
+        // Re-pairing changes transport identity only. An open guide survives backend restarts.
+        public void RebindTelemetrySession(string pairedSessionId)
+        {
+            if (Session == null || telemetry == null) return;
+            telemetry.RebindSession(pairedSessionId);
+            lastSnapshotMs = Clock();
+            Publish(telemetry.SnapshotEvent(Session, lastSnapshotMs));
+        }
         // Inspection calls this on the main thread, outside Transitioned callbacks.
         // The returned event is the exact locally paused acknowledgment, using the shared sequence.
         public GuideEvent PauseForInspection()
@@ -151,6 +161,11 @@ namespace Trail.Runtime.Guide
                     LastCompletion = effect.Kind == GuideEffectKind.UserConfirmed ? "Step completed by user confirmation." : "Movement checkpoint reached.";
                     Publish(telemetry.CompletionEvent(Session, effect, Clock()));
                 }
+            }
+            if (publishedPhase != transition.State.Phase || publishedRevision != transition.State.StepRevision)
+            {
+                publishedPhase = transition.State.Phase; publishedRevision = transition.State.StepRevision;
+                lastSnapshotMs = Clock(); Publish(telemetry.SnapshotEvent(Session, lastSnapshotMs));
             }
             if (Transitioned != null)
                 foreach (Action<GuideTransition> listener in Transitioned.GetInvocationList())

@@ -389,3 +389,19 @@ Task 6 verification update: all four real Chromium scenarios now pass on isolate
 - Corrected toolchain discovery: AndroidPlayer with SDK/NDK/OpenJDK exists beside the editor bundle at `Editor/6000.3.24f1/PlaybackEngines`; the prior absence note checked only `Unity.app/Contents/PlaybackEngines`. Real build execution, not that incomplete directory check, determines availability. Trail runtime/editor/test assemblies have compiled in Unity; setup is finishing initial package asset imports.
 - Native setup review found that OpenXR requires the new Input System (the editor default was legacy-only); setup now applies the actual serialized setting used by Unity's package. Meta also auto-generates a disabled local DevAgent resource containing a machine credential. Excluded that generated asset and metadata from Git, and added setup/final-build sanitization to clear the disabled tool's credentials/address before packaging. No application voice/provider implementation was changed.
 - Implemented visible native setup: a world-fixed head-directed 0.9-second dwell keyboard for bounded HTTPS endpoint and masked role-code input, explicit development USB preset, Pair, state/role, Disconnect/re-pair and UI-only recenter. It adds no hand provider or guide authority. Code clears on submit/pause/focus loss; endpoint/credentials remain memory-only. Actual pure C# input policy tests pass. Unity EditMode ran 2/2 passing against the imported project and compiled the new UI/runtime; PlayMode keyboard/lifecycle interaction tests are running. Physical legibility/dwell comfort are unverified.
+Task 4 actual native evidence: full-project Unity EditMode passed 10/10 tests and
+PlayMode passed 4/4, including the real GuideController/CaptureReplaySession
+lifecycle with injected synthetic hand events, independent calibration, ordered
+completion, inspection pause, resume, Repeat and origin reset. These runs compiled
+actual Unity/Meta assemblies and imported real packages; they do not establish
+physical/headset behavior. Android tooling was subsequently found in the editor's
+sibling PlaybackEngines directory, correcting the earlier absence claim. Parent
+assigned final combined IL2CPP build to task 6 to avoid duplicate heavy builds.
+
+Storage integration review added RebindTelemetrySession: same server session
+preserves sequence; a new session changes only the telemetry envelope. It publishes
+a full snapshot without mutating the loaded guide. The actual C# golden integration
+passes both recovery cases; refreshed Unity tests include the paused re-pair path.
+Final contracts 3d629fa and capture capacity fixes are integrated. Native/source
+checks are rerunning for this last recovery change; prior native passes remain
+at their explicitly recorded revisions.
