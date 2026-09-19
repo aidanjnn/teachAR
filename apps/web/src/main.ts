@@ -69,8 +69,10 @@ async function refreshHealth() {
     const response = await fetch('/api/health', { signal: AbortSignal.timeout(3000), cache: 'no-store' });
     const health = HealthSchema.parse(await response.json());
     status.textContent = health.status === 'ok' && response.ok ? 'Connected · storage writable' : 'Storage unavailable';
+    element('#providers').textContent = `AI: ${health.providers.ai} · haptics: ${health.providers.haptics}`;
   } catch {
     status.textContent = 'Unavailable · start the local server';
+    element('#providers').textContent = 'Unknown';
   } finally {
     button.disabled = false;
   }

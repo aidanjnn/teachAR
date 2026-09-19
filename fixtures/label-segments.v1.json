@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "segments": [
+    { "id": "seg-1", "startMs": 0, "endMs": 3400 },
+    { "id": "seg-2", "startMs": 3400, "endMs": 6600 },
+    { "id": "seg-3", "startMs": 6600, "endMs": 12000 }
+  ]
+}

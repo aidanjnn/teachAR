@@ -79,7 +79,8 @@ The lockfile records the complete working dependency graph. pnpm's explicit
 
 ## Original bootstrap configuration (historical)
 
-The only API is `GET /api/health`; every request performs a temporary-file write
+The health API is `GET /api/health` (the voice routes are described in
+`apps/server/src/routes/README.md`); every health request performs a temporary-file write
 probe under `DATA_DIR` and reports `ok`/200 or `degraded`/503. Build identification
 defaults to `development-uncommitted`; set `BUILD_ID` to an actual tested revision
 when producing a release. No known-good commit is fabricated by this scaffold.
