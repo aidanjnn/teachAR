@@ -35,8 +35,8 @@ export function fileNameFor(mimeType: string): string {
   return `narration.${EXTENSIONS[essence] ?? 'webm'}`;
 }
 
-export function createOpenAiGateway(apiKey: string): OpenAiGateway {
-  const client = new OpenAI({ apiKey, maxRetries: 1 });
+export function createOpenAiGateway(apiKey: string, options: { baseURL?: string } = {}): OpenAiGateway {
+  const client = new OpenAI({ apiKey, maxRetries: 1, ...(options.baseURL ? { baseURL: options.baseURL } : {}) });
   return {
     async transcribeVerbose({ bytes, mimeType, model, signal }) {
       const file = new File([bytes], fileNameFor(mimeType), { type: mimeType });
@@ -70,10 +70,36 @@ export function createOpenAiGateway(apiKey: string): OpenAiGateway {
     openSideband(sessionId) {
       // Sends queue while the socket connects; no reconnect so a dead session is reported, not silently resumed.
       const socket = new SidebandWS(client, { session_id: sessionId }, { reconnect: null });
+      const errorHandlers = new Set<(error: Error) => void>();
+      const closeHandlers = new Set<() => void>();
+      const pending: { settle: { resolve: () => void; reject: (error: Error) => void } | null } = { settle: null };
+      const ready = new Promise<void>((resolve, reject) => { pending.settle = { resolve, reject }; });
+      void ready.catch(() => undefined);
+      // The SDK rejects a bare promise (and would take the process down) when an error arrives with no listener.
+      socket.on('error', error => {
+        pending.settle?.reject(error);
+        pending.settle = null;
+        errorHandlers.forEach(handler => handler(error));
+      });
+      socket.on('close', () => {
+        pending.settle?.reject(new Error('Live sideband closed before it opened'));
+        pending.settle = null;
+        closeHandlers.forEach(handler => handler());
+      });
+      void (async () => {
+        try {
+          for await (const item of socket.stream()) {
+            if (item.type === 'open') { pending.settle?.resolve(); pending.settle = null; }
+            if (item.type === 'close' || item.type === 'error') break;
+          }
+        } catch { /* already reported through the error listener */ }
+      })();
       return {
+        ready,
         send: event => { socket.send(event); },
         close: () => { socket.close(); },
-        onClose: handler => { socket.on('close', () => { handler(); }); },
+        onClose: handler => { closeHandlers.add(handler); },
+        onError: handler => { errorHandlers.add(handler); },
       };
     },
   };

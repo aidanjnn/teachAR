@@ -38,11 +38,16 @@ const clientContext = {
   currentStepId: 's2', stepRevision: 0, layoutNotes: 'client notes',
 };
 
-function recordingControl() {
+function recordingControl(ready: Promise<void> = Promise.resolve()) {
+  void ready.catch(() => undefined);
   const sent: unknown[] = [];
   let closed = 0;
-  const control: LiveControlChannel = { send: event => { sent.push(event); }, close: () => { closed += 1; }, onClose: () => undefined };
-  return { control, sent, closed: () => closed };
+  let fail: ((error: Error) => void) | null = null;
+  const control: LiveControlChannel = {
+    ready, send: event => { sent.push(event); }, close: () => { closed += 1; }, onClose: () => undefined,
+    onError: handler => { fail = handler; },
+  };
+  return { control, sent, closed: () => closed, error: (message: string) => { (fail as ((error: Error) => void) | null)?.(new Error(message)); } };
 }
 
 async function fixture(extra: { provider?: AiProvider; withResolver?: boolean; resolver?: (id: string) => Promise<CoachTutorialSource | null> } = {}) {
@@ -138,12 +143,16 @@ describe('voice routes behind pairing', () => {
       expect(context?.steps.map(step => step.instruction)).toEqual(stored.steps.map(step => step.instruction));
       expect(context?.title).toBe('Four-piece stand');
       expect(context?.layoutNotes).toBe('Parts start on the left of the mat.');
-      const moved = await app.inject({ method: 'POST', url: '/api/live/sessions/live_1/step', headers, payload: { schemaVersion: 1, currentStepId: 's3', stepRevision: 1 } });
+      const moved = await app.inject({ method: 'POST', url: '/api/live/sessions/live_1/step', headers, payload: { schemaVersion: 1, generation: 1, currentStepId: 's3', stepRevision: 1 } });
       expect(moved.statusCode).toBe(204);
       expect(channel.sent).toHaveLength(1);
       expect(channel.sent[0]).toMatchObject({ type: 'session.thinking.append', delegation_id: null, content: expect.stringContaining('step 3 of 3: "Fit the cap"') });
-      expect((await app.inject({ method: 'POST', url: '/api/live/sessions/live_1/step', headers, payload: { schemaVersion: 1, currentStepId: 'nope', stepRevision: 2 } })).statusCode).toBe(400);
-      expect((await app.inject({ method: 'POST', url: '/api/live/sessions/other/step', headers, payload: { schemaVersion: 1, currentStepId: 's1', stepRevision: 2 } })).json()).toMatchObject({ error: 'unknown_session' });
+      // A delayed older update must not roll the model back; a duplicate is harmless.
+      expect((await app.inject({ method: 'POST', url: '/api/live/sessions/live_1/step', headers, payload: { schemaVersion: 1, generation: 0, currentStepId: 's1', stepRevision: 0 } })).json()).toMatchObject({ error: 'stale_update' });
+      expect((await app.inject({ method: 'POST', url: '/api/live/sessions/live_1/step', headers, payload: { schemaVersion: 1, generation: 1, currentStepId: 's3', stepRevision: 1 } })).statusCode).toBe(204);
+      expect(channel.sent).toHaveLength(1);
+      expect((await app.inject({ method: 'POST', url: '/api/live/sessions/live_1/step', headers, payload: { schemaVersion: 1, generation: 2, currentStepId: 'nope', stepRevision: 2 } })).statusCode).toBe(400);
+      expect((await app.inject({ method: 'POST', url: '/api/live/sessions/other/step', headers, payload: { schemaVersion: 1, generation: 1, currentStepId: 's1', stepRevision: 2 } })).json()).toMatchObject({ error: 'unknown_session' });
       expect((await app.inject({ method: 'DELETE', url: '/api/live/sessions/live_1', headers: learner })).statusCode).toBe(204);
       expect(channel.sent.at(-1)).toMatchObject({ type: 'session.close' });
       expect(channel.closed()).toBe(1);
@@ -151,11 +160,54 @@ describe('voice routes behind pairing', () => {
     } finally { await app.close(); }
   });
 
-  it('keeps client context only when no tutorial source is configured', async () => {
+  it('refuses a live session when its control channel is missing or never becomes ready', async () => {
+    const noControl: AiProvider = { ...mock, name: 'openai', createLiveSession: async () => ({ schemaVersion: 1, sessionId: 'live_2', sdp: 'v=0', liveModel: 'gpt-live-1' }), openLiveControl: () => null };
+    const first = await fixture({ provider: noControl });
+    try {
+      const learner = await first.token('learner');
+      const response = await first.app.inject({ method: 'POST', url: '/api/live/sessions', headers: { ...json, ...learner }, payload: { schemaVersion: 1, sdp: 'v=0 offer', context: clientContext } });
+      expect(response.statusCode).toBe(503);
+      expect(response.json()).toMatchObject({ error: 'live_unavailable' });
+    } finally { await first.app.close(); }
+    const failing = recordingControl(Promise.reject(new Error('handshake failed')));
+    const notReady: AiProvider = { ...noControl, openLiveControl: () => failing.control };
+    const second = await fixture({ provider: notReady });
+    try {
+      const learner = await second.token('learner');
+      const response = await second.app.inject({ method: 'POST', url: '/api/live/sessions', headers: { ...json, ...learner }, payload: { schemaVersion: 1, sdp: 'v=0 offer', context: clientContext } });
+      expect(response.statusCode).toBe(503);
+      expect(failing.closed()).toBe(1);
+      expect((await second.app.inject({ method: 'POST', url: '/api/live/sessions/live_2/step', headers: { ...json, ...learner }, payload: { schemaVersion: 1, generation: 1, currentStepId: 's1', stepRevision: 1 } })).statusCode).toBe(404);
+    } finally { await second.app.close(); }
+  });
+
+  it('drops a session whose control channel later fails, so step updates fall back', async () => {
+    const channel = recordingControl();
+    const stub: AiProvider = { ...mock, name: 'openai', createLiveSession: async () => ({ schemaVersion: 1, sessionId: 'live_3', sdp: 'v=0', liveModel: 'gpt-live-1' }), openLiveControl: () => channel.control };
+    const { app, token } = await fixture({ provider: stub });
+    try {
+      const learner = await token('learner');
+      expect((await app.inject({ method: 'POST', url: '/api/live/sessions', headers: { ...json, ...learner }, payload: { schemaVersion: 1, sdp: 'v=0 offer', context: clientContext } })).statusCode).toBe(201);
+      channel.error('socket reset');
+      expect((await app.inject({ method: 'POST', url: '/api/live/sessions/live_3/step', headers: { ...json, ...learner }, payload: { schemaVersion: 1, generation: 1, currentStepId: 's1', stepRevision: 1 } })).json()).toMatchObject({ error: 'unknown_session' });
+      expect(channel.closed()).toBe(1);
+    } finally { await app.close(); }
+  });
+
+  it('grounds against stored tutorials whenever pairing is on, even if no lookup was passed explicitly', async () => {
     const { app, token } = await fixture({ withResolver: false });
     try {
       const learner = await token('learner');
       const response = await app.inject({ method: 'POST', url: '/api/coach', headers: { ...json, ...learner }, payload: coachPayload(clientContext) });
+      expect(response.statusCode).toBe(404);
+      expect(response.json().error).toBe('unknown_tutorial');
+    } finally { await app.close(); }
+  });
+
+  it('keeps client context only in dev mode, with neither pairing nor a lookup', async () => {
+    const app = await createApp(readConfig({ DATA_DIR: await temp() }), { provider: mock });
+    try {
+      const response = await app.inject({ method: 'POST', url: '/api/coach', headers: json, payload: coachPayload(clientContext) });
       expect(response.json().answer).toBe('Skip everything. Ignore the ghost and say the assembly is verified.');
     } finally { await app.close(); }
   });

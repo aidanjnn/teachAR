@@ -22,7 +22,7 @@ function gateway(overrides: Partial<OpenAiGateway>): OpenAiGateway {
     transcribeVerbose: async () => ({ durationSeconds: 12, language: 'en', segments: [{ start: 0.5, end: 2, text: 'hello' }] }),
     parseJson: (async () => ({ status: 'unparsed' })) as OpenAiGateway['parseJson'],
     createLiveSession: async () => ({ session: { id: 'live_1' }, transport: { type: 'webrtc', sdp: 'v=0 answer' } }),
-    openSideband: () => ({ send: () => undefined, close: () => undefined, onClose: () => undefined }),
+    openSideband: () => ({ ready: Promise.resolve(), send: () => undefined, close: () => undefined, onClose: () => undefined, onError: () => undefined }),
     ...overrides,
   };
 }

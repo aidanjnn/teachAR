@@ -39,7 +39,9 @@ describe('coach modes', () => {
   });
   it('pushes step context while live and stops listening on a step change', () => {
     const live = run(start, { type: 'connect-started' }, { type: 'live-ready' }).state;
-    expect(reduceCoach(live, { type: 'step-changed', stepId: 's2', stepRevision: 1 }).effects).toEqual([{ type: 'invalidate-live-output' }, { type: 'send-step-context' }]);
+    const changedLive = reduceCoach(live, { type: 'step-changed', stepId: 's2', stepRevision: 1 });
+    expect(changedLive.effects).toEqual([{ type: 'invalidate-live-output' }, { type: 'send-step-context' }]);
+    expect(changedLive.state).toMatchObject({ contextSync: 'pending', contextGeneration: 1 });
     const listening = reduceCoach(live, { type: 'listen-toggled' }).state;
     const changed = reduceCoach(listening, { type: 'step-changed', stepId: 's2', stepRevision: 1 });
     expect(changed.state).toMatchObject({ mode: 'live', stepId: 's2', stepRevision: 1, pendingRequestId: null });
@@ -71,6 +73,30 @@ describe('live lifecycle and context resync', () => {
     expect(reduceCoach(askedAgain, { type: 'answer-received', answer: answer({ requestId: 'req-2', attemptId: 'a2' }) }).effects[0]?.type).toBe('emit-answer');
     const live = run(start, { type: 'connect-started' }, { type: 'live-ready' }).state;
     expect(reduceCoach(live, { type: 'attempt-changed', attemptId: 'a3' }).effects).toEqual([{ type: 'invalidate-live-output' }, { type: 'send-step-context' }]);
+  });
+});
+
+describe('context synchronisation with the server', () => {
+  const live = run(start, { type: 'connect-started' }, { type: 'live-ready' }).state;
+  it('refuses to listen while a step update is pending and resumes once acknowledged', () => {
+    const pending = reduceCoach(live, { type: 'step-changed', stepId: 's2', stepRevision: 1 }).state;
+    expect(reduceCoach(pending, { type: 'listen-toggled' }).effects).toEqual([]);
+    expect(reduceCoach(pending, { type: 'context-synced', generation: 0 }).state.contextSync).toBe('pending');
+    const synced = reduceCoach(pending, { type: 'context-synced', generation: 1 }).state;
+    expect(synced.contextSync).toBe('idle');
+    expect(reduceCoach(synced, { type: 'listen-toggled' }).effects).toEqual([{ type: 'unmute' }]);
+  });
+  it('leaves live mode when the current update is rejected, ignoring acks and failures for older generations', () => {
+    const second = run(live, { type: 'step-changed', stepId: 's2', stepRevision: 1 }, { type: 'attempt-changed', attemptId: 'a2' }).state;
+    expect(second.contextGeneration).toBe(2);
+    expect(reduceCoach(second, { type: 'context-sync-failed', generation: 1 }).state.mode).toBe('live');
+    const failed = reduceCoach(second, { type: 'context-sync-failed', generation: 2 });
+    expect(failed.state).toMatchObject({ mode: 'text', liveClosed: true, contextSync: 'idle' });
+    expect(failed.effects).toEqual([{ type: 'release-live' }]);
+  });
+  it('marks context pending when a change happened during connect and the session becomes ready', () => {
+    const ready = run(start, { type: 'connect-started' }, { type: 'step-changed', stepId: 's2', stepRevision: 1 }, { type: 'live-ready' }).state;
+    expect(ready).toMatchObject({ mode: 'live', contextSync: 'pending', contextGeneration: 1 });
   });
 });
 

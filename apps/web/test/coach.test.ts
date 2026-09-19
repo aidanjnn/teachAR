@@ -62,7 +62,7 @@ describe('coach live path', () => {
     expect(fake.sent.some(event => event.type === 'session.thinking.append')).toBe(false);
     const report = fetchImpl.calls.at(-1);
     expect(report?.url).toBe('/api/live/sessions/live_1/step');
-    expect(JSON.parse(String(report?.init?.body))).toMatchObject({ currentStepId: 's2', stepRevision: 1 });
+    expect(JSON.parse(String(report?.init?.body))).toMatchObject({ generation: 1, currentStepId: 's2', stepRevision: 1 });
     fake.closeFromServer();
     expect(coach.state).toMatchObject({ mode: 'text', liveClosed: true });
     coach.dispose();
@@ -181,6 +181,8 @@ describe('coach startup and output gating', () => {
     coach.setStep('s2', 1);
     expect(sink.muted).toBe(true);
     fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'Slide base.', start_ms: 100, end_ms: 200 });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state.contextSync).toBe('idle');
     fake.emit({ type: 'session.input_transcript.delta', event_id: 'i2', delta: 'and now', start_ms: 300, end_ms: 400 });
     expect(sink.muted).toBe(false);
     fake.emit({ type: 'session.output_transcript.delta', event_id: 'o2', delta: 'Drop it.', start_ms: 400, end_ms: 500 });
@@ -211,6 +213,47 @@ describe('coach startup and output gating', () => {
     fake2.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'Drop it.', start_ms: 0, end_ms: 100 });
     expect(seen).toEqual([false]);
     expect(sink.muted).toBe(false);
+  });
+  it('keeps the mic and playback closed until the server acknowledges a step change, and leaves live if it is refused', async () => {
+    const sink = { muted: false, srcObject: null as MediaStream | null, play: async () => undefined } as unknown as HTMLAudioElement;
+    const gate = { release: null as (() => void) | null, status: 200 };
+    const fetchImpl: typeof fetch = async input => {
+      if (String(input).endsWith('/step')) {
+        await new Promise<void>(resolve => { gate.release = resolve; });
+        return new Response(gate.status === 200 ? null : JSON.stringify({ error: 'stale_update', message: 'old' }), { status: gate.status });
+      }
+      return new Response(JSON.stringify(sessionOk), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const fake = fakeTransport();
+    const { stream: mic, track } = trackedStream();
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async () => mic, transportFactory: () => fake.transport, audioSink: sink });
+    const seen: string[] = [];
+    coach.onTranscript(entry => seen.push(`${entry.stale ? 'stale' : 'live'}:${entry.delta}`));
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    coach.setStep('s2', 1);
+    expect(coach.state.contextSync).toBe('pending');
+    coach.ask();
+    expect(coach.state.mode).toBe('live');
+    expect(track.enabled).toBe(false);
+    fake.emit({ type: 'session.input_transcript.delta', event_id: 'i1', delta: 'hello', start_ms: 0, end_ms: 100 });
+    expect(sink.muted).toBe(true);
+    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'old step words', start_ms: 100, end_ms: 200 });
+    expect(seen.at(-1)).toBe('stale:old step words');
+    gate.release?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state.contextSync).toBe('idle');
+    coach.ask();
+    expect(coach.state.mode).toBe('listening');
+    coach.ask();
+    gate.status = 503;
+    coach.setStep('s1', 2);
+    gate.release?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state).toMatchObject({ mode: 'text', liveClosed: true });
+    expect(track.stopped).toBe(true);
   });
   it('settles connect() when the session closes or is disposed before session.started', async () => {
     const fake = fakeTransport();

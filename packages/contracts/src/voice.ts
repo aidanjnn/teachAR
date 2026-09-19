@@ -140,7 +140,7 @@ export type CoachSessionResponse = z.infer<typeof CoachSessionResponseSchema>;
 export const VoiceUnavailableSchema = z.strictObject({
   error: z.enum([
     'live_unavailable', 'provider_unavailable', 'payload_too_large', 'unsupported_media_type', 'invalid_request',
-    'unauthorized', 'forbidden', 'unknown_tutorial', 'stale_tutorial', 'unknown_session',
+    'unauthorized', 'forbidden', 'unknown_tutorial', 'stale_tutorial', 'unknown_session', 'stale_update',
   ]),
   message: z.string().min(1).max(300),
 });
@@ -148,7 +148,10 @@ export type VoiceUnavailable = z.infer<typeof VoiceUnavailableSchema>;
 
 /** Client report that the learner moved to another step or attempt in an open live session; the server pushes the context. */
 export const LiveStepUpdateSchema = z.strictObject({
-  schemaVersion: z.literal(1), currentStepId: IdSchema, stepRevision: Revision, attemptId: IdSchema.optional(),
+  schemaVersion: z.literal(1),
+  /** Client-side counter that increases on every step or attempt change; the server rejects older updates. */
+  generation: Revision,
+  currentStepId: IdSchema, stepRevision: Revision, attemptId: IdSchema.optional(),
 });
 export type LiveStepUpdate = z.infer<typeof LiveStepUpdateSchema>;
 

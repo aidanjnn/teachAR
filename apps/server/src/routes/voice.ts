@@ -28,6 +28,8 @@ export interface CoachTutorialSource {
   steps: readonly { id: string; title: string; instruction: string }[];
 }
 const LOOKUP_TIMEOUT_MS = 2_000;
+/** The trusted control channel must be open before the browser is told the session exists. */
+const CONTROL_READY_TIMEOUT_MS = 5_000;
 const SessionIdParam = z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/) });
 export type CoachTutorialLookup = (tutorialId: string) => Promise<CoachTutorialSource | null>;
 
@@ -160,7 +162,19 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
         if (!grounded.ok) return unavailable(reply, grounded.status, grounded.body);
         result = await provider.createLiveSession({ ...parsed.data, context: grounded.context }, AbortSignal.any([clientGone.signal, AbortSignal.timeout(SESSION_TIMEOUT_MS)]));
         if ('error' in result) return unavailable(reply, 503, result);
-        sessions.register(result.sessionId, grounded.context, provider.openLiveControl(result.sessionId));
+        // Without the server-side channel there is no trusted way to move the model between steps; refuse rather than hand out a stuck session.
+        const control = provider.openLiveControl(result.sessionId);
+        if (!control) return unavailable(reply, 503, { error: 'live_unavailable', message: 'The live coach control channel could not be opened.' });
+        try {
+          await Promise.race([
+            control.ready,
+            new Promise<never>((_, reject) => { setTimeout(() => reject(new Error('control timeout')), CONTROL_READY_TIMEOUT_MS).unref?.(); }),
+          ]);
+        } catch {
+          try { control.close(); } catch { /* already closed */ }
+          return unavailable(reply, 503, { error: 'live_unavailable', message: 'The live coach control channel did not become ready.' });
+        }
+        sessions.register(result.sessionId, grounded.context, control);
       } finally {
         reply.raw.off('close', onClose);
       }

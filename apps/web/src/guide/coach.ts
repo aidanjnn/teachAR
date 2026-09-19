@@ -115,17 +115,21 @@ export function createCoach(options: CoachOptions): CoachApi {
       case 'drop-answer': break;
     }
   }
-  /** The server composes and pushes step context over its trusted channel; the browser only names the step. */
+  /** The server composes and pushes step context over its trusted channel; the browser only names the step and waits for the ack. */
   function reportStep() {
-    if (!liveSessionId) return;
+    const generation = state.contextGeneration;
+    if (!liveSessionId) { dispatch({ type: 'context-sync-failed', generation }); return; }
     const sessionId = liveSessionId;
     void fetchImpl(`/api/live/sessions/${encodeURIComponent(sessionId)}/step`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(3_000),
-      body: JSON.stringify({ schemaVersion: 1, currentStepId: context.currentStepId, stepRevision: context.stepRevision, attemptId: context.attemptId }),
+      body: JSON.stringify({ schemaVersion: 1, generation, currentStepId: context.currentStepId, stepRevision: context.stepRevision, attemptId: context.attemptId }),
     }).then(response => {
-      if (!response.ok) errorHandlers.forEach(handler => handler({ code: 'step_context_rejected', message: `Server refused the step update (${response.status}).` }));
+      if (response.ok) { dispatch({ type: 'context-synced', generation }); return; }
+      errorHandlers.forEach(handler => handler({ code: 'step_context_rejected', message: `Server refused the step update (${response.status}); live coaching stopped.` }));
+      dispatch({ type: 'context-sync-failed', generation });
     }, () => {
-      errorHandlers.forEach(handler => handler({ code: 'step_context_failed', message: 'Could not reach the server to update the coach step.' }));
+      errorHandlers.forEach(handler => handler({ code: 'step_context_failed', message: 'Could not reach the server to update the coach step; live coaching stopped.' }));
+      dispatch({ type: 'context-sync-failed', generation });
     });
   }
   function dispatch(event: CoachEvent): CoachEffect[] {
@@ -149,7 +153,8 @@ export function createCoach(options: CoachOptions): CoachApi {
         armListenTimer();
         // A new learner turn reopens the gate and fixes the revision its answer belongs to.
         turnRevision = state.stepRevision;
-        if (outputGateClosed) { outputGateClosed = false; setPlaybackMuted(false); }
+        // Only reopen once the server has acknowledged the current step; until then the model may still hold the old one.
+        if (outputGateClosed && state.contextSync === 'idle') { outputGateClosed = false; setPlaybackMuted(false); }
         transcriptHandlers.forEach(handler => handler({ role: 'learner', delta: event.delta, stepRevision: turnRevision, stale: false }));
         break;
       case 'session.output_transcript.delta':
