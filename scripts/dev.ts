@@ -27,7 +27,8 @@ const token = process.env.VISION_SERVICE_TOKEN || randomBytes(32).toString('base
 const port = process.env.VISION_PORT || '3002';
 const env = {
   VISION_SERVICE_TOKEN: token,
-  VISION_SERVICE_URL: process.env.VISION_SERVICE_URL || `http://127.0.0.1:${port}`,
+  // This launcher owns the local vision process, so its URL must match its port.
+  VISION_SERVICE_URL: `http://127.0.0.1:${port}`,
 };
 console.log('Starting desktop, main API and vision skeleton. Image interpretation is not implemented.');
 // Use the existing CLI: its published library types conflict with strict optional types.
