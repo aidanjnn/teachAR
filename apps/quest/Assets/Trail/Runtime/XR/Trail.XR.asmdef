@@ -1,0 +1,6 @@
+{
+  "name": "Trail.XR",
+  "rootNamespace": "Trail.Runtime.XR",
+  "references": ["Trail.Runtime", "Trail.Contracts", "Trail.Motion", "Unity.XR.Hands"],
+  "noEngineReferences": false
+}

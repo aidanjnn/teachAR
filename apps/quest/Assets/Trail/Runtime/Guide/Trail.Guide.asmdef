@@ -1,12 +1,7 @@
 {
-  "name": "Trail.Presentation",
-  "rootNamespace": "Trail.Presentation",
-  "references": [
-    "Trail.Runtime",
-    "Trail.Motion",
-    "Trail.Contracts",
-    "Trail.XR"
-  ],
+  "name": "Trail.Guide",
+  "rootNamespace": "Trail.Runtime.Guide",
+  "references": ["Trail.Contracts", "Trail.Motion", "Trail.Runtime", "Trail.Presentation"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
