@@ -246,6 +246,8 @@ element('#label').addEventListener('click', async () => {
 // ---- Coach ----------------------------------------------------------------
 let coach: CoachApi | null = null;
 let stepRevision = 0;
+/** Step number shown for each caption, keyed by the revision the coach stamped it with. */
+const stepNumberByRevision = new Map<number, number>();
 let attemptCounter = 1;
 let askInFlight = false;
 const stepsSelect = element<HTMLSelectElement>('#steps');
@@ -270,17 +272,20 @@ function renderMode(mode: string, note = '') {
   element<HTMLButtonElement>('#coach-repeat').disabled = mode === 'idle' || mode === 'connecting';
   askTextButton.disabled = askInFlight || mode === 'idle' || mode === 'connecting';
 }
-function appendLog(role: 'learner' | 'coach', delta: string) {
+function appendLog(role: 'learner' | 'coach', delta: string, stepRevision: number) {
   const log = element('#coach-log');
+  const stepNumber = stepNumberByRevision.get(stepRevision);
+  const label = `${role === 'learner' ? 'You' : 'Coach'}${stepNumber ? ` [step ${stepNumber}]` : ''}`;
   const last = log.lastElementChild;
-  if (last instanceof HTMLLIElement && last.dataset.role === role && last.dataset.open === 'true') {
+  if (last instanceof HTMLLIElement && last.dataset.role === role && last.dataset.open === 'true' && last.dataset.label === label) {
     last.textContent = `${last.textContent ?? ''}${delta}`;
   } else {
     for (const item of log.children) (item as HTMLElement).dataset.open = 'false';
     const item = document.createElement('li');
     item.dataset.role = role;
     item.dataset.open = 'true';
-    item.textContent = `${role === 'learner' ? 'You' : 'Coach'}: ${delta}`;
+    item.dataset.label = label;
+    item.textContent = `${label}: ${delta}`;
     log.append(item);
   }
   log.scrollTop = log.scrollHeight;
@@ -300,11 +305,13 @@ element('#coach-connect').addEventListener('click', async () => {
   element('#coach-answer').textContent = 'No answer yet.';
   element('#coach-source').textContent = '—';
   stepRevision = 0;
+  stepNumberByRevision.clear();
+  stepNumberByRevision.set(0, stepsSelect.selectedIndex + 1);
   coach = createCoach({ context: buildContext(), audioSink: element<HTMLAudioElement>('#coach-audio') });
   coach.onState(state => renderMode(state.mode, state.liveClosed ? 'Live session ended; text answers continue.' : ''));
   coach.onTranscript(entry => {
     if (entry.stale) { element('#coach-note').textContent = 'Step changed; the previous spoken answer was cut off. Ask again.'; return; }
-    appendLog(entry.role, entry.delta);
+    appendLog(entry.role, entry.delta, entry.stepRevision);
   });
   coach.onLiveError(error => { element('#coach-note').textContent = `Live session error: ${error.code}`; });
   coach.onAnswer(answer => {
@@ -335,6 +342,7 @@ element('#coach-repeat').addEventListener('click', () => {
 stepsSelect.addEventListener('change', () => {
   if (!coach) return;
   stepRevision += 1;
+  stepNumberByRevision.set(stepRevision, stepsSelect.selectedIndex + 1);
   coach.setStep(stepsSelect.value, stepRevision);
 });
 populateSteps();
