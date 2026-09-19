@@ -20,7 +20,8 @@ export function validateAssessment(value: unknown): CoachAssessment {
   }
   // Defense in depth for common unsupported certainties. This is not a proof of natural-language truth.
   const text = [...assessment.observedEvidence, assessment.feedback].join(' ');
-  if (/\b(assembly verified|guaranteed|watertight|load.bearing|structurally sound|step completed|advance automatically)\b/i.test(text)) {
+  if (/\b(assembly verified|guaranteed|watertight|load.bearing|structurally sound|step completed|advance automatically)\b/i.test(text) ||
+      /\[[^\]\n]{0,120}\d[^\]\n]{0,120}\]|\b\d+(?:\.\d+)?\s*(?:mm|cm|meters?|metres?|millimeters?|centimeters?|degrees?|radians?)\b|\b[xyz]\s*[:=]\s*-?\d/i.test(text)) {
     throw new VisionError('invalid-assessment', 502);
   }
   return assessment;

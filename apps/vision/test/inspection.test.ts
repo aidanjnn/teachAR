@@ -85,6 +85,8 @@ describe('bounded image inspection', () => {
     expect(() => validateAssessment({ ...assessment(), coordinates: [0, 1, 2] })).toThrow('invalid-assessment');
     expect(() => validateAssessment({ ...assessment(), observedEvidence: [] })).toThrow('invalid-assessment');
     expect(() => validateAssessment({ ...assessment(), feedback: 'Assembly verified.' })).toThrow('invalid-assessment');
+    expect(() => validateAssessment({ ...assessment(), feedback: 'Move to [1,2,3].' })).toThrow('invalid-assessment');
+    expect(() => validateAssessment({ ...assessment(), feedback: 'Move 12 cm right.' })).toThrow('invalid-assessment');
     expect(() => validateAssessment({ ...assessment('uncertain'), suggestedAction: 'none' })).toThrow('invalid-assessment');
   });
   it('sends actual labelled images using Responses structured outputs with no retention request', async () => {

@@ -77,30 +77,27 @@ namespace Trail.Runtime.Scene
         }
         private void OnFrame(CapturedSceneFrame frame)
         {
-            using (frame)
-            {
-                if (!pending || capture == null || frame.Ticket.Nonce != capture.CaptureNonce || !IsCurrent(context)) return;
-                var current = generation; observationAt = frame.Ticket.DeliveredAtMs;
-                try {
-                    var body = ContractJson.SerializeInspectionUpload(capture, frame.Ticket.SourceSessionId, frame.Ticket.SourceFrameSequence,
-                        Now - frame.Ticket.DeliveredAtMs, frame.Jpeg, frame.Width, frame.Height, frame.Sha256);
-                    Connection.Request("POST", "/api/scene-observations", body, (status, response) => {
-                        if (!Active(current)) return;
-                        if (Now - observationAt > 5000) { Unavailable("Checked view is too old; Retry captures a fresh view."); return; }
-                        if (status != 200) { Unavailable("Visual advice unavailable; Retry captures a new view, or Resume."); return; }
-                        try {
-                            var result = ContractJson.ParseInspectionResult(response);
-                            if (result.Request.RequestId != capture.Request.RequestId || result.Request.RequestEpoch != epoch ||
-                                result.Request.LiveSessionId != appSessionId || result.Request.SessionGeneration != 1 ||
-                                !Same(result.Request, context) || result.ObservationId == null ||
-                                string.Join("|", result.ReferenceIds) != string.Join("|", capture.Request.ReferenceIds)) throw new ContractException("Stale result");
-                            Findings = result; pending = false;
-                            Status = (result.Provenance == "mock" ? "SYNTHETIC MOCK: " : "Checked snapshot: ") + result.Assessment.Feedback + "\n" + result.Assessment.Limitation + "\nResume or Repeat when ready.";
-                            FindingsAccepted?.Invoke(result);
-                        } catch { Unavailable("Invalid visual findings; Retry or Resume."); }
-                    });
-                } catch { Unavailable("Frame became stale before upload; Retry or Resume."); }
-            }
+            if (!pending || capture == null || frame.Ticket.Nonce != capture.CaptureNonce || !IsCurrent(context)) return;
+            var current = generation; observationAt = frame.Ticket.DeliveredAtMs;
+            try {
+                var body = ContractJson.SerializeInspectionUpload(capture, frame.Ticket.SourceSessionId, frame.Ticket.SourceFrameSequence,
+                    Now - frame.Ticket.DeliveredAtMs, frame.Jpeg, frame.Width, frame.Height, frame.Sha256);
+                Connection.Request("POST", "/api/scene-observations", body, (status, response) => {
+                    if (!Active(current)) return;
+                    if (Now - observationAt > 5000) { Unavailable("Checked view is too old; Retry captures a fresh view."); return; }
+                    if (status != 200) { Unavailable("Visual advice unavailable; Retry captures a new view, or Resume."); return; }
+                    try {
+                        var result = ContractJson.ParseInspectionResult(response);
+                        if (result.Request.RequestId != capture.Request.RequestId || result.Request.RequestEpoch != epoch ||
+                            result.Request.LiveSessionId != appSessionId || result.Request.SessionGeneration != 1 ||
+                            !Same(result.Request, context) || result.ObservationId == null ||
+                            string.Join("|", result.ReferenceIds) != string.Join("|", capture.Request.ReferenceIds)) throw new ContractException("Stale result");
+                        Findings = result; pending = false;
+                        Status = (result.Provenance == "mock" ? "SYNTHETIC MOCK: " : "Checked snapshot: ") + result.Assessment.Feedback + "\n" + result.Assessment.Limitation + "\nResume or Repeat when ready.";
+                        FindingsAccepted?.Invoke(result);
+                    } catch { Unavailable("Invalid visual findings; Retry or Resume."); }
+                });
+            } catch { Unavailable("Frame became stale before upload; Retry or Resume."); }
         }
         public bool IsCurrent(GuideContextRef expected)
         {

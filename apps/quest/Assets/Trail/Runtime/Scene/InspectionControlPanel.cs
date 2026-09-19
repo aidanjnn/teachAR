@@ -38,7 +38,7 @@ namespace Trail.Runtime.Scene
         }
         private void Observe(ReferenceObservation frame)
         {
-            if (buttons[0] == null || source.TrackingSpace == null || frame.OriginRevision != source.OriginRevision ||
+            if (buttons[0] == null || source == null || source.TrackingSpace == null || frame.OriginRevision != source.OriginRevision ||
                 frame.Sequence <= lastSequence || frame.TimestampMs <= lastTime || MotionClock.NowMs - frame.TimestampMs > 100)
             { ResetTouch(); return; }
             if (frame.TimestampMs - lastTime > 100) ResetTouch();
@@ -46,7 +46,7 @@ namespace Trail.Runtime.Scene
             int selected = -1;
             foreach (HandSample hand in new[] { frame.Left, frame.Right })
             {
-                if (hand == null || hand.Status != "valid" || !hand.Joints.TryGetValue("index-finger-tip", out var pose)) continue;
+                if (hand == null || hand.Status != "valid" || hand.Joints == null || !hand.Joints.TryGetValue("index-finger-tip", out var pose)) continue;
                 var p = pose.PositionM; var world = source.TrackingSpace.TransformPoint(new Vector3(p.X, p.Y, -p.Z));
                 for (int i = 0; i < buttons.Length; i++) if (Vector3.Distance(world, buttons[i].transform.position) <= .025f) { selected = i; break; }
                 if (selected >= 0) break;
