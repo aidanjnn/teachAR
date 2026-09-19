@@ -5,7 +5,8 @@
     "Trail.Contracts",
     "Trail.Motion",
     "Oculus.VR",
-    "Unity.XR.Management"
+    "Unity.XR.Management",
+    "UnityEngine.UI"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

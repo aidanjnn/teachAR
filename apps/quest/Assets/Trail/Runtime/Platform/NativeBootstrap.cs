@@ -38,6 +38,7 @@ namespace Trail.Runtime.Platform
             Context = new PlatformContext(gameObject, rig.trackingSpace, rig.centerEyeAnchor.GetComponent<Camera>(), connection);
             try
             {
+                gameObject.AddComponent<NativePairingPanel>().Initialize(Context);
                 PlatformFeatures.Install(gameObject);
                 foreach (var feature in GetComponentsInChildren<MonoBehaviour>(true).OfType<IPlatformFeature>().OrderBy(value => value.Order)) feature.Initialize(Context);
                 rigRoot.SetActive(true);
