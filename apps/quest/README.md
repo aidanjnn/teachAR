@@ -2,8 +2,8 @@
 
 This project now contains the Android setup/build path, a single OpenXR/Meta
 passthrough bootstrap, and a scoped native API connection. **Unity import,
-compilation, APK build, and headset operation remain unverified** because no
-Unity editor is installed on the development machine. This branch supplies the
+compilation, APK build, and headset operation remain unverified** because the pinned editor
+currently stops at license activation (exit 198). This branch supplies the
 platform foundation; capture, guide, scene interpretation and storage are
 separate feature branches. Voice remains separately owned.
 
@@ -53,18 +53,21 @@ UPM lock, tests or build artifacts fails. `TRAIL_ANDROID_VERSION_CODE` optionall
 sets a positive version code (default 1). Application ID is `com.trail.guide`.
 The wrapper selects Android before script compilation to avoid the wrong platform
 symbols. Setup generates URP assets, enables a single OpenXR loader, the Meta XR,
-Meta Quest and Hand Tracking Subsystem features, Vulkan, linear color and a
+Meta Quest, Hand Tracking Subsystem and Oculus Touch input-profile features,
+Vulkan, linear color and a
 HandsOnly/required-passthrough Android manifest. Check Meta Project Setup Tool
 and permissions on the actual resolved project before hardware acceptance.
 
 The checked-in `Trail.unity` runs `NativeBootstrap`: it waits for OpenXR, refuses
 an existing competing rig/camera, creates one `OVRCameraRig` with Stage origin,
-transparent camera and passthrough underlay, and supplies its `trackingSpace` to
+transparent camera and passthrough underlay, disables app-requested recentering,
+and supplies its `trackingSpace` to
 feature assemblies. It does not create controller/synthetic hand data or
 locomotion. Features register a concrete installer through `PlatformFeatures`
 before scene load, then implement `IPlatformFeature.Initialize(PlatformContext)`.
 This preserves assembly ownership without runtime reflection or guessed types.
-Tasks compose capture at order 10, guide 20, scene 30 and storage/UI 40. A missing
+The Touch profile satisfies Meta Core OVRInput setup requirements; it does not
+provide recorded hand samples or spawn controller visuals. Tasks compose capture at order 10, guide 20, scene 30 and storage/UI 40. A missing
 feature is not represented as successful hardware capability.
 
 ## Pair and reach the API
@@ -94,7 +97,10 @@ APK printed by the wrapper with `adb install -r <absolute-apk-path>` and launch
 
 `pnpm check:quest-scaffold` checks metadata and source boundaries only.
 `dotnet run --project tests/native-network/Network.csproj` executes actual pure C#
-URL/token/expiry policy tests. PlayMode sources cover native connection lifecycle,
+URL/token/expiry policy tests. `dotnet build tests/native-network/UnityCompile.csproj`
+compiles the network adapter against installed Unity managed assemblies (set
+`-p:UnityManagedPath=...` on other installations), without loading Unity or proving
+IL2CPP compatibility. PlayMode sources cover native connection lifecycle,
 but cannot count as passing until Unity executes them. WebSocket/HTTP server tests
 exercise real server authorization. None establishes tracking, simultaneous
 hands/audio/camera, physical calibration/transfer, APK networking or usable XR UI.

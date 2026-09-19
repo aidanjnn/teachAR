@@ -14,6 +14,7 @@
     "@trail/contracts": "workspace:*",
     "@trail/motion": "workspace:*",
     "fastify": "5.12.5",
+    "sharp": "0.34.5",
     "zod": "4.6.5"
   },
   "devDependencies": {
