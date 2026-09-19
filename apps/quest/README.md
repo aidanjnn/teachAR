@@ -1,9 +1,9 @@
 # Trail Quest platform
 
 This project now contains the Android setup/build path, a single OpenXR/Meta
-passthrough bootstrap, and a scoped native API connection. **Unity import,
-compilation, APK build, and headset operation remain unverified** because the pinned editor
-currently stops at license activation (exit 198). This branch supplies the
+passthrough bootstrap, and a scoped native API connection. The pinned editor has resolved the checked-in UPM lock. **Complete Unity
+compilation/tests, APK build, and headset operation remain pending**; SDK compile
+findings are being repaired, and Android Build Support is not installed. This branch supplies the
 platform foundation; capture, guide, scene interpretation and storage are
 separate feature branches. Voice remains separately owned.
 
@@ -15,7 +15,7 @@ separate feature branches. Voice remains separately owned.
 | Meta Core / Interaction / OVR integration / MRUK | 205.0.0 |
 | Unity OpenXR / XR Management / XR Hands | 1.18.0 / 4.5.4 / 1.7.2 |
 | URP / uGUI | 17.3.0 / 2.0.0 |
-| Unity WebRTC / Test Framework | 3.0.0 / 1.4.6 |
+| Unity WebRTC / Test Framework | 3.0.0 / 1.6.0 |
 
 These are exact proposed pins, not a tested combined package set. The official
 Meta Core 205 package itself requires XR Hands 1.7.2. Setup uses APIs inspected in
@@ -27,10 +27,12 @@ those exact Core/OpenXR/Management/Hands package sources. References:
 [editor release](https://unity.com/releases/editor/whats-new/6000.3.24f1), and
 [WebRTC requirements](https://docs.unity3d.com/Packages/com.unity.webrtc@3.0/manual/requirements.html).
 
-There is no fabricated UPM lock. The first successful editor resolution must
-produce `Packages/packages-lock.json`; review and commit it together with generated
-XR/URP/Meta settings and their `.meta` files. Preserve existing GUIDs. Package or
-editor incompatibility is a failed gate, not permission to silently alter pins.
+The checked-in `Packages/packages-lock.json` is actual Unity 6000.3.24f1 resolver
+output. Test Framework 1.6.0 matches its editor-bundled resolution. Built-in
+Animation, AssetBundle, ParticleSystem and Physics2D modules satisfy concrete
+Meta Core/Interaction compiler requirements. Preserve existing GUIDs when saving
+generated XR/URP/Meta assets. Package compatibility still requires passing Unity
+compilation and runtime checks.
 
 ## Reproduce setup and build
 
@@ -53,18 +55,21 @@ UPM lock, tests or build artifacts fails. `TRAIL_ANDROID_VERSION_CODE` optionall
 sets a positive version code (default 1). Application ID is `com.trail.guide`.
 The wrapper selects Android before script compilation to avoid the wrong platform
 symbols. Setup generates URP assets, enables a single OpenXR loader, the Meta XR,
-Meta Quest and Hand Tracking Subsystem features, Vulkan, linear color and a
+Meta Quest, Hand Tracking Subsystem and Oculus Touch input-profile features,
+Vulkan, linear color and a
 HandsOnly/required-passthrough Android manifest. Check Meta Project Setup Tool
 and permissions on the actual resolved project before hardware acceptance.
 
 The checked-in `Trail.unity` runs `NativeBootstrap`: it waits for OpenXR, refuses
 an existing competing rig/camera, creates one `OVRCameraRig` with Stage origin,
-transparent camera and passthrough underlay, and supplies its `trackingSpace` to
+transparent camera and passthrough underlay, disables app-requested recentering,
+and supplies its `trackingSpace` to
 feature assemblies. It does not create controller/synthetic hand data or
 locomotion. Features register a concrete installer through `PlatformFeatures`
 before scene load, then implement `IPlatformFeature.Initialize(PlatformContext)`.
 This preserves assembly ownership without runtime reflection or guessed types.
-Tasks compose capture at order 10, guide 20, scene 30 and storage/UI 40. A missing
+The Touch profile satisfies Meta Core OVRInput setup requirements; it does not
+provide recorded hand samples or spawn controller visuals. Tasks compose capture at order 10, guide 20, scene 30 and storage/UI 40. A missing
 feature is not represented as successful hardware capability.
 
 ## Pair and reach the API
