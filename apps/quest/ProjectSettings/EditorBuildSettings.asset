@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Trail/Scenes/Trail.unity
     guid: 4f8369766b4e5e31bd25c0d2dbb7f27c
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 986c3cab37687405c802cacee7d1da4e, type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 53ac27bf7df9b409bbdeb3e1edcefd46, type: 2}
+  m_UseUCBPForAssetBundles: 0
