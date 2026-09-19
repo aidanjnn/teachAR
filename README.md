@@ -67,8 +67,10 @@ flowchart LR
     Guide -. current step .-> Coach[Fastify coaching coordinator]
     Headset[Quest microphone and speaker] <-->|WebRTC| Live[GPT Live conversation]
     Live <-->|sideband| Coach
-    Scene[Fresh camera image and expert reference] --> Vision[Responses visual assessor]
-    Vision --> Coach
+    Scene[Fresh camera image and expert reference] --> Coach
+    Coach -->|authenticated images and context| Vision[Separate apps/vision backend]
+    Vision <-->|image analysis| Model[Image-capable Responses model]
+    Vision -->|validated evidence| Coach
 ```
 
 | Layer | Planned technology and responsibility |
@@ -77,7 +79,7 @@ flowchart LR
 | Desktop UI | Existing TypeScript/Vite/HTML/CSS and Three.js for review, diagnostics and spectator |
 | Wire contracts | Zod schemas and strict C# DTO validators; shared versioned JSON fixtures |
 | Motion runtime | Pure C# headset engine; TypeScript offline authoring/math retained with golden fixtures |
-| Backend | One Fastify process for uploads, storage, jobs, AI, and WebSocket relay |
+| Backend | Main Fastify API for storage, pairing, Live and relay; separate Fastify vision service for image interpretation |
 | Persistence | Laptop files and Unity private-file cache; optional desktop IndexedDB |
 | AI | Transcription/labels, GPT Live WebRTC conversation, and a separate Responses visual assessor |
 | Verification | Existing web tests plus planned Unity EditMode/PlayMode, APK builds and real headset trials |
@@ -94,7 +96,9 @@ voice transport must pass the first standalone APK test; engine selection alone
 is not hardware evidence.
 
 GPT Live handles audio/text. Fresh native MRUK camera images go to a separate
-image-capable Responses request, with its findings returned to voice. A paired
+image-capable `apps/vision` backend, with validated findings returned to voice.
+Audio/text-only conversation does not satisfy the target: actual current images
+must produce appropriate spoken feedback in the headset. A paired
 webcam is a development or disclosed reduced-demo source; headset-camera feedback
 is the target. See the [Live and scene design](docs/plan.md#gpt-live-conversation-and-fresh-visual-coaching).
 
@@ -113,7 +117,8 @@ Application layout (module responsibilities beyond the scaffold remain planned):
 ```text
 apps/quest/           Planned Unity headset app: capture, guidance, camera and native voice
 apps/web/             Desktop review, synthetic replay and spectator UI
-apps/server/          Fastify routes, storage, AI, and session relay
+apps/server/          Fastify routes, storage, Live/labels, vision coordination and relay
+apps/vision/          Planned separate image interpretation backend (TRAIL-20)
 packages/contracts/  Versioned schemas and shared types
 packages/motion/     Existing pure math; planned offline authoring/reference logic
 fixtures/            Synthetic and explicitly approved real test recordings
@@ -128,7 +133,8 @@ Use Node **22.23.1** (see `.node-version`) and pnpm **11.3.0**. The dependency
 versions are pinned exactly in the package manifests and one `pnpm-lock.yaml`.
 The commands below describe the existing web/server scaffold. Unity requires a
 separate editor, Android tooling and UPM lockfile; pnpm does not build the headset
-app. Exact native setup and check commands are added when TRAIL-18 is implemented.
+app. The dedicated vision service is also planned; current commands do not
+start it. Exact native setup and check commands are added when TRAIL-18 is implemented.
 
 ```sh
 pnpm install --frozen-lockfile

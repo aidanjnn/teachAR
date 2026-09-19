@@ -18,6 +18,19 @@ standalone Unity + Meta XR Android app; Unity project/setup remain planned.
   the intended spectator path; Editor/simulator tests are separate evidence.
 - Independent two-user mat calibration, held-out mark, tracking loss, recenter,
   removal, app suspension/restart and safe local recovery.
+- Transfer the same tutorial, objects and starting layout to another room/table;
+  record table height, mat orientation, held-out error and actual learner result.
+- Bounded MRUK scene probe: current room/surface geometry, permission denial, stale
+  or absent data, origin/world-lock consistency and frame cost; mark synthetic
+  fallback separately. Record whether scene-assisted setup is enabled or deferred.
+- Tracking and fresh visual coaching under changed backgrounds/lighting; explicit
+  starting-layout confirmation and recovery from an intentionally misplaced part.
+
+- Fresh Quest camera → main API → separate vision backend → image-capable model
+  → GPT Live → audible headset feedback, with matched request/observation IDs.
+  Correct/wrong/obscured/adjusted views must change the response appropriately.
+- Vision process timeout/crash/restart and cancelled/late result rejection; voice
+  remains available, visual status is explicit, and local guide recovery works.
 
 ## Proposed data connection
 

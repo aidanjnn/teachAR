@@ -54,7 +54,10 @@ for server, authoring, desktop diagnostics and spectator. Unity setup is planned
 in TRAIL-18, not implemented. Do not install IWSDK/Spatial SDK or downgrade Vite.
 Use Unity OpenXR, Meta XR Core/Interaction and MRUK with a tested native WebRTC
 adapter; freeze compatible exact versions during setup. Keep accounts/cloud DB,
-ORM, React framework and separate worker services out of the baseline.
+ORM and React framework out of the baseline. The user requested a dedicated
+visual interpretation backend: `apps/vision` is a second TypeScript/Fastify
+process (TRAIL-20), with authenticated internal calls from `apps/server`. Other
+worker services remain outside the baseline.
 
 | Planned location | Responsibility / owner |
 | --- | --- |
@@ -63,7 +66,8 @@ ORM, React framework and separate worker services out of the baseline.
 | `apps/quest/Assets/Trail/Contracts/`, `Motion/` | Pure C# DTO validation/calibration/matcher/reducer; motion |
 | `apps/quest/Assets/Trail/Runtime/XR/`, `Record/`, `Guide/` | Native tracking, calibration UI, capture, guide integration; XR, voice owns narration files |
 | `apps/quest/Assets/Trail/Runtime/Scene/`, `Presentation/` | MRUK snapshots, separate ghost and world-space UI; XR |
-| `apps/quest/Assets/Trail/Runtime/Coach/`, server `ai/` | Native mic/WebRTC, Live, labels and Responses assessment; voice/AI |
+| `apps/quest/Assets/Trail/Runtime/Coach/`, server `ai/` | Native mic/WebRTC, Live, labels and inspection coordination; voice/AI |
+| `apps/vision/src/` | Dedicated image interpretation/Responses, bounded inputs/results and cancellation; voice/AI, integration owns service wiring |
 | `apps/quest/Assets/Trail/Runtime/Network/`, `Storage/` | Native pairing/API and private-file persistence; integration |
 | `apps/quest/Packages/`, `ProjectSettings/`, main scene/build scripts | Compatible Unity packages/settings and build; integration |
 | `apps/web/`, other server code, manifests, CI | Desktop review/replay/spectator, files, relay and checks; integration |

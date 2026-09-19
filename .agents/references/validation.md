@@ -34,12 +34,14 @@ invariants. This reference selects evidence; it does not claim tests exist.
 | Unity migration/runtime/UI | T31–T37 | Compatible editor/UPM set, preserved web checks, C# fixtures, one provider/rig, native joints/basis conversion, world-space UI, pause/teardown and APK build; simulator and Quest results separate |
 | Native auth/camera/audio | T38–T40 | Bearer vs cookie/Origin, wrong role, frame identity/readback freshness, DSP clock mapping, duplex echo/interruption and lifecycle on APK |
 | Audio/semantic labels | T12, T13, T23 | Complete playable WAV, timing alignment, concurrent mic/XR/hands/casting, actual provider result |
-| GPT Live/scene inspection | T24–T30 | Actual Quest speech and interruptions, fresh decoded frames, reviewed references, correct/wrong/obscured views, stale-audio suppression and clean close |
+| GPT Live/scene inspection | T24–T30, T47 | Actual Quest speech and interruptions, fresh decoded frames, reviewed references, correct/wrong/obscured views, stale-audio suppression and clean close |
+| Dedicated vision service | T45–T47 | Internal auth/input bounds, actual two-process integration, cancellation/deduplication/crash recovery; real fresh-image interpretation changes speech heard on Quest |
+| Environment transfer/scene setup | T41–T44 | Different room/table with same parts/layout; independent calibration, current scene or explicit unavailable, changed lighting/background |
 | Uploads/storage/jobs | T14, T15 | Fastify injection/failure cases; interrupted upload/job, atomic publish and restart |
 | Spectator/network/preload | T10, T16, T17 | Stale indicator, full reconnect snapshot, actual backend disconnect after preload |
 | Optional haptics | T19 | Mock first; physical cutoff/watchdog and disconnect only when hardware exists |
 
-T01–T40 are plan identifiers, not guaranteed test filenames. Select actual tests
+T01–T47 are plan identifiers, not guaranteed test filenames. Select actual tests
 after finding their implementation. Also check pairing/Origin, path containment,
 input limits, secret exposure, stale draft/job revisions, and read-only spectator
 roles whenever the diff touches those boundaries.
@@ -67,4 +69,6 @@ AI-generated reviewed labels are required for the target semantic MVP; manual
 labels are a disclosed reduced tier. A cold offline start needs separate proof.
 The quality target also requires two fresh task families without code changes,
 GPT Live conversation on the headset, and bounded scene-grounded spoken feedback.
-Mock providers, cached images and captions alone cannot prove that target.
+The separate vision service must receive real current image inputs and return
+evidence that changes the answer heard in the headset. Mock providers, cached
+images, audio/text-only exchanges and captions alone cannot prove that target.
