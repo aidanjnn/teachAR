@@ -645,3 +645,78 @@ and `artifacts/quest/test-play-d94c4b1a-69d2-4a09-8da8-0aa03263273a`.
 Unity changed only trailing whitespace in three tracked settings, which was
 normalized back to the committed form. Combined Android build and final base
 synchronization follow separately; no device, live provider or physical evidence.
+- Corrected toolchain discovery: AndroidPlayer with SDK/NDK/OpenJDK exists beside the editor bundle at `Editor/6000.3.24f1/PlaybackEngines`; the prior absence note checked only `Unity.app/Contents/PlaybackEngines`. Real build execution, not that incomplete directory check, determines availability. Trail runtime/editor/test assemblies have compiled in Unity; setup is finishing initial package asset imports.
+- Native setup review found that OpenXR requires the new Input System (the editor default was legacy-only); setup now applies the actual serialized setting used by Unity's package. Meta also auto-generates a disabled local DevAgent resource containing a machine credential. Excluded that generated asset and metadata from Git, and added setup/final-build sanitization to clear the disabled tool's credentials/address before packaging. No application voice/provider implementation was changed.
+- Implemented visible native setup: a world-fixed head-directed 0.9-second dwell keyboard for bounded HTTPS endpoint and masked role-code input, explicit development USB preset, Pair, state/role, Disconnect/re-pair and UI-only recenter. It adds no hand provider or guide authority. Code clears on submit/pause/focus loss; endpoint/credentials remain memory-only. Actual pure C# input policy tests pass. Unity EditMode ran 2/2 passing against the imported project and compiled the new UI/runtime; PlayMode keyboard/lifecycle interaction tests are running. Physical legibility/dwell comfort are unverified.
+- Unity setup completed successfully with actual generated Android/OpenXR/URP/Meta assets; committed those settings and preserved GUIDs. New Input System is enabled, required headset-camera manifest capability is declared for task5's explicit runtime permission flow, and disabled SDK AgentBridge credential/address fields were verified empty after setup. Standard Unity YAML trailing spaces were normalized without changing values. Empty duplicate SDK-created folders were omitted.
+- Actual Unity 6000.3.24f1 results: EditMode2/2 passed, PlayMode2/2 passed, then PlayMode2/2 passed again after enabling the new Input System and applying the final setup. Tests cover coordinate basis, native connection pause/disable, and head-directed keyboard entry/code clearing. These editor results do not prove Quest ergonomics, tracking or physical transfer. Final combined APK remains task6-owned; baseline platform build is attempted separately.
+
+- Review repair: pairing codes now bind role/session and browser/native client kind. Bootstrap explicitly issues a browser-author code; author issuance accepts an explicit client (default native). Browser Origin/Fetch Metadata requests cannot exchange native codes for raw bearer credentials. Eight focused auth tests and server typecheck passed. Native 401 now increments the transport generation and aborts every other in-flight request before clearing the session/notifying consumers; real Unity-managed adapter compilation passed. Added a deterministic two-concurrent-request PlayMode regression, pending execution while the earlier baseline APK build owns the editor.
+- Verified an additional setup finding in exact XR Hands/OpenXR package sources: XR Hands HandTracking and MicrosoftHandInteraction share a feature ID. The generated Android settings had enabled the Microsoft profile while leaving the joint subsystem disabled. Setup now selects the concrete XR Hands type and disables the Microsoft profile. Actual setup reapplication and native test execution follow the running baseline toolchain build; that earlier build cannot validate this repair.
+- Added a final Android prebuild guard requiring one automatically initialized OpenXR loader, the concrete enabled XR Hands HandTracking subsystem, and enabled Meta/Quest/Touch support. New isolated platform EditMode tests assert the actual configured feature type and prove that an enabled Microsoft profile cannot substitute for disabled XR Hands. Static scaffold checks pass; actual Unity compile/test pending. Full pnpm check after client-binding repair passed 49 tests and all type/build/static gates.
+- Actual repaired platform evidence on Unity 6000.3.24f1: setup passed (setup-f67aad52), EditMode4/4 passed (test-b760c6d8) including concrete-subsystem/prebuild rejection tests, and PlayMode3/3 passed (test-play-60ebd226) including the concurrent401 cancellation regression. Committed the actual generated HandTracking-enabled/Microsoft-disabled Android flags. Quoted empty TagManager entries explicitly: bare empty sequence items produced a Unity parser warning after whitespace normalization; the quoted representation imported without parser errors.
+- Baseline08fd3a7 development Android attempt completed IL2CPP/native compilation and linking but failed Gradle packaging with “Gradle build daemon has been stopped: stop command received.” No APK was verified. No stop command was issued by this task; a shared-daemon interaction is suspected, not established. Task6 owns the combined final APK attempt with a private Gradle user home. Hosted software/browser/policy checks all passed on8190aaf. No device, live provider or physical transfer validation.
+
+PR #6 final catchup: PRs #5 and #8 merged while this run was waiting for checks, and GitHub retargeted PR #6 to main. Merged actual base 2a29871, preserving all capture/contract history and adding the platform evidence. Dependency ownership is now reflected in the PR base itself. Revalidating the expanded native platform and auth inputs before final publication.
+
+Final main-integrated native evidence: Unity 6000.3.24f1 passed 13/13 EditMode
+(test-c34aafe1-ee0c-46fc-ad5e-52bd15875c56) and 7/7 PlayMode
+(test-play-29860c9c-8ba3-492c-b8de-52e72ede5473), then the standard `quest:build`
+recipe succeeded for non-development Android ARM64/IL2CPP with an isolated
+Gradle user home. APK: artifacts/quest/build-ccc5b914-7a2b-4453-b38a-e1ba21096d4a/Trail.apk,
+69,218,821 bytes, SHA256 fb6f7b4ba2d2e5483020938ba9960e7383459392aaff791282ae5b9ac54b2050.
+The build report confirms the editor/backend/architecture, and the ZIP contains
+lib/arm64-v8a/libil2cpp.so. The same artifact directory records 215 native/shared
+input hashes, distinguishing staged inputs from eight settings regenerated by
+ProjectSetup.Apply; generated files were preserved there and staged platform
+settings restored after validation. No generated settings or APK are committed.
+The final merged workspace passed 161 tests/typechecks/builds, fixture validation
+and Chromium 3/3. This supersedes the earlier current-APK gap; hosted native-CI
+enforcement and review-thread disposition remain separate. No device install,
+headset, physical transfer or live-provider validation is claimed.
+
+Final guide-base synchronization: merged capture `82b0266`, including the
+platform/authentication changes now in main. `pnpm check` passed typechecks,
+161 tests and builds; its final static check encountered an empty Unity-created
+StreamingAssets folder left by switching this task's branches. Removed that
+untracked empty folder and reran the unchanged static check successfully (122
+GUIDs), then fixtures passed. Actual Unity 6000.3.24f1 passed EditMode 15/15 and
+PlayMode 8/8 on this combined guide tree; XML is in
+`artifacts/quest/test-52f7f34a-aaf8-4997-bdbf-97337238b69d` and
+`artifacts/quest/test-play-e6b422a3-8780-4b9a-938d-03c7ba604f31`.
+The complete combined authoring APK is building separately. No headset claim.
+
+Final inspection-base synchronization: merged guide `20186c6` and the validated
+capture/platform base. Typechecks, 193 tests and builds passed; removed the same
+empty Unity-generated StreamingAssets directory after native tests finished and
+reran the unchanged static check successfully (132 GUIDs), then fixtures passed.
+Actual Unity 6000.3.24f1 passed EditMode 19/19 and PlayMode 8/8, with XML in
+`artifacts/quest/test-c4f4ae19-39f7-400c-9f98-d9ec8517a449` and
+`artifacts/quest/test-play-543f3641-2d89-4ea8-a470-970f2d13a12f`.
+All native source/configuration files match the corresponding files in the
+already-tested combined authoring candidate; combined APK packaging is ongoing.
+No native CI enforcement or review-thread resolution is claimed by local tests.
+
+## 2026-09-19 — Final combined stack Android evidence
+
+Merged final inspection base `d84b490` into authoring; only this activity log
+changed relative to tested source `d59963e`. Reused its 206 workspace tests,
+fixtures, 4/4 Chromium, Unity EditMode 20/20 and PlayMode 8/8 evidence.
+The standard `pnpm quest:build` recipe succeeded on that source in the existing
+integration checkout with a private Gradle user home. Actual Unity 6000.3.24f1
+produced a non-development Android ARM64/IL2CPP APK, 69,315,761 bytes, SHA256
+`db0345c165c80a69129f94b1fa1cbbb4394693d6637803107cef092023544f77`.
+ZIP inspection found only arm64-v8a native libraries and libil2cpp.so.
+
+Integration-checkout evidence is in ignored
+`artifacts/quest/build-b309c4eb-dcd1-41db-8a36-314780a0c52b/`: build.json,
+Trail.apk, Unity log, 293-file source-manifest.json, generated-settings.patch,
+and generated/ snapshots. The manifest distinguishes committed input hashes
+from seven settings/assets rewritten by the normal Unity/ProjectSetup build
+pipeline (including URP profile/render settings); those generated changes were
+archived and the checkout restored. Neither generated settings nor APK entered
+Git. No device install, real camera/provider session, or physical-transfer claim.
+
+Stack repair left review-thread disposition and hosted Unity/Android enforcement
+separate from local validation. Final hosted checks are verified after publication;
+no review replies, resolutions, PR merges or deployments were performed here.
