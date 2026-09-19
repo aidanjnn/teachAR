@@ -53,7 +53,9 @@ claim of tested headset legibility, input comfort, grasp or assembly verificatio
 - `HandObservationSource`: source provenance, tracking-session ID, origin
   revision and fresh `Observed(ReferenceObservation)` events. The production
   `XRHandsSource` reads only Dynamic `updatedHands`, checks per-hand update flags,
-  `isTracked` and all 25 `TryGetPose` results. No controller/skinned mesh source.
+  `isTracked` and all 25 `TryGetPose` results. Only the official `OpenXR Hands`
+  descriptor is admitted; Editor/non-Android runs are labeled synthetic. No
+  controller/skinned mesh source.
 - `ReferenceObservation`: timestamp, sequence, origin revision, source, left/right
   canonical hand samples. Missing hands remain explicit. Native XR's 26-joint
   set maps explicitly by enum name; palm is omitted, wrist retained.
