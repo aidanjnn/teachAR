@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CounterSchema, HashSchema, IdSchema, RevisionSchema, unique } from './common.js';
 import { GuideContextRefSchema } from './guide.js';
+import { TutorialSchema, type Tutorial } from './tutorial.js';
 export const SceneSourceSchema = z.enum(['quest-camera', 'workspace-webcam']);
 export const StepSceneReferenceSchema = z.strictObject({
   id: IdSchema, recordingId: IdSchema, recordingHash: HashSchema, tutorialId: IdSchema, tutorialRevision: RevisionSchema,
@@ -33,3 +34,11 @@ export const InspectionResultSchema = z.strictObject({
 }).refine(r => r.referenceIds.length === r.request.referenceIds.length && r.referenceIds.every((id, i) => id === r.request.referenceIds[i]) &&
   ((r.assessment.verdict !== 'visible-match' && r.assessment.verdict !== 'adjustment-needed') || (r.observationId !== null && r.referenceIds.length > 0)), 'Result references must match request; visual verdict needs observation and reference');
 export type InspectionResult = z.infer<typeof InspectionResultSchema>;
+
+/** Bind reviewed scene sidecar to the current tutorial; asset approval remains a storage responsibility. */
+export function parseSceneReferencesForTutorial(input: unknown, tutorialInput: Tutorial): SceneReferenceManifest {
+  const manifest = SceneReferenceManifestSchema.parse(input);
+  const tutorial = TutorialSchema.parse(tutorialInput);
+  if (manifest.recordingId !== tutorial.recordingId || manifest.recordingHash !== tutorial.recordingHash || manifest.tutorialId !== tutorial.id || manifest.tutorialRevision !== tutorial.revision || !manifest.references.every(r => tutorial.steps.some(s => s.id === r.stepId))) throw new Error('Scene references do not belong to the current tutorial steps/revision');
+  return manifest;
+}

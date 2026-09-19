@@ -1,9 +1,5 @@
-// Build-time only. Generate the structural C# readers from these same Zod schemas.
+// Build-time only. Refinements are separately implemented in ContractValidation.cs.
 import { writeFileSync } from 'node:fs';
-import { z } from 'zod';
-import * as contracts from '../src/index.js';
-const registry = z.registry<{id: string}>();
-for (const [name, schema] of Object.entries(contracts)) {
-  if (name.endsWith('Schema') && schema instanceof z.ZodType && !name.startsWith('Vision') && name !== 'HealthSchema') registry.add(schema, {id: name.slice(0, -6)});
-}
-writeFileSync(process.argv[2]!, JSON.stringify(z.toJSONSchema(registry), null, 2));
+import { buildContractSchemas } from './schema-registry.js';
+if (!process.argv[2]) throw new Error('Pass an output JSON path');
+writeFileSync(process.argv[2], JSON.stringify(buildContractSchemas(), null, 2));

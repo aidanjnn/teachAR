@@ -69,6 +69,16 @@ class Program
         }
         var recording=ContractJson.ParseRecording(Load("recording")); var tutorial=ContractJson.ParseTutorial(Load("tutorial"));
         ContractValidation.ValidateTutorialRecording(tutorial,recording,tutorial.RecordingHash);
+        var manifest=ContractJson.ParseSceneReferenceManifest(Load("scene-references"));
+        var sidecar=ContractJson.ParseNativeCaptureSidecar(Load("native-sidecar"));
+        ContractValidation.ValidateSceneReferencesForTutorial(manifest,tutorial);
+        ContractValidation.ValidateNativeCaptureRecording(sidecar,recording,tutorial.RecordingHash);
+        manifest.References[0].StepId="wrong"; bool sceneRejected=false;
+        try { ContractValidation.ValidateSceneReferencesForTutorial(manifest,tutorial); } catch(ContractException) { sceneRejected=true; }
+        Check(sceneRejected,"Unknown scene step accepted");
+        sidecar.Source="live"; bool nativeRejected=false;
+        try { ContractValidation.ValidateNativeCaptureRecording(sidecar,recording,tutorial.RecordingHash); } catch(ContractException) { nativeRejected=true; }
+        Check(nativeRejected,"Native source mismatch accepted"); count+=4;
         foreach (string change in new[]{"hash","workspace","target","missing-hand"})
         {
             var t=ContractJson.ParseTutorial(Load("tutorial"));var r=ContractJson.ParseRecording(Load("recording"));
