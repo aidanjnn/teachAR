@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <UnityManagedPath Condition="'$(UnityManagedPath)' == ''">/Applications/Unity/Hub/Editor/6000.3.24f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine</UnityManagedPath>
+    <NoWarn>CS0649</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Network/NativeApiConnection.cs" /><Compile Include="../../apps/quest/Assets/Trail/Runtime/Network/ConnectionPolicy.cs" />
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(UnityManagedPath)/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule"><HintPath>$(UnityManagedPath)/UnityEngine.UnityWebRequestModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.JSONSerializeModule"><HintPath>$(UnityManagedPath)/UnityEngine.JSONSerializeModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <Target Name="RequireUnityAssemblies" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(UnityManagedPath)/UnityEngine.CoreModule.dll')" Text="Real Unity managed assemblies are required; set UnityManagedPath. This diagnostic does not replace Unity compilation." />
+  </Target>
+</Project>

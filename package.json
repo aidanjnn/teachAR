@@ -22,7 +22,10 @@
     "start:vision": "node apps/vision/dist/main.js",
     "check:quest-scaffold": "tsx scripts/check-quest-scaffold.ts",
     "quest:test": "tsx scripts/quest.ts test",
-    "quest:setup": "tsx scripts/quest.ts setup"
+    "quest:setup": "tsx scripts/quest.ts setup",
+    "quest:test:play": "tsx scripts/quest.ts test-play",
+    "quest:build": "tsx scripts/quest.ts build",
+    "test:native-network": "dotnet run --project tests/native-network/Network.csproj"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
