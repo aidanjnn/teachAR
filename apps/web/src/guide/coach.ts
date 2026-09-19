@@ -97,6 +97,9 @@ export function createCoach(options: CoachOptions): CoachApi {
     transport = null;
     active?.close();
     stopStream();
+    // The audio element outlives this coach; never leave it muted for the next session.
+    outputGateClosed = false;
+    setPlaybackMuted(false);
   }
 
   function runEffect(effect: CoachEffect) {
@@ -176,6 +179,7 @@ export function createCoach(options: CoachOptions): CoachApi {
           startTimer = setTimeout(() => reject(new Error('Live session did not start in time')), liveStartTimeoutMs);
         });
         outputGateClosed = false;
+        setPlaybackMuted(false);
         turnRevision = state.stepRevision;
         void started.catch(() => undefined);
         await active.connect({

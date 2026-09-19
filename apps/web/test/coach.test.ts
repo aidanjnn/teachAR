@@ -177,6 +177,32 @@ describe('coach startup and output gating', () => {
     fake.emit({ type: 'session.output_transcript.delta', event_id: 'o2', delta: 'Drop it.', start_ms: 400, end_ms: 500 });
     expect(seen).toEqual(['learner:0:live:what now', 'coach:0:stale:Slide base.', 'learner:1:live:and now', 'coach:1:live:Drop it.']);
   });
+  it('never leaves the shared audio element muted for the next session', async () => {
+    const sink = { muted: false, srcObject: null as MediaStream | null, play: async () => undefined } as unknown as HTMLAudioElement;
+    const fake1 = fakeTransport();
+    const first = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake1.transport, audioSink: sink });
+    const c1 = first.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake1.emit(started);
+    await c1;
+    first.setStep('s2', 1);
+    expect(sink.muted).toBe(true);
+    first.dispose();
+    expect(sink.muted).toBe(false);
+    sink.muted = true;
+    const fake2 = fakeTransport();
+    const second = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake2.transport, audioSink: sink });
+    const seen: boolean[] = [];
+    second.onTranscript(entry => seen.push(entry.stale));
+    const c2 = second.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(sink.muted).toBe(false);
+    fake2.emit(started);
+    await c2;
+    fake2.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'Drop it.', start_ms: 0, end_ms: 100 });
+    expect(seen).toEqual([false]);
+    expect(sink.muted).toBe(false);
+  });
   it('settles connect() when the session closes or is disposed before session.started', async () => {
     const fake = fakeTransport();
     const closing: LiveTransport = { ...fake.transport, connect: async options => { await fake.transport.connect(options); options.onClosed(); } };
