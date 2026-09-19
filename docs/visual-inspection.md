@@ -61,8 +61,8 @@ Automated TypeScript checks, real-process mock integration and portable pure C#
 tests are recorded in the task's PR/log. Unity editor 6000.3.24f1 was installed
 externally during the workstreams. Licensing later resolved; the first real compile
 identified missing Meta SDK built-in module dependencies, repaired by the platform
-branch. Final editor results are recorded in the PR/log. Android Build Support is
-absent. No Android/IL2CPP build, actual camera capture, OpenAI response or
+branch. Final editor and Android build results are recorded in the PR/log. Android tools
+were found in the editor installation during validation. No actual camera capture, OpenAI response or
 camera-to-spoken-feedback proof is claimed.
 
 Source frame alignment needs particular attention: MRUK queues a native texture
