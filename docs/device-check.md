@@ -2,7 +2,8 @@
 
 The hardware is confirmed: **Meta Quest 3S with controllers**. No live headset
 checks are recorded for the current scaffold. The selected target is now a
-standalone Unity + Meta XR Android app; Unity project/setup remain planned.
+standalone Unity + Meta XR Android app. Source project files are prepared; Unity
+is not installed, and package resolution/import/compile/setup remain unverified.
 
 ## Native setup evidence to collect
 

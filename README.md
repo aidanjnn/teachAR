@@ -10,14 +10,15 @@ checkpoints aligned to their workspace.
 
 **Current status:** runnable local application scaffold (the software portion of
 TRAIL-02). The workspace includes a synthetic Three.js hand replay, recording
-schemas, rigid transforms, a Fastify health route, unit/browser checks, and CI.
+schemas, rigid transforms, main/vision Fastify skeletons, a Unity source project,
+unit/browser checks, and CI. Unity import/compile and image interpretation are pending.
 Recording, calibration, learner progression, persistence, live AI, pairing, and
 headset validation remain planned. The experience below describes the target
 product; the current screen is a diagnostic fixture.
 
 **Selected headset stack:** Unity + Meta XR, using C#, Unity OpenXR,
-Core/Interaction SDK and MRUK camera access. The native project is planned at
-`apps/quest`; it does not exist yet. The current Three.js app remains a desktop
+Core/Interaction SDK and MRUK camera access. The source project is prepared at
+[`apps/quest`](apps/quest/README.md); it has not been imported or compiled in Unity. The current Three.js app remains a desktop
 diagnostic. [The migration plan](docs/plan.md#unity-migration-sequence-owned-by-integration-and-xr)
 preserves the web/server while adding native build, capture, guidance and voice.
 
@@ -115,10 +116,10 @@ Available now:
 Application layout (module responsibilities beyond the scaffold remain planned):
 
 ```text
-apps/quest/           Planned Unity headset app: capture, guidance, camera and native voice
+apps/quest/           Unity source scaffold; runtime adapters and device setup pending
 apps/web/             Desktop review, synthetic replay and spectator UI
 apps/server/          Fastify routes, storage, Live/labels, vision coordination and relay
-apps/vision/          Planned separate image interpretation backend (TRAIL-20)
+apps/vision/          Authenticated service skeleton; image interpretation pending
 packages/contracts/  Versioned schemas and shared types
 packages/motion/     Existing pure math; planned offline authoring/reference logic
 fixtures/            Synthetic and explicitly approved real test recordings
@@ -133,8 +134,8 @@ Use Node **22.23.1** (see `.node-version`) and pnpm **11.3.0**. The dependency
 versions are pinned exactly in the package manifests and one `pnpm-lock.yaml`.
 The commands below describe the existing web/server scaffold. Unity requires a
 separate editor, Android tooling and UPM lockfile; pnpm does not build the headset
-app. The dedicated vision service is also planned; current commands do not
-start it. Exact native setup and check commands are added when TRAIL-18 is implemented.
+app. The dedicated vision service skeleton starts with `pnpm dev`; it reports image
+interpretation as unavailable. Unity source checks do not compile C#. Exact native setup and check commands are added when TRAIL-18 is implemented.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -146,12 +147,14 @@ Open `http://localhost:5173`. The synthetic fixture supports Play/Pause, Reset,
 keyboard scrubbing, and an explicit tracking gap. It is diagnostic joint replay,
 not live capture, an articulated hand mesh, or learner progression.
 
-Vite binds to `127.0.0.1:5173` with a fixed port and proxies `/api` and `/ws` to
-Fastify on `127.0.0.1:3001`. Only `/api/health` is implemented; the `/ws` proxy
+Vite defaults to `127.0.0.1:5173` and proxies `/api` and `/ws` to
+Fastify on `127.0.0.1:3001`. The launcher checks port availability before starting
+children; it never kills an existing stack. For an isolated run, use
+`PORT=3201 DEV_WEB_PORT=5273 VISION_PORT=3202 pnpm dev`. `/api/health` and `/api/dependencies/vision` are implemented; the `/ws` proxy
 reserves the future relay path. In the scaffold, keep `PORT=3001` for development.
 Server startup loads the root `.env` regardless of the package working directory;
 existing process environment values take precedence. Relative `DATA_DIR` paths
-resolve from the repository root. No credentials are required. Unsupported live
+resolve from the repository root. `pnpm dev` supplies an ephemeral internal vision-service token. No provider credentials are required. Unsupported live
 AI/haptic modes fail configuration validation instead of reporting mock success.
 Provider keys must never enter `VITE_*` variables or client bundles.
 
@@ -166,13 +169,17 @@ pnpm --filter @trail/server dev
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev` | Build shared packages, then start shared/web/server watchers |
-| `pnpm check` | Strict typecheck (including tests/config), unit tests, production build |
+| `pnpm dev` | Build shared packages, then start desktop, main API and vision with an ephemeral service token |
+| `pnpm dev:web` | Start the desktop/main API without the vision process |
+| `pnpm check` | Strict typecheck, unit/API tests, production builds and static Unity scaffold checks |
 | `pnpm test` | Contract, pure motion, architecture boundary, and Fastify checks; build shared packages first |
 | `pnpm validate:fixtures` | Build shared packages and validate the committed synthetic recording |
 | `pnpm test:e2e` | Test the **built** application on port 3101; run `pnpm build` or `pnpm check` first |
 | `pnpm build` | Build shared ESM/declarations, web assets, and server |
-| `pnpm start` | Serve built assets and API together on `http://localhost:3001` |
+| `pnpm start` | Serve built assets and main API on `http://localhost:3001` |
+| `pnpm start:vision` | Run built vision skeleton separately; requires internal service token |
+| `pnpm check:quest-scaffold` | Validate native file/GUID/assembly structure without claiming compilation |
+| `pnpm quest:setup` / `pnpm quest:test` | Run setup/EditMode tests using an installed Unity editor; fail clearly if absent |
 
 Install the browser once before desktop end-to-end tests:
 
@@ -190,7 +197,7 @@ retains failure traces. No secrets or headset are needed. See
 ### Quest connection
 
 Hardware is **Meta Quest 3S with controllers**. Native setup remains planned:
-install Unity with Android build support, create the pinned OpenXR/Meta project,
+install Unity with Android build support, open the [prepared native project](apps/quest/README.md), resolve its candidate packages, configure the rig,
 build an ARM64 APK and install it using ADB/MQDH. Controllers do not substitute
 for bare-hand capture. See [the setup plan](docs/plan.md#device-connection-and-runtime-validation)
 and [pending device gate](docs/device-check.md).

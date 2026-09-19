@@ -25,3 +25,22 @@ test-results/
 # Local agent settings and OS files
 .claude/settings.local.json
 .DS_Store
+
+# Unity caches, local settings and build outputs; retain Assets .meta and UPM locks
+/apps/quest/[Ll]ibrary/
+/apps/quest/[Tt]emp/
+/apps/quest/[Oo]bj/
+/apps/quest/[Ll]ogs/
+/apps/quest/[Uu]ser[Ss]ettings/
+/apps/quest/[Bb]uild/
+/apps/quest/[Bb]uilds/
+/apps/quest/MemoryCaptures/
+/apps/quest/Recordings/
+/apps/quest/.vs/
+/apps/quest/*.csproj
+/apps/quest/*.sln
+/apps/quest/*.slnx
+/apps/quest/*.user
+/artifacts/
+*.keystore
+*.jks

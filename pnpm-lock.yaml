@@ -42,6 +42,18 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
 
+  apps/vision:
+    dependencies:
+      '@trail/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      fastify:
+        specifier: 5.12.5
+        version: 5.12.5
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+
   apps/web:
     dependencies:
       '@trail/contracts':

@@ -20,6 +20,6 @@
     "scripts/**/*.ts",
     "tests/**/*.ts",
     "packages/*/test/**/*.ts",
-    "apps/server/test/**/*.ts"
+    "apps/*/test/**/*.ts"
   ]
 }

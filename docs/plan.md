@@ -4,7 +4,7 @@
 
 **Planning snapshot:** September 19, 2026, approximately 03:35 EDT.
 
-**Status:** Updated September 19, 2026 for the user-approved **Unity + Meta XR** headset app, the approved visual direction and GPT Live coaching. The existing scaffold is TypeScript/Three.js/Fastify; no Unity project or native headset features have been implemented by this planning revision. Unity setup, capture, guide progression, live coaching, scene inspection and headset acceptance remain implementation work. See [scaffold status](scaffold.md). Requirements below are targets, not claims of completed behavior.
+**Status:** Updated September 19, 2026 for Unity + Meta XR, cross-room transfer and dedicated visual interpretation. The repository now includes a Unity source scaffold and a separate authenticated vision-service skeleton alongside the TypeScript desktop/server. Unity is not installed: package resolution, C# compilation, scene setup and headset behavior are unverified. Image interpretation, GPT Live, capture, calibration and progression remain implementation work. See [scaffold status](scaffold.md). Requirements below are targets, not claims of completed behavior.
 
 **Input:** The supplied “Hack the North 2026 AR Physical Skill Tutor” handoff, plus the user's direction: **Meta Quest 3S with its joystick controllers**, the highest-quality version achievable, the translucent assembly storyboard, reusable guidance for freshly demonstrated bottle/LEGO-like tasks, and **GPT Live API conversation in the headset**, including “Am I doing this right?” with context-sensitive feedback.
 
@@ -253,7 +253,7 @@ trail/
 7. Add reproducible Unity test/build wrappers and CI when editor licensing is available. Keep current `pnpm check`, fixture and browser gates for the web/server. Proposed `check:quest`/`build:quest` wrappers do not exist yet; document exact commands once implemented. Produce EditMode/PlayMode XML and an Android build artifact; if CI cannot activate Unity, report that gap and retain a reproducible local build requirement.
 8. Pass the joint hand/ghost/camera/voice device slice, then proceed with the dependency graph. Record tested package versions, build/commit and actual observations in `docs/validation.md`. Freeze one working APK plus server revision before expanding scope.
 
-**Migration pass:** preserved web/server checks, pure C# fixture tests, reproducible native build/install, valid hand observations, one separate ghost, permission/restart cleanup, fresh headset images and actual duplex voice together. TRAIL-18 owns setup; TRAIL-04/16/17 supply the feature evidence. No Unity installation, generated project, dependency migration or headset test is performed by this planning task.
+**Migration pass:** preserved web/server checks, pure C# fixture tests, reproducible native build/install, valid hand observations, one separate ghost, permission/restart cleanup, fresh headset images and actual duplex voice together. TRAIL-18 owns setup; TRAIL-04/16/17 supply the feature evidence. The rescaffold prepares native source/project files and candidate pins without installing Unity; editor resolution, C# compilation, native runtime integration and headset tests remain pending.
 
 ### Environment contract
 
@@ -289,7 +289,7 @@ DEMO_PAIRING_SECRET=
 
 Load `.env` explicitly in server startup; Vite's env loading does not configure a separately started Node process. Set mock providers by default. No provider key belongs in `VITE_*`, a browser bundle, Unity assets/Resources/StreamingAssets, an APK or a native client config. Camera frames, raw narration, API keys, and full hand recordings stay out of logs and source control unless a small test fixture was deliberately consented and approved for inclusion.
 
-These Live/scene/vision-service settings are proposed additions, not options implemented by the current scaffold. `OPENAI_VISION_API_KEY` is consumed only by `apps/vision`; `VISION_SERVICE_TOKEN` authenticates main-server calls to it. Local development may use keys from the same OpenAI project, but the service boundary must not forward provider credentials in requests. Integration adds vision to the development launcher and check/build scripts only when the package exists; current commands do not start it. Mock mode must be labeled in the UI and cannot satisfy live acceptance. The integration owner adds configuration validation and pins a Live-capable SDK with the voice owner; no unrelated dependency upgrades are needed.
+Vision listener/token/URL and mock-mode settings are implemented by the service skeleton; Live/scene/provider settings remain proposed. `OPENAI_VISION_API_KEY` is consumed only by `apps/vision`; `VISION_SERVICE_TOKEN` authenticates main-server calls to it. Local development may use keys from the same OpenAI project, but the service boundary must not forward provider credentials in requests. The development launcher and check/build scripts now include the vision skeleton; it reports image interpretation as unimplemented. Mock mode must be labeled in the UI and cannot satisfy live acceptance. The integration owner adds configuration validation and pins a Live-capable SDK with the voice owner; no unrelated dependency upgrades are needed.
 
 ### Device connection and runtime validation
 

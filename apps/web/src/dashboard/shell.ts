@@ -28,7 +28,7 @@ export function mountShell(root: HTMLElement) {
           <p class="scope-note">This preview shows recorded motion. It does not track your hands or verify a physical task.</p>
         </aside>
       </div>
-      <section class="diagnostics" aria-label="Runtime diagnostics"><div><span>Local server</span><strong id="health" role="status">Checking…</strong></div><div><span>Immersive AR</span><strong id="xr">Checking…</strong></div><div><span>Integrations</span><strong>AI and haptics: mock</strong></div><button id="refresh-health" type="button">Recheck server</button></section>
+      <section class="diagnostics" aria-label="Runtime diagnostics"><div><span>Local server</span><strong id="health" role="status">Checking…</strong></div><div><span>Headset app</span><strong>Unity · device validation pending</strong></div><div><span>Vision backend</span><strong id="vision" role="status">Checking…</strong></div><button id="refresh-health" type="button">Recheck server</button></section>
       <footer>Record once. Learn at your own pace.<span>Scaffold preview · Headset validation pending</span></footer>
     </main>`;
 }
