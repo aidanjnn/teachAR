@@ -13,7 +13,7 @@ function patched(test: (typeof corpus.cases)[number]): string {
     let parent: any = value;
     for (const part of patch.path.slice(0,-1)) parent = parent[part];
     const last = patch.path.at(-1)!;
-    if ('remove' in patch && patch.remove) delete parent[last]; else parent[last] = patch.value;
+    if ('remove' in patch && patch.remove) delete parent[last]; else parent[last] = 'value' in patch ? patch.value : undefined;
   }
   return JSON.stringify(value);
 }
