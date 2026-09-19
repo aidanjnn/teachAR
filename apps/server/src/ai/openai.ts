@@ -33,7 +33,8 @@ export function buildLiveSessionParams(
       audio: { output: { voice: models.liveVoice } },
       delegation: {
         type: 'responses',
-        responses: { model: models.liveBackendModel, instructions: backendInstructions(context), tool_choice: 'none', max_output_tokens: 200 },
+        // No tools are registered, so the backend cannot call anything; tool_choice is deliberately omitted.
+        responses: { model: models.liveBackendModel, instructions: backendInstructions(context), max_output_tokens: 200 },
       },
       client: { data_channel: { allowed_client_events: BROWSER_CLIENT_EVENTS } },
       store: false,

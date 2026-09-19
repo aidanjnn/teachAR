@@ -153,6 +153,7 @@ stopButton.addEventListener('click', async () => {
   try {
     recording = await recorder.stop();
     showCapture(recording.capture);
+    if (playback.src.startsWith('blob:')) URL.revokeObjectURL(playback.src);
     playback.src = URL.createObjectURL(recording.blob);
     playback.hidden = false;
     playButton.disabled = false;

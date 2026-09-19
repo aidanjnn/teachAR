@@ -77,7 +77,10 @@ describe('openai provider live sessions', () => {
     expect(params.session.instructions).toContain('Place the base');
     expect(params.session.store).toBe(false);
     expect(params.session.audio).toEqual({ output: { voice: 'marin' } });
-    expect(params.session.delegation).toMatchObject({ type: 'responses', responses: { model: 'gpt-5.6-luna', tool_choice: 'none' } });
+    expect(params.session.delegation).toMatchObject({ type: 'responses', responses: { model: 'gpt-5.6-luna', max_output_tokens: 200 } });
+    const responses = params.session.delegation?.type === 'responses' ? params.session.delegation.responses : undefined;
+    expect(responses?.tools).toBeUndefined();
+    expect(responses?.tool_choice).toBeUndefined();
     expect(params.session.client?.data_channel.allowed_client_events).toEqual(BROWSER_CLIENT_EVENTS);
     expect(BROWSER_CLIENT_EVENTS).not.toContain('session.instructions.append');
     expect(BROWSER_CLIENT_EVENTS).not.toContain('session.update');

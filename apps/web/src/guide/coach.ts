@@ -31,6 +31,7 @@ function stepOf(context: CoachContext): CoachStep {
   if (!step) throw new Error('Coach context has no current step');
   return step;
 }
+/** Mirrors the server's stepChangeContext wording; the web bundle cannot import server code. */
 function stepContextText(context: CoachContext): string {
   const index = context.steps.findIndex(item => item.id === context.currentStepId);
   const step = stepOf(context);

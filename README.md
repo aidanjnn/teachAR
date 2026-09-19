@@ -117,8 +117,8 @@ keyboard scrubbing, and an explicit tracking gap. It is diagnostic joint replay,
 not live capture, an articulated hand mesh, or learner progression.
 
 Vite binds to `127.0.0.1:5173` with a fixed port and proxies `/api` and `/ws` to
-Fastify on `127.0.0.1:3001`. Only `/api/health` is implemented; the `/ws` proxy
-reserves the future relay path. In the scaffold, keep `PORT=3001` for development.
+Fastify on `127.0.0.1:3001`. Implemented routes are `/api/health` and the voice
+routes under `/api/voice` and `/api/coach`; the `/ws` proxy reserves the future relay path. In the scaffold, keep `PORT=3001` for development.
 Server startup loads the root `.env` regardless of the package working directory;
 existing process environment values take precedence. Relative `DATA_DIR` paths
 resolve from the repository root. No credentials are required. Unsupported live
@@ -167,6 +167,8 @@ root `.env`, restart `pnpm dev`, and open the Voice Lab. Keys never leave the
 server: the browser exchanges an SDP offer through `POST /api/coach/session`, and the
 server creates the GPT-Live session. Live mode is verified manually; CI covers mock
 and text paths. Answers are grounded in the tutorial text and cannot advance a step.
+There is no pairing or per-session cap yet, and each live session bills at least
+15 seconds, so keep the server on loopback until pairing lands.
 
 ### Quest connection
 

@@ -44,7 +44,8 @@ export function reduceCoach(state: CoachState, event: CoachEvent): { state: Coac
     case 'connect-started':
       return { state: { ...state, mode: 'connecting' }, effects: none };
     case 'live-ready':
-      return { state: { ...state, mode: 'live', liveClosed: false }, effects: [{ type: 'mute' }] };
+      // A late session.started after the channel already closed must not revive a dead session.
+      return state.mode === 'connecting' ? { state: { ...state, mode: 'live', liveClosed: false }, effects: [{ type: 'mute' }] } : { state, effects: none };
     case 'live-failed':
       return { state: { ...state, mode: 'text' }, effects: none };
     case 'live-closed':

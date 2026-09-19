@@ -33,6 +33,9 @@ describe('coach modes', () => {
     const closed = run(start, { type: 'connect-started' }, { type: 'live-ready' }, { type: 'live-closed' });
     expect(closed.state).toMatchObject({ mode: 'text', liveClosed: true });
     expect(reduceCoach(closed.state, { type: 'listen-toggled' }).effects).toEqual([]);
+    const lateStart = reduceCoach(closed.state, { type: 'live-ready' });
+    expect(lateStart.state.mode).toBe('text');
+    expect(lateStart.effects).toEqual([]);
   });
   it('pushes step context while live and stops listening on a step change', () => {
     const live = run(start, { type: 'connect-started' }, { type: 'live-ready' }).state;

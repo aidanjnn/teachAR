@@ -124,7 +124,7 @@ with the session below and returns the SDP answer.
     model: OPENAI_LIVE_MODEL,             // gpt-live-1
     instructions: frontendInstructions(context),   // approved text only, ≤ 16k tokens
     audio: { output: { voice: OPENAI_LIVE_VOICE } }, // marin
-    delegation: { type: 'responses', responses: { model: OPENAI_LIVE_BACKEND_MODEL, instructions: backendInstructions(context), tool_choice: 'none', max_output_tokens: 200 } },
+    delegation: { type: 'responses', responses: { model: OPENAI_LIVE_BACKEND_MODEL, instructions: backendInstructions(context), max_output_tokens: 200 } }, // no tools registered
     client: { data_channel: { allowed_client_events: ['session.input_audio.mute', 'session.input_audio.unmute', 'session.thinking.append', 'session.close'] } },
     store: false,
   },
@@ -248,7 +248,7 @@ microphone concurrency. Section 10 lists the manual procedure.
 - Provider key only in server `.env`. The browser receives an SDP answer, never a key
   or ephemeral secret.
 - Browser data channel is allow-listed; instructions come only from the server.
-- No tools, no function calling, `tool_choice: 'none'`, `store: false`.
+- No tools registered, so no function calling is possible; `store: false`.
 - Bounded bodies, MIME allow-list, per-route timeouts, `no-store` responses.
 - Audio and transcript text never logged. Fixtures are synthetic.
 - Loopback only; pairing and Origin checks remain integration's tunnel prerequisite.
