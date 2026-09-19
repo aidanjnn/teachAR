@@ -456,3 +456,9 @@ TRAIL-04 review follow-up: capture panel labels now arm after a 0.6 s fresh inde
 TRAIL-05 review follow-up: `Preload` now loads the recording into capture before dispatching `Preloaded`, so capture's synchronous invalidation is absorbed by the Preload phase and the first attempt stays `attempt-1`, revision 1. Merged the capture-panel and contracts fixes from `codex/capture-calibration-replay`. Guide harness passed (.NET; not Unity/headset). The user-confirmed-while-occluded question (reviewer P1 versus the existing `ManualOcclusion` scenario) is left for a product decision.
 
 TRAIL-07 review follow-up: vision re-encodes uploads in their source format (JPEG stays JPEG at quality 92, PNG stays PNG) so a realistic 1280×960 camera JPEG is no longer rejected for exceeding the PNG size ceiling; a noisy-JPEG test covers it. The coordinator's retired live-session memory is a bounded FIFO instead of a hard `busy` after 64 transitions. Non-success provider responses cancel their body. A GPU readback error on the current ticket now releases the copy slot and reports `readback-failed` immediately instead of waiting for the inspection timeout (MonoBehaviour path; unverified in Unity). Merged the guide/capture/contracts fixes from `codex/local-guide-progression`. `pnpm check` and the .NET scene harness passed; Unity CI gates remain open for the platform owner.
+||||||| 6d500aa
+
+## 2026-09-19 — PR #7 babysit: tracking loss cannot confirm
+
+- `GuideReducer.Confirm` and `GuideControlPanel` no longer accept user confirmation in `TrackingLost`; confirmation resumes after reacquisition (Guiding/Holding). The `ManualOcclusion` scenario previously asserted the opposite and was realigned with the product invariant that tracking loss cannot complete a step.
+- Automated evidence: guide-harness (.NET) green. No Unity Editor/PlayMode or headset evidence.

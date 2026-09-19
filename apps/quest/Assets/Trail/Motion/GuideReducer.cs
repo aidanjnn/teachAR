@@ -76,7 +76,7 @@ namespace Trail.Motion
                     { ClearEvidence(s); s.Phase = GuidePhase.TrackingLost; s.ResumePhase = GuidePhase.Guiding; s.Notice = "Reacquiring tracking before guiding."; }
                     break;
                 case GuideAction.Confirm:
-                    if (step.CompletionMode == GuideCompletionMode.UserConfirmed && (s.Phase == GuidePhase.Guiding || s.Phase == GuidePhase.Holding || (s.Phase == GuidePhase.TrackingLost && s.ResumePhase == GuidePhase.Guiding))) Complete(true);
+                    if (step.CompletionMode == GuideCompletionMode.UserConfirmed && (s.Phase == GuidePhase.Guiding || s.Phase == GuidePhase.Holding)) Complete(true);
                     break;
                 case GuideAction.Tick:
                     if (Active(s.Phase) && (s.SampleMs < 0 || s.NowMs - s.SampleMs > StallMs)) LoseTracking(s, effects, definition, "Tracking stalled; reacquire active hands.");

@@ -52,7 +52,7 @@ namespace Trail.Runtime.Guide
                 case 1: return s.State.Calibrated;
                 case 2: return phase == GuidePhase.Showing || phase == GuidePhase.WaitingStart || phase == GuidePhase.Guiding || phase == GuidePhase.Holding || phase == GuidePhase.TrackingLost;
                 case 3: return phase == GuidePhase.Paused;
-                case 4: return step.CompletionMode == GuideCompletionMode.UserConfirmed && (phase == GuidePhase.Guiding || phase == GuidePhase.Holding || phase == GuidePhase.TrackingLost);
+                case 4: return step.CompletionMode == GuideCompletionMode.UserConfirmed && (phase == GuidePhase.Guiding || phase == GuidePhase.Holding);
                 default: return false;
             }
         }
