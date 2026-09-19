@@ -429,3 +429,21 @@ TRAIL-05 review follow-up: `Preload` now loads the recording into capture before
 
 - `GuideReducer.Confirm` and `GuideControlPanel` no longer accept user confirmation in `TrackingLost`; confirmation resumes after reacquisition (Guiding/Holding). The `ManualOcclusion` scenario previously asserted the opposite and was realigned with the product invariant that tracking loss cannot complete a step.
 - Automated evidence: guide-harness (.NET) green. No Unity Editor/PlayMode or headset evidence.
+
+## 2026-09-19 — PR #7 babysit verification follow-up
+
+Synchronized published head `2fc8d4a`; both prior review threads are resolved,
+all hosted checks pass, and the actual capture base has no conflict. Verified
+that preload invalidation stays in Preload and user confirmation excludes
+TrackingLost. Added real-adapter PlayMode assertions for initial attempt 1 and
+revision 1, and corrected the native guide documentation's stale occlusion rule.
+
+Actual local Unity 6000.3.24f1 EditMode passed 13/13 at 20:21:55Z and PlayMode
+passed 5/5 at 20:22:33Z, including the new assertions. Results are in
+`artifacts/quest/test-53e0fe31-0229-4409-ae1e-7e4d1ba0b051/results.xml` and
+`artifacts/quest/test-play-c7924ded-7346-4a5a-8a9f-f1a27ee223b4/results.xml`.
+The .NET Release guide harness passed 24 scenarios and golden/rebind integration;
+static scaffold validation passed 97 GUIDs. Reused passing hosted workspace,
+fixture, browser and workflow checks for unchanged inputs; final-head CI follows
+the push. Archived only this run's generated Unity settings/assets. Combined
+Android build remains with integration; no headset or provider evidence is claimed.
