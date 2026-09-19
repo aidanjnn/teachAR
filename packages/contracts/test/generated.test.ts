@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -12,6 +12,20 @@ it('keeps generated C# DTOs, readers and shape constraints synchronized with Zod
     execFileSync('python3', ['packages/contracts/tools/generate-csharp.py', schemaPath, dir]);
     for (const name of ['ContractModels.cs','ContractJson.Generated.cs','ContractShapeData.Generated.cs']) {
       expect(readFileSync(join(dir,name),'utf8'), `${name} requires regeneration`).toBe(readFileSync(`apps/quest/Assets/Trail/Contracts/${name}`,'utf8'));
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+it('regenerates every shared fixture without dropping regression cases', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'trail-fixture-generation-'));
+  try {
+    execFileSync(process.execPath, ['--import', 'tsx', 'packages/contracts/tools/generate-fixtures.ts', dir]);
+    const expected = readdirSync('fixtures/contracts').sort();
+    expect(readdirSync(dir).sort()).toEqual(expected);
+    for (const name of expected) {
+      expect(JSON.parse(readFileSync(join(dir, name), 'utf8')), `${name} differs from its generator`).toEqual(
+        JSON.parse(readFileSync(join('fixtures/contracts', name), 'utf8')),
+      );
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

@@ -375,3 +375,9 @@ builds and 78-GUID static check) and `pnpm validate:fixtures` (61-frame syntheti
 recording). The existing Vite chunk-size warning remains. Desktop inputs are
 unchanged by this C# panel repair; current-head hosted browser evidence is checked
 separately after publication.
+
+### 2026-09-19 — Babysit contracts PR #8
+
+Fast-forwarded to the existing review repair `9ccf520`, verified matching TS/C# chunk-order checks and the already-resolved review thread. Reproduced a remaining regression-maintenance bug: fixture regeneration silently removed both new chunk-order cases. Added those cases to the generator and a temporary-directory regeneration test covering every shared fixture; the test failed before the fix and passed afterward. No wire format, runtime behavior or committed fixture changed. Final local signoff passed `pnpm check` (151 tests), fixture validation, 127 focused contract tests, 115 actual .NET parser checks, and 5/5 isolated Unity EditMode tests. Existing browser evidence is reusable because app/runtime/fixture inputs are unchanged; newly pushed hosted checks are verified separately. Full-app Unity dependency limits and Android/headset/physical acceptance remain outside this evidence. No review replies, thread resolutions, bot invocations, merges or deployments were performed.
+
+PR #6 catchup: merged base 1895f08 after an append-only work-log conflict, preserving both entries. Only fixture-generation tooling/tests changed upstream; native runtime inputs and the passing 11 EditMode/5 PlayMode evidence remain unchanged. The merged `pnpm check` passed 160 tests/typechecks/builds/static checks and fixture validation passed.
