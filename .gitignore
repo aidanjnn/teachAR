@@ -37,6 +37,7 @@ test-results/
 /apps/quest/MemoryCaptures/
 /apps/quest/Recordings/
 /apps/quest/.vs/
+/apps/quest/.utmp/
 /apps/quest/*.csproj
 /apps/quest/*.sln
 /apps/quest/*.slnx

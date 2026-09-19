@@ -10,10 +10,11 @@ assumptions are not current verification evidence.
 
 The repository has a pnpm application scaffold, shared recording schemas and
 rigid transforms, a synthetic desktop replay, Fastify health/static serving,
-an authenticated vision-service skeleton, a Unity source scaffold, and automated
-checks/CI. Unity import/compile and image interpretation are unverified. Capture,
-calibration, guide progression, persistence,
-providers, and headset validation remain planned. Inspect the current tree and
+an authenticated vision-service skeleton, native platform setup/pairing, strict
+C# contracts, browser voice diagnostics and automated checks/CI. Local Unity
+import/compile and native tests have passed; see [setup evidence](docs/native-setup.md).
+Image interpretation, complete feature composition, live-provider acceptance and
+headset validation remain separate gates. Inspect the current tree and
 manifests before claiming a capability exists. Continue from the dependency-ordered
 tickets in plan section 17; docs/scaffold.md records the bootstrap scope.
 
@@ -52,7 +53,7 @@ authorized by applicable instructions.
 
 The user-approved target is **Unity + Meta XR** for a standalone Quest 3S
 Android app in `apps/quest`, with the existing pnpm TypeScript/Fastify workspace
-for server, authoring, desktop diagnostics and spectator. Unity files are prepared; editor import, rig setup and device validation remain
+for server, authoring, desktop diagnostics and spectator. Unity import and the rig bootstrap are implemented; device validation remains
 in TRAIL-18. Do not install IWSDK/Spatial SDK or downgrade Vite.
 Use Unity OpenXR, Meta XR Core/Interaction and MRUK with a tested native WebRTC
 adapter; freeze compatible exact versions during setup. Keep accounts/cloud DB,

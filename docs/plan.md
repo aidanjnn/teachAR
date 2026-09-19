@@ -4,7 +4,7 @@
 
 **Planning snapshot:** September 19, 2026, approximately 03:35 EDT.
 
-**Status:** Updated September 19, 2026 for Unity + Meta XR, cross-room transfer and dedicated visual interpretation. The repository now includes a Unity source scaffold and a separate authenticated vision-service skeleton alongside the TypeScript desktop/server. Unity is not installed: package resolution, C# compilation, scene setup and headset behavior are unverified. Image interpretation, GPT Live, capture, calibration and progression remain implementation work. See [scaffold status](scaffold.md). Requirements below are targets, not claims of completed behavior.
+**Status:** Updated September 19, 2026 for Unity + Meta XR, cross-room transfer and dedicated visual interpretation. The merged repository includes native platform setup/pairing, strict shared/native contracts, browser voice diagnostics and the authenticated vision-service skeleton. The local pinned Unity/Android toolchain is installed and activated; see [native setup evidence](native-setup.md) for revision-specific compilation, tests and APK results. Complete capture/guide/storage composition, fresh visual interpretation, live-provider acceptance and headset behavior remain separate work. See [scaffold status](scaffold.md). Requirements below are targets, not claims of completed physical behavior.
 
 **Input:** The supplied “Hack the North 2026 AR Physical Skill Tutor” handoff, plus the user's direction: **Meta Quest 3S with its joystick controllers**, the highest-quality version achievable, the translucent assembly storyboard, reusable guidance for freshly demonstrated bottle/LEGO-like tasks, and **GPT Live API conversation in the headset**, including “Am I doing this right?” with context-sensitive feedback.
 
