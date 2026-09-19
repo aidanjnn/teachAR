@@ -17,8 +17,10 @@ invariants. This reference selects evidence; it does not claim tests exist.
    `pnpm check` first and install Chromium with `pnpm exec playwright install chromium`.
 4. Native changes need the implemented Unity EditMode/PlayMode and Android
    ARM64/IL2CPP build checks in addition to relevant web/server checks. Native
-   wrappers/CI are planned, not existing commands. Inspect the editor/project and
-   available scripts first; report activation/licensing or absent gates. Test
+   wrappers `pnpm quest:setup`, `pnpm quest:test`, `pnpm quest:test:play` and
+   `pnpm quest:build` invoke the installed pinned editor. Native Unity CI remains
+   pending; inspect [local setup evidence](../../docs/native-setup.md) and report
+   activation/licensing or missing-check limitations. Test
    strict C# serialization/AOT in APK and compare shared golden fixtures. No
    Unity installation is necessary to check a documentation-only change.
 5. Reuse results for unchanged inputs; after repairs, rerun affected checks and

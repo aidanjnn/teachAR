@@ -34,6 +34,7 @@ namespace Trail.Editor
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel32;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
             PlayerSettings.Android.forceInternetPermission = true;
+            PlayerSettings.Android.optimizedFramePacing = false;
             PlayerSettings.insecureHttpOption = InsecureHttpOption.DevelopmentOnly;
             PlayerSettings.colorSpace = ColorSpace.Linear;
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
@@ -68,11 +69,15 @@ namespace Trail.Editor
             if (asset == null) return;
             var settings = new SerializedObject(asset);
             var enabled = settings.FindProperty("enabled");
-            if (enabled != null) enabled.boolValue = false;
+            if (enabled == null || enabled.propertyType != SerializedPropertyType.Boolean)
+                throw new BuildFailedException("Review Meta DevAgent enable flag before building");
+            enabled.boolValue = false;
             foreach (var field in new[] { "accessToken", "witClientAccessToken", "serverAddress" })
             {
                 var property = settings.FindProperty(field);
-                if (property != null) property.stringValue = "";
+                if (property == null || property.propertyType != SerializedPropertyType.String)
+                    throw new BuildFailedException("Review Meta DevAgent credential field before building: " + field);
+                property.stringValue = "";
             }
             settings.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
@@ -80,11 +85,19 @@ namespace Trail.Editor
         }
         private static void ConfigureOpenXR()
         {
-            if (!EditorBuildSettings.TryGetConfigObject<XRGeneralSettingsPerBuildTarget>(XRGeneralSettings.k_SettingsKey, out var settings))
+            if (!EditorBuildSettings.TryGetConfigObject<XRGeneralSettingsPerBuildTarget>(XRGeneralSettings.k_SettingsKey, out var settings) || settings == null)
             {
-                settings = ScriptableObject.CreateInstance<XRGeneralSettingsPerBuildTarget>();
-                if (!AssetDatabase.IsValidFolder("Assets/XR")) AssetDatabase.CreateFolder("Assets", "XR");
-                AssetDatabase.CreateAsset(settings, "Assets/XR/TrailXRSettings.asset");
+                var existing = AssetDatabase.FindAssets("t:XRGeneralSettingsPerBuildTarget");
+                if (existing.Length > 1)
+                    throw new BuildFailedException("Multiple XR settings assets exist; resolve their ownership before setup");
+                if (existing.Length == 1)
+                    settings = AssetDatabase.LoadAssetAtPath<XRGeneralSettingsPerBuildTarget>(AssetDatabase.GUIDToAssetPath(existing[0]));
+                else
+                {
+                    settings = ScriptableObject.CreateInstance<XRGeneralSettingsPerBuildTarget>();
+                    if (!AssetDatabase.IsValidFolder("Assets/XR")) AssetDatabase.CreateFolder("Assets", "XR");
+                    AssetDatabase.CreateAsset(settings, "Assets/XR/TrailXRSettings.asset");
+                }
                 EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, settings, true);
             }
             if (!settings.HasSettingsForBuildTarget(BuildTargetGroup.Android)) settings.CreateDefaultSettingsForBuildTarget(BuildTargetGroup.Android);
@@ -92,7 +105,7 @@ namespace Trail.Editor
             var general = settings.SettingsForBuildTarget(BuildTargetGroup.Android);
             general.InitManagerOnStart = true;
             var manager = general.Manager;
-            if (manager.activeLoaders.Any(loader => loader.GetType().FullName != "UnityEngine.XR.OpenXR.OpenXRLoader"))
+            if (manager.activeLoaders.Any(loader => loader == null || loader.GetType().FullName != "UnityEngine.XR.OpenXR.OpenXRLoader"))
                 throw new BuildFailedException("Remove competing XR providers before applying Trail settings");
             if (!XRPackageMetadataStore.AssignLoader(manager, "UnityEngine.XR.OpenXR.OpenXRLoader", BuildTargetGroup.Android))
                 throw new BuildFailedException("OpenXR loader assignment failed");
@@ -164,7 +177,9 @@ namespace Trail.Editor
             var output = Environment.GetEnvironmentVariable("TRAIL_APK_PATH");
             if (string.IsNullOrWhiteSpace(output) || !Path.IsPathRooted(output) || !output.EndsWith(".apk", StringComparison.OrdinalIgnoreCase))
                 throw new BuildFailedException("TRAIL_APK_PATH must be an absolute .apk path");
+            if (File.Exists(output)) throw new BuildFailedException("Use a new APK path to preserve existing build artifacts");
             Directory.CreateDirectory(Path.GetDirectoryName(output));
+            EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
             var development = Environment.GetEnvironmentVariable("TRAIL_DEVELOPMENT_BUILD") == "1";
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                 scenes = new[] { ScenePath }, locationPathName = output, target = BuildTarget.Android,
