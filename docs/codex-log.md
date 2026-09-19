@@ -303,3 +303,39 @@ import. Its final result follows separately. No physical/provider evidence yet.
 TRAIL-03 final software validation: retained parsed pose doubles for re-export, added sidecar identity binding and regeneration drift tests, and documented versions/migration/native representation limits in `docs/contracts.md`. Fixed strict TS array/fixture-union diagnostics found by the full gate without changing schemas. `pnpm check` passed (148 tests, typechecks, app builds and native static check), `pnpm validate:fixtures` passed, 124 contract tests passed, and the actual .NET parser harness passed 113 checks. Three Chromium fixture scenarios passed on isolated port 3103 with an owned temporary data directory; the server was cleaned up. The existing Vite large-chunk warning remains.
 
 Unity became available externally during this run. Full-project `pnpm quest:test` on the baseline manifest failed before tests on vendor CS1069 diagnostics requiring Animation and Asset Bundle modules; native-platform owns that repair. A minimal temporary project containing the unchanged production Contracts/Motion and their tests passed 5/5 EditMode tests in Unity 6000.3.24f1 with Test Framework 1.4.6. The repeatable `pnpm --filter @trail/contracts test:unity-isolated` runner records source hashes, setup and result XML; its verified run began 2026-09-19T18:00:43Z with 32 copied/hashed production/test files, all five passed. The temporary project and logs are outside Git; import-generated full-project settings/lock were preserved outside this PR for the platform owner. No Android IL2CPP build, live provider, headset or physical LEGO/transfer claim. Contracts PR remains independent against main, to be consumed before the capture, guide, authoring and inspection PRs.
+
+## 2026-09-19 — Task 3 final native and delivery evidence
+
+The actual full project now imports and compiles in externally installed/licensed
+Unity 6000.3.24f1 after native-platform's module/real-lock repair d23754a. With
+final shared contracts 3d629fa, `pnpm quest:test` passed 11/11 and
+`pnpm quest:test:play` passed 4/4. The latter instantiates the real capture installer,
+separate articulated ghost prefab and fonts/materials, checks no duplicate source
+and no ghost colliders, and exercises capture/calibration/replay invalidation
+with explicitly synthetic hand observations. Latest PlayMode evidence is
+`artifacts/quest/test-play-7aa7d645-f308-4f06-9158-cb183caeec72/results.xml`.
+Isolated real Unity source-hashing runner passes EditMode 6/6 and PlayMode 2/2;
+full-project results are distinct and stronger import/composition evidence.
+
+Added a serialized 31 MiB motion budget via the canonical frame writer, preserving
+a saveable accepted prefix plus visible StopReason before the 32 MiB parser ceiling;
+actual C# regression passed. Explicitly admit only the official OpenXR Hands
+provider; non-Android/Editor sources remain synthetic. Continuous pure C# capture
+CI is green. Runtime source is stable from 1b2d095, with final contract dependency
+and composition tests added afterward. .NET fixtures continue to pass.
+
+The final pnpm pass after contract integration passed 157 tests/typechecks/builds;
+its static tail encountered Unity's empty generated StreamingAssets folder before
+metadata existed. Removed/backed up only validation-generated files, restored only
+the engine-generated EditorBuildSettings delta, and reran the normal available gate.
+Generated platform settings/assets are preserved under ignored artifacts, not in
+this PR; platform owns their canonical publication. Existing Vite size warning
+remains. Prior desktop smoke passed 3/3; hosted branch checks including C# capture
+and network are green before this documentation-only completion update.
+
+PR #6 is stacked on shared-contracts PR #8 and also includes platform PR #5 dependencies.
+Merge those before capture, then the dependent guide/authoring/inspection work.
+Android support was found externally and the coordinator assigned the combined
+APK build to task 6; no APK result is preclaimed here. No headset, native live
+hand capture, physical LEGO/independent-user transfer, provider, or timing-accuracy
+claim follows from these editor/synthetic checks. No voice implementation changed.
