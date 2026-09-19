@@ -339,7 +339,6 @@ Android support was found externally and the coordinator assigned the combined
 APK build to task 6; no APK result is preclaimed here. No headset, native live
 hand capture, physical LEGO/independent-user transfer, provider, or timing-accuracy
 claim follows from these editor/synthetic checks. No voice implementation changed.
-||||||| 3d629fa
 
 TRAIL-03 review follow-up: `MotionChunk` now rejects non-increasing `tMs` within a chunk in both Zod (`refine`) and pure C# (`ContractValidation.Validate(MotionChunk)`, wired through the generator's semantic set); cross-chunk ordering remains a storage-coordinator concern. Two corpus cases (duplicate and decreasing chunk timestamps) cover parity. `pnpm check` passed (150 tests) and the .NET harness passed 115 checks; no Unity, IL2CPP or headset claim.
 
