@@ -1,0 +1,1615 @@
+{
+  "cases": [
+    {
+      "name": "valid recording",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": true
+    },
+    {
+      "name": "valid tutorial",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": true
+    },
+    {
+      "name": "valid draft-edit",
+      "contract": "TutorialDraftEdit",
+      "file": "draft-edit.json",
+      "valid": true
+    },
+    {
+      "name": "valid guide-event",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": true
+    },
+    {
+      "name": "valid guide-tracking",
+      "contract": "GuideEvent",
+      "file": "guide-tracking.json",
+      "valid": true
+    },
+    {
+      "name": "valid guide-completed",
+      "contract": "GuideEvent",
+      "file": "guide-completed.json",
+      "valid": true
+    },
+    {
+      "name": "valid guide-ended",
+      "contract": "GuideEvent",
+      "file": "guide-ended.json",
+      "valid": true
+    },
+    {
+      "name": "valid native-sidecar",
+      "contract": "NativeCaptureSidecar",
+      "file": "native-sidecar.json",
+      "valid": true
+    },
+    {
+      "name": "valid calibration-v2",
+      "contract": "CalibrationV2",
+      "file": "calibration-v2.json",
+      "valid": true
+    },
+    {
+      "name": "valid scene-references",
+      "contract": "SceneReferenceManifest",
+      "file": "scene-references.json",
+      "valid": true
+    },
+    {
+      "name": "valid inspection-request",
+      "contract": "InspectionRequest",
+      "file": "inspection-request.json",
+      "valid": true
+    },
+    {
+      "name": "valid scene-observation",
+      "contract": "SceneObservation",
+      "file": "scene-observation.json",
+      "valid": true
+    },
+    {
+      "name": "valid inspection-result",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": true
+    },
+    {
+      "name": "valid create-recording",
+      "contract": "CreateRecordingRequest",
+      "file": "create-recording.json",
+      "valid": true
+    },
+    {
+      "name": "valid motion-chunk",
+      "contract": "MotionChunk",
+      "file": "motion-chunk.json",
+      "valid": true
+    },
+    {
+      "name": "valid finalize-recording",
+      "contract": "FinalizeRecordingRequest",
+      "file": "finalize-recording.json",
+      "valid": true
+    },
+    {
+      "name": "recording unknown field",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "recording missing field",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial unknown field",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial missing field",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "draft-edit unknown field",
+      "contract": "TutorialDraftEdit",
+      "file": "draft-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "draft-edit missing field",
+      "contract": "TutorialDraftEdit",
+      "file": "draft-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "baseRevision"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "guide-event unknown field",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "guide-event missing field",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "guide-tracking unknown field",
+      "contract": "GuideEvent",
+      "file": "guide-tracking.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "guide-tracking missing field",
+      "contract": "GuideEvent",
+      "file": "guide-tracking.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "guide-completed unknown field",
+      "contract": "GuideEvent",
+      "file": "guide-completed.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "guide-completed missing field",
+      "contract": "GuideEvent",
+      "file": "guide-completed.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "guide-ended unknown field",
+      "contract": "GuideEvent",
+      "file": "guide-ended.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "guide-ended missing field",
+      "contract": "GuideEvent",
+      "file": "guide-ended.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "native-sidecar unknown field",
+      "contract": "NativeCaptureSidecar",
+      "file": "native-sidecar.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "native-sidecar missing field",
+      "contract": "NativeCaptureSidecar",
+      "file": "native-sidecar.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "calibration-v2 unknown field",
+      "contract": "CalibrationV2",
+      "file": "calibration-v2.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "calibration-v2 missing field",
+      "contract": "CalibrationV2",
+      "file": "calibration-v2.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "scene-references unknown field",
+      "contract": "SceneReferenceManifest",
+      "file": "scene-references.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "scene-references missing field",
+      "contract": "SceneReferenceManifest",
+      "file": "scene-references.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "inspection-request unknown field",
+      "contract": "InspectionRequest",
+      "file": "inspection-request.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "inspection-request missing field",
+      "contract": "InspectionRequest",
+      "file": "inspection-request.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "runId"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "scene-observation unknown field",
+      "contract": "SceneObservation",
+      "file": "scene-observation.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "scene-observation missing field",
+      "contract": "SceneObservation",
+      "file": "scene-observation.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "id"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "inspection-result unknown field",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "inspection-result missing field",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "request"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "create-recording unknown field",
+      "contract": "CreateRecordingRequest",
+      "file": "create-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "create-recording missing field",
+      "contract": "CreateRecordingRequest",
+      "file": "create-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "metadata"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "motion-chunk unknown field",
+      "contract": "MotionChunk",
+      "file": "motion-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "motion-chunk missing field",
+      "contract": "MotionChunk",
+      "file": "motion-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "motion-chunk timestamp duplicate",
+      "contract": "MotionChunk",
+      "valid": false,
+      "file": "motion-chunk.json",
+      "patches": [
+        {
+          "path": [
+            "frames",
+            1,
+            "tMs"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "motion-chunk timestamp decreasing",
+      "contract": "MotionChunk",
+      "valid": false,
+      "file": "motion-chunk.json",
+      "patches": [
+        {
+          "path": [
+            "frames",
+            2,
+            "tMs"
+          ],
+          "value": 20
+        }
+      ]
+    },
+    {
+      "name": "finalize-recording unknown field",
+      "contract": "FinalizeRecordingRequest",
+      "file": "finalize-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "finalize-recording missing field",
+      "contract": "FinalizeRecordingRequest",
+      "file": "finalize-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "chunkCount"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "unknown recording version",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "missing named joint",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "extra palm",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "palm"
+          ],
+          "value": {
+            "positionM": [
+              0,
+              0,
+              0
+            ],
+            "orientationXyzw": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "zero quaternion",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist",
+            "orientationXyzw"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "short vec3",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist",
+            "positionM"
+          ],
+          "value": [
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "timestamp duplicate",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            1,
+            "tMs"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "duration outside limit",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "durationMs"
+          ],
+          "value": 120001
+        }
+      ]
+    },
+    {
+      "name": "frame beyond duration",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "durationMs"
+          ],
+          "value": 99
+        }
+      ]
+    },
+    {
+      "name": "duplicate marker",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "markers",
+            1,
+            "id"
+          ],
+          "value": "start"
+        }
+      ]
+    },
+    {
+      "name": "joint order mismatch",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "jointOrder",
+            0
+          ],
+          "value": "thumb-tip"
+        }
+      ]
+    },
+    {
+      "name": "missing hand discriminator",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "left",
+            "status"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "missing sample cannot carry joints",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "left"
+          ],
+          "value": {
+            "status": "missing",
+            "reason": "unavailable",
+            "joints": {}
+          }
+        }
+      ]
+    },
+    {
+      "name": "duplicate target hand",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "targets"
+          ],
+          "value": [
+            {
+              "side": "right",
+              "joint": "wrist",
+              "startPose": {
+                "positionM": [
+                  0,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "checkpointPose": {
+                "positionM": [
+                  0.2,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "positionToleranceM": 0.04,
+              "orientationToleranceRad": null,
+              "gesture": "any",
+              "motionGates": [
+                {
+                  "frameIndex": 1,
+                  "positionM": [
+                    0.1,
+                    0.1,
+                    -0.1
+                  ],
+                  "toleranceM": 0.05,
+                  "dwellMs": 100
+                }
+              ],
+              "pathCorridorM": 0.08
+            },
+            {
+              "side": "right",
+              "joint": "wrist",
+              "startPose": {
+                "positionM": [
+                  0,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "checkpointPose": {
+                "positionM": [
+                  0.2,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "positionToleranceM": 0.04,
+              "orientationToleranceRad": null,
+              "gesture": "any",
+              "motionGates": [
+                {
+                  "frameIndex": 1,
+                  "positionM": [
+                    0.1,
+                    0.1,
+                    -0.1
+                  ],
+                  "toleranceM": 0.05,
+                  "dwellMs": 100
+                }
+              ],
+              "pathCorridorM": 0.08
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "checkpoint outside range",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "checkpointFrame"
+          ],
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "reversed range",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "startFrame"
+          ],
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "path without gates",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "targets",
+            0,
+            "motionGates"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "gate at checkpoint",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "targets",
+            0,
+            "motionGates",
+            0,
+            "frameIndex"
+          ],
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "gate at start",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "targets",
+            0,
+            "motionGates",
+            0,
+            "frameIndex"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "overlapping steps",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps"
+          ],
+          "value": [
+            {
+              "id": "step-1",
+              "title": "Move the synthetic hand",
+              "instruction": "Follow the path and hold at the checkpoint.",
+              "startFrame": 0,
+              "endFrameExclusive": 3,
+              "checkpointFrame": 2,
+              "targets": [
+                {
+                  "side": "right",
+                  "joint": "wrist",
+                  "startPose": {
+                    "positionM": [
+                      0,
+                      0.1,
+                      -0.1
+                    ],
+                    "orientationXyzw": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  "checkpointPose": {
+                    "positionM": [
+                      0.2,
+                      0.1,
+                      -0.1
+                    ],
+                    "orientationXyzw": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  "positionToleranceM": 0.04,
+                  "orientationToleranceRad": null,
+                  "gesture": "any",
+                  "motionGates": [
+                    {
+                      "frameIndex": 1,
+                      "positionM": [
+                        0.1,
+                        0.1,
+                        -0.1
+                      ],
+                      "toleranceM": 0.05,
+                      "dwellMs": 100
+                    }
+                  ],
+                  "pathCorridorM": 0.08
+                }
+              ],
+              "dwellMs": 500,
+              "startDwellMs": 300,
+              "completionMode": "path-and-pose",
+              "narrationSpanIds": []
+            },
+            {
+              "id": "step-2",
+              "title": "Move the synthetic hand",
+              "instruction": "Follow the path and hold at the checkpoint.",
+              "startFrame": 0,
+              "endFrameExclusive": 3,
+              "checkpointFrame": 2,
+              "targets": [
+                {
+                  "side": "right",
+                  "joint": "wrist",
+                  "startPose": {
+                    "positionM": [
+                      0,
+                      0.1,
+                      -0.1
+                    ],
+                    "orientationXyzw": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  "checkpointPose": {
+                    "positionM": [
+                      0.2,
+                      0.1,
+                      -0.1
+                    ],
+                    "orientationXyzw": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  "positionToleranceM": 0.04,
+                  "orientationToleranceRad": null,
+                  "gesture": "any",
+                  "motionGates": [
+                    {
+                      "frameIndex": 1,
+                      "positionM": [
+                        0.1,
+                        0.1,
+                        -0.1
+                      ],
+                      "toleranceM": 0.05,
+                      "dwellMs": 100
+                    }
+                  ],
+                  "pathCorridorM": 0.08
+                }
+              ],
+              "dwellMs": 500,
+              "startDwellMs": 300,
+              "completionMode": "path-and-pose",
+              "narrationSpanIds": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hash invalid",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "recordingHash"
+          ],
+          "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+        }
+      ]
+    },
+    {
+      "name": "model provenance missing",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "provenance",
+            "labels"
+          ],
+          "value": "model"
+        }
+      ]
+    },
+    {
+      "name": "unknown guide event",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "type"
+          ],
+          "value": "advance"
+        }
+      ]
+    },
+    {
+      "name": "unsafe seq",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "seq"
+          ],
+          "value": 9007199254740992
+        }
+      ]
+    },
+    {
+      "name": "fractional revision",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "state",
+            "stepRevision"
+          ],
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "name": "progress outside bounds",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "state",
+            "dwellProgress"
+          ],
+          "value": 1.1
+        }
+      ]
+    },
+    {
+      "name": "incomplete attempt identity",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "state",
+            "attemptId"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "cross tutorial reference",
+      "contract": "SceneReferenceManifest",
+      "file": "scene-references.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "references",
+            0,
+            "tutorialRevision"
+          ],
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "duplicate reference",
+      "contract": "InspectionRequest",
+      "file": "inspection-request.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "referenceIds"
+          ],
+          "value": [
+            "reference-1",
+            "reference-1"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "result reference mismatch",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "referenceIds"
+          ],
+          "value": [
+            "reference-2"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "visual result lacks observation",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "observationId"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "visual verdict lacks evidence",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "assessment",
+            "observedEvidence"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "legacy skeleton",
+      "contract": "NativeCaptureSidecar",
+      "file": "native-sidecar.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "skeleton"
+          ],
+          "value": "ovr-24"
+        }
+      ]
+    },
+    {
+      "name": "old calibration version",
+      "contract": "CalibrationV2",
+      "file": "calibration-v2.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "value": 1
+        }
+      ]
+    },
+    {
+      "name": "metadata marker duplicate",
+      "contract": "CreateRecordingRequest",
+      "file": "create-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "metadata",
+            "markers",
+            1,
+            "id"
+          ],
+          "value": "start"
+        }
+      ]
+    },
+    {
+      "name": "duplicate key",
+      "contract": "Recording",
+      "json": "{\"schemaVersion\":1,\"schemaVersion\":1}",
+      "valid": false
+    },
+    {
+      "name": "escaped duplicate key",
+      "contract": "Recording",
+      "json": "{\"id\":1,\"\\u0069d\":2}",
+      "valid": false
+    },
+    {
+      "name": "infinite exponent",
+      "contract": "Recording",
+      "json": "1e999",
+      "valid": false
+    },
+    {
+      "name": "trailing token",
+      "contract": "Recording",
+      "json": "{} {}",
+      "valid": false
+    },
+    {
+      "name": "trailing comma",
+      "contract": "Recording",
+      "json": "{\"a\":1,}",
+      "valid": false
+    },
+    {
+      "name": "leading zero",
+      "contract": "Recording",
+      "json": "01",
+      "valid": false
+    },
+    {
+      "name": "bad escape",
+      "contract": "Recording",
+      "json": "\"\\x\"",
+      "valid": false
+    },
+    {
+      "name": "control char",
+      "contract": "Recording",
+      "json": "\"\n\"",
+      "valid": false
+    },
+    {
+      "name": "comment",
+      "contract": "Recording",
+      "json": "/*x*/{}",
+      "valid": false
+    },
+    {
+      "name": "deep nesting",
+      "contract": "Recording",
+      "json": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[0]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+      "valid": false
+    },
+    {
+      "name": "valid recording with duplicate key",
+      "contract": "Recording",
+      "valid": false,
+      "json": "{\"schemaVersion\":1,\"schemaVersion\":1,\"id\":\"contract-recording\",\"coordinateFrame\":\"workspace\",\"workspace\":{\"id\":\"mat-v1\",\"version\":1,\"widthM\":0.6,\"depthM\":0.4,\"calibrationMarksM\":{\"A\":[0,0,0],\"B\":[0.6,0,0],\"C\":[0,0,-0.4],\"D\":[0.6,0,-0.4]},\"layoutId\":\"synthetic-layout\",\"dominantHand\":\"right\",\"calibrationMethod\":\"three-point-index-tip-v1\"},\"jointOrder\":[\"wrist\",\"thumb-metacarpal\",\"thumb-phalanx-proximal\",\"thumb-phalanx-distal\",\"thumb-tip\",\"index-finger-metacarpal\",\"index-finger-phalanx-proximal\",\"index-finger-phalanx-intermediate\",\"index-finger-phalanx-distal\",\"index-finger-tip\",\"middle-finger-metacarpal\",\"middle-finger-phalanx-proximal\",\"middle-finger-phalanx-intermediate\",\"middle-finger-phalanx-distal\",\"middle-finger-tip\",\"ring-finger-metacarpal\",\"ring-finger-phalanx-proximal\",\"ring-finger-phalanx-intermediate\",\"ring-finger-phalanx-distal\",\"ring-finger-tip\",\"pinky-finger-metacarpal\",\"pinky-finger-phalanx-proximal\",\"pinky-finger-phalanx-intermediate\",\"pinky-finger-phalanx-distal\",\"pinky-finger-tip\"],\"nominalSampleHz\":30,\"durationMs\":100,\"frames\":[{\"tMs\":0,\"hands\":{\"left\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.003,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.004,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.005,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.006,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.007,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.008,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.009000000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.01,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.011,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.012,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.013000000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.014,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.015,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.016,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.017,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.018000000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.019,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.02,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.021,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.022,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.023,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.024,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]}}},\"right\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.003,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.004,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.005,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.006,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.007,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.008,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.009000000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.01,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.011,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.012,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.013000000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.014,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.015,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.016,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.017,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.018000000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.019,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.02,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.021,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.022,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.023,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.024,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]}}}},\"head\":null},{\"tMs\":40,\"hands\":{\"left\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0.1,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.101,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.10200000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.10300000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.10400000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.10500000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.10600000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.10700000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.10800000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.10900000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.11,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.111,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.112,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.113,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.114,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.115,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.116,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.117,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.11800000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.11900000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.12000000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.12100000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.122,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.123,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.124,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]}}},\"right\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0.1,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.101,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.10200000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.10300000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.10400000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.10500000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.10600000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.10700000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.10800000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.10900000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.11,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.111,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.112,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.113,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.114,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.115,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.116,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.117,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.11800000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.11900000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.12000000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.12100000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.122,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.123,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.124,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]}}}},\"head\":null},{\"tMs\":100,\"hands\":{\"left\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0.2,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.201,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.202,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.203,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.20400000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.20500000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.20600000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.20700000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.20800000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.20900000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.21000000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.21100000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.21200000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.21300000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.21400000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.21500000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.21600000000000003,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.21700000000000003,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.21800000000000003,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.219,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.22,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.221,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.222,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.223,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.224,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]}}},\"right\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0.2,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.201,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.202,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.203,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.20400000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.20500000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.20600000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.20700000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.20800000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.20900000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.21000000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.21100000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.21200000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.21300000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.21400000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.21500000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.21600000000000003,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.21700000000000003,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.21800000000000003,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.219,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.22,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.221,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.222,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.223,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.224,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]}}}},\"head\":null}],\"markers\":[{\"id\":\"start\",\"tMs\":0,\"kind\":\"step-start\",\"source\":\"review\"},{\"id\":\"end\",\"tMs\":100,\"kind\":\"step-end\",\"source\":\"review\"}],\"audio\":null,\"source\":\"synthetic-fixture\"}"
+    },
+    {
+      "name": "valid recording with escaped duplicate",
+      "contract": "Recording",
+      "valid": false,
+      "json": "{\"schemaVersion\":1,\"\\u0073chemaVersion\":1,\"id\":\"contract-recording\",\"coordinateFrame\":\"workspace\",\"workspace\":{\"id\":\"mat-v1\",\"version\":1,\"widthM\":0.6,\"depthM\":0.4,\"calibrationMarksM\":{\"A\":[0,0,0],\"B\":[0.6,0,0],\"C\":[0,0,-0.4],\"D\":[0.6,0,-0.4]},\"layoutId\":\"synthetic-layout\",\"dominantHand\":\"right\",\"calibrationMethod\":\"three-point-index-tip-v1\"},\"jointOrder\":[\"wrist\",\"thumb-metacarpal\",\"thumb-phalanx-proximal\",\"thumb-phalanx-distal\",\"thumb-tip\",\"index-finger-metacarpal\",\"index-finger-phalanx-proximal\",\"index-finger-phalanx-intermediate\",\"index-finger-phalanx-distal\",\"index-finger-tip\",\"middle-finger-metacarpal\",\"middle-finger-phalanx-proximal\",\"middle-finger-phalanx-intermediate\",\"middle-finger-phalanx-distal\",\"middle-finger-tip\",\"ring-finger-metacarpal\",\"ring-finger-phalanx-proximal\",\"ring-finger-phalanx-intermediate\",\"ring-finger-phalanx-distal\",\"ring-finger-tip\",\"pinky-finger-metacarpal\",\"pinky-finger-phalanx-proximal\",\"pinky-finger-phalanx-intermediate\",\"pinky-finger-phalanx-distal\",\"pinky-finger-tip\"],\"nominalSampleHz\":30,\"durationMs\":100,\"frames\":[{\"tMs\":0,\"hands\":{\"left\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.003,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.004,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.005,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.006,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.007,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.008,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.009000000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.01,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.011,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.012,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.013000000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.014,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.015,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.016,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.017,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.018000000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.019,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.02,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.021,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.022,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.023,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.024,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]}}},\"right\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.003,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.004,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.005,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.006,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.007,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.008,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.009000000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.01,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.011,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.012,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.013000000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.014,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.015,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.016,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.017,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.018000000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.019,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.02,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.021,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.022,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.023,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.024,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]}}}},\"head\":null},{\"tMs\":40,\"hands\":{\"left\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0.1,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.101,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.10200000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.10300000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.10400000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.10500000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.10600000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.10700000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.10800000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.10900000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.11,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.111,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.112,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.113,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.114,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.115,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.116,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.117,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.11800000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.11900000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.12000000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.12100000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.122,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.123,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.124,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]}}},\"right\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0.1,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.101,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.10200000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.10300000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.10400000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.10500000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.10600000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.10700000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.10800000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.10900000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.11,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.111,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.112,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.113,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.114,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.115,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.116,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.117,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.11800000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.11900000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.12000000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.12100000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.122,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.123,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.124,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]}}}},\"head\":null},{\"tMs\":100,\"hands\":{\"left\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0.2,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.201,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.202,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.203,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.20400000000000001,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.20500000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.20600000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.20700000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.20800000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.20900000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.21000000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.21100000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.21200000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.21300000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.21400000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.21500000000000002,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.21600000000000003,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.21700000000000003,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.21800000000000003,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.219,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.22,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.221,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.222,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.223,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.224,0.2,-0.1],\"orientationXyzw\":[0,0,0,1]}}},\"right\":{\"status\":\"valid\",\"joints\":{\"wrist\":{\"positionM\":[0.2,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-metacarpal\":{\"positionM\":[0.201,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-proximal\":{\"positionM\":[0.202,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-phalanx-distal\":{\"positionM\":[0.203,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"thumb-tip\":{\"positionM\":[0.20400000000000001,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-metacarpal\":{\"positionM\":[0.20500000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-proximal\":{\"positionM\":[0.20600000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-intermediate\":{\"positionM\":[0.20700000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-phalanx-distal\":{\"positionM\":[0.20800000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"index-finger-tip\":{\"positionM\":[0.20900000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-metacarpal\":{\"positionM\":[0.21000000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-proximal\":{\"positionM\":[0.21100000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-intermediate\":{\"positionM\":[0.21200000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-phalanx-distal\":{\"positionM\":[0.21300000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"middle-finger-tip\":{\"positionM\":[0.21400000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-metacarpal\":{\"positionM\":[0.21500000000000002,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-proximal\":{\"positionM\":[0.21600000000000003,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-intermediate\":{\"positionM\":[0.21700000000000003,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-phalanx-distal\":{\"positionM\":[0.21800000000000003,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"ring-finger-tip\":{\"positionM\":[0.219,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-metacarpal\":{\"positionM\":[0.22,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-proximal\":{\"positionM\":[0.221,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-intermediate\":{\"positionM\":[0.222,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-phalanx-distal\":{\"positionM\":[0.223,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]},\"pinky-finger-tip\":{\"positionM\":[0.224,0.1,-0.1],\"orientationXyzw\":[0,0,0,1]}}}},\"head\":null}],\"markers\":[{\"id\":\"start\",\"tMs\":0,\"kind\":\"step-start\",\"source\":\"review\"},{\"id\":\"end\",\"tMs\":100,\"kind\":\"step-end\",\"source\":\"review\"}],\"audio\":null,\"source\":\"synthetic-fixture\"}"
+    },
+    {
+      "name": "legacy audio",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": true,
+      "patches": [
+        {
+          "path": [
+            "audio"
+          ],
+          "value": {
+            "assetId": "audio-1",
+            "mimeType": "audio/wav",
+            "durationMs": 100,
+            "audioStartOffsetMs": 0,
+            "syncMethod": "manual-markers",
+            "estimatedSyncErrorMs": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "negative quaternion",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": true,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist",
+            "orientationXyzw"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            -1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "quaternion tolerance boundary",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": true,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist",
+            "orientationXyzw"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0.9999
+          ]
+        }
+      ]
+    },
+    {
+      "name": "zero coordinates",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": true,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist",
+            "positionM"
+          ],
+          "value": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "missing hand preserves explicit reason",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": true,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            1,
+            "hands",
+            "left"
+          ],
+          "value": {
+            "status": "missing",
+            "reason": "nonfinite"
+          }
+        }
+      ]
+    },
+    {
+      "name": "native audio cannot silently widen v1",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "audio"
+          ],
+          "value": {
+            "assetId": "audio-1",
+            "mimeType": "audio/wav",
+            "durationMs": 100,
+            "audioStartOffsetMs": 0,
+            "syncMethod": "unity-dsp-clock-map",
+            "estimatedSyncErrorMs": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "audio offset limit",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "audio"
+          ],
+          "value": {
+            "assetId": "audio-1",
+            "mimeType": "audio/wav",
+            "durationMs": 100,
+            "audioStartOffsetMs": 5001,
+            "syncMethod": "manual-markers",
+            "estimatedSyncErrorMs": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "audio blob URL",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "audio"
+          ],
+          "value": {
+            "assetId": "blob:test",
+            "mimeType": "audio/wav",
+            "durationMs": 100,
+            "audioStartOffsetMs": 0,
+            "syncMethod": "manual-markers",
+            "estimatedSyncErrorMs": null
+          }
+        }
+      ]
+    }
+  ]
+}

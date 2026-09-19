@@ -1,0 +1,11 @@
+{
+  "id": "observation-1",
+  "requestId": "request-1",
+  "captureNonce": "nonce-1",
+  "sourceSessionId": "source-1",
+  "source": "quest-camera",
+  "assetId": "image-1",
+  "sourceFrameSeq": 15,
+  "captureAgeAtSendMs": 30,
+  "receivedAtServerMonoMs": 1000
+}
