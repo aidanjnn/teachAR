@@ -59,7 +59,7 @@ Earlier checks below are historical results from task E and the linked CI runs. 
 
 | Evidence category | Recorded result | Scope |
 | --- | --- | --- |
-| Clean installation | Passed `pnpm install --offline --frozen-lockfile` in a temporary source copy without existing dependencies, builds, environment file, or runtime data. Initial network installation also succeeded. | Node 22.23.1 / pnpm 11.3.0; recorded in [scaffold validation](scaffold.md#validation). |
+| Clean installation | Passed `pnpm install --offline --frozen-lockfile` in a temporary source copy without existing dependencies, builds, environment file, or runtime data. Initial network installation also succeeded. | Node 22.23.1 / pnpm 11.3.0; recorded in [scaffold validation](scaffold.md#original-bootstrap-validation-historical). |
 | Automated application checks | Passed `pnpm check`: strict typecheck, **27 unit/API tests**, and production build. | Recording boundaries, rigid transforms, shared-package architecture, server configuration, health/storage failure, and static serving. |
 | Synthetic fixture | Passed `pnpm validate:fixtures`: **61 frames / 2,000 ms**. | [Synthetic fixture](../fixtures/synthetic-reach.v1.json); not a real person's recording. |
 | Desktop browser | Passed `pnpm test:e2e`: **3 Chromium tests**. Development startup/proxy/watchers also ran; desktop/mobile screenshots were inspected. | Replay/tracking gaps/reset, failed health request/recovery, and narrow-screen keyboard controls. Task E records Chromium 153.0.8010.12. |
@@ -793,3 +793,150 @@ self-hosted runners. Local editor/player gates do not establish hosted gating.
 No headset, physical transfer, or new live provider run was performed. Open
 review threads are left for user disposition; no replies/resolutions or merges
 were performed by this repair.
+## 2026-09-19 — PR 7: enforce native validation in CI
+
+Confirmed the review finding: `guide.yml` ran only the standalone .NET harness,
+so it could not detect Unity integration or Android build regressions. Converted
+it to a reusable workflow called by Check, retained the harness, and added
+separate EditMode, PlayMode and Android ARM64/IL2CPP matrix gates using the
+existing evidence-validating wrappers. The existing aggregate `check` now
+requires that workflow to succeed. Native logs/results/build artifacts upload
+on success or failure. Documented isolated licensed-runner provisioning and
+updated the stale validation reference.
+
+Automated validation on the changed worktree: actionlint 1.7.12 and patch
+whitespace passed; eight runner-configuration cases and all 256 combinations
+of success/failure/cancelled/skipped aggregate inputs passed; both existing
+Unity-wrapper regression tests passed. Full `pnpm check` passed (252 tests,
+typechecks, production builds and static scaffold checks), and recording/voice
+fixture validation passed. Existing hosted browser evidence for f2ab1d0 is
+reused because application, fixtures and browser-test inputs are unchanged.
+
+Infrastructure boundary: GitHub reports no repository self-hosted runners or
+Actions variables. Missing `TRAIL_UNITY_RUNNER_LABELS` now fails explicitly;
+configure a disposable licensed runner and `TRAIL_UNITY_EDITOR` as documented
+in docs/ci.md before native CI can pass. No Unity test or APK execution is
+claimed from workflow validation, and no headset/provider evidence was added.
+No review replies, thread resolutions, merge or deployment were performed.
+### 2026-09-19 — PR #6 Greptile native-gate repair
+
+Rechecked every Greptile thread on head 27411fd. The withdrawal-confirmation
+finding is already fixed with its PlayMode regression. The Unity dependency
+ownership finding is stale: integration PR #5 and contracts PR #8 are merged,
+and `git diff origin/main...HEAD -- apps/quest/Packages` is empty. No dependency
+or lockfile edit is needed or included in this repair.
+
+Added a reusable Unity workflow to the existing Check aggregate: actual full
+project EditMode and PlayMode (Android target), then the production Android
+ARM64/IL2CPP build. All must succeed; missing activation fails the prerequisite
+and aggregate explicitly. The existing standalone C# harnesses stay supplemental.
+The CI build entry point sets output paths and calls the unchanged production
+setup/build guard. A verifier rejects missing/empty/failed/skipped test reports,
+wrong build configuration, mismatched APK size and a non-ARM64 IL2CPP ELF binary.
+Four regression tests exercise both accepted results and these failure modes.
+Pinned the GameCI actions/CLI and verified the Android-capable image tag exists.
+Updated the CI runbook and validation guidance without relaxing native or
+physical acceptance requirements.
+
+Repository inspection found no Actions secrets, no self-hosted runners and no
+branch protection on main. The new hosted native gate is therefore blocked on
+Unity activation credentials. Adding the workflow does not itself configure
+those credentials or a branch rule. No activation data was read, copied or
+published. Local licensed Unity results remain separate from hosted CI evidence.
+
+Local repair validation passed: frozen-lockfile install, `pnpm check` (252 tests,
+typechecks, production builds, static native checks), fixture validation,
+Chromium 6/6 with synthetic/fake-microphone inputs, actionlint 1.7.12, and all
+four native-verifier regression tests. Real Unity 6000.3.24f1 passed 13/13
+EditMode (test-1b3cc3cf-f31b-422b-9ec0-c1bc38f85a2e) and 7/7 PlayMode
+(test-play-3ca6524b-499d-4c66-8b15-ff53fbdf8dc6). Directly executing the new
+BuildAndroidCi entry point succeeded with an isolated Gradle home: non-development
+ARM64/IL2CPP APK, 69,218,837 bytes, SHA256
+99aacc614a212920cf33c101a2b975e61a334e67a8453e008a32c68f95e78ba6.
+The verifier also checked its actual ELF architecture. The ignored
+artifacts/quest-ci directory retains the APK, build report, generated settings
+and 220 native/shared input hashes. Eight Unity-regenerated tracked settings
+were preserved there and restored, keeping dependency/platform assets outside
+this repair. Existing Vite chunk-size and vendor Android manifest warnings
+remain. No live-provider, headset or physical acceptance result is claimed.
+### 2026-09-19 — Align the README with the revised plan and rescaffold
+
+- **User request:** Update the README to follow the revised plan.
+- **Codex work / result:** Reworked the overview around Unity/Meta XR, independent different-room/table calibration with the same parts/layout, the MRUK feasibility milestone and future object-aware transfer. Documented the separate main/vision processes and required fresh-camera-to-spoken-feedback acceptance, local inspection pause/resume and explicit limits on physical verification. Added a component-by-component implemented/pending table, corrected startup/port/authentication instructions, described existing Unity wrappers and linked the four-person work split and dependency-ordered tickets.
+- **Validation / limits:** Checked README command names against package scripts and native candidate versions against checked-in project files. Documentation checks passed 52 local links/anchors and 15 fenced blocks across 10 files; `git diff --check` passed. Existing scaffold test evidence is attributed to its recorded results. Documentation-only edit: no installs, application changes, provider/headset tests, commit or push in this turn.
+
+- **PR babysit final observation:** Remote head `84152bd` matches local HEAD. All four Check workflow jobs and the existing Greptile review passed; GitHub reports CLEAN/MERGEABLE, no unresolved review threads, and no required checks configured. The prior thread was resolved externally without Codex posting or resolving it. README/prior log edits remain uncommitted; no merge performed.
+
+
+### 2026-09-19 — Audit installed pnpm and declared Unity dependencies
+
+- **User request:** Confirm whether package dependencies and installations for Unity/Meta are complete and correct. Current target remains native Unity + Meta XR/OpenXR; browser WebXR typings do not supply native SDKs.
+- **Workspace evidence:** Node 22.23.1 satisfies the declared Node 22 range; pnpm 11.3.0 matches packageManager; npm 10.9.8 is available. Recursive dependency inspection lists the declared direct versions and internal workspace links across all six projects. `pnpm install --frozen-lockfile --offline` reported already up to date; dependency manifests and lockfile are unchanged. This verification invocation ran before the historical per-install approval preference was encountered in the prior log; no further installation was attempted.
+- **Automated / desktop evidence:** On HEAD 84152bd with the existing README/log edits, `pnpm check` passed typechecking, 39 tests, all builds and static native scaffold checks. Fixture validation passed 61 synthetic frames / 2,000 ms; all three Playwright Chromium scenarios passed. Existing non-failing Vite chunk-size warning remains.
+- **Native evidence / gaps:** No Unity Hub/editor found in standard application directories, no UNITY_EDITOR override, no project Library or packages-lock.json. `pnpm quest:test` failed explicitly because Unity 6000.3.24f1 is absent at the configured path; no native test ran. Android tools, UPM resolution, C# compilation, combined SDK compatibility and APK/device behavior remain unverified.
+- **Registry / documentation evidence:** Live official registry metadata contains the four Meta 205.0.0 pins, XR Management 4.5.4, OpenXR 1.18.0, WebRTC 3.0.0 and Test Framework 1.4.6. Generic Unity registry metadata did not expose the pinned URP/uGUI versions; this alone does not prove invalid pins because core packages are editor-coupled. [Unity 6.3 URP documentation](https://docs.unity3d.com/6000.3/Documentation/Manual/com.unity.render-pipelines.universal.html) identifies URP 17.3; [WebRTC requirements](https://docs.unity3d.com/Packages/com.unity.webrtc@3.0/manual/requirements.html) list Unity 6000.3 and Android ARM64/IL2CPP. Meta Interaction/MRUK transitive TMP and uGUI compatibility still needs actual editor resolution. [Meta installation guidance](https://developers.meta.com/horizon/documentation/unity/unity-package-manager/) uses Unity Package Manager, not the pnpm workspace.
+- **Result:** Existing web/server installations are verified; native dependencies are declared candidates, not a completed installation. No package versions changed, editor installed, or live-provider/headset claims made. Preserved existing README/log work.
+
+
+### 2026-09-19 — Install and validate the native Unity/Android toolchain
+
+- **User request / authorization:** Install/activate Unity with Android Build Support, resolve packages, generate the UPM lock, compile, run native tests and build Android. User explicitly approved the displayed Unity terms and completed account sign-in. No publication or device installation was requested.
+- **Workspace:** Created `codex/unity-android-setup` from `84152bd`, preserving the existing README/log edits. Installed Unity Hub 3.21.3 through Homebrew, then the pinned ARM64 editor 6000.3.24f1 / 4e7b9b5b6244 and all Android child modules through Hub. Activated Unity Personal with Unity's bundled CLI. Exact versions and reproduction commands are in [native setup evidence](native-setup.md).
+- **Resolution / fixes:** Unity generated `Packages/packages-lock.json`. Actual compiler failures identified missing Animation, Asset Bundle, Particle System and Physics 2D built-ins; added exact 1.0.0 entries. Aligned the direct Test Framework pin with the editor-selected built-in 1.6.0. All direct manifest versions match the resolved lock; URP/uGUI/TMP resolved successfully. Kept pnpm dependencies and its lock unchanged.
+- **Build support:** Added `pnpm quest:build` for a uniquely named development ARM64/IL2CPP scaffold APK, with nonzero build-result and nonempty-output checks. Android setup enables Internet access and disables optimized frame pacing for the WebRTC candidate. Generated project settings and SDK assets retain their GUIDs. Meta's auto-generated DevAgent asset contains local credentials: ignored that asset/metadata and added a final preprocessing callback that clears the unused fields before build serialization, leaving the feature disabled. No credential values belong in this log or Git.
+- **Automated / native evidence:** `pnpm quest:setup` passed real editor import and C# compilation after the dependency fixes. `pnpm quest:test` reported 2 passed, 0 failed, 0 skipped. TypeScript tools typecheck, static scaffold check and patch whitespace passed. Existing web/server test/build/fixture and three-browser-test results from the earlier audit remain applicable because their implementation inputs did not change. The Android build result is recorded below when complete.
+- **Limits:** The runtime scene is still a scaffold. No XR rig, physical hand/camera/audio behavior, provider call, device installation or human run is validated. Local native setup does not finish TRAIL-18's headset acceptance; native CI and PlayMode coverage remain pending. Updated current setup/status documentation while preserving historical bootstrap records.
+- **Android result:** The first APK succeeded but Meta's post-build telemetry hook threw a non-fatal null reference against absent XR manager settings. Fixed the actual configuration: setup creates/preserves XR settings and assigns exactly one Android OpenXR loader, refusing a conflicting provider. The corrected `pnpm quest:build` passed without that exception. Final local APK `artifacts/quest/trail-scaffold-1789842078500.apk` is 88,467,730 bytes; signature/ZIP integrity, `com.trail.guide`, minimum SDK 32, target/compile SDK 36, ARM64-only ABI and IL2CPP/WebRTC libraries verified. No current local debugger credential bytes appeared in decompressed APK entries. SHA-256 is recorded in the setup evidence. No headset install/run was performed.
+- **Final checks / handoff:** Repeated the two EditMode tests after the XR settings fix: 2 passed, 0 failed/skipped. TypeScript tools typecheck, static scaffold (57 asset/folder GUIDs), seven-document/44-local-link checks, direct manifest/lock agreement, generated-asset credential scan and patch whitespace passed. Removed only three empty unreferenced folders generated by this import/build. Registered the project in Unity Hub and attempted a GUI launch; final window verification is blocked by the locked Mac. Batch import/test/build succeeded independently of this GUI handoff. Changes remain local and uncommitted; no push, deployment or headset installation.
+
+### 2026-09-19 — Complete Unity GUI handoff and recheck native build
+
+- **User request / GUI evidence:** Continued after the Mac was unlocked. Verified the actual `Assets/Trail/Scenes/Trail.unity` window from this checkout in Unity 6000.3.24f1 with Android selected. The editor initially opened an untitled default scene; explicitly loaded the repository scaffold scene. Unity Personal remains active. Hub's GUI showed its sign-in screen, while the bundled CLI reported an active signed-in license; direct editor launch succeeded.
+- **Configuration:** The first GUI launch requested native Input System activation. Its initial Both setting was changed to Input System Package (New), followed by an editor restart. The saved Android target API is 34 after the GUI session. No package versions changed: all 19 direct pins match the 48-package Unity lock. SDK-generated PackageManagerSettings contains the existing Unity and Meta registries.
+- **Automated evidence:** Closed the GUI before batch validation. `pnpm quest:test` passed 2 tests, 0 failed/skipped; `pnpm quest:build` passed. Refreshed APK `artifacts/quest/trail-scaffold-1789848334746.apk` is 118,413,600 bytes, minimum SDK 32, target/compile SDK 34, ARM64-only, with IL2CPP and WebRTC native libraries. APK signature and ZIP integrity passed; no nonempty current local DevAgent credential matched decompressed entries. SHA-256: `45f88bcba7b8fbb20adc23f6125932af5a2c34a26d3c48dba44ee4219b6e4bad`. Static scaffold validation still passes 57 GUIDs. Updated [setup evidence](native-setup.md); prior results above remain historical.
+- **Limits:** The GUI reported remaining SDK/XR project recommendations and one editor progress-status error (`Cannot get non-existing progress id 5`); no C# compile failure was reported, and the subsequent native checks passed. The scene remains a scaffold. `adb devices -l` listed no headset, so no device install, XR observation or human test occurred. Changes remain local and uncommitted.
+
+### 2026-09-19 — Document reproducible installation and inspect publication needs
+
+- **User request:** Explain whether a merge/PR is needed and update the README so another developer can install the same dependencies.
+- **Documentation:** Added prominent setup links, pinned Node/pnpm downloads and bootstrap commands, root frozen-lockfile installation, Chromium and verification commands, Unity Hub/editor/module installation, per-developer license activation, UPM resolution, exact SDK versions, Input System selection, editor executable overrides and APK/log locations. Documented mock defaults, ignored machine-local credentials/caches, absence of a committed APK and setup troubleshooting. Preserved the product overview and existing user README changes. Official Node release, pnpm installation and Unity release/Android setup pages were consulted; the repo pins remain authoritative.
+- **Publication inspection:** GitHub shows scaffold PR #2 already merged. This checkout's `codex/unity-android-setup` branch has no remote branch or PR and its setup changes remain uncommitted. Open native-platform PR #5 overlaps generated Unity assets/settings, package manifests/lock and editor/build scripts; reconcile those changes during publication/integration instead of assuming the two implementations merge independently. This was a publication-status check, not a complete review or authorization to merge any open PR.
+- **Validation / limits:** README validation passed 30 local links/anchors, eight fenced blocks, existing pnpm script names and Node/pnpm pin agreement; patch whitespace passed. No dependency installation or application edit was needed for this documentation change. Reused prior native/web validation for unchanged code; did not claim a new clean-machine install or additional platform/device tests. No commit, push, PR creation or merge was performed.
+
+### 2026-09-19 — Reconcile Unity setup with merged platform and prepare delivery
+
+- **Authorization / base:** User requested reconciliation with PR #5, preservation of both implementations, applicable validation, commit, push and PR creation, explicitly without merging. PR #5 had already merged externally. Created isolated `codex/unity-setup-integration` from `origin/main` at `6e7b5b5`, retaining merged platform, strict contracts and voice workstreams. The original `codex/unity-android-setup` source/settings/document edits remain untouched.
+- **Reconciliation:** Retained main's generated assets and GUIDs, actual UPM/pnpm locks, XR Hands 1.7.2 pin, concrete hand subsystem, one-rig bootstrap, pairing code, PlayMode coverage and unique release/development build wrappers. Ported only missing setup behavior: WebRTC-compatible disabled optimized frame pacing, strict credential-field/type checks, existing XR-settings asset recovery, null/competing-loader rejection, APK overwrite refusal and explicit packaged-APK output. Added the Unity `.utmp` ignore. No dependency versions or runtime feature behavior changed.
+- **Documentation:** Integrated the local README installation/product rewrite with main's voice/platform capabilities, exact downloads, per-user activation, Android modules, Input System, release/development commands, result paths and optional .NET 8.0.425 diagnostics. Updated agent/validation/status guidance and preserved historical local setup evidence separately from this integration. Repaired an old scaffold-validation anchor without changing its recorded result.
+- **Fresh-checkout / automated evidence:** Frozen pnpm install passed with 170 packages reused and zero downloads. `pnpm check` passed typechecks, 252 tests, production builds and static native structure checks; existing Vite chunk warning remains. Fixture validation passed. Six Chromium scenarios passed on isolated port 3319 with one worker, synthetic/fake-microphone/mock inputs. Pure C# network/pairing diagnostics and 115 contract checks passed using the existing .NET SDK (not initially on PATH). Fresh Unity import/setup/C# compilation passed, followed by EditMode 7/7 and PlayMode 3/3; no failures/skips. All 20 direct UPM pins match 48 resolved packages. Eight-document/123-local-link validation passed.
+- **Local resources / boundaries:** Closed only the earlier task's Unity editor and removed its generated `Library/Bee` build intermediates to recover disk space; source, metadata, logs and APKs remain. Native and desktop checks are software evidence, not headset, provider or physical-transfer acceptance. The Android package result and publication outcome follow below.
+- **Android / final review:** The combined release-mode Android ARM64/IL2CPP build passed. APK is 69,077,802 bytes, `com.trail.guide` 0.1.0, minimum API 32 and target/compile API 36; signature, ZIP integrity, ABI and IL2CPP/WebRTC libraries verified. SHA-256 `136d52acaa8ab848af2a6452a144e8cba035448b698196e5b82519b8c72f26c1`. Generated DevAgent credential/address fields are cleared and disabled. Kept editor-materialized URP defaults/prefilter/runtime settings, Meta build config and Oculus runtime preload; original metadata GUIDs remain unchanged. Normalized generated whitespace while retaining quoted empty layer strings; static checks pass 81 local GUIDs. Test-only resources cleaned themselves through SDK post-build cleanup; removed the empty StreamingAssets directory. See [integration evidence](native-setup.md). Publication uses the requested PR workflow; no merge is performed.
+
+### 2026-09-19 — Correct native contract validation status in the README
+
+- **Review finding / fix:** Confirmed that the stack table incorrectly described native strict DTO validation as unimplemented. Updated the Contracts row to match the implemented strict parsing and validation, including native capture sidecars and scene-reference manifests, and the README's existing status table.
+- **Validation / limits:** Checked the wording against the native contract implementation and verified patch whitespace. This documentation-only correction changes no code, dependencies or links; prior software test evidence remains applicable. No new headset or live-provider validation is claimed.
+
+### 2026-09-19 — Catch up open PR branches
+
+- User requested a fresh CI check and catchup for every open PR. In an isolated checkout, merged current main `c80d67b` into PR #6, preserving the hosted native gates and the newly merged Unity setup safeguards/assets. Reconciled validation guidance and retained both activity histories. The original dirty Unity setup checkout is untouched.
+- Before catchup, hosted licensing prerequisites passed after secret configuration, but the test runner stopped before Unity with `Unknown argument: noCoverageEnabled`. PR #7 separately requires a configured self-hosted runner. These existing CI failures are not evidence of passing native tests.
+- Validation on the merged worktree: `pnpm check` passed (252 tests, typechecks, production builds and 102 static native GUID checks), fixture validation passed, actionlint passed, and 4 native-result-verifier regressions passed. Native CI remains failing before Unity execution as recorded above; no new editor/APK, provider or headset evidence.
+
+### 2026-09-19 — Catch up guide PR #7 with capture
+
+Merged capture `370aee5` into the guide branch. Reconciled overlapping CI implementations by requiring one full-project hosted Unity EditMode/PlayMode/Android workflow plus the guide's pure C# scenario harness. The same native suites and production build remain mandatory, while the duplicate self-hosted matrix and its missing-runner prerequisite are superseded. The aggregate now checks all five job results. Preserved both logs and main's setup changes. The inherited GameCI CLI flag failure remains a separate known blocker; no native execution is claimed.
+
+Guide catchup validation: `pnpm check` and fixture validation passed; actionlint passed; the pure C# harness passed 24 guide scenarios plus golden recording/tutorial/telemetry integration; all 4 native-result verifier regressions passed. These are software/static checks, not a new Unity or headset run.
+
+### 2026-09-19 — Catch up inspection PR #10
+
+Merged updated guide `7945802`, including current main and reconciled native CI, into inspection. The only conflict was append-only activity history; both sides are retained. Inspected automatic changes to setup, generated assets and workflow wiring. No inspection/runtime implementation changed during resolution. Validation follows below; existing GameCI execution failure remains distinct from static/software results.
+
+Inspection catchup validation: `pnpm check` passed 284 tests, typechecks, production builds and 131 static native GUID checks; fixtures and actionlint passed. The scene harness passed freshness/lifecycle/strict request and server-issued session checks. No new Unity/APK/provider/headset run.
+
+### 2026-09-19 — Catch up authoring PR #11 and complete stack sync
+
+Merged inspection `6d767db` into authoring, carrying current main through all four stacked PRs. Kept both activity histories, the `.utmp` and Python-cache ignores, and main's intentionally tracked `OVRBuildConfig.asset` with its original GUID; removed the superseded ignore entries for that committed metadata. No feature code or serialized contract was altered by conflict resolution. PR #14 was separately merged with the same main base; its 260 workspace tests and six synthetic Chromium scenarios passed. Remaining CI failure before Unity execution is tracked separately; validation of this merged authoring tree follows below.
+
+Final authoring catchup validation: `pnpm check` passed 333 unit/API tests, typechecks, production builds and static native structure checks; all fixtures and seven Chromium scenarios passed (synthetic/fake-microphone/mock inputs, port 3395). Pure C# storage passed 14 checks and shared contracts passed 151 corpus/binding/legacy/math checks. Actionlint and patch whitespace passed. No new editor/APK, provider or headset result is claimed. All five open PR branches are published without rewriting history; none is merged into its PR base by this task.

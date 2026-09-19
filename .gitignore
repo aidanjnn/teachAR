@@ -37,6 +37,7 @@ test-results/
 /apps/quest/MemoryCaptures/
 /apps/quest/Recordings/
 /apps/quest/.vs/
+/apps/quest/.utmp/
 /apps/quest/*.csproj
 /apps/quest/*.sln
 /apps/quest/*.slnx
@@ -55,7 +56,5 @@ test-results/
 /apps/quest/Assets/Resources/OVRPlatformToolSettings.asset
 /apps/quest/Assets/Resources/OVRPlatformToolSettings.asset.meta
 
-# Android native compiler scratch output and generated Meta build metadata.
-/apps/quest/.utmp/
-/apps/quest/Assets/Resources/OVRBuildConfig.asset
-/apps/quest/Assets/Resources/OVRBuildConfig.asset.meta
+# Python native-CI verifier test caches
+__pycache__/
