@@ -463,3 +463,20 @@ TRAIL-07 review follow-up: vision re-encodes uploads in their source format (JPE
 
 - Review finding: FIFO eviction of retired `liveSessionId`s let a forgotten identity be replayed with a higher caller-supplied epoch. `InspectionCoordinator` now keeps retired identities for the current paired session in a fixed 16 KiB Bloom filter (no false negatives, constant memory); history for other paired sessions is dropped because they never pass `isCurrent`. Server test drives 300 transitions and confirms early, middle and latest retired identities stay rejected while a fresh identity is accepted.
 - Automated evidence only (`pnpm check`); no Unity/headset claim.
+
+### 2026-09-19 — PR10 inspection-session review repair
+
+Verified the remaining Bloom-filter review finding against current head72601d3.
+Replaced accumulated retired IDs with one server-issued current lease. The new
+learner-authenticated session endpoint requires the exact paused context; native
+Check/Retry obtains its lease after pause acknowledgment, then sends it in the
+existing start contract. Superseded/fabricated identities remain stale regardless
+of request epoch. Fixed memory use no longer trades replay rejection for false
+positives. Native transport parsing and additive endpoint migration are documented.
+
+Focused tests passed50,000 rotations plus old-identity/epoch/generation/scope
+rejection, exact cancellation and two-process crash/recovery. The .NET harness
+passed strict lease parsing, duplicate fields and unsupported version rejection.
+Real Unity EditMode/PlayMode and Android ARM64/IL2CPP gates are being run for this
+runtime change; no hardware/provider validation is inferred. Review comments are
+not replied to or resolved without explicit user authorization.

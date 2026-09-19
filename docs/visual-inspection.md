@@ -24,6 +24,24 @@ an exact, fresh, connected, paused, calibrated native snapshot. Relay updates ca
 The resolver must require a ready immutable tutorial and its reviewed references;
 caller-supplied URLs and paths never enter the vision service.
 
+An authenticated learner obtains a new inspection incarnation with
+`POST /api/inspection-sessions`, sending the exact paused `GuideContextRef` after
+its guide-event acknowledgment. The response is strict
+`{schemaVersion:1, liveSessionId:<server-issued ID>}`. The subsequent inspection
+start must use that ID and `sessionGeneration:1`; request epochs increase within
+that lease. Every explicit native Check/Retry obtains a new lease, invalidating
+prior work. The coordinator stores only the current lease, so reconnect history
+cannot fill a set or probabilistic filter. Client-selected and superseded IDs
+fail closed even with larger epochs or generations. The endpoint has the same
+learner authentication and paused-context checks as inspection start.
+
+This is an additive transport endpoint with stricter start admission. Deploy the
+updated native client with the updated main server; older clients that invent
+`liveSessionId` must acquire the server lease first. Existing capture/upload/result
+schemas and v1 recordings are unchanged. Task6 composition automatically registers
+the endpoint through `registerInspectionRoutes`; synthetic integration callers
+must perform the same handshake.
+
 Native transport contracts are strict JSON. `InspectionCapture` includes the exact
 canonical request plus a nonce, source session, minimum sequence and remaining
 budgets. Source sensor timestamps remain local identity/diagnostic values; elapsed

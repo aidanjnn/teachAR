@@ -19,6 +19,7 @@ async function setup() {
   const start: InspectionStart = { schemaVersion: 1, context: { runId: 'run-1', tutorialId: 'tutorial-1', tutorialRevision: 1,
     stepId: 'step-1', stepRevision: 1, attemptId: 'attempt-1' }, liveSessionId: 'app-check', sessionGeneration: 1,
     requestEpoch: 1, question: 'Is this aligned?', sourceSessionId: 'camera-1', source: 'quest-camera', sourceFrameSeq: 1 };
+  start.liveSessionId = coordinator.openSession('session', start.context).liveSessionId;
   const upload = (capture: InspectionCapture): InspectionUpload => ({ schemaVersion: 1, requestId: capture.request.requestId,
     requestEpoch: capture.request.requestEpoch, captureNonce: capture.captureNonce, sourceSessionId: 'camera-1',
     source: 'quest-camera', sourceFrameSeq: capture.minSourceFrameSeq + 1, captureAgeAtSendMs: 10, image: fixture.currentImage });
@@ -81,23 +82,29 @@ it('authenticates routes before reading images, excludes spectators, and scopes 
     expect([401, 403]).toContain(result.statusCode); expect(h.calls()).toBe(0);
   } finally { await app.close(); }
 });
-it('allows a newly paired app generation but permanently rejects the retired app session', async () => {
+it('accepts fresh server leases without accumulated retirement history and rejects obsolete identities', async () => {
   const h = await setup();
   try {
-    await h.coordinator.start('session', h.start);
-    await h.coordinator.start('session', { ...h.start, liveSessionId: 'new-app-session', requestEpoch: 0 });
-    await expect(h.coordinator.start('session', { ...h.start, requestEpoch: 999 })).rejects.toMatchObject({ code: 'stale' });
-  } finally { h.coordinator.close(); }
-});
-it('never forgets retired live sessions while accepting unbounded legitimate transitions', async () => {
-  const h = await setup();
-  try {
-    for (let i = 0; i < 300; i++) await h.coordinator.start('session', { ...h.start, liveSessionId: `app-${i}` });
-    for (const retired of ['app-0', 'app-1', 'app-150', 'app-298']) {
-      await expect(h.coordinator.start('session', { ...h.start, liveSessionId: retired, requestEpoch: 999 }), retired).rejects.toMatchObject({ code: 'stale' });
+    const oldCapture = await h.coordinator.start('session', h.start);
+    const retired = [h.start.liveSessionId];
+    let latest = h.start.liveSessionId;
+    for (let i = 0; i < 50_000; i++) {
+      latest = h.coordinator.openSession('session', h.start.context).liveSessionId;
+      if (i % 1000 === 0) {
+        await h.coordinator.start('session', { ...h.start, liveSessionId: latest });
+        retired.push(latest);
+      }
     }
-    await expect(h.coordinator.start('session', { ...h.start, liveSessionId: 'app-299', requestEpoch: 0 })).rejects.toMatchObject({ code: 'stale' });
-    await h.coordinator.start('session', { ...h.start, liveSessionId: 'app-300', requestEpoch: 0 });
+    for (const liveSessionId of retired) {
+      await expect(h.coordinator.start('session', { ...h.start, liveSessionId, requestEpoch: 999 })).rejects.toMatchObject({ code: 'stale' });
+    }
+    await expect(h.coordinator.upload('session', h.upload(oldCapture))).rejects.toMatchObject({ code: 'stale' });
+    await expect(h.coordinator.start('session', { ...h.start, liveSessionId: latest, sessionGeneration: 2 })).rejects.toMatchObject({ code: 'stale' });
+    await expect(h.coordinator.start('other-session', { ...h.start, liveSessionId: latest })).rejects.toMatchObject({ code: 'stale' });
+    await h.coordinator.start('session', { ...h.start, liveSessionId: latest, requestEpoch: 0 });
+    await expect(h.coordinator.start('session', { ...h.start, liveSessionId: latest, requestEpoch: 0 })).rejects.toMatchObject({ code: 'stale' });
+    h.setCurrent(false);
+    expect(() => h.coordinator.openSession('session', h.start.context)).toThrow();
   } finally { h.coordinator.close(); }
 });
 it('enforces learner role and exact paired session through real route composition', async () => {
@@ -115,7 +122,11 @@ it('enforces learner role and exact paired session through real route compositio
   try {
     const spectator = await pair('spectator'); const learner = await pair('learner');
     expect((await app.inject({ method: 'POST', url: '/api/inspections', headers: spectator, payload: h.start })).statusCode).toBe(403);
-    const response = await app.inject({ method: 'POST', url: '/api/inspections', headers: learner, payload: h.start });
+    expect((await app.inject({ method: 'POST', url: '/api/inspection-sessions', headers: spectator, payload: h.start.context })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'POST', url: '/api/inspection-sessions', headers: learner, payload: { ...h.start.context, unexpected: true } })).statusCode).toBe(400);
+    const lease = await app.inject({ method: 'POST', url: '/api/inspection-sessions', headers: learner, payload: h.start.context });
+    expect(lease.statusCode).toBe(200);
+    const response = await app.inject({ method: 'POST', url: '/api/inspections', headers: learner, payload: { ...h.start, liveSessionId: lease.json().liveSessionId } });
     expect(response.statusCode).toBe(200);
     const capture = response.json() as InspectionCapture;
     expect((await app.inject({ method: 'DELETE', url: `/api/inspections/${capture.request.requestId}?epoch=999`, headers: learner })).statusCode).toBe(409);
@@ -128,6 +139,7 @@ it('bounds unresolved reference IO even if the resolver ignores cancellation', a
   const coordinator = new InspectionCoordinator({ vision: { url: 'http://127.0.0.1:1', token: 'unused' }, isCurrent: () => true,
     resolveReferences: async () => { await new Promise<void>(resolve => { finish = resolve; }); return { references: fixture.references, approvedStep: fixture.approvedStep }; },
   });
+  h.start.liveSessionId = coordinator.openSession('session', h.start.context).liveSessionId;
   const pending = coordinator.start('session', h.start);
   const rejected = expect(pending).rejects.toMatchObject({ code: 'cancelled' });
   await Promise.resolve(); coordinator.invalidate('session');

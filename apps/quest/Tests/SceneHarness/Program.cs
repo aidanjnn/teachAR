@@ -30,3 +30,10 @@ Check(Trail.Contracts.ContractJson.ParseInspectionCapture(captureJson).MinSource
 try { Trail.Contracts.ContractJson.ParseInspectionCapture(captureJson.Replace("\"schemaVersion\":1", "\"schemaVersion\":1,\"schemaVersion\":1")); throw new Exception("duplicate key accepted"); } catch (Trail.Contracts.ContractException) { }
 try { Trail.Contracts.ContractJson.ParseInspectionCapture(captureJson.Replace("2000", "2001")); throw new Exception("capture bound accepted"); } catch (Trail.Contracts.ContractException) { }
 Console.WriteLine("PASS: strict native inspection transport and canonical request binding");
+
+Check(Trail.Contracts.ContractJson.ParseInspectionSession("{\"schemaVersion\":1,\"liveSessionId\":\"server-lease\"}") == "server-lease", "server lease parse");
+foreach (var invalid in new[] { "{\"schemaVersion\":1}", "{\"schemaVersion\":2,\"liveSessionId\":\"lease\"}", "{\"schemaVersion\":1,\"liveSessionId\":\"lease\",\"liveSessionId\":\"other\"}" })
+{
+    try { Trail.Contracts.ContractJson.ParseInspectionSession(invalid); throw new Exception("invalid lease accepted"); } catch (Trail.Contracts.ContractException) { }
+}
+Console.WriteLine("PASS: strict server-issued inspection session transport");

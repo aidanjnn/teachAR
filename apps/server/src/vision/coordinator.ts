@@ -1,6 +1,6 @@
 import { randomUUID, createHash } from 'node:crypto';
 import {
-  InspectionStartSchema, InspectionUploadSchema, InspectionCaptureSchema, InspectionResultSchema,
+  GuideContextRefSchema, InspectionSessionSchema, InspectionStartSchema, InspectionUploadSchema, InspectionCaptureSchema, InspectionResultSchema,
   VisionInspectionInputSchema, type GuideContextRef, type InspectionCapture, type InspectionResult,
   type InspectionStart, type VisionInspectionInput,
 } from '@trail/contracts';
@@ -23,38 +23,27 @@ interface Active {
   controller: AbortController; timer: ReturnType<typeof setTimeout>;
   references: ReviewedInspectionReferences | null; uploadHash: string | null; promise: Promise<InspectionResult> | null;
 }
-/**
- * Retired live-session identities for the current paired session, kept in a fixed-size Bloom filter:
- * a retired identity is never forgotten (no false negatives), memory is constant, and the rare false
- * positive only rejects a fresh identity as stale. Other paired sessions never pass `isCurrent`, so
- * their history is dropped when the paired session changes.
- */
-class RetiredLiveSessions {
-  private static readonly BITS = 1 << 17;
-  private static readonly HASHES = 4;
-  private sessionId: string | null = null;
-  private readonly bits = new Uint8Array(RetiredLiveSessions.BITS / 8);
-  has(sessionId: string, liveSessionId: string): boolean {
-    return this.sessionId === sessionId && RetiredLiveSessions.indices(liveSessionId).every(i => (this.bits[i >> 3]! & (1 << (i & 7))) !== 0);
-  }
-  add(sessionId: string, liveSessionId: string): void {
-    if (this.sessionId !== sessionId) { this.bits.fill(0); this.sessionId = sessionId; }
-    for (const i of RetiredLiveSessions.indices(liveSessionId)) this.bits[i >> 3]! |= 1 << (i & 7);
-  }
-  private static indices(liveSessionId: string): number[] {
-    const digest = createHash('sha256').update(liveSessionId).digest();
-    return Array.from({ length: RetiredLiveSessions.HASHES }, (_, k) => digest.readUInt32BE(k * 4) % RetiredLiveSessions.BITS);
-  }
-}
 /** A one-headset coordinator. It can pause-check identity, never mutate guide progression. */
 export class InspectionCoordinator {
   private active: Active | null = null;
   private resolving = false;
-  private readonly retiredLiveSessions = new RetiredLiveSessions();
+  private lease: { sessionId: string; liveSessionId: string } | null = null;
   private source: { sessionId: string; id: string; sequence: number } | null = null;
   private readonly now: () => number;
   private epoch: { sessionId: string; liveSessionId: string; generation: number; epoch: number } | null = null;
   constructor(private readonly deps: InspectionDependencies) { this.now = deps.now ?? (() => performance.now()); }
+
+  /** Explicit Check obtains a fresh server-issued incarnation; only the latest lease can start work. */
+  openSession(sessionId: string, raw: unknown) {
+    const context = GuideContextRefSchema.safeParse(raw);
+    if (!context.success) throw new InspectionError('invalid-input');
+    if (!this.deps.isCurrent(sessionId, context.data)) throw new InspectionError('stale', 409);
+    if (this.resolving || (this.active && this.active.sessionId !== sessionId)) throw new InspectionError('busy', 429);
+    this.invalidate(sessionId);
+    this.lease = { sessionId, liveSessionId: randomUUID() };
+    this.epoch = null;
+    return InspectionSessionSchema.parse({ schemaVersion: 1, liveSessionId: this.lease.liveSessionId });
+  }
 
   async start(sessionId: string, raw: unknown): Promise<InspectionCapture> {
     const parsed = InspectionStartSchema.safeParse(raw);
@@ -65,12 +54,10 @@ export class InspectionCoordinator {
     if (!this.deps.vision && !this.deps.inspect) throw new InspectionError('provider-unavailable', 503);
     if (this.active && this.active.sessionId !== sessionId) throw new InspectionError('busy', 429);
     const prior = this.epoch;
-    if (this.retiredLiveSessions.has(sessionId, input.liveSessionId)) throw new InspectionError('stale', 409);
-    if (prior?.sessionId === sessionId && input.liveSessionId === prior.liveSessionId &&
-        (input.sessionGeneration < prior.generation || (input.sessionGeneration === prior.generation && input.requestEpoch <= prior.epoch))) {
+    if (this.lease?.sessionId !== sessionId || this.lease.liveSessionId !== input.liveSessionId || input.sessionGeneration !== 1)
       throw new InspectionError('stale', 409);
-    }
-    if (prior?.sessionId === sessionId && prior.liveSessionId !== input.liveSessionId) this.retiredLiveSessions.add(sessionId, prior.liveSessionId);
+    if (prior?.sessionId === sessionId && (input.sessionGeneration < prior.generation ||
+        (input.sessionGeneration === prior.generation && input.requestEpoch <= prior.epoch))) throw new InspectionError('stale', 409);
     this.invalidate(sessionId);
     this.epoch = { sessionId, liveSessionId: input.liveSessionId, generation: input.sessionGeneration, epoch: input.requestEpoch };
     const started = this.now();
@@ -169,7 +156,7 @@ export class InspectionCoordinator {
   guideChanged(sessionId: string): void {
     if (this.active?.sessionId === sessionId && !this.deps.isCurrent(sessionId, this.active.start.context)) this.invalidate(sessionId);
   }
-  close(): void { if (this.active) this.invalidate(this.active.sessionId); }
+  close(): void { if (this.active) this.invalidate(this.active.sessionId); this.lease = null; this.epoch = null; }
   private expire(active: Active): void {
     active.controller.abort(new InspectionError('deadline', 504)); this.finish(active);
   }
