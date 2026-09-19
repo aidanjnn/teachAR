@@ -10,7 +10,7 @@ export async function writePairingBootstrap(authority: PairingAuthority, dataDir
   const temporary = join(dataDir, `.pairing-${randomUUID()}`);
   const handle = await open(temporary, 'wx', 0o600);
   try {
-    await handle.writeFile(JSON.stringify(authority.issueCode('author')) + '\n');
+    await handle.writeFile(JSON.stringify(authority.issueCode('author', authority.sessionId, 'browser')) + '\n');
     await handle.sync();
   } finally { await handle.close(); }
   try { await rename(temporary, destination); }

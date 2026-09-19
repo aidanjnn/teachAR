@@ -5,7 +5,7 @@
     <NoWarn>CS0649</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Network/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Network/NativeApiConnection.cs" /><Compile Include="../../apps/quest/Assets/Trail/Runtime/Network/ConnectionPolicy.cs" />
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(UnityManagedPath)/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UnityWebRequestModule"><HintPath>$(UnityManagedPath)/UnityEngine.UnityWebRequestModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.JSONSerializeModule"><HintPath>$(UnityManagedPath)/UnityEngine.JSONSerializeModule.dll</HintPath><Private>false</Private></Reference>

@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyRequest, preHandlerHookHandler } from 'fas
 import { z } from 'zod';
 
 export type PairingRole = 'author' | 'learner' | 'spectator';
+export type PairingClient = 'native' | 'browser';
 export type Principal = Readonly<{ role: PairingRole; sessionId: string; client: 'native' | 'browser'; expiresAt: number }>;
 export type AccessPolicy = { roles: readonly PairingRole[]; sessionId?: string };
 export type PairingOptions = { allowedOrigins: readonly string[]; allowUsbLoopback?: boolean; now?: () => number };
@@ -19,7 +20,7 @@ export class PairingAuthority {
   readonly sessionId = randomUUID();
   private readonly origins: Set<string>;
   private readonly now: () => number;
-  private readonly codes = new Map<string, { role: PairingRole; sessionId: string; expiresAt: number }>();
+  private readonly codes = new Map<string, { role: PairingRole; sessionId: string; client: PairingClient; expiresAt: number }>();
   private readonly tokens = new Map<string, Principal>();
   private readonly attempts = new Map<string, { count: number; expiresAt: number }>();
   private globalAttempts = { count: 0, expiresAt: 0 };
@@ -41,13 +42,13 @@ export class PairingAuthority {
       for (const [key, value] of map) if (value.expiresAt <= now) map.delete(key);
     }
   }
-  issueCode(role: PairingRole, sessionId: string = this.sessionId) {
+  issueCode(role: PairingRole, sessionId: string = this.sessionId, client: PairingClient = 'native') {
     this.prune();
-    if (!roles.includes(role) || !z.uuid().safeParse(sessionId).success) throw new Error('Invalid pairing scope');
+    if (!roles.includes(role) || !['native', 'browser'].includes(client) || !z.uuid().safeParse(sessionId).success) throw new Error('Invalid pairing scope');
     if (this.codes.size >= 64) return fail(429, 'Too many pending pairing codes');
     let code: string;
     do { code = randomInt(0, 100_000_000).toString().padStart(8, '0'); } while (this.codes.has(digest(code)));
-    const scope = { role, sessionId, expiresAt: this.now() + codeLifetime };
+    const scope = { role, sessionId, client, expiresAt: this.now() + codeLifetime };
     this.codes.set(digest(code), scope);
     return { code, ...scope };
   }
@@ -76,10 +77,11 @@ export class PairingAuthority {
   exchange(request: FastifyRequest, code: string, client: 'browser' | 'native') {
     this.checkTransport(request);
     this.rateLimit(request);
+    if (client === 'native' && (request.headers.origin || request.headers['sec-fetch-mode'])) return fail(403, 'Native pairing requires a native client');
     if (client === 'browser' && !request.headers.origin) return fail(403, 'Browser Origin required');
     const key = digest(code);
     const scope = this.codes.get(key);
-    if (!scope) return fail(401, 'Invalid or expired pairing code');
+    if (!scope || scope.client !== client) return fail(401, 'Invalid or expired pairing code');
     if (this.tokens.size >= 128) return fail(429, 'Too many paired clients');
     // Synchronous consume and issuance prevents concurrent reuse.
     this.codes.delete(key);
@@ -147,10 +149,10 @@ export function registerPairingRoutes(app: FastifyInstance, authority: PairingAu
   });
   app.post('/api/pairing-codes', { bodyLimit: 1024 }, async (request, reply) => {
     const principal = authority.authorize(request, { roles: ['author'], sessionId: authority.sessionId });
-    const body = z.object({ role: z.enum(roles) }).strict().safeParse(request.body);
+    const body = z.object({ role: z.enum(roles), client: z.enum(['native', 'browser']).default('native') }).strict().safeParse(request.body);
     if (!body.success) return fail(400, 'Invalid pairing role');
     reply.header('Cache-Control', 'no-store');
-    return authority.issueCode(body.data.role, principal.sessionId);
+    return authority.issueCode(body.data.role, principal.sessionId, body.data.client);
   });
   app.addHook('onClose', async () => { authority.clear(); });
 }

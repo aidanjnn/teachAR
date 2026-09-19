@@ -13,8 +13,8 @@ restricted TLS proxy. HTTP works only when explicitly enabled, both the actual
 peer and Host are loopback, and the browser Origin is allowlisted.
 
 On server startup, call `writePairingBootstrap(authority, dataDir)` to write
-`pairing.json` atomically with mode 0600. It contains the initial **author** code,
-role, demo session UUID and epoch expiry. Read it locally; do not log or commit it.
+`pairing.json` atomically with mode 0600. It contains the initial **browser author** code,
+role, client kind, demo session UUID and epoch expiry. Read it locally; do not log or commit it.
 Redeem within five minutes. Codes are eight random decimal digits, single-use,
 stored hashed, with at most 64 pending and rate limits of 10 attempts/IP/minute
 and 100 total/minute. Tokens contain 256 random bits, are hashed in memory, expire
@@ -22,11 +22,14 @@ after one hour, and are capped at 128. Restart revokes all credentials.
 
 - `POST /api/pair`: `{code, client: "browser" | "native"}`. Browser receives an
   HttpOnly, SameSite=Strict cookie (Secure with HTTPS); native receives `token`.
-  Both receive role, sessionId, client and expiresAt. No token appears in a URL.
+  Codes are bound to their issued client kind; a mismatched exchange is rejected.
+  Native exchange rejects browser Origin/Fetch Metadata headers. Both receive role,
+  sessionId, client and expiresAt. No token appears in a URL.
 - `POST /api/session` (also native `GET`): authenticated session identity.
 - `DELETE /api/session`: revoke this credential and clear the cookie.
-- `POST /api/pairing-codes`: authenticated author submits `{role}` to issue a
-  code for author, learner or spectator in the same session. Share only the needed
+- `POST /api/pairing-codes`: authenticated author submits `{role, client}` to issue
+  a code for author, learner or spectator in the same session. Client defaults to
+  `native`; explicitly choose `browser` for desktop or spectator browser pairing. Share only the needed
   role's code. Spectators cannot issue codes, advance guides or request frames.
 
 Every protected consumer uses `authority.authorize(request, {roles, sessionId})`
@@ -40,6 +43,7 @@ make a browser GET succeed. Ambiguous cookie plus bearer credentials are rejecte
 
 Native credentials are memory-only. `NativeApiConnection` clears credentials and
 aborts requests on pause/focus loss/disable; callback generations prevent stale
-responses from applying to a later pairing. Configure HTTPS normally. A development
+responses from applying to a later pairing. An unauthorized response invalidates
+all in-flight callbacks and clears the session. Configure HTTPS normally. A development
 APK may explicitly enable the `adb reverse` loopback exception; release builds
 reject it. Loaded local guidance remains independent of these network states.
