@@ -401,3 +401,47 @@ task 6; no build or device success is inferred from editor tests. No provider,
 headset, physical LEGO or independent learner evidence exists for this task.
 
 - **Task 5 combined-auth smoke repair:** Platform881bbd7 correctly rejects browser fetch metadata during native pairing. The real two-process test now exchanges its native code with node:http instead of Node fetch, which automatically sends Sec-Fetch-Mode:cors. No production authentication changed. The complete two-process scenario passed against both the current pairing source and the exact stricter881bbd7 source (temporarily applied then restored); tools/test typechecking passed.
+## 2026-09-19 — Task 3 final native and delivery evidence
+
+The actual full project now imports and compiles in externally installed/licensed
+Unity 6000.3.24f1 after native-platform's module/real-lock repair d23754a. With
+final shared contracts 3d629fa, `pnpm quest:test` passed 11/11 and
+`pnpm quest:test:play` passed 4/4. The latter instantiates the real capture installer,
+separate articulated ghost prefab and fonts/materials, checks no duplicate source
+and no ghost colliders, and exercises capture/calibration/replay invalidation
+with explicitly synthetic hand observations. Latest PlayMode evidence is
+`artifacts/quest/test-play-7aa7d645-f308-4f06-9158-cb183caeec72/results.xml`.
+Isolated real Unity source-hashing runner passes EditMode 6/6 and PlayMode 2/2;
+full-project results are distinct and stronger import/composition evidence.
+
+Added a serialized 31 MiB motion budget via the canonical frame writer, preserving
+a saveable accepted prefix plus visible StopReason before the 32 MiB parser ceiling;
+actual C# regression passed. Explicitly admit only the official OpenXR Hands
+provider; non-Android/Editor sources remain synthetic. Continuous pure C# capture
+CI is green. Runtime source is stable from 1b2d095, with final contract dependency
+and composition tests added afterward. .NET fixtures continue to pass.
+
+The final pnpm pass after contract integration passed 157 tests/typechecks/builds;
+its static tail encountered Unity's empty generated StreamingAssets folder before
+metadata existed. Removed/backed up only validation-generated files, restored only
+the engine-generated EditorBuildSettings delta, and reran the normal available gate.
+Generated platform settings/assets are preserved under ignored artifacts, not in
+this PR; platform owns their canonical publication. Existing Vite size warning
+remains. Prior desktop smoke passed 3/3; hosted branch checks including C# capture
+and network are green before this documentation-only completion update.
+
+PR #6 is stacked on shared-contracts PR #8 and also includes platform PR #5 dependencies.
+Merge those before capture, then the dependent guide/authoring/inspection work.
+Android support was found externally and the coordinator assigned the combined
+APK build to task 6; no APK result is preclaimed here. No headset, native live
+hand capture, physical LEGO/independent-user transfer, provider, or timing-accuracy
+claim follows from these editor/synthetic checks. No voice implementation changed.
+
+Task 4 final base synchronization: merged capture's final `9cf0bd7` without
+changing production guide source. Preserved both tasks' log entries and reran
+the expanded full PlayMode suite: 5/5 passed in Unity 6000.3.24f1, including the
+new real capture prefab/control composition test alongside the guide recovery
+scenario. Archived only this rerun's generated platform assets/settings. EditMode
+13/13 and other passing checks are reused for unchanged inputs.
+
+- **Task 5 final stack synchronization:** Merged guide88508b2 non-rewriting and preserved both work-log histories. Incoming changes add the capture prefab/control PlayMode test and validation documentation; no production runtime source changes. The expanded PlayMode suite and hosted executable gates are being verified on this merge; prior EditMode/software results are reused only where inputs are unchanged.

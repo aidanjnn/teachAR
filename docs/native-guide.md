@@ -86,7 +86,7 @@ prints the entire transition/effect order. Unity EditMode reuses the core scenar
 source, and an injected native lifecycle test exercises the real controller/capture
 event path including inspection pause and reset. These checks do not establish Unity/SDK import, Android/IL2CPP behavior,
 real hands, physical LEGO transfer or human completion. Final software evidence on 2026-09-19: Unity 6000.3.24f1 compiled the actual
-project and passed 13/13 EditMode and 4/4 PlayMode tests. PlayMode covers the real
+project and passed 13/13 EditMode and 5/5 PlayMode tests. PlayMode covers the real
 controller/capture event wiring, pause acknowledgment, same/new server-session
 re-pairing, completion, Repeat and invalidation using explicitly synthetic data.
 The final C# source is commit `1ed9659`; later dependency merges/documentation
