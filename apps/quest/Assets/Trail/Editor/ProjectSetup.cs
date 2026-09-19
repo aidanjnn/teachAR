@@ -40,6 +40,13 @@ namespace Trail.Editor
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
             EditorUserBuildSettings.buildAppBundle = false;
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+            // OpenXR needs the new Input System; this serialized setting is used by Unity's own package helper.
+            var playerAsset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset").FirstOrDefault();
+            if (playerAsset == null) throw new BuildFailedException("Player settings unavailable");
+            var playerObject = new SerializedObject(playerAsset);
+            var inputHandler = playerObject.FindProperty("activeInputHandler");
+            if (inputHandler == null) throw new BuildFailedException("Active input handling setting unavailable");
+            if (inputHandler.intValue != 1) { inputHandler.intValue = 1; playerObject.ApplyModifiedPropertiesWithoutUndo(); }
             ConfigureOpenXR();
             ConfigureRendering();
             var config = OVRProjectConfig.CachedProjectConfig;
@@ -47,9 +54,29 @@ namespace Trail.Editor
             config.targetDeviceTypes = new System.Collections.Generic.List<OVRProjectConfig.DeviceType> { OVRProjectConfig.DeviceType.Quest3, OVRProjectConfig.DeviceType.Quest3S };
             config.handTrackingSupport = OVRProjectConfig.HandTrackingSupport.HandsOnly;
             config.insightPassthroughSupport = OVRProjectConfig.FeatureSupport.Required;
+            config.isPassthroughCameraAccessEnabled = true;
             OVRProjectConfig.CommitProjectConfig(config);
+            SanitizeDevelopmentTools();
+            ValidateAndroidConfiguration();
             AssetDatabase.SaveAssets();
             Debug.Log("Trail Android settings applied. Review generated assets and UPM lock; device readiness remains unverified.");
+        }
+        public static void SanitizeDevelopmentTools()
+        {
+            // Meta's editor auto-generates a local AgentBridge credential asset. Never ship it.
+            var asset = AssetDatabase.LoadMainAssetAtPath("Assets/Resources/DevAgentSettings.asset");
+            if (asset == null) return;
+            var settings = new SerializedObject(asset);
+            var enabled = settings.FindProperty("enabled");
+            if (enabled != null) enabled.boolValue = false;
+            foreach (var field in new[] { "accessToken", "witClientAccessToken", "serverAddress" })
+            {
+                var property = settings.FindProperty(field);
+                if (property != null) property.stringValue = "";
+            }
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssetIfDirty(asset);
         }
         private static void ConfigureOpenXR()
         {
@@ -71,7 +98,7 @@ namespace Trail.Editor
                 throw new BuildFailedException("OpenXR loader assignment failed");
             FeatureHelpers.RefreshFeatures(BuildTargetGroup.Android);
             // IDs verified in the exact OpenXR 1.18 / Meta Core 205 / XR Hands 1.7.2 package sources.
-            foreach (var id in new[] { "com.meta.openxr.feature.metaxr", "com.unity.openxr.feature.metaquest", "com.unity.openxr.feature.input.handtracking", "com.unity.openxr.feature.input.oculustouch" })
+            foreach (var id in new[] { "com.meta.openxr.feature.metaxr", "com.unity.openxr.feature.metaquest", "com.unity.openxr.feature.input.oculustouch" })
             {
                 var feature = FeatureHelpers.GetFeatureWithIdForBuildTarget(BuildTargetGroup.Android, id);
                 if (feature == null) throw new BuildFailedException("Required OpenXR feature is unavailable: " + id);
@@ -79,8 +106,30 @@ namespace Trail.Editor
             }
             var openxr = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
             if (openxr == null) throw new BuildFailedException("OpenXR settings missing");
+            // MicrosoftHandInteraction declares the same feature ID as XR Hands; select by type.
+            var hands = openxr.GetFeature<UnityEngine.XR.Hands.OpenXR.HandTracking>();
+            if (hands == null) throw new BuildFailedException("XR Hands HandTracking subsystem feature is unavailable");
+            hands.enabled = true; EditorUtility.SetDirty(hands);
+            var microsoftHands = openxr.GetFeature<UnityEngine.XR.OpenXR.Features.Interactions.MicrosoftHandInteraction>();
+            if (microsoftHands != null) { microsoftHands.enabled = false; EditorUtility.SetDirty(microsoftHands); }
             openxr.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
             EditorUtility.SetDirty(openxr); EditorUtility.SetDirty(manager); EditorUtility.SetDirty(general); EditorUtility.SetDirty(settings);
+        }
+        public static void ValidateAndroidConfiguration()
+        {
+            var general = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
+            if (general == null || !general.InitManagerOnStart || general.Manager == null ||
+                general.Manager.activeLoaders.Count != 1 || !(general.Manager.activeLoaders[0] is UnityEngine.XR.OpenXR.OpenXRLoader))
+                throw new BuildFailedException("Trail requires exactly one automatically initialized Android OpenXR loader");
+            var openxr = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
+            var hands = openxr == null ? null : openxr.GetFeature<UnityEngine.XR.Hands.OpenXR.HandTracking>();
+            if (hands == null || !hands.enabled)
+                throw new BuildFailedException("Android XR Hands HandTracking subsystem must be enabled");
+            foreach (var id in new[] { "com.meta.openxr.feature.metaxr", "com.unity.openxr.feature.metaquest", "com.unity.openxr.feature.input.oculustouch" })
+            {
+                var feature = FeatureHelpers.GetFeatureWithIdForBuildTarget(BuildTargetGroup.Android, id);
+                if (feature == null || !feature.enabled) throw new BuildFailedException("Required Android OpenXR feature is disabled: " + id);
+            }
         }
         private static void ConfigureRendering()
         {
@@ -127,5 +176,14 @@ namespace Trail.Editor
                 JsonUtility.ToJson(new BuildEvidence { result = "Succeeded", editor = Application.unityVersion, platform = "Android", architecture = "ARM64", backend = "IL2CPP", development = development, bytes = new FileInfo(output).Length }));
         }
         [Serializable] private sealed class BuildEvidence { public string result; public string editor; public string platform; public string architecture; public string backend; public bool development; public long bytes; }
+    }
+    public sealed class NativeBuildGuard : IPreprocessBuildWithReport
+    {
+        public int callbackOrder => int.MaxValue;
+        public void OnPreprocessBuild(BuildReport report)
+        {
+            if (report.summary.platform == BuildTarget.Android) ProjectSetup.ValidateAndroidConfiguration();
+            ProjectSetup.SanitizeDevelopmentTools();
+        }
     }
 }

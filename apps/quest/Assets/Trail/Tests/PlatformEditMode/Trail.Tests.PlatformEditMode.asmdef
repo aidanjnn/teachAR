@@ -1,0 +1,15 @@
+{
+  "name": "Trail.Tests.PlatformEditMode",
+  "rootNamespace": "Trail.Tests.PlatformEditMode",
+  "references": [
+    "Trail.Editor",
+    "Unity.XR.OpenXR",
+    "Unity.XR.Hands"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

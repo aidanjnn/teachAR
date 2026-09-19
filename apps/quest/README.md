@@ -1,9 +1,10 @@
 # Trail Quest platform
 
 This project now contains the Android setup/build path, a single OpenXR/Meta
-passthrough bootstrap, and a scoped native API connection. The pinned editor has resolved the checked-in UPM lock. **Complete Unity
-compilation/tests, APK build, and headset operation remain pending**; SDK compile
-findings are being repaired, and Android Build Support is not installed. This branch supplies the
+passthrough bootstrap, and a scoped native API connection. The pinned editor has resolved the checked-in UPM lock, compiled the project,
+applied Android/OpenXR/URP settings, and passed EditMode4/4 plus PlayMode3/3 tests.
+**APK and headset acceptance remain separate gates**; physical operation is not
+proven by editor tests. This branch supplies the
 platform foundation; capture, guide, scene interpretation and storage are
 separate feature branches. Voice remains separately owned.
 
@@ -31,8 +32,8 @@ The checked-in `Packages/packages-lock.json` is actual Unity 6000.3.24f1 resolve
 output. Test Framework 1.6.0 matches its editor-bundled resolution. Built-in
 Animation, AssetBundle, ParticleSystem and Physics2D modules satisfy concrete
 Meta Core/Interaction compiler requirements. Preserve existing GUIDs when saving
-generated XR/URP/Meta assets. Package compatibility still requires passing Unity
-compilation and runtime checks.
+generated XR/URP/Meta assets. The editor import/setup/tests pass; native Android/IL2CPP and device compatibility
+still require their separate build/runtime checks.
 
 ## Reproduce setup and build
 
@@ -75,8 +76,22 @@ feature is not represented as successful hardware capability.
 ## Pair and reach the API
 
 Server composition is delivered by the authoring/storage branch; reusable auth
-and routes are in `apps/server/src/auth`. See [pairing setup](../../docs/pairing.md).
-Configure `NativeApiConnection` with the exact HTTPS origin, then `Pair(code)`.
+and routes are in `apps/server/src/auth`. Issue a **native** client code for the
+Quest app; browser codes are bound to cookie sessions and cannot become native
+bearer credentials. See [pairing setup](../../docs/pairing.md).
+The native scene opens a world-space setup keyboard. Aim your head at a key for
+0.9 seconds, then look away to release it. Enter the HTTPS origin, select **Edit
+code**, enter the eight-digit desktop-issued author/learner code, then select
+**Pair**. The panel shows connection state and the granted role; it collapses
+after success. **Setup** reopens it, **Disconnect** clears pairing, and **Recenter
+panel** moves only the UI (never the XR origin). **USB dev :3001** explicitly
+selects the standard loopback server port in development builds; edit its port
+if your server uses another. Endpoint and code are not saved, and code text is
+masked and cleared on submit/pause/focus loss. The head-directed keyboard is
+setup input only, not eye tracking or learner hand evidence. Hardware readability
+and dwell comfort remain unverified.
+
+Other components can configure `NativeApiConnection` and call `Pair(code)`.
 It retains a role/session bearer only in memory, attaches it to every request,
 rejects redirects/traversal, bounds concurrency/body sizes and returns status 0
 for transport failure. Re-pair after expiry, focus loss, pause or restart.
@@ -86,10 +101,10 @@ may continue locally without granting the server progression authority.
 For an explicitly enabled loopback development server and development APK:
 
 ```sh
-adb reverse tcp:3401 tcp:3401
+adb reverse tcp:3001 tcp:3001
 ```
 
-Use `Configure("http://127.0.0.1:3401", true)` and a fresh code; this exception is
+Use `Configure("http://127.0.0.1:3001", true)` and a fresh code; this exception is
 rejected by release builds. Untethered operation requires valid HTTPS reachable
 from the Quest. No certificate-validation bypass is supplied. Install the actual
 APK printed by the wrapper with `adb install -r <absolute-apk-path>` and launch
@@ -102,8 +117,8 @@ APK printed by the wrapper with `adb install -r <absolute-apk-path>` and launch
 URL/token/expiry policy tests. `dotnet build tests/native-network/UnityCompile.csproj`
 compiles the network adapter against installed Unity managed assemblies (set
 `-p:UnityManagedPath=...` on other installations), without loading Unity or proving
-IL2CPP compatibility. PlayMode sources cover native connection lifecycle,
-but cannot count as passing until Unity executes them. WebSocket/HTTP server tests
+IL2CPP compatibility. Unity PlayMode tests passed for native connection lifecycle and head-directed
+pairing keyboard entry/pause-clearing. WebSocket/HTTP server tests
 exercise real server authorization. None establishes tracking, simultaneous
 hands/audio/camera, physical calibration/transfer, APK networking or usable XR UI.
 Use [device checks](../../docs/device-check.md) and record actual hardware evidence
