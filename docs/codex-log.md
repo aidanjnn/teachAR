@@ -358,3 +358,21 @@ passes both recovery cases; refreshed Unity tests include the paused re-pair pat
 Final contracts 3d629fa and capture capacity fixes are integrated. Native/source
 checks are rerunning for this last recovery change; prior native passes remain
 at their explicitly recorded revisions.
+
+### 2026-09-19 — Task 4 final guide verification
+
+Final guide source at `1ed9659` passed full-project Unity 6000.3.24f1 EditMode
+13/13 (`2026-09-19 18:10:58Z`) and PlayMode 4/4 (`18:11:42Z`). The PlayMode
+scenario uses the actual native controller/capture/ghost adapters with injected
+synthetic samples and verifies same/new-session telemetry recovery while paused.
+Later capture merge `9a5befa` adds test tooling only; guide sources are unchanged.
+Full `pnpm check` passed 157 tests, typechecks/builds and static metadata checks;
+fixture validation passed. Release .NET passes 24 scenarios plus the shared
+fixture/calibration/golden telemetry integration and re-pairing assertions.
+Playwright regression uses isolated 3105 and one worker. Workflows pass actionlint.
+
+Archived this run's generated XR/default editor settings under ignored artifacts
+and restored the tracked build-settings file; canonical platform settings/locks
+remain task 1's ownership. Parent assigned the final combined APK/IL2CPP build to
+task 6; no build or device success is inferred from editor tests. No provider,
+headset, physical LEGO or independent learner evidence exists for this task.
