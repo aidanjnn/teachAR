@@ -107,7 +107,7 @@ in the status table above.
 | Desktop | TypeScript, Vite, plain HTML/CSS and Three.js; review, diagnostics and spectator presentation |
 | Main backend | `apps/server`: TypeScript/Fastify; storage, pairing, tutorial processing, GPT Live sideband and inspection coordination |
 | Visual backend | `apps/vision`: separate TypeScript/Fastify process; image interpretation through an image-capable Responses model |
-| Contracts | Zod and versioned JSON fixtures; native strict DTO validation remains to be implemented |
+| Contracts | Zod and versioned JSON fixtures; strict native DTO parsing and validation |
 | Persistence | Planned laptop files and Unity application-private cache; no cloud database required |
 
 The two backend processes initially run on the demo laptop. Provider credentials
