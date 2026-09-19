@@ -2,7 +2,7 @@ export function mountShell(root: HTMLElement) {
   root.innerHTML = `
     <header class="masthead">
       <a class="brand" href="/" aria-label="Trail home"><span class="brand-mark" aria-hidden="true">⌁</span> Trail</a>
-      <span class="workspace-name">Motion workspace</span>
+      <nav class="masthead-links" aria-label="Pages"><a href="/" aria-current="page">Motion workspace</a><a href="/voice-lab.html">Voice lab</a></nav>
       <span class="stage-label">Development preview</span>
     </header>
     <main>
@@ -29,7 +29,7 @@ export function mountShell(root: HTMLElement) {
           <p class="scope-note">This preview shows recorded motion. It does not track your hands or verify a physical task.</p>
         </aside>
       </div>
-      <section class="diagnostics" aria-label="Runtime diagnostics"><div><span>Local server</span><strong id="health" role="status">Checking…</strong></div><div><span>Headset app</span><strong>Unity · device validation pending</strong></div><div><span>Vision backend</span><strong id="vision" role="status">Checking…</strong></div><button id="refresh-health" type="button">Recheck server</button></section>
+      <section class="diagnostics" aria-label="Runtime diagnostics"><div><span>Local server</span><strong id="health" role="status">Checking…</strong></div><div><span>Headset app</span><strong>Unity · device validation pending</strong></div><div><span>Integrations</span><strong id="providers">Checking…</strong></div><div><span>Vision backend</span><strong id="vision" role="status">Checking…</strong></div><button id="refresh-health" type="button">Recheck server</button></section>
       <footer>Record once. Learn at your own pace.<span>Workspace preview · Headset validation pending</span></footer>
     </main>`;
 }

@@ -230,6 +230,44 @@ namespace Trail.Contracts
         public AudioAsset Audio { get; set; }
         public string Source { get; set; }
     }
+    public sealed class RecordingByteChunk
+    {
+        public string DataBase64 { get; set; }
+        public string Sha256 { get; set; }
+    }
+    public sealed class ReferenceEdit
+    {
+        public int BaseRevision { get; set; }
+        public StepSceneReference[] References { get; set; }
+    }
+    public sealed class StepSceneReference
+    {
+        public string Id { get; set; }
+        public string RecordingId { get; set; }
+        public string RecordingHash { get; set; }
+        public string TutorialId { get; set; }
+        public int TutorialRevision { get; set; }
+        public string StepId { get; set; }
+        public string AssetId { get; set; }
+        public string Source { get; set; }
+        public string VisibleOutcome { get; set; }
+    }
+    public sealed class ReferenceImageUpload
+    {
+        public string RecordingId { get; set; }
+        public string RecordingHash { get; set; }
+        public int FrameIndex { get; set; }
+        public string Source { get; set; }
+        public ReferenceImageUploadImage Image { get; set; }
+    }
+    public sealed class ReferenceImageUploadImage
+    {
+        public string MimeType { get; set; }
+        public string DataBase64 { get; set; }
+        public string Sha256 { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+    }
     public sealed class SceneObservation
     {
         public string Id { get; set; }
@@ -251,17 +289,23 @@ namespace Trail.Contracts
         public int TutorialRevision { get; set; }
         public StepSceneReference[] References { get; set; }
     }
-    public sealed class StepSceneReference
+    public sealed class SpectatorState
     {
-        public string Id { get; set; }
-        public string RecordingId { get; set; }
-        public string RecordingHash { get; set; }
-        public string TutorialId { get; set; }
-        public int TutorialRevision { get; set; }
-        public string StepId { get; set; }
-        public string AssetId { get; set; }
+        public string Type { get; set; }
+        public bool Connected { get; set; }
+        public double UpdatedAt { get; set; }
+        public double AgeMs { get; set; }
+        public GuideEvent Snapshot { get; set; }
+        public SpectatorStateStep Step { get; set; }
+    }
+    public sealed class SpectatorStateStep
+    {
+        public string Title { get; set; }
+        public string Instruction { get; set; }
+        public long Index { get; set; }
+        public long Total { get; set; }
+        public string CompletionMode { get; set; }
         public string Source { get; set; }
-        public string VisibleOutcome { get; set; }
     }
     public sealed class Tutorial
     {
@@ -311,5 +355,35 @@ namespace Trail.Contracts
         public string CompletionMode { get; set; }
         public string Title { get; set; }
         public string Instruction { get; set; }
+    }
+    public sealed class TutorialFinalize
+    {
+        public int BaseRevision { get; set; }
+    }
+    public sealed class TutorialJobCreate
+    {
+        public string RecordingId { get; set; }
+        public string RecordingHash { get; set; }
+        public int SegmentationRevision { get; set; }
+    }
+    public sealed class TutorialLabelBatch
+    {
+        public int BaseRevision { get; set; }
+        public string RecordingHash { get; set; }
+        public TutorialLabelBatchLabelsItem[] Labels { get; set; }
+        public TutorialLabelBatchProvenance Provenance { get; set; }
+    }
+    public sealed class TutorialLabelBatchLabelsItem
+    {
+        public string Id { get; set; }
+        public string Title { get; set; }
+        public string Instruction { get; set; }
+        public string[] NarrationSpanIds { get; set; }
+    }
+    public sealed class TutorialLabelBatchProvenance
+    {
+        public string Labels { get; set; }
+        public string Model { get; set; }
+        public string PromptVersion { get; set; }
     }
 }

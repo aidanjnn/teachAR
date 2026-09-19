@@ -97,6 +97,54 @@
       "valid": true
     },
     {
+      "name": "valid tutorial-job-create",
+      "contract": "TutorialJobCreate",
+      "file": "tutorial-job-create.json",
+      "valid": true
+    },
+    {
+      "name": "valid tutorial-finalize",
+      "contract": "TutorialFinalize",
+      "file": "tutorial-finalize.json",
+      "valid": true
+    },
+    {
+      "name": "valid reference-edit",
+      "contract": "ReferenceEdit",
+      "file": "reference-edit.json",
+      "valid": true
+    },
+    {
+      "name": "valid reference-image-upload",
+      "contract": "ReferenceImageUpload",
+      "file": "reference-image-upload.json",
+      "valid": true
+    },
+    {
+      "name": "valid spectator-state",
+      "contract": "SpectatorState",
+      "file": "spectator-state.json",
+      "valid": true
+    },
+    {
+      "name": "valid spectator-connected",
+      "contract": "SpectatorState",
+      "file": "spectator-connected.json",
+      "valid": true
+    },
+    {
+      "name": "valid tutorial-label-batch",
+      "contract": "TutorialLabelBatch",
+      "file": "tutorial-label-batch.json",
+      "valid": true
+    },
+    {
+      "name": "valid recording-byte-chunk",
+      "contract": "RecordingByteChunk",
+      "file": "recording-byte-chunk.json",
+      "valid": true
+    },
+    {
       "name": "recording unknown field",
       "contract": "Recording",
       "file": "recording.json",
@@ -519,8 +567,8 @@
     {
       "name": "motion-chunk timestamp duplicate",
       "contract": "MotionChunk",
-      "valid": false,
       "file": "motion-chunk.json",
+      "valid": false,
       "patches": [
         {
           "path": [
@@ -535,8 +583,8 @@
     {
       "name": "motion-chunk timestamp decreasing",
       "contract": "MotionChunk",
-      "valid": false,
       "file": "motion-chunk.json",
+      "valid": false,
       "patches": [
         {
           "path": [
@@ -573,6 +621,1115 @@
             "chunkCount"
           ],
           "remove": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial-job-create unknown field",
+      "contract": "TutorialJobCreate",
+      "file": "tutorial-job-create.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial-job-create missing field",
+      "contract": "TutorialJobCreate",
+      "file": "tutorial-job-create.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "recordingId"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial-finalize unknown field",
+      "contract": "TutorialFinalize",
+      "file": "tutorial-finalize.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial-finalize missing field",
+      "contract": "TutorialFinalize",
+      "file": "tutorial-finalize.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "baseRevision"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "reference-edit unknown field",
+      "contract": "ReferenceEdit",
+      "file": "reference-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "reference-edit missing field",
+      "contract": "ReferenceEdit",
+      "file": "reference-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "baseRevision"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "reference-image-upload unknown field",
+      "contract": "ReferenceImageUpload",
+      "file": "reference-image-upload.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "reference-image-upload missing field",
+      "contract": "ReferenceImageUpload",
+      "file": "reference-image-upload.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "recordingId"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "spectator-state unknown field",
+      "contract": "SpectatorState",
+      "file": "spectator-state.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "spectator-state missing field",
+      "contract": "SpectatorState",
+      "file": "spectator-state.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "type"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "spectator-connected unknown field",
+      "contract": "SpectatorState",
+      "file": "spectator-connected.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "spectator-connected missing field",
+      "contract": "SpectatorState",
+      "file": "spectator-connected.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "type"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial-label-batch unknown field",
+      "contract": "TutorialLabelBatch",
+      "file": "tutorial-label-batch.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial-label-batch missing field",
+      "contract": "TutorialLabelBatch",
+      "file": "tutorial-label-batch.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "baseRevision"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "recording-byte-chunk unknown field",
+      "contract": "RecordingByteChunk",
+      "file": "recording-byte-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "recording-byte-chunk missing field",
+      "contract": "RecordingByteChunk",
+      "file": "recording-byte-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "dataBase64"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "authoring zero segmentation revision",
+      "contract": "TutorialJobCreate",
+      "file": "tutorial-job-create.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "segmentationRevision"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "authoring bad recording hash",
+      "contract": "TutorialJobCreate",
+      "file": "tutorial-job-create.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "recordingHash"
+          ],
+          "value": "invalid"
+        }
+      ]
+    },
+    {
+      "name": "authoring fractional base revision",
+      "contract": "TutorialFinalize",
+      "file": "tutorial-finalize.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "baseRevision"
+          ],
+          "value": 1.5
+        }
+      ]
+    },
+    {
+      "name": "authoring too many references",
+      "contract": "ReferenceEdit",
+      "file": "reference-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "references"
+          ],
+          "value": [
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            },
+            {
+              "id": "reference-1",
+              "recordingId": "contract-recording",
+              "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+              "tutorialId": "tutorial-1",
+              "tutorialRevision": 1,
+              "stepId": "step-1",
+              "assetId": "synthetic-image",
+              "source": "quest-camera",
+              "visibleOutcome": "The synthetic block is beside the marked square."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "authoring unsupported image source",
+      "contract": "ReferenceImageUpload",
+      "file": "reference-image-upload.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "source"
+          ],
+          "value": "synthetic-camera"
+        }
+      ]
+    },
+    {
+      "name": "authoring invalid frame index",
+      "contract": "ReferenceImageUpload",
+      "file": "reference-image-upload.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frameIndex"
+          ],
+          "value": 3600
+        }
+      ]
+    },
+    {
+      "name": "spectator negative age",
+      "contract": "SpectatorState",
+      "file": "spectator-state.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "ageMs"
+          ],
+          "value": -1
+        }
+      ]
+    },
+    {
+      "name": "authoring empty label batch",
+      "contract": "TutorialLabelBatch",
+      "file": "tutorial-label-batch.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "labels"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "authoring unknown provenance",
+      "contract": "TutorialLabelBatch",
+      "file": "tutorial-label-batch.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "provenance",
+            "labels"
+          ],
+          "value": "ai"
+        }
+      ]
+    },
+    {
+      "name": "byte chunk malformed base64",
+      "contract": "RecordingByteChunk",
+      "file": "recording-byte-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "dataBase64"
+          ],
+          "value": "!!!"
+        }
+      ]
+    },
+    {
+      "name": "byte chunk empty payload",
+      "contract": "RecordingByteChunk",
+      "file": "recording-byte-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "dataBase64"
+          ],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "name": "byte chunk invalid hash",
+      "contract": "RecordingByteChunk",
+      "file": "recording-byte-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "sha256"
+          ],
+          "value": "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
         }
       ]
     },

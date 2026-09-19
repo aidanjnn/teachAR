@@ -28,7 +28,7 @@ This document is self-contained. The handoff and image supply product context; t
 
 The official 2026 Devpost page lists a **Sunday, September 20, 08:00 EDT** submission deadline and requires sponsor-prize selections **before Saturday, September 19, 14:00 EDT**. These were checked on the live event page; recheck the participant portal for announcements. At this planning snapshot, approximately 28.5 hours remain until submission. [Official event and submission requirements](https://hackthenorth2026.devpost.com/)
 
-Use a **24-hour implementation budget**, with a working physical prototype within four hours, an interactive step within seven, and a feature freeze by hour 18. These are dependency and validation gates; the target is the complete, polished experience described below. Allocate parallel work toward that target and cut features only in response to measured blockers or remaining time. Keep the final submission buffer for verification, rest, and recovery. Assign one person to select applicable sponsor tracks before 14:00 today; do not wait for the final demo.
+Use a **24-hour implementation budget**, with a working physical prototype within four hours, an interactive step within seven, and a feature freeze by hour 18. These are dependency and validation gates; the target is the complete, polished experience described below. Allocate parallel work toward that target and cut features only in response to measured blockers or remaining time. Keep the final submission buffer for verification, rest, and recovery. Assign one person to select applicable sponsor tracks **immediately** — the 14:00 EDT cutoff is hours after the Unity revision, not days; do not wait for the final demo.
 
 ### Default architecture
 
@@ -53,7 +53,7 @@ Use a **24-hour implementation budget**, with a working physical prototype withi
 
 Build a polished 3–5-step experience: stable workspace alignment, an articulated ghost that makes the movement obvious, learner-paced path progress, automatically proposed steps with quick review, and useful GPT Live conversation grounded in the current task and scene. The learner can ask for an explanation, interrupt an answer, or ask “Am I doing this right?” while manipulating objects. The authoring screen and spectator presentation should feel finished. Preserve a working checkpoint build throughout, then keep improving toward this target.
 
-**Use Unity + Meta XR for the headset application.** The user chose this after comparing the full workflow. Unity provides documented hand-bone access and hand assets, a visual scene/material workflow for ghost guidance, and native Quest camera access through MRUK. Spatial SDK is an alternative Kotlin/Android client, not a Unity dependency. IWSDK remains an alternative browser runtime; neither is part of the selected headset stack. The existing TypeScript server, desktop viewer, schemas and authoring math remain useful. This is a product-fit decision, not proof of better tracking accuracy or shorter delivery time. [Unity hands](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/), [Unity camera access](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/)
+**Use Unity + Meta XR for the headset application.** The user chose this after comparing the full workflow and has **committed to it** (September 19). Unity provides documented hand-bone access and hand assets, a visual scene/material workflow for ghost guidance, and native Quest camera access through MRUK. Spatial SDK is an alternative Kotlin/Android client, not a Unity dependency. No parallel browser runtime is maintained; the recovery path if native delivery slips is the disclosed reduced demo — explicit markers, a joint-skeleton ghost, a labeled webcam scene source and the HTTP voice loop — not a second engine. The existing TypeScript server, desktop viewer, schemas and authoring math remain useful. This is a product-fit decision, not proof of better tracking accuracy or shorter delivery time. [Unity hands](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/), [Unity camera access](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/)
 
 The first integrated proof is a **standalone Quest 3S APK** with valid live hand capture, calibrated recorded ghost replay, a fresh headset-camera image and two-way GPT Live speech operating together. A Unity Editor or simulator result does not pass this gate. Native voice, joint mapping, calibration transfer and frame timing remain measured risks. Do not reopen the engine decision for ordinary implementation friction; isolate concrete failures and report their effect on the target.
 
@@ -120,7 +120,7 @@ Use the same physical mat, part sizes, initial layout, and dominant hand for bot
 | Minimum demo, H+11 | Fresh recording produces 3–5 marked steps; learner completes them locally | Automatic segmentation, questions, haptics |
 | Semantic integration, H+15 | Motion proposals plus narration become reviewed steps; save/reload works; Live voice and scene inspection integrated | Final visual polish and broader conversational topics |
 | Quality target, H+18 | Polished ghost, ordered gates, hands-free GPT Live questions with fresh visual feedback, reviewed tutorials, finished review/spectator screens | Haptics, continuous video understanding, optional sponsor integrations |
-| Stretch, only after core gates | Useful sponsor observability, separate eligible OMNI interaction, optional haptics | Never required to reach or complete a checkpoint |
+| Stretch, only after core gates | Useful sponsor observability, separate eligible OMNI interaction, optional haptics, bounded event-driven spoken acknowledgments (one short commentary line on step completion, rate-limited, cut under pressure), optional auto-inspection on checkpoint hold | Never required to reach or complete a checkpoint |
 
 The minimum demo is a recovery milestone, not the planned finish line. Explicitly marked steps and a skeleton renderer establish the pipeline early; automatic proposals, polished guidance, and contextual help remain scheduled target work. Any fallback and its effect on the delivered experience must be recorded. Manually edited labels do not satisfy the automatic semantic tutorial generation target.
 
@@ -177,7 +177,7 @@ Keep the current pnpm workspace intact and add a separate Unity project at `apps
 | Camera | MRUK `PassthroughCameraAccess`; one selected camera with bounded CPU readback for snapshots |
 | Voice candidate | `com.unity.webrtc` 3.0.0, microphone PCM bridge and remote audio output; prove Android ARM64/IL2CPP interoperability with GPT Live |
 | Native domain | C# `Trail.Contracts` and `Trail.Motion` assemblies with no UnityEngine/Meta/network dependency |
-| Native JSON | Pinned IL2CPP-compatible serializer supporting strict DTO validation; test stripping/AOT in APK, not just Editor |
+| Native JSON | IL2CPP-safe serializer decided in TRAIL-18: System.Text.Json source-generated contexts preferred, or Newtonsoft with link.xml/preserve attributes; strict DTO validation; T37 parses fixtures inside the APK, not just the Editor |
 | Server / web | Preserve current Node/pnpm/TypeScript, Vite, Three.js desktop viewer, Fastify, Zod and installed test versions |
 | Backend AI | Main server owns Live/transcription/labels; separate `apps/vision` owns image-capable Responses calls. Both use the existing Node/TypeScript stack and server-only credentials |
 | Persistence | Unity application-private persistent files; Fastify atomic local files; optional browser cache for desktop views |
@@ -274,9 +274,10 @@ VISION_HOST=127.0.0.1
 VISION_PORT=3002
 VISION_PROVIDER=mock
 OPENAI_VISION_API_KEY=
-OPENAI_VISION_MODEL=gpt-4.1-mini-2025-04-14
+OPENAI_VISION_MODEL=gpt-6-astra
 SCENE_SOURCE=mock
 # Planned live scene choices: quest-camera or workspace-webcam
+# Visual assessor: gpt-6-astra at low reasoning effort; gpt-4.1-mini is the documented fallback
 OMNI_API_KEY=
 OMNI_BASE_URL=
 OMNI_MODEL=
@@ -299,7 +300,7 @@ Vision listener/token/URL and mock-mode settings are implemented by the service 
 4. Pair the app with a short-lived code to obtain a scoped native bearer token. The browser UI retains its same-origin cookie path. Check authentication on every HTTP/WS connection; see section 6. A native client need not send Origin, so absence of Origin is never sufficient authentication.
 5. Request Android microphone and headset-camera permissions visibly. Recheck permission/focus after return from OS dialogs. Start passthrough, bare-hand tracking and local UI; test denial/retry, removal/recenter, suspend/resume and app restart. Registration and partial dwell cannot survive an uncertain origin change.
 6. Use ADB/logcat and Unity profiling with bounded metadata-only diagnostics. Prove real fresh frames, hand gaps, actual audio output and concurrent casting. Retain no raw media/secrets in logs.
-7. For untethered use, configure the authenticated HTTPS/WSS API explicitly and test network reachability/voice ICE behavior. A tunnel reaches the server but does not install or run the Unity app. Do not expose unpaired scaffold endpoints. Verify the exact release build and network before the demo.
+7. For untethered use, configure the authenticated HTTPS/WSS API explicitly and test network reachability/voice ICE behavior. Treat a phone hotspot as the known-good demo network; venue Wi-Fi is unproven for ICE — rehearse on both. A tunnel reaches the server but does not install or run the Unity app. Do not expose unpaired scaffold endpoints. Verify the exact release build and network before the demo.
 
 **Setup pass:** a second teammate can restore both dependency sets, run the implemented checks, build/install the APK, pair it, and operate passthrough/hands while reaching the server. The desktop fixture remains a separate useful diagnostic. Until native setup is implemented, README commands continue to describe only the existing scaffold.
 
@@ -337,7 +338,7 @@ flowchart LR
 2. Start audio, establish a monotonic recording clock, then start motion capture. Show a visible recording state.
 3. Sample fresh named hand observations through the Unity native adapter, convert to canonical reference/workspace coordinates, and append bounded buffers at 30 Hz. Render/match at headset cadence without reusing an observation for dwell; never record cached visuals, controller proxies or simulated input as physical capture.
 4. Record missing hands as missing; record explicit step markers and tracking-gap intervals. Never fill gaps with stale poses.
-   During authoring, also capture the starting layout and a bounded stream of local scene stills (initial target 2 Hz, ≤240 images and ≤64 MiB total for a 120 s recording). Keep frame-delivery timestamps, source identity and the associated motion-time interval/uncertainty; use request/ack markers for a separate webcam clock. Explicit checkpoint markers request a still immediately. After automatic segmentation, select clear reference images from these captured states. If a relevant state was missed or its timing is ambiguous, require an explicit recapture/review rather than inventing it. Capture limits produce a visible failure, not silent loss.
+   During authoring, also capture the starting layout plus stills at explicit step markers and checkpoint holds (roughly 6–10 per recording; a sparse ~0.2 Hz periodic capture may supplement but is not required). Keep frame-delivery timestamps, source identity and the associated motion-time interval/uncertainty; use request/ack markers for a separate webcam clock. After automatic segmentation, select clear reference images from these captured states. If a relevant state was missed or its timing is ambiguous, require an explicit recapture/review rather than inventing it. Capture limits produce a visible failure, not silent loss.
 5. Stop capture, drain the bounded native audio buffer and finalize its WAV header, persist the complete local recording, and upload motion metadata and audio separately.
 6. The upload is complete only when the manifest, frame data, and required assets validate. A failed upload can be retried without repeating the demonstration.
 
@@ -828,7 +829,9 @@ Aim for ≤15 seconds to compile the short demo recording, but show truthful ela
 
 ### GPT Live conversation and fresh visual coaching
 
-**Required stack:** GPT Live API with `gpt-live-1` for natural full-duplex speech; a native Unity WebRTC adapter for microphone/speaker media; the existing Fastify backend for authenticated session creation, trusted sideband and inspection coordination; a dedicated `apps/vision` backend process that performs image-capable Responses requests for visual analysis. GPT Live does not accept images/video directly. The initial visual assessor is `gpt-4.1-mini-2025-04-14`, already used for bounded labels; evaluate its visible-placement accuracy on real tasks before freezing it. The Live model choice remains GPT Live. [GPT-Live capabilities](https://developers.openai.com/api/docs/models/gpt-live-1), [Image-capable backend pattern](https://developers.openai.com/api/docs/guides/live-delegation#add-images-and-visual-context), [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini)
+**Required stack:** GPT Live API with `gpt-live-1` for natural full-duplex speech; a native Unity WebRTC adapter for microphone/speaker media; the existing Fastify backend for authenticated session creation, trusted sideband and inspection coordination; a dedicated `apps/vision` backend process that performs image-capable Responses requests for visual analysis. GPT Live does not accept images/video directly. The visual assessor is `gpt-6-astra` at low reasoning effort — image input is supported and it is the strongest available spatial-judgment model for the demo's highest-stakes call; `gpt-4.1-mini-2025-04-14` remains the bounded-labels model and the documented cost/latency fallback. Evaluate visible-placement accuracy on real tasks before freezing. The Live model choice remains GPT Live. [GPT-Live capabilities](https://developers.openai.com/api/docs/models/gpt-live-1), [Image-capable backend pattern](https://developers.openai.com/api/docs/guides/live-delegation#add-images-and-visual-context), [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra), [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini)
+
+**Voice ordering.** Prove the HTTP voice loop first — a push-to-talk MediaRecorder clip → `whisper-1` → Responses → `audio/speech` → local playback — which needs no WebRTC, no headset and no duplex timing, and gives an always-available baseline coach. Then upgrade to the full-duplex Live session below. The PTT path remains as the degraded voice mode, not a throwaway.
 
 **Connection and lifecycle.** Request Android microphone permission from an explicit Start action. Acquire the native mic once and use a dedicated speech playback sink. Start conversation explicitly; keep a visible mic state with Mute and End controls inside XR. After that, speech is hands-free for the active session. Optional push-to-talk is an alternate control, not the primary interaction. Test echo cancellation and speaker-to-mic feedback on the headset.
 
@@ -1143,6 +1146,7 @@ Only pulse during an armed attempt for a sustained path deviation—not merely b
 | Server/tunnel fails after preload | Continue local guide, display disconnected spectator state | No uninterrupted remote-view claim |
 | Haptic protocol/driver is unstable | Mock driver or remove feature | No real haptic demonstration |
 | H+7 interactive gate is missed | Remove every stretch feature; focus on one correct step before expanding | Do not call an animation an interactive tutor |
+| Unity native path cannot ship a working APK in time | Deliver the disclosed reduced demo: explicit markers, joint-skeleton ghost, labeled webcam scene source, HTTP voice loop | Unity is committed; the fallback is reduced capability, not a second engine |
 
 Use measured blockers and remaining time to trigger cuts. Prior experience is not a cut criterion. Remove optional breadth before reducing the quality of the central interaction:
 
@@ -1169,7 +1173,7 @@ Preserve calibration, real recording/save/replay, legible spatial ghost/path, lo
 | 65–105 s | Learner follows ghost, asks “Am I doing this right?”, hears a scene-grounded correction, then resumes | Guide waits during inspection; current frame and actual spoken feedback shown |
 | 105–120 s | Show final object and limitation | Motion checkpoint and visual advice are distinct; hidden physical properties remain unverified |
 
-Rehearse headset swap, calibration and actual voice/vision latency; if they do not fit the timing, announce a longer live run or show a clearly labeled capture clip followed by live learner guidance. Do not silently replace fresh capture/compilation with a cached tutorial or replayed AI answer. Keep evidence of the second fresh task available even if the stage demo shows only one. Retain local controls for a failed live request and disclose the failure.
+Rehearse headset swap, calibration (target ≈20 s; narrate over it while resetting parts) and actual voice/vision latency; if they do not fit the timing, announce a longer live run or show a clearly labeled capture clip followed by live learner guidance. Do not silently replace fresh capture/compilation with a cached tutorial or replayed AI answer. Keep evidence of the second fresh task available even if the stage demo shows only one. Retain local controls for a failed live request and disclose the failure.
 
 ### Recovery kit
 

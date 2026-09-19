@@ -720,3 +720,43 @@ Git. No device install, real camera/provider session, or physical-transfer claim
 Stack repair left review-thread disposition and hosted Unity/Android enforcement
 separate from local validation. Final hosted checks are verified after publication;
 no review replies, resolutions, PR merges or deployments were performed here.
+### 2026-09-19 16:50 EDT — Voice/AI workstream: contracts, provider, routes, coach, Voice Lab (PR #3)
+
+- **User goal / request:** Take the voice/AI role (TRAIL-09/10 software portions and the server half of TRAIL-16) from design to a mergeable PR with tests and a desktop way to exercise it, using `gpt-live-1` for the coach.
+- **Codex work:** Researched current OpenAI Live, Realtime, transcription and Structured Outputs docs and the `openai` 7.19.0 SDK types; wrote the design spec and implementation plan under `docs/superpowers/`; implemented voice contracts (transcript, labels, coach context/request/answer, live session, narration capture), an `AiProvider` with mock and OpenAI implementations (whisper-1 segment timestamps, `gpt-4.1-mini-2025-04-14` Structured Outputs, `client.live.create`), four Fastify routes with bounded bodies, MIME allow-list and typed errors, a browser coach reducer and runtime (GPT-Live over WebRTC, text and local fallbacks, stale-reply rules across run/tutorial/attempt/step, mic silenced until Ask by voice, playback gated across step changes), a narration recorder bounded at 120 s / 20 MiB, and the Voice Lab page. Ran staff, Sentry-checklist and inline code reviews and fixed all findings. Merged `main` after #5 and #8 and applied the contracts split (`voice.ts` on `common.ts`/`recording.ts`).
+- **Human input:** Ali chose GPT-Live-1 over the Realtime API and approved the design. Aidan's review requested five changes (mic enabled during startup, stale live output across step changes, `connect()` hanging before `session.started`, unbounded capture, cross-segment label citations); all fixed and re-reviewed. Ali ran the live desktop test with a real key.
+- **Result:** implemented. PR #3 open against `main`, level with `main`.
+- **Evidence:** [PR #3](https://github.com/aidanjnn/trail/pull/3), [design spec](superpowers/specs/2026-09-19-voice-ai-design.md), [implementation plan](superpowers/plans/2026-09-19-voice-ai.md), fixtures `narration-transcript.v1.json` and `label-segments.v1.json`.
+- **Validation:** Automated on the PR head: `pnpm check` (typecheck, 252 unit/API tests, build), `pnpm validate:fixtures`, `pnpm test:e2e` 6/6 with Chromium's fake microphone; all CI jobs green. Live provider (desktop Chrome on macOS, `AI_PROVIDER=openai`, observed by Ali at revision `4c01b4e`): whisper-1 transcribed a 14.33 s clip into 4 spans with the 207 ms start offset applied; labels for 3 simulated segments carried provenance `model`; the GPT-Live-1 session reached mode `live`, answered "what do I do now" from the tutorial text, and refused to confirm completion ("The system only checks the hand movement checkpoint"). Latency was not measured. Headset: not tested; native mic and WebRTC on the Quest APK remain TRAIL-16.
+- **Remaining limits / next step:** Routes are unauthenticated and trust the submitted `CoachContext` until pairing and tutorial storage (#11) land; no per-learner live-session cap; whisper-1 is deprecated for 2027-02-26. Next: register the voice routes behind pairing auth with server-side tutorial lookup, then prove native mic → WebRTC → Live on the Quest APK.
+
+Final stack repair cycle: PR #3 merged externally into main `6e7b5b5` during final verification. Merged that actual base into capture, preserving both activity histories. No native inputs changed; prior capture Unity/APK evidence remains applicable. New voice/server/browser inputs are covered by the new-head hosted full workspace/browser gate and final combined-stack checks. Review #11 additionally requested authoring transport fixtures and migration notes; that repair is scoped to the authoring tip.
+
+Final guide cycle: inherited capture `27411fd` and the externally merged voice workstream. Conflict resolution only preserves both log histories. Native files are unchanged; the current-head hosted workspace/browser gate validates the new TS inputs.
+
+Final inspection cycle: inherited guide `f2ab1d0` after the external voice merge. Only the activity log conflicted. Native inputs remain unchanged and the final-head hosted workspace/browser gate covers the added voice TS surface.
+
+## 2026-09-19 — Final review cycle: authoring fixtures and voice integration
+
+Main advanced externally through voice PR #3. Propagated that base through capture,
+guide and inspection, then reconciled authoring's server TLS/pairing/vision options
+with voice provider options and retained both authoring and voice dashboard UI.
+The combined full workspace gate passed 333 tests, typechecks, builds and static
+checks; all seven Chromium voice/fixture/authoring scenarios passed.
+
+Verified PR #11's new missing-fixtures finding. Added eight synthetic envelopes
+and 36 valid/invalid shared-corpus cases for all seven authoring schemas, including
+connected/disconnected spectators. Explicitly extended the shared native registry,
+regenerated pure C# DTOs/parsers/serializers and shapes, and documented compatibility
+and consumer limits. Native job/byte upload now uses generated serializers with
+the same wire fields; no recording/tutorial format or stored-data migration changed.
+Image metadata fixtures contain synthetic placeholder bytes, not camera evidence.
+The existing pinned storage CI job now also runs the actual C# shared corpus.
+
+Zod contract tests passed 180 checks; pure C# passed 151 corpus/binding/legacy/math
+checks. Actual Unity 6000.3.24f1 passed EditMode 21/21 and PlayMode 8/8, including
+the new one-MiB native byte-chunk round trip and invalid authoring bounds. XML is
+in `artifacts/quest/test-13b3c32d-7c16-49e1-ad68-563f51a5e0cc` and
+`artifacts/quest/test-play-955f651f-0d31-403f-954f-0c7104e6f620`.
+A new APK build is required for these generated C#/serializer changes; earlier
+APK evidence is not attributed to this source. No provider or headset test ran.

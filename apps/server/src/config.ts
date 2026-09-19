@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
 export const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
+const ModelName = z.string().min(1).max(128);
 const EnvironmentSchema = z.object({
   TLS_CERT_FILE: z.string().min(1).optional(),
   TLS_KEY_FILE: z.string().min(1).optional(),
@@ -12,7 +13,7 @@ const EnvironmentSchema = z.object({
   HOST: z.literal('127.0.0.1').default('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   DATA_DIR: z.string().min(1).default('./data'),
-  AI_PROVIDER: z.literal('mock').default('mock'),
+  AI_PROVIDER: z.enum(['mock', 'openai']).default('mock'),
   HAPTICS_DRIVER: z.literal('mock').default('mock'),
   VISION_SERVICE_URL: z.string().url().refine(value => {
     let url: URL;
@@ -21,6 +22,16 @@ const EnvironmentSchema = z.object({
   }, 'Expected a loopback service origin').optional(),
   VISION_SERVICE_TOKEN: z.string().min(32).max(256).regex(/^[A-Za-z0-9_-]+$/).optional(),
   BUILD_ID: z.string().min(1).max(128).default('development-uncommitted'),
+  OPENAI_API_KEY: z.string().default(''),
+  OPENAI_TRANSCRIBE_MODEL: ModelName.default('whisper-1'),
+  OPENAI_TEXT_MODEL: ModelName.default('gpt-4.1-mini-2025-04-14'),
+  OPENAI_LIVE_MODEL: ModelName.default('gpt-live-1'),
+  OPENAI_LIVE_BACKEND_MODEL: ModelName.default('gpt-5.6-luna'),
+  OPENAI_LIVE_VOICE: z.string().min(1).max(64).default('marin'),
+}).superRefine((env, ctx) => {
+  if (env.AI_PROVIDER === 'openai' && env.OPENAI_API_KEY.trim().length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['OPENAI_API_KEY'], message: 'Required when AI_PROVIDER=openai' });
+  }
 });
 
 export function loadEnvironment(): void {
@@ -41,15 +52,20 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     throw new Error('Invalid server configuration: VISION_SERVICE_TOKEN');
   }
   if (Boolean(result.data.TLS_CERT_FILE) !== Boolean(result.data.TLS_KEY_FILE)) throw new Error('Invalid server configuration: TLS_CERT_FILE/TLS_KEY_FILE');
+  const values = result.data;
   return {
-    tls: result.data.TLS_CERT_FILE && result.data.TLS_KEY_FILE ? { certFile: resolve(result.data.TLS_CERT_FILE), keyFile: resolve(result.data.TLS_KEY_FILE) } : null,
-    pairing: { allowedOrigins: result.data.PAIRING_ORIGINS.split(',').map(value => value.trim()).filter(Boolean), allowUsbLoopback: result.data.ALLOW_USB_LOOPBACK === 'true' },
-    vision: result.data.VISION_SERVICE_URL && result.data.VISION_SERVICE_TOKEN
-      ? { url: result.data.VISION_SERVICE_URL, token: result.data.VISION_SERVICE_TOKEN } : null,
-    host: result.data.HOST, port: result.data.PORT,
-    dataDir: resolve(repositoryRoot, result.data.DATA_DIR),
-    buildId: result.data.BUILD_ID,
-    providers: { ai: result.data.AI_PROVIDER, haptics: result.data.HAPTICS_DRIVER },
+    tls: values.TLS_CERT_FILE && values.TLS_KEY_FILE ? { certFile: resolve(values.TLS_CERT_FILE), keyFile: resolve(values.TLS_KEY_FILE) } : null,
+    pairing: { allowedOrigins: values.PAIRING_ORIGINS.split(',').map(value => value.trim()).filter(Boolean), allowUsbLoopback: values.ALLOW_USB_LOOPBACK === 'true' },
+    host: values.HOST, port: values.PORT,
+    dataDir: resolve(repositoryRoot, values.DATA_DIR),
+    buildId: values.BUILD_ID,
+    providers: { ai: values.AI_PROVIDER, haptics: values.HAPTICS_DRIVER },
+    openai: values.AI_PROVIDER === 'openai' ? {
+      apiKey: values.OPENAI_API_KEY.trim(), transcribeModel: values.OPENAI_TRANSCRIBE_MODEL, textModel: values.OPENAI_TEXT_MODEL,
+      liveModel: values.OPENAI_LIVE_MODEL, liveBackendModel: values.OPENAI_LIVE_BACKEND_MODEL, liveVoice: values.OPENAI_LIVE_VOICE,
+    } : null,
+    vision: values.VISION_SERVICE_URL && values.VISION_SERVICE_TOKEN
+      ? { url: values.VISION_SERVICE_URL, token: values.VISION_SERVICE_TOKEN } : null,
   };
 }
 export type ServerConfig = ReturnType<typeof readConfig>;

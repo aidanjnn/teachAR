@@ -13,7 +13,10 @@ import { HealthSchema, parseContractJson } from '@trail/contracts';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { createProvider } from './ai/index.js';
+import type { AiProvider } from './ai/provider.js';
 import type { ServerConfig } from './config.js';
+import { registerVoiceRoutes } from './routes/voice.js';
 
 async function storageWritable(dataDir: string): Promise<boolean> {
   const probe = join(dataDir, `.health-${randomUUID()}`);
@@ -28,13 +31,14 @@ async function storageWritable(dataDir: string): Promise<boolean> {
   }
 }
 
-export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority } = {}) {
+export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider } = {}) {
   const https = config.tls ? { cert: await readFile(config.tls.certFile), key: await readFile(config.tls.keyFile) } : null;
   const app = Fastify({
     ...(https ? { https } : {}),
     logger: options.logger ?? false,
     logController: new LogController({ disableRequestLogging: true }),
-    bodyLimit: 64 * 1024, requestTimeout: 10_000,
+    // requestTimeout bounds receiving the whole request; narration uploads of up to 20 MiB need more than 10 s on Wi-Fi.
+    bodyLimit: 64 * 1024, requestTimeout: 60_000,
   });
   app.removeContentTypeParser('application/json');
   app.addContentTypeParser('application/json', { parseAs: 'string' }, (_request, body, done) => {
@@ -73,6 +77,7 @@ export async function createApp(config: ServerConfig, options: { webRoot?: strin
     reply.header('Cache-Control', 'no-store');
     return probeVision(config.vision);
   });
+  await registerVoiceRoutes(app, options.provider ?? createProvider(config));
   if (options.webRoot) {
     await app.register(fastifyStatic, { root: options.webRoot, dotfiles: 'deny' });
   }

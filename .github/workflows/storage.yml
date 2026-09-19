@@ -25,3 +25,8 @@ jobs:
         env:
           DOTNET_CLI_TELEMETRY_OPTOUT: '1'
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
+      - name: Verify shared authoring and domain wire fixtures in C#
+        run: dotnet run --project packages/contracts/native-tests/Contracts.csproj --configuration Release
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'

@@ -24,6 +24,13 @@ class Program
             case "CreateRecordingRequest": return ContractJson.SerializeCreateRecordingRequest(ContractJson.ParseCreateRecordingRequest(json));
             case "MotionChunk": return ContractJson.SerializeMotionChunk(ContractJson.ParseMotionChunk(json));
             case "FinalizeRecordingRequest": return ContractJson.SerializeFinalizeRecordingRequest(ContractJson.ParseFinalizeRecordingRequest(json));
+            case "TutorialJobCreate": return ContractJson.SerializeTutorialJobCreate(ContractJson.ParseTutorialJobCreate(json));
+            case "TutorialFinalize": return ContractJson.SerializeTutorialFinalize(ContractJson.ParseTutorialFinalize(json));
+            case "ReferenceEdit": return ContractJson.SerializeReferenceEdit(ContractJson.ParseReferenceEdit(json));
+            case "ReferenceImageUpload": return ContractJson.SerializeReferenceImageUpload(ContractJson.ParseReferenceImageUpload(json));
+            case "SpectatorState": return ContractJson.SerializeSpectatorState(ContractJson.ParseSpectatorState(json));
+            case "TutorialLabelBatch": return ContractJson.SerializeTutorialLabelBatch(ContractJson.ParseTutorialLabelBatch(json));
+            case "RecordingByteChunk": return ContractJson.SerializeRecordingByteChunk(ContractJson.ParseRecordingByteChunk(json));
             default: throw new Exception("Unknown test contract " + name);
         }
     }

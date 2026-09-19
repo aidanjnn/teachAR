@@ -1,0 +1,40 @@
+{
+  "type": "spectator-state",
+  "connected": true,
+  "updatedAt": 1000,
+  "ageMs": 10,
+  "snapshot": {
+    "schemaVersion": 1,
+    "sessionId": "session-1",
+    "runId": "run-1",
+    "seq": 1,
+    "tMs": 100,
+    "type": "snapshot",
+    "state": {
+      "phase": "guiding",
+      "tutorialId": "tutorial-1",
+      "tutorialRevision": 1,
+      "stepId": "step-1",
+      "stepRevision": 1,
+      "attemptId": "attempt-1",
+      "dwellProgress": 0,
+      "pathProgress": 0.5,
+      "nextGateByHand": {
+        "right": 1
+      },
+      "calibrationValid": true,
+      "tracking": {
+        "left": "valid",
+        "right": "valid"
+      }
+    }
+  },
+  "step": {
+    "title": "Move the synthetic block",
+    "instruction": "Follow the fixture motion.",
+    "index": 1,
+    "total": 1,
+    "completionMode": "path-and-pose",
+    "source": "fallback"
+  }
+}

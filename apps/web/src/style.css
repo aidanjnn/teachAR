@@ -10,6 +10,9 @@ button:disabled { cursor: wait; opacity: .6; }
 .brand { display: flex; align-items: center; gap: 9px; font-size: 30px; font-weight: 750; letter-spacing: -1.2px; color: inherit; text-decoration: none; }
 .brand-mark { font-size: 48px; line-height: .65; color: #16738e; }
 .workspace-name { padding-left: 26px; border-left: 1px solid #dce5eb; font-size: 14px; }
+.masthead-links { display: flex; gap: 18px; font-size: 14px; padding-left: 26px; border-left: 1px solid #dce5eb; }
+.masthead-links a { color: #526b7b; text-decoration: none; }
+.masthead-links a[aria-current='page'] { color: #253b4b; font-weight: 600; }
 .stage-label { margin-left: auto; color: #526b7b; font-size: 13px; }
 main { max-width: 1440px; margin: auto; padding: 44px 5% 24px; }
 .introduction { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
@@ -49,7 +52,7 @@ h3 { font-size: 13px; margin: 0 0 8px; }
 footer { display: flex; justify-content: space-between; gap: 20px; font-size: 11px; color: #607784; padding: 24px 0 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 980px) { .workspace-layout { grid-template-columns: minmax(0, 1fr) 260px; } aside { padding: 24px 20px; } .scene-axis { display: none; } .diagnostics { flex-wrap: wrap; } }
-@media (max-width: 720px) { .masthead { gap: 16px; padding: 18px 5%; } .workspace-name { display: none; } main { padding-top: 28px; } .introduction { align-items: flex-start; flex-direction: column; gap: 14px; } .workspace-layout { grid-template-columns: 1fr; } #scene { height: 330px; } aside { border-left: 0; border-top: 1px solid #e4ebef; } .transport { padding: 18px; } .diagnostics { align-items: flex-start; gap: 22px; } .diagnostics div { min-width: 42%; } footer { flex-direction: column; gap: 8px; } }
+@media (max-width: 720px) { .masthead { gap: 16px; padding: 18px 5%; } .masthead-links { display: none; } main { padding-top: 28px; } .introduction { align-items: flex-start; flex-direction: column; gap: 14px; } .workspace-layout { grid-template-columns: 1fr; } #scene { height: 330px; } aside { border-left: 0; border-top: 1px solid #e4ebef; } .transport { padding: 18px; } .diagnostics { align-items: flex-start; gap: 22px; } .diagnostics div { min-width: 42%; } footer { flex-direction: column; gap: 8px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
 
 /* Authoring uses a continuous ordered motion strip, beside the selected frame. */
