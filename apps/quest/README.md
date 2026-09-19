@@ -2,7 +2,7 @@
 
 This project now contains the Android setup/build path, a single OpenXR/Meta
 passthrough bootstrap, and a scoped native API connection. The pinned editor has resolved the checked-in UPM lock, compiled the project,
-applied Android/OpenXR/URP settings, and passed EditMode2/2 plus PlayMode2/2 tests.
+applied Android/OpenXR/URP settings, and passed EditMode4/4 plus PlayMode3/3 tests.
 **APK and headset acceptance remain separate gates**; physical operation is not
 proven by editor tests. This branch supplies the
 platform foundation; capture, guide, scene interpretation and storage are
