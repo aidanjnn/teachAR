@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "schemaVersion": 1,
+    "id": "contract-recording",
+    "coordinateFrame": "workspace",
+    "workspace": {
+      "id": "mat-v1",
+      "version": 1,
+      "widthM": 0.6,
+      "depthM": 0.4,
+      "calibrationMarksM": {
+        "A": [
+          0,
+          0,
+          0
+        ],
+        "B": [
+          0.6,
+          0,
+          0
+        ],
+        "C": [
+          0,
+          0,
+          -0.4
+        ],
+        "D": [
+          0.6,
+          0,
+          -0.4
+        ]
+      },
+      "layoutId": "synthetic-layout",
+      "dominantHand": "right",
+      "calibrationMethod": "three-point-index-tip-v1"
+    },
+    "jointOrder": [
+      "wrist",
+      "thumb-metacarpal",
+      "thumb-phalanx-proximal",
+      "thumb-phalanx-distal",
+      "thumb-tip",
+      "index-finger-metacarpal",
+      "index-finger-phalanx-proximal",
+      "index-finger-phalanx-intermediate",
+      "index-finger-phalanx-distal",
+      "index-finger-tip",
+      "middle-finger-metacarpal",
+      "middle-finger-phalanx-proximal",
+      "middle-finger-phalanx-intermediate",
+      "middle-finger-phalanx-distal",
+      "middle-finger-tip",
+      "ring-finger-metacarpal",
+      "ring-finger-phalanx-proximal",
+      "ring-finger-phalanx-intermediate",
+      "ring-finger-phalanx-distal",
+      "ring-finger-tip",
+      "pinky-finger-metacarpal",
+      "pinky-finger-phalanx-proximal",
+      "pinky-finger-phalanx-intermediate",
+      "pinky-finger-phalanx-distal",
+      "pinky-finger-tip"
+    ],
+    "nominalSampleHz": 30,
+    "durationMs": 100,
+    "markers": [
+      {
+        "id": "start",
+        "tMs": 0,
+        "kind": "step-start",
+        "source": "review"
+      },
+      {
+        "id": "end",
+        "tMs": 100,
+        "kind": "step-end",
+        "source": "review"
+      }
+    ],
+    "audio": null,
+    "source": "synthetic-fixture"
+  }
+}

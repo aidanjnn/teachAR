@@ -1,0 +1,33 @@
+{
+  "request": {
+    "runId": "run-1",
+    "tutorialId": "tutorial-1",
+    "tutorialRevision": 1,
+    "stepId": "step-1",
+    "stepRevision": 1,
+    "attemptId": "attempt-1",
+    "requestId": "request-1",
+    "liveSessionId": "session-1",
+    "sessionGeneration": 1,
+    "requestEpoch": 1,
+    "delegationId": null,
+    "question": "Is the block beside the square?",
+    "referenceIds": [
+      "reference-1"
+    ]
+  },
+  "observationId": "observation-1",
+  "referenceIds": [
+    "reference-1"
+  ],
+  "assessment": {
+    "verdict": "visible-match",
+    "observedEvidence": [
+      "The block is visibly beside the square."
+    ],
+    "limitation": "This does not verify attachment or hidden surfaces.",
+    "feedback": "The visible placement matches the reviewed reference.",
+    "suggestedAction": "none"
+  },
+  "provenance": "mock"
+}

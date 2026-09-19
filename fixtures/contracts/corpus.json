@@ -1,0 +1,1393 @@
+{
+  "cases": [
+    {
+      "name": "valid recording",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": true
+    },
+    {
+      "name": "valid tutorial",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": true
+    },
+    {
+      "name": "valid draft-edit",
+      "contract": "TutorialDraftEdit",
+      "file": "draft-edit.json",
+      "valid": true
+    },
+    {
+      "name": "valid guide-event",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": true
+    },
+    {
+      "name": "valid guide-tracking",
+      "contract": "GuideEvent",
+      "file": "guide-tracking.json",
+      "valid": true
+    },
+    {
+      "name": "valid guide-completed",
+      "contract": "GuideEvent",
+      "file": "guide-completed.json",
+      "valid": true
+    },
+    {
+      "name": "valid guide-ended",
+      "contract": "GuideEvent",
+      "file": "guide-ended.json",
+      "valid": true
+    },
+    {
+      "name": "valid native-sidecar",
+      "contract": "NativeCaptureSidecar",
+      "file": "native-sidecar.json",
+      "valid": true
+    },
+    {
+      "name": "valid calibration-v2",
+      "contract": "CalibrationV2",
+      "file": "calibration-v2.json",
+      "valid": true
+    },
+    {
+      "name": "valid scene-references",
+      "contract": "SceneReferenceManifest",
+      "file": "scene-references.json",
+      "valid": true
+    },
+    {
+      "name": "valid inspection-request",
+      "contract": "InspectionRequest",
+      "file": "inspection-request.json",
+      "valid": true
+    },
+    {
+      "name": "valid scene-observation",
+      "contract": "SceneObservation",
+      "file": "scene-observation.json",
+      "valid": true
+    },
+    {
+      "name": "valid inspection-result",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": true
+    },
+    {
+      "name": "valid create-recording",
+      "contract": "CreateRecordingRequest",
+      "file": "create-recording.json",
+      "valid": true
+    },
+    {
+      "name": "valid motion-chunk",
+      "contract": "MotionChunk",
+      "file": "motion-chunk.json",
+      "valid": true
+    },
+    {
+      "name": "valid finalize-recording",
+      "contract": "FinalizeRecordingRequest",
+      "file": "finalize-recording.json",
+      "valid": true
+    },
+    {
+      "name": "recording unknown field",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "recording missing field",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial unknown field",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "tutorial missing field",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "draft-edit unknown field",
+      "contract": "TutorialDraftEdit",
+      "file": "draft-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "draft-edit missing field",
+      "contract": "TutorialDraftEdit",
+      "file": "draft-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "baseRevision"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "guide-event unknown field",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "guide-event missing field",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "guide-tracking unknown field",
+      "contract": "GuideEvent",
+      "file": "guide-tracking.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "guide-tracking missing field",
+      "contract": "GuideEvent",
+      "file": "guide-tracking.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "guide-completed unknown field",
+      "contract": "GuideEvent",
+      "file": "guide-completed.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "guide-completed missing field",
+      "contract": "GuideEvent",
+      "file": "guide-completed.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "guide-ended unknown field",
+      "contract": "GuideEvent",
+      "file": "guide-ended.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "guide-ended missing field",
+      "contract": "GuideEvent",
+      "file": "guide-ended.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "native-sidecar unknown field",
+      "contract": "NativeCaptureSidecar",
+      "file": "native-sidecar.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "native-sidecar missing field",
+      "contract": "NativeCaptureSidecar",
+      "file": "native-sidecar.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "calibration-v2 unknown field",
+      "contract": "CalibrationV2",
+      "file": "calibration-v2.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "calibration-v2 missing field",
+      "contract": "CalibrationV2",
+      "file": "calibration-v2.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "scene-references unknown field",
+      "contract": "SceneReferenceManifest",
+      "file": "scene-references.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "scene-references missing field",
+      "contract": "SceneReferenceManifest",
+      "file": "scene-references.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "inspection-request unknown field",
+      "contract": "InspectionRequest",
+      "file": "inspection-request.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "inspection-request missing field",
+      "contract": "InspectionRequest",
+      "file": "inspection-request.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "runId"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "scene-observation unknown field",
+      "contract": "SceneObservation",
+      "file": "scene-observation.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "scene-observation missing field",
+      "contract": "SceneObservation",
+      "file": "scene-observation.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "id"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "inspection-result unknown field",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "inspection-result missing field",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "request"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "create-recording unknown field",
+      "contract": "CreateRecordingRequest",
+      "file": "create-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "create-recording missing field",
+      "contract": "CreateRecordingRequest",
+      "file": "create-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "metadata"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "motion-chunk unknown field",
+      "contract": "MotionChunk",
+      "file": "motion-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "motion-chunk missing field",
+      "contract": "MotionChunk",
+      "file": "motion-chunk.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "finalize-recording unknown field",
+      "contract": "FinalizeRecordingRequest",
+      "file": "finalize-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "finalize-recording missing field",
+      "contract": "FinalizeRecordingRequest",
+      "file": "finalize-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "chunkCount"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "unknown recording version",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "missing named joint",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "extra palm",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "palm"
+          ],
+          "value": {
+            "positionM": [
+              0,
+              0,
+              0
+            ],
+            "orientationXyzw": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "zero quaternion",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist",
+            "orientationXyzw"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "short vec3",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "right",
+            "joints",
+            "wrist",
+            "positionM"
+          ],
+          "value": [
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "timestamp duplicate",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            1,
+            "tMs"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "duration outside limit",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "durationMs"
+          ],
+          "value": 120001
+        }
+      ]
+    },
+    {
+      "name": "frame beyond duration",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "durationMs"
+          ],
+          "value": 99
+        }
+      ]
+    },
+    {
+      "name": "duplicate marker",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "markers",
+            1,
+            "id"
+          ],
+          "value": "start"
+        }
+      ]
+    },
+    {
+      "name": "joint order mismatch",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "jointOrder",
+            0
+          ],
+          "value": "thumb-tip"
+        }
+      ]
+    },
+    {
+      "name": "missing hand discriminator",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "left",
+            "status"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "missing sample cannot carry joints",
+      "contract": "Recording",
+      "file": "recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frames",
+            0,
+            "hands",
+            "left"
+          ],
+          "value": {
+            "status": "missing",
+            "reason": "unavailable",
+            "joints": {}
+          }
+        }
+      ]
+    },
+    {
+      "name": "duplicate target hand",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "targets"
+          ],
+          "value": [
+            {
+              "side": "right",
+              "joint": "wrist",
+              "startPose": {
+                "positionM": [
+                  0,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "checkpointPose": {
+                "positionM": [
+                  0.2,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "positionToleranceM": 0.04,
+              "orientationToleranceRad": null,
+              "gesture": "any",
+              "motionGates": [
+                {
+                  "frameIndex": 1,
+                  "positionM": [
+                    0.1,
+                    0.1,
+                    -0.1
+                  ],
+                  "toleranceM": 0.05,
+                  "dwellMs": 100
+                }
+              ],
+              "pathCorridorM": 0.08
+            },
+            {
+              "side": "right",
+              "joint": "wrist",
+              "startPose": {
+                "positionM": [
+                  0,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "checkpointPose": {
+                "positionM": [
+                  0.2,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "positionToleranceM": 0.04,
+              "orientationToleranceRad": null,
+              "gesture": "any",
+              "motionGates": [
+                {
+                  "frameIndex": 1,
+                  "positionM": [
+                    0.1,
+                    0.1,
+                    -0.1
+                  ],
+                  "toleranceM": 0.05,
+                  "dwellMs": 100
+                }
+              ],
+              "pathCorridorM": 0.08
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "checkpoint outside range",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "checkpointFrame"
+          ],
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "reversed range",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "startFrame"
+          ],
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "path without gates",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "targets",
+            0,
+            "motionGates"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "gate at checkpoint",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "targets",
+            0,
+            "motionGates",
+            0,
+            "frameIndex"
+          ],
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "gate at start",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps",
+            0,
+            "targets",
+            0,
+            "motionGates",
+            0,
+            "frameIndex"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "overlapping steps",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "steps"
+          ],
+          "value": [
+            {
+              "id": "step-1",
+              "title": "Move the synthetic hand",
+              "instruction": "Follow the path and hold at the checkpoint.",
+              "startFrame": 0,
+              "endFrameExclusive": 3,
+              "checkpointFrame": 2,
+              "targets": [
+                {
+                  "side": "right",
+                  "joint": "wrist",
+                  "startPose": {
+                    "positionM": [
+                      0,
+                      0.1,
+                      -0.1
+                    ],
+                    "orientationXyzw": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  "checkpointPose": {
+                    "positionM": [
+                      0.2,
+                      0.1,
+                      -0.1
+                    ],
+                    "orientationXyzw": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  "positionToleranceM": 0.04,
+                  "orientationToleranceRad": null,
+                  "gesture": "any",
+                  "motionGates": [
+                    {
+                      "frameIndex": 1,
+                      "positionM": [
+                        0.1,
+                        0.1,
+                        -0.1
+                      ],
+                      "toleranceM": 0.05,
+                      "dwellMs": 100
+                    }
+                  ],
+                  "pathCorridorM": 0.08
+                }
+              ],
+              "dwellMs": 500,
+              "startDwellMs": 300,
+              "completionMode": "path-and-pose",
+              "narrationSpanIds": []
+            },
+            {
+              "id": "step-2",
+              "title": "Move the synthetic hand",
+              "instruction": "Follow the path and hold at the checkpoint.",
+              "startFrame": 0,
+              "endFrameExclusive": 3,
+              "checkpointFrame": 2,
+              "targets": [
+                {
+                  "side": "right",
+                  "joint": "wrist",
+                  "startPose": {
+                    "positionM": [
+                      0,
+                      0.1,
+                      -0.1
+                    ],
+                    "orientationXyzw": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  "checkpointPose": {
+                    "positionM": [
+                      0.2,
+                      0.1,
+                      -0.1
+                    ],
+                    "orientationXyzw": [
+                      0,
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  "positionToleranceM": 0.04,
+                  "orientationToleranceRad": null,
+                  "gesture": "any",
+                  "motionGates": [
+                    {
+                      "frameIndex": 1,
+                      "positionM": [
+                        0.1,
+                        0.1,
+                        -0.1
+                      ],
+                      "toleranceM": 0.05,
+                      "dwellMs": 100
+                    }
+                  ],
+                  "pathCorridorM": 0.08
+                }
+              ],
+              "dwellMs": 500,
+              "startDwellMs": 300,
+              "completionMode": "path-and-pose",
+              "narrationSpanIds": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hash invalid",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "recordingHash"
+          ],
+          "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+        }
+      ]
+    },
+    {
+      "name": "model provenance missing",
+      "contract": "Tutorial",
+      "file": "tutorial.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "provenance",
+            "labels"
+          ],
+          "value": "model"
+        }
+      ]
+    },
+    {
+      "name": "unknown guide event",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "type"
+          ],
+          "value": "advance"
+        }
+      ]
+    },
+    {
+      "name": "unsafe seq",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "seq"
+          ],
+          "value": 9007199254740992
+        }
+      ]
+    },
+    {
+      "name": "fractional revision",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "state",
+            "stepRevision"
+          ],
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "name": "progress outside bounds",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "state",
+            "dwellProgress"
+          ],
+          "value": 1.1
+        }
+      ]
+    },
+    {
+      "name": "incomplete attempt identity",
+      "contract": "GuideEvent",
+      "file": "guide-event.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "state",
+            "attemptId"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "cross tutorial reference",
+      "contract": "SceneReferenceManifest",
+      "file": "scene-references.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "references",
+            0,
+            "tutorialRevision"
+          ],
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "duplicate reference",
+      "contract": "InspectionRequest",
+      "file": "inspection-request.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "referenceIds"
+          ],
+          "value": [
+            "reference-1",
+            "reference-1"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "result reference mismatch",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "referenceIds"
+          ],
+          "value": [
+            "reference-2"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "visual result lacks observation",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "observationId"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "visual verdict lacks evidence",
+      "contract": "InspectionResult",
+      "file": "inspection-result.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "assessment",
+            "observedEvidence"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "legacy skeleton",
+      "contract": "NativeCaptureSidecar",
+      "file": "native-sidecar.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "skeleton"
+          ],
+          "value": "ovr-24"
+        }
+      ]
+    },
+    {
+      "name": "old calibration version",
+      "contract": "CalibrationV2",
+      "file": "calibration-v2.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "value": 1
+        }
+      ]
+    },
+    {
+      "name": "metadata marker duplicate",
+      "contract": "CreateRecordingRequest",
+      "file": "create-recording.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "metadata",
+            "markers",
+            1,
+            "id"
+          ],
+          "value": "start"
+        }
+      ]
+    },
+    {
+      "name": "duplicate key",
+      "contract": "Recording",
+      "json": "{\"schemaVersion\":1,\"schemaVersion\":1}",
+      "valid": false
+    },
+    {
+      "name": "escaped duplicate key",
+      "contract": "Recording",
+      "json": "{\"id\":1,\"\\u0069d\":2}",
+      "valid": false
+    },
+    {
+      "name": "infinite exponent",
+      "contract": "Recording",
+      "json": "1e999",
+      "valid": false
+    },
+    {
+      "name": "trailing token",
+      "contract": "Recording",
+      "json": "{} {}",
+      "valid": false
+    },
+    {
+      "name": "trailing comma",
+      "contract": "Recording",
+      "json": "{\"a\":1,}",
+      "valid": false
+    },
+    {
+      "name": "leading zero",
+      "contract": "Recording",
+      "json": "01",
+      "valid": false
+    },
+    {
+      "name": "bad escape",
+      "contract": "Recording",
+      "json": "\"\\x\"",
+      "valid": false
+    },
+    {
+      "name": "control char",
+      "contract": "Recording",
+      "json": "\"\n\"",
+      "valid": false
+    },
+    {
+      "name": "comment",
+      "contract": "Recording",
+      "json": "/*x*/{}",
+      "valid": false
+    },
+    {
+      "name": "deep nesting",
+      "contract": "Recording",
+      "json": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[0]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+      "valid": false
+    }
+  ]
+}
