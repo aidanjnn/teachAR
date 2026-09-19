@@ -5,7 +5,8 @@ import { HashSchema, RevisionSchema } from './common.js';
 export const RecordingMetadataSchema = z.strictObject(RecordingSchema.shape).omit({ frames: true }).refine(r =>
   r.jointOrder.every((joint, i) => joint === JOINT_NAMES[i]) && new Set(r.markers.map(m => m.id)).size === r.markers.length && r.markers.every(m => m.tMs <= r.durationMs), 'Invalid recording metadata');
 export const CreateRecordingRequestSchema = z.strictObject({ metadata: RecordingMetadataSchema });
-export const MotionChunkSchema = z.strictObject({ frames: z.array(MotionFrameSchema).min(1).max(3600), sha256: HashSchema });
+export const MotionChunkSchema = z.strictObject({ frames: z.array(MotionFrameSchema).min(1).max(3600), sha256: HashSchema }).refine(c =>
+  c.frames.every((frame, i) => i === 0 || frame.tMs > (c.frames[i - 1]?.tMs ?? Infinity)), 'Chunk frame time must strictly increase');
 export const FinalizeRecordingRequestSchema = z.strictObject({ chunkCount: RevisionSchema.min(1).max(3600), sha256: HashSchema });
 export type RecordingMetadata = z.infer<typeof RecordingMetadataSchema>;
 export type CreateRecordingRequest = z.infer<typeof CreateRecordingRequestSchema>;
