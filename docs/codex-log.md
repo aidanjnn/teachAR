@@ -251,3 +251,4 @@ compiled the actual sources and passed 19 synthetic scenarios, including a full
 multi-step effect trace without any backend. Unity EditMode, APK and physical
 LEGO/headset validation remain unavailable. Native DTO/capture integration is
 being completed on this task branch; this core result does not claim that wiring.
+TRAIL-03 native implementation update: explicit generated DTO readers/writers now compile with the task-scoped .NET 8 SDK. A dependency-free bounded JSON reader rejects duplicate keys, malformed input and nonfinite exponents; generated structural validation and handwritten semantic validation share the TS corpus. 112 TS contract tests and 99 pure C# corpus/binding/legacy/joint/basis checks passed. This is actual .NET behavior, not Unity import or IL2CPP proof. OpenXR enum names were verified against the Khronos XrHandJointEXT reference; palm is excluded explicitly.
