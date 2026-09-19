@@ -33,6 +33,12 @@ namespace Trail.Tests.EditMode
                 Near(reflected.PositionM, pose.PositionM, "basis position round trip");
                 Check(Math.Abs(Quaternion.Dot(reflected.OrientationXyzw, pose.OrientationXyzw)) > .99999f, "basis quaternion round trip");
             }
+            // Fixed golden marks/expected point, independent of the transform used to generate other cases.
+            var quarterTurn = WorkspaceCalibration.Fit(.5f, .35f,
+                new Vector3(1, .8f, 2), new Vector3(1, .8f, 1.5f),
+                new Vector3(.65f, .8f, 2), new Vector3(.65f, .8f, 1.5f), Vector3.UnitY);
+            Near(quarterTurn.ReferenceFromWorkspace.TransformPoint(new Vector3(.2f, .1f, -.1f)),
+                new Vector3(.9f, .9f, 1.8f), "fixed quarter-turn calibration golden");
             // A known non-roundtrip golden: Unity +Z becomes canonical -Z, and a +Y rotation reverses.
             var golden = CoordinateBasis.ReflectZ(new CanonicalPose(new Vector3(1, 2, 3), new Quaternion(0, .70710677f, 0, .70710677f)));
             Near(golden.PositionM, new Vector3(1, 2, -3), "golden reflected position");
