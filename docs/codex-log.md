@@ -324,3 +324,14 @@ import. Its final result follows separately. No physical/provider evidence yet.
 - Desktop fixture: initial parallel Playwright run had one existing 3-second health timeout under concurrent load (2/3 passed); isolated `E2E_PORT=3102 pnpm test:e2e --workers=1` passed all 3. Added E2E_PORT override and per-port data isolation without weakening assertions/timeouts. Added sharp 0.34.5 to the server on task6's request for decoded reviewed-reference validation; lockfile install passed.
 - Final source review aligned the setup with Meta Core 205's required OVRInput profile rule by enabling the verified Oculus Touch profile ID, without adding a second provider or using controller poses as hand evidence. Disabled app-requested recentering on the Stage rig; system-origin changes still require feature-owned invalidation/recalibration. These native settings remain license-blocked for editor/device execution.
 - Native entitlement retry progressed into real package import. Task4's completed SDK compile exposed CS1069 errors in Meta Core/Interaction for exactly UnityEngine.AnimationModule and UnityEngine.AssetBundleModule. Added their built-in 1.0.0 modules centrally; no external package upgrade. Stopped only this worktree's still-resolving setup process to apply the repair and retry. License activation is no longer the current final blocker; import/build results remain pending.
+
+Task 4 verification update: full workspace check passed 145 TS tests, strict
+checking, production builds and static native GUID/purity checks. Fixture
+validation passed; isolated port 3105 Chromium smoke passed 3/3 with one worker.
+Release .NET guide checks pass 24 scenarios and the bound golden integration;
+new pinned .NET CI workflow passes actionlint. Added actual Unity lifecycle test
+and explicit runtime font/active-hand rendering; the source/clock are injected
+synthetic data, never headset evidence. Own Unity EditMode now resolves licensing
+and imports packages, but first failed Animation/AssetBundle SDK module imports,
+then after platform 5250e30 failed Physics2D/ParticleSystem SDK requirements.
+Platform owner is repairing the manifest; no native pass or APK claim yet.

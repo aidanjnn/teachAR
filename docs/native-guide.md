@@ -76,7 +76,10 @@ shared recording/tutorial → rotated calibration → projection → guide → s
 telemetry integration. A golden phase trace is stored in
 `fixtures/guide/expected-integration-phases.txt`; a synthetic multi-step diagnostic
 prints the entire transition/effect order. Unity EditMode reuses the core scenario
-source. These checks do not establish Unity/SDK import, Android/IL2CPP behavior,
-real hands, physical LEGO transfer or human completion. An editor installation was
-reported during implementation; its required native gates are licensing-blocked
-until activation succeeds. No provider, headset or physical evidence is claimed.
+source, and an injected native lifecycle test exercises the real controller/capture
+event path including inspection pause and reset. These checks do not establish Unity/SDK import, Android/IL2CPP behavior,
+real hands, physical LEGO transfer or human completion. Unity 6000.3.24f1 became installed and activated externally during implementation.
+Actual editor import now resolves the SDKs; successive native test runs exposed
+missing built-in vendor module dependencies, being repaired by the platform task.
+Final native test/build results are recorded in the PR and delivery log. No
+provider, headset or physical evidence is claimed.
