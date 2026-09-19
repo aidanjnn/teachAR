@@ -1,0 +1,6 @@
+{
+  "name": "Trail.Tests.CapturePresentation",
+  "references": ["Trail.Contracts", "Trail.Motion", "Trail.Runtime", "Trail.XR", "Trail.Presentation"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}
