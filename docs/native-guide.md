@@ -85,8 +85,18 @@ telemetry integration. A golden phase trace is stored in
 prints the entire transition/effect order. Unity EditMode reuses the core scenario
 source, and an injected native lifecycle test exercises the real controller/capture
 event path including inspection pause and reset. These checks do not establish Unity/SDK import, Android/IL2CPP behavior,
-real hands, physical LEGO transfer or human completion. Unity 6000.3.24f1 became installed and activated externally during implementation.
-Actual editor import now resolves the SDKs; successive native test runs exposed
-missing built-in vendor module dependencies, being repaired by the platform task.
-Final native test/build results are recorded in the PR and delivery log. No
-provider, headset or physical evidence is claimed.
+real hands, physical LEGO transfer or human completion. Final software evidence on 2026-09-19: Unity 6000.3.24f1 compiled the actual
+project and passed 13/13 EditMode and 4/4 PlayMode tests. PlayMode covers the real
+controller/capture event wiring, pause acknowledgment, same/new server-session
+re-pairing, completion, Repeat and invalidation using explicitly synthetic data.
+The final C# source is commit `1ed9659`; later dependency merges/documentation
+preserve those guide sources. Full workspace validation passed 157 tests and
+production builds; isolated Chromium regression passed all three scenarios.
+
+The parent assigned the combined Android ARM64/IL2CPP build to the integration
+workstream after all feature revisions land. This PR makes no standalone APK,
+provider, Quest tracking, physical LEGO transfer or human acceptance claim.
+Headset control placement/readability and actual simultaneous device behavior
+still need validation. Native test XML/logs remain in ignored `artifacts/quest`;
+editor-generated platform settings were archived there rather than committed
+outside their owner's branch.
