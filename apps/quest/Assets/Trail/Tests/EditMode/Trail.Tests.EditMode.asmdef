@@ -1,0 +1,22 @@
+{
+  "name": "Trail.Tests.EditMode",
+  "rootNamespace": "Trail.Tests.EditMode",
+  "references": [
+    "Trail.Contracts",
+    "Trail.Motion"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

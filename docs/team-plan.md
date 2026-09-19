@@ -67,9 +67,9 @@ Build in this order:
 
 ## 5. Person 3: voice and AI
 
-**Tickets:** TRAIL-09/10/16; Responses/Live portion of 17; voice dependency and compatibility support in 18.
+**Tickets:** TRAIL-09/10/16/20; Responses/Live portion of 17; voice dependency and compatibility support in 18.
 
-**Own:** `apps/quest/Assets/Trail/Runtime/Coach/`, narration/audio files under `Runtime/Record/`, a separate Coach prefab/tests, `apps/server/src/ai/` and owned Live/label/inspection route modules. Person 4 registers routes and supplies auth/storage.
+**Own:** `apps/quest/Assets/Trail/Runtime/Coach/`, narration/audio files under `Runtime/Record/`, a separate Coach prefab/tests, `apps/vision/src/` for visual interpretation, `apps/server/src/ai/` and owned Live/label/inspection coordinator modules. Person 4 registers routes and supplies auth/storage.
 
 Build in this order:
 
@@ -77,7 +77,7 @@ Build in this order:
 2. Freeze native audio interface with 1: one microphone owner, bounded sample buffers, common epoch, mute/end and playback generation control. Coordinate UPM dependency/settings with 4.
 3. Produce complete WAV narration with sample-clock mapping; test start/end drift before transcription/labels.
 4. Implement server-owned session creation/sideband/delegation, exact current-step context, stale audio suppression and unavailable state.
-5. Implement bounded Responses assessment using 1's fresh Quest frame and 4's reviewed expert references. Correct-looking, visibly wrong and obscured states need different grounded feedback.
+5. Build the separate `apps/vision` TypeScript/Fastify service (TRAIL-20): bounded authenticated image input, Responses assessment, structured evidence, cancellation and typed failures. Use 1's fresh Quest frame and 4's reviewed expert references. Correct-looking, visibly wrong, obscured and subsequently adjusted scenes must produce appropriately different answers actually heard through GPT Live. Prove this with 17; audio/text-only success does not pass.
 6. Integrate labels with 2's fixed segments and 4's review; AI cannot invent coordinates, adjust tolerances or emit completion.
 
 **Done:** real headset conversation and visual feedback while guidance runs, with tested failures and interruption. Own provider/transport failures rather than transferring them to 4. SDK WebRTC support does not establish GPT Live compatibility until the actual APK is tested.
@@ -93,7 +93,7 @@ Build in this order:
 1. Freeze compatible editor/OpenXR/Meta/WebRTC set with 1/3, establish Android ARM64/IL2CPP build/install, preserve `.meta`/GUIDs and existing web checks. Record activation/CI constraints.
 2. Native bearer pairing/auth and role-scoped HTTP/WS, retaining browser cookie/Origin checks. No authentication bypass because a native request has no Origin.
 3. Native private-file cache and server atomic upload/finalize, immutable tutorial identity and recovery. Keys never enter the APK.
-4. Register 3's provider routes; receive 1's nonce-bound camera frames. Build expert-reference selection/storage and invalidate review on boundary edits. A webcam assists debugging/reduced demos, not headset-camera acceptance.
+4. Register 3's provider routes; receive 1's nonce-bound camera frames. Own the `apps/vision` package/launcher integration, loopback service authentication and main-server forwarding adapter; preserve deadlines and reject stale service results before Live delivery. Build expert-reference selection/storage and invalidate review on boundary edits. A webcam assists debugging/reduced demos, not headset-camera acceptance.
 5. Desktop timeline/review/spectator with real data, reconnect/stale states and composed audience view.
 6. Integrate feature prefabs into the main scene, maintain known-good APK/server pairs, run applicable gates and coordinate acceptance/runbook.
 
@@ -154,16 +154,20 @@ These labels map to [plan section 17](plan.md#17-immediate-tickets-to-create), n
 | TRAIL-14 Optional sponsor additions | 3 | 4 checks eligibility/submission and integration capacity |
 | TRAIL-15 Optional haptics | 4 | Only after core quality gates; drop if it displaces required work |
 | TRAIL-16 GPT Live conversation | 3 | 1 mounts headset UI and tests audio concurrency; 4 registers paired routes |
-| TRAIL-17 Scene-grounded spoken inspection | 4 | 4 reference storage; 1 native MRUK capture; 3 assessor/Live delivery; 2 review widget after motion gates pass |
+| TRAIL-17 Scene-grounded spoken inspection | 4 | 4 reference storage/service adapter; 1 native MRUK capture; 3 dedicated vision backend/Live delivery; 2 review widget after motion gates pass |
 | TRAIL-18 Unity + Meta XR setup | 4 | 4 editor/UPM/settings/build/main scene; 1 rig/raw hands/camera/UI; 2 C#/TS fixtures; 3 native WebRTC compatibility |
+| TRAIL-19 Environment transfer and scene setup | 1 | 2 transform/origin fixtures and alignment error; 4 MRUK scene integration and test slot; 3 coaching under changed lighting/background |
 
+| TRAIL-20 Separate visual interpretation backend | 3 | 4 package/launcher/locks, service auth and main-server adapter; 1 real camera input; 2 shared fixture/schema support |
 
-Start TRAIL-16/17/18 early. Native setup in 18 unblocks APK validation for capture/voice/camera; 02/03 supply shared API/contracts. Ticket numbers preserve references, not chronological order.
+Start TRAIL-16/17/18/20 early. Native setup in 18 unblocks APK validation for capture/voice/camera; 02/03 supply shared API/contracts. Ticket numbers preserve references, not chronological order.
+
+TRAIL-19 follows accurate native replay: Person 1 owns the bounded current-room MRUK probe and physical transfer; Person 2 verifies registration and origin changes; Person 3 tests scene-grounded answers against changed backgrounds; Person 4 integrates scene permissions/status and records the enable/defer decision. Manual calibrated setup remains available. General object tracking and detailed reconstruction are future work; do not add a GPU service to the current delivery.
 
 ## 11. Finish as one team
 
 Run existing pnpm/fixture/Playwright gates for the web/server and the implemented Unity EditMode/PlayMode/build gates for native code. No command should be claimed available before its wrapper exists. CI licensing gaps are reported, not hidden behind green web checks. Record device evidence separately in `docs/validation.md` only after testing.
 
-The target requires both fresh task families, independent learner calibration, paced local progression, tracking-loss recovery, a readable articulated ghost, real headset conversation, and fresh **headset-camera** feedback for correct/wrong/obscured views. Three consecutive runs and a non-builder trial must work. Ship a reproducible APK/server pair, exported tutorial, runbook and labeled backup video. A webcam, controller-only replay, manual labels or unavailable voice are disclosed reduced outcomes.
+The target requires both fresh task families, independent learner calibration in a different room/on a different table with the same objects and starting layout, paced local progression, tracking-loss recovery, a readable articulated ghost, real headset conversation, and fresh **headset-camera** feedback for correct/wrong/obscured views. The dedicated vision service must consume real current images and change the spoken response appropriately; audio-only or text-only checks do not pass. Three consecutive runs and a non-builder trial must work. Ship a reproducible APK/server pair, exported tutorial, runbook and labeled backup video. A webcam, controller-only replay, manual labels or unavailable voice are disclosed reduced outcomes.
 
 **First assignments:** 1—native hands/ghost/MRUK probes; 2—C# domain and cross-language fixtures; 3—native GPT Live audio and server delegation; 4—Unity build/project plus native API/auth/storage. Converge on one functioning APK before optional integrations.
