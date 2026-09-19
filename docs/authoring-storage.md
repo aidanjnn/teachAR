@@ -14,7 +14,10 @@ ALLOW_USB_LOOPBACK=true PAIRING_ORIGINS=http://127.0.0.1:3001 pnpm start
 ```
 
 Open `http://127.0.0.1:3001`, choose **Author a guide**, and use the short-lived initial
-author code in private `data/pairing.json`. Codes are never put in logs or page source.
+browser-author code in private `data/pairing.json`. Codes are never put in logs or page source.
+To pair another client, choose its role and **Client** (Quest app or Browser), then
+create a code. A code is valid only for that client type; browser sessions use cookies,
+while the native app receives its scoped bearer token.
 Use `DATA_DIR` to isolate runs. Restart revokes credentials; recordings and ready guides
 persist. For actual TLS, provide both `TLS_CERT_FILE` and `TLS_KEY_FILE`, configure an
 exact HTTPS `PAIRING_ORIGINS`, and use a certificate trusted by the browser/headset.
