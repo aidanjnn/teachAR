@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "tutorial-1",
+  "revision": 1,
+  "recordingId": "contract-recording",
+  "recordingHash": "406b69b1d2ebe743208a759b2c6fec62a1a797a4cbc38b45af4376c014c5e876",
+  "workspace": {
+    "id": "mat-v1",
+    "version": 1,
+    "widthM": 0.6,
+    "depthM": 0.4,
+    "calibrationMarksM": {
+      "A": [
+        0,
+        0,
+        0
+      ],
+      "B": [
+        0.6,
+        0,
+        0
+      ],
+      "C": [
+        0,
+        0,
+        -0.4
+      ],
+      "D": [
+        0.6,
+        0,
+        -0.4
+      ]
+    },
+    "layoutId": "synthetic-layout",
+    "dominantHand": "right",
+    "calibrationMethod": "three-point-index-tip-v1"
+  },
+  "status": "ready",
+  "steps": [
+    {
+      "id": "step-1",
+      "title": "Move the synthetic hand",
+      "instruction": "Follow the path and hold at the checkpoint.",
+      "startFrame": 0,
+      "endFrameExclusive": 3,
+      "checkpointFrame": 2,
+      "targets": [
+        {
+          "side": "right",
+          "joint": "wrist",
+          "startPose": {
+            "positionM": [
+              0,
+              0.1,
+              -0.1
+            ],
+            "orientationXyzw": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "checkpointPose": {
+            "positionM": [
+              0.2,
+              0.1,
+              -0.1
+            ],
+            "orientationXyzw": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "positionToleranceM": 0.04,
+          "orientationToleranceRad": null,
+          "gesture": "any",
+          "motionGates": [
+            {
+              "frameIndex": 1,
+              "positionM": [
+                0.1,
+                0.1,
+                -0.1
+              ],
+              "toleranceM": 0.05,
+              "dwellMs": 100
+            }
+          ],
+          "pathCorridorM": 0.08
+        }
+      ],
+      "dwellMs": 500,
+      "startDwellMs": 300,
+      "completionMode": "path-and-pose",
+      "narrationSpanIds": []
+    }
+  ],
+  "provenance": {
+    "segmentation": "explicit-markers",
+    "labels": "manual",
+    "model": null,
+    "promptVersion": "manual-v1"
+  }
+}

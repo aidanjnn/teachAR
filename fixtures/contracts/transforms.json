@@ -1,0 +1,160 @@
+{
+  "cases": [
+    {
+      "name": "translated",
+      "pose": {
+        "positionM": [
+          0.1,
+          0.2,
+          -0.3
+        ],
+        "orientationXyzw": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "referenceFromWorkspace": {
+        "positionM": [
+          1,
+          2,
+          3
+        ],
+        "orientationXyzw": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "expected": {
+        "positionM": [
+          1.1,
+          2.2,
+          2.7
+        ],
+        "orientationXyzw": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "name": "rotated-y-90",
+      "pose": {
+        "positionM": [
+          1,
+          0,
+          0
+        ],
+        "orientationXyzw": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "referenceFromWorkspace": {
+        "positionM": [
+          1,
+          2,
+          3
+        ],
+        "orientationXyzw": [
+          0,
+          0.7071067811865476,
+          0,
+          0.7071067811865476
+        ]
+      },
+      "expected": {
+        "positionM": [
+          1,
+          2,
+          2
+        ],
+        "orientationXyzw": [
+          0,
+          0.7071067811865476,
+          0,
+          0.7071067811865476
+        ]
+      }
+    },
+    {
+      "name": "rotated-z-90",
+      "pose": {
+        "positionM": [
+          1,
+          0,
+          0
+        ],
+        "orientationXyzw": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "referenceFromWorkspace": {
+        "positionM": [
+          0,
+          0,
+          0
+        ],
+        "orientationXyzw": [
+          0,
+          0,
+          0.7071067811865476,
+          0.7071067811865476
+        ]
+      },
+      "expected": {
+        "positionM": [
+          0,
+          1,
+          0
+        ],
+        "orientationXyzw": [
+          0,
+          0,
+          0.7071067811865476,
+          0.7071067811865476
+        ]
+      }
+    }
+  ],
+  "basisCases": [
+    {
+      "pose": {
+        "positionM": [
+          1,
+          2,
+          3
+        ],
+        "orientationXyzw": [
+          0.7071067811865476,
+          0,
+          0,
+          0.7071067811865476
+        ]
+      },
+      "expected": {
+        "positionM": [
+          1,
+          2,
+          -3
+        ],
+        "orientationXyzw": [
+          -0.7071067811865476,
+          0,
+          0,
+          0.7071067811865476
+        ]
+      }
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { AudioMimeTypeSchema, IdSchema, MAX_RECORDING_DURATION_MS } from './primitives.js';
+import { IdSchema } from './common.js';
+import { AudioMimeTypeSchema, MAX_RECORDING_DURATION_MS } from './recording.js';
 
 export const MAX_NARRATION_BYTES = 20 * 1024 * 1024;
 export const MAX_TRANSCRIPT_SPANS = 2_000;

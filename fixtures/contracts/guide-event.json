@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "sessionId": "session-1",
+  "runId": "run-1",
+  "seq": 1,
+  "tMs": 100,
+  "type": "snapshot",
+  "state": {
+    "phase": "guiding",
+    "tutorialId": "tutorial-1",
+    "tutorialRevision": 1,
+    "stepId": "step-1",
+    "stepRevision": 1,
+    "attemptId": "attempt-1",
+    "dwellProgress": 0,
+    "pathProgress": 0.5,
+    "nextGateByHand": {
+      "right": 1
+    },
+    "calibrationValid": true,
+    "tracking": {
+      "left": "valid",
+      "right": "valid"
+    }
+  }
+}

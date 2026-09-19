@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "sessionId": "session-1",
+  "runId": "run-1",
+  "seq": 1,
+  "tMs": 100,
+  "type": "guide-ended",
+  "reason": "cancelled"
+}
