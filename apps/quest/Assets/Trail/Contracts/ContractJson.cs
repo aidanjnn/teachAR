@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Linq;
 
 namespace Trail.Contracts
 {
@@ -27,11 +28,11 @@ namespace Trail.Contracts
         private static CanonicalPose ReadPose(object value)
         {
             var map = (Dictionary<string, object>)value;
-            try { return new CanonicalPose(ReadVec3(map["positionM"]), ReadQuat(map["orientationXyzw"])); }
+            try { return new CanonicalPose(ReadVec3(map["positionM"]), ReadQuat(map["orientationXyzw"]), ((List<object>)map["positionM"]).Cast<double>().ToArray(), ((List<object>)map["orientationXyzw"]).Cast<double>().ToArray()); }
             catch (ArgumentException e) { throw new ContractException(e.Message); }
         }
         private static object WriteVec3(Vector3 v) => new object[] { v.X, v.Y, v.Z };
         private static object WriteQuat(Quaternion q) => new object[] { q.X, q.Y, q.Z, q.W };
-        private static object WritePose(CanonicalPose p) => new Dictionary<string, object> { { "positionM", WriteVec3(p.PositionM) }, { "orientationXyzw", WriteQuat(p.OrientationXyzw) } };
+        private static object WritePose(CanonicalPose p) => new Dictionary<string, object> { { "positionM", (object)p.WirePositionM ?? WriteVec3(p.PositionM) }, { "orientationXyzw", (object)p.WireOrientationXyzw ?? WriteQuat(p.OrientationXyzw) } };
     }
 }

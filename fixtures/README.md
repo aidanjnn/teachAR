@@ -18,3 +18,17 @@ default. Add a real fixture only with explicit consent, inspection, and provenan
 `vision-health.v1.json` is synthetic service-protocol evidence, not scene data.
 It explicitly reports that image interpretation is unavailable and is exercised
 by the authenticated vision service test. Recording v1 fixtures are unchanged.
+
+## TRAIL-03 contract corpus
+
+`contracts/` contains synthetic recording/tutorial/guide/native/scene/inspection
+and upload examples, plus `corpus.json` valid/invalid mutations consumed by both
+Zod and the actual C# parser. `joint-map.json` freezes named OpenXR mapping;
+`transforms.json` has independently specified translated/rotated expected poses.
+No image bytes, real recording or headset observation is included. Camera source
+labels in synthetic manifest examples describe a hypothetical protocol case.
+
+Run `pnpm exec vitest run packages/contracts/test` and, with a .NET 8 SDK,
+`DOTNET=/path/to/dotnet pnpm --filter @trail/contracts test:native`. Regenerate
+synthetic examples with `pnpm exec tsx packages/contracts/tools/generate-fixtures.ts`.
+See [contract versions and native validation limits](../docs/contracts.md).

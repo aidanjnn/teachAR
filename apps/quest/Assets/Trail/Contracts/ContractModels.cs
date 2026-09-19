@@ -263,29 +263,6 @@ namespace Trail.Contracts
         public string Source { get; set; }
         public string VisibleOutcome { get; set; }
     }
-    public sealed class TutorialDraftEdit
-    {
-        public int BaseRevision { get; set; }
-        public TutorialDraftStep[] Steps { get; set; }
-    }
-    public sealed class TutorialDraftStep
-    {
-        public string Id { get; set; }
-        public int StartFrame { get; set; }
-        public int EndFrameExclusive { get; set; }
-        public int CheckpointFrame { get; set; }
-        public string[] ActiveHands { get; set; }
-        public string CompletionMode { get; set; }
-        public string Title { get; set; }
-        public string Instruction { get; set; }
-    }
-    public sealed class TutorialProvenance
-    {
-        public string Segmentation { get; set; }
-        public string Labels { get; set; }
-        public string Model { get; set; }
-        public string PromptVersion { get; set; }
-    }
     public sealed class Tutorial
     {
         public int SchemaVersion { get; set; }
@@ -311,5 +288,28 @@ namespace Trail.Contracts
         public double StartDwellMs { get; set; }
         public string CompletionMode { get; set; }
         public string[] NarrationSpanIds { get; set; }
+    }
+    public sealed class TutorialProvenance
+    {
+        public string Segmentation { get; set; }
+        public string Labels { get; set; }
+        public string Model { get; set; }
+        public string PromptVersion { get; set; }
+    }
+    public sealed class TutorialDraftEdit
+    {
+        public int BaseRevision { get; set; }
+        public TutorialDraftStep[] Steps { get; set; }
+    }
+    public sealed class TutorialDraftStep
+    {
+        public string Id { get; set; }
+        public int StartFrame { get; set; }
+        public int EndFrameExclusive { get; set; }
+        public int CheckpointFrame { get; set; }
+        public string[] ActiveHands { get; set; }
+        public string CompletionMode { get; set; }
+        public string Title { get; set; }
+        public string Instruction { get; set; }
     }
 }
