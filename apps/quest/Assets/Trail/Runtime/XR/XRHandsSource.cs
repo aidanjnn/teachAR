@@ -18,7 +18,7 @@ namespace Trail.Runtime.XR
         public override string AdapterVersion => "unity-xrhands-openxr-v1";
         public override string SdkVersion => "xr-hands-1.7.2";
         public override string ProviderId => hands == null ? "unavailable" : hands.subsystemDescriptor.id;
-        public override string SourceKind => Application.isEditor ? "synthetic-fixture" : "live";
+        public override string SourceKind => !Application.isEditor && Application.platform == RuntimePlatform.Android ? "live" : "synthetic-fixture";
         public override string Availability => available;
         private string available = "waiting for a running native XR Hands subsystem";
         private XRHandSubsystem hands;
@@ -57,7 +57,7 @@ namespace Trail.Runtime.XR
             {
                 handSystems.Clear(); SubsystemManager.GetSubsystems(handSystems);
                 foreach (var candidate in handSystems)
-                    if (candidate.running) { hands = candidate; hands.updatedHands += OnHands; break; }
+                    if (candidate.running && candidate.subsystemDescriptor.id == "OpenXR Hands") { hands = candidate; hands.updatedHands += OnHands; break; }
                 if (hands != null)
                 {
                     inputs.Clear(); SubsystemManager.GetSubsystems(inputs);

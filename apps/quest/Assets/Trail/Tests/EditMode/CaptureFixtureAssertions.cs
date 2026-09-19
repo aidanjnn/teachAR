@@ -86,6 +86,11 @@ namespace Trail.Tests.EditMode
             var bounded = new MotionCapture(0, 120000, 0, new RigidRegistration(Vector3.Zero, Quaternion.Identity), "synthetic-fixture");
             for (var i = 0; i < 10000; i++) bounded.Append(Obs(i * 34, i, 0, MotionSamples.Missing()));
             Check(bounded.FrameCount <= 3600 && bounded.IsFinished, "duration and memory bounded");
+            var bytes = new MotionCapture(0, 5000, 0, new RigidRegistration(Vector3.Zero, Quaternion.Identity), "synthetic-fixture", 10000);
+            for (var i = 0; i < 100; i++) bytes.Append(Obs(i * 40, i, 0, Hand(new Vector3(.1234567f, .2345678f, -.3456789f))));
+            Check(bytes.IsFinished && bytes.FrameCount > 0 && bytes.FrameCount < 100, "serialized byte budget stops admission");
+            var finalized = bytes.Finish("byte-bound", Workspace(), 4000);
+            Check(finalized.Frames.Length == bytes.FrameCount && bytes.StopReason == "serialized motion size limit", "byte-bound capture remains saveable");
         }
         public static void FreshnessRejectsJumps()
         {

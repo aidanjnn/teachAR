@@ -172,7 +172,7 @@ namespace Trail.Runtime.Record
             {
                 LastRecording = completed.Finish(Guid.NewGuid().ToString("N"), recordedWorkspace, Clock());
                 replay = new MotionReplay(LastRecording); completedMetadata = captureMetadata;
-                Status = "Captured " + LastRecording.Frames.Length + " frames. Save through the recording store, or Replay.";
+                Status = "Captured " + LastRecording.Frames.Length + " frames" + (completed.StopReason == null ? "" : " (" + completed.StopReason + ")") + ". Save through the recording store, or Replay.";
                 RecordingCompleted?.Invoke(LastRecording);
             }
             catch (Exception error) when (error is InvalidOperationException || error is ContractException || error is ArgumentException) { Status = "Capture could not be finalized: " + error.Message; }
