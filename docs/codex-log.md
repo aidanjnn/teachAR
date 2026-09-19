@@ -335,3 +335,5 @@ synthetic data, never headset evidence. Own Unity EditMode now resolves licensin
 and imports packages, but first failed Animation/AssetBundle SDK module imports,
 then after platform 5250e30 failed Physics2D/ParticleSystem SDK requirements.
 Platform owner is repairing the manifest; no native pass or APK claim yet.
+- Added an isolated .NET 8 CI workflow for the actual pure C# network policy harness, pinning setup-dotnet v4 to the official resolved commit. This intentionally does not label the separate policy harness as Unity/IL2CPP validation.
+- The next real SDK compile exposed ParticleSystemRenderer and Physics2D references; added only their required built-in particlesystem/physics2d 1.0.0 modules. Unity 6000.3.24f1 produced the checked-in `packages-lock.json`; every direct manifest pin matches its actual resolved version. Explicit Test Framework pin is now 1.6.0 because Unity resolves that built-in version. Complete native tests remain pending; Android Build Support is absent (only MacStandaloneSupport installed).
