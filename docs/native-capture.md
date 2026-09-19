@@ -53,7 +53,9 @@ claim of tested headset legibility, input comfort, grasp or assembly verificatio
 - `HandObservationSource`: source provenance, tracking-session ID, origin
   revision and fresh `Observed(ReferenceObservation)` events. The production
   `XRHandsSource` reads only Dynamic `updatedHands`, checks per-hand update flags,
-  `isTracked` and all 25 `TryGetPose` results. No controller/skinned mesh source.
+  `isTracked` and all 25 `TryGetPose` results. Only the official `OpenXR Hands`
+  descriptor is admitted; Editor/non-Android runs are labeled synthetic. No
+  controller/skinned mesh source.
 - `ReferenceObservation`: timestamp, sequence, origin revision, source, left/right
   canonical hand samples. Missing hands remain explicit. Native XR's 26-joint
   set maps explicitly by enum name; palm is omitted, wrist retained.
@@ -70,7 +72,10 @@ claim of tested headset legibility, input comfort, grasp or assembly verificatio
 - `GhostPresentation.ShowGuideFrame(frame, checkpoint)` / `ClearGuideFrame()`:
   display only. The native guide controls completion and step timing.
 
-Capture takes at most 3,600 frames and 120 seconds, at up to 30 Hz. Recording
+Capture takes at most 3,600 frames and 120 seconds, at up to 30 Hz. It also
+stops admission before serialized motion exceeds 31 MiB, reserving room inside
+the contracts parser limit; the panel reports that bound and retains a saveable
+recording. The canonical frame writer performs this bound check. Recording
 `tMs` is actual Dynamic callback receipt time minus the capture start on a shared
 Stopwatch monotonic epoch. It is **not** an exposed sensor capture timestamp.
 The sidecar records the epoch offset and clock tick resolution; this uncertainty
@@ -96,9 +101,14 @@ executes the actual pure C# domain and strict contracts. The assertions are also
 Unity EditMode tests. Additional Unity runtime tests cover lifecycle invalidation,
 subscriptions and the named SDK mapping; these are not console tests.
 
-Unity package resolution, runtime C# compilation, shader/prefab import,
-EditMode/PlayMode execution, Android ARM64/IL2CPP build and Quest smoke tests
-remain unavailable without the editor/device. Required physical checks: fresh
+Runtime adapter/session/presentation C# compiled against actual Unity 6000.3
+managed DLLs and official XR Hands 1.7.2/Core Utils 2.2.0 source using the portable
+.NET compiler. Full Unity package resolution, shader/prefab import,
+EditMode/PlayMode execution and Android ARM64/IL2CPP build are separate gates.
+The first Unity 6000.3.24f1 attempt exited 198 without a valid license; an
+externally resolved license allowed a retry to begin actual package import.
+Final gate results are recorded in the task delivery log. Quest smoke tests
+remain unavailable without a device. Required physical checks: fresh
 five-second recording/save/reload; right/left named joints; independent novice
 registration in a rotated mat and different room; fourth-mark error; occlusion,
 recenter, mat movement, suspension and headset removal; no false guide progress.

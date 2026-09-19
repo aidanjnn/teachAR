@@ -50,16 +50,20 @@ namespace Trail.Motion
         private long lastSequence = -1;
         private double lastObservationMs = -1, lastFrameMs = double.NegativeInfinity;
         private readonly string source;
+        private readonly int maxEncodedFrameChars;
+        private int encodedFrameChars;
+        public string StopReason { get; private set; }
         public bool IsFinished { get; private set; }
         public int FrameCount => frames.Count;
-        public MotionCapture(double nowMs, double durationMs, int originRevision, RigidRegistration registration, string source)
+        public MotionCapture(double nowMs, double durationMs, int originRevision, RigidRegistration registration, string source, int maxEncodedFrameChars = 31 * 1024 * 1024)
         {
             if (double.IsNaN(nowMs) || double.IsInfinity(nowMs) || nowMs < 0 ||
                 double.IsNaN(durationMs) || double.IsInfinity(durationMs) || durationMs <= 0 || durationMs > 120000 ||
-                (source != "live" && source != "synthetic-fixture" && source != "recorded-fixture")) throw new ArgumentException("Invalid recording bounds/source.");
-            startedMs = nowMs; this.durationMs = durationMs; revision = originRevision; this.registration = registration; this.source = source;
+                (source != "live" && source != "synthetic-fixture" && source != "recorded-fixture") ||
+                maxEncodedFrameChars < 256 || maxEncodedFrameChars > 31 * 1024 * 1024) throw new ArgumentException("Invalid recording bounds/source.");
+            startedMs = nowMs; this.durationMs = durationMs; revision = originRevision; this.registration = registration; this.source = source; this.maxEncodedFrameChars = maxEncodedFrameChars;
         }
-        public void Tick(double nowMs) { if (nowMs >= startedMs + durationMs) IsFinished = true; }
+        public void Tick(double nowMs) { if (nowMs >= startedMs + durationMs) { IsFinished = true; StopReason = "duration limit"; } }
         public bool Append(ReferenceObservation observation)
         {
             if (IsFinished) return false;
@@ -69,16 +73,23 @@ namespace Trail.Motion
             if (double.IsNaN(elapsed) || double.IsInfinity(elapsed) || elapsed < 0 ||
                 observation.Sequence <= lastSequence || observation.TimestampMs <= lastObservationMs) return false;
             lastSequence = observation.Sequence; lastObservationMs = observation.TimestampMs;
-            if (elapsed > durationMs || frames.Count >= 3600) { IsFinished = true; return false; }
+            if (elapsed > durationMs || frames.Count >= 3600) { IsFinished = true; StopReason = "duration/frame limit"; return false; }
             // Never fabricate samples to fill a stall. Actual callback timestamps survive downsampling.
             if (elapsed - lastFrameMs < 1000.0 / 30.0) return false;
             var frame = MotionSamples.ToWorkspace(observation, registration);
-            frame.TMs = elapsed; frames.Add(frame); lastFrameMs = elapsed;
+            frame.TMs = elapsed;
+            // Bound the actual serialized payload too; reserve 1 MiB for the recording envelope.
+            // Use the canonical writer instead of inventing a second wire-size approximation.
+            var encodedSize = ContractJson.SerializeMotionFrame(frame).Length + 1;
+            if (encodedFrameChars + encodedSize > maxEncodedFrameChars)
+            { IsFinished = true; StopReason = "serialized motion size limit"; return false; }
+            encodedFrameChars += encodedSize; frames.Add(frame); lastFrameMs = elapsed;
             if (frames.Count == 3600 || elapsed >= durationMs) IsFinished = true;
             return true;
         }
         public Recording Finish(string id, WorkspaceDefinition workspace, double nowMs)
         {
+            if (double.IsNaN(nowMs) || double.IsInfinity(nowMs) || nowMs < startedMs) throw new ArgumentException("Invalid completion clock.");
             IsFinished = true;
             if (frames.Count == 0) throw new InvalidOperationException("No fresh frames were captured.");
             var names = new string[JointNames.Canonical.Count];

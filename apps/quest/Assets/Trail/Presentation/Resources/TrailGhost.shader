@@ -10,6 +10,7 @@ Shader "Trail/Ghost"
             ZWrite Off
             Cull Back
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile_instancing

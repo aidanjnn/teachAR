@@ -35,7 +35,10 @@ namespace Trail.Presentation
         private TextMesh Label(string label, Vector3 position, float size)
         {
             var child = new GameObject(label); child.transform.SetParent(transform, false); child.transform.localPosition = position;
-            var text = child.AddComponent<TextMesh>(); text.fontSize = 48; text.characterSize = size;
+            var text = child.AddComponent<TextMesh>();
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            child.GetComponent<MeshRenderer>().sharedMaterial = text.font.material;
+            text.fontSize = 48; text.characterSize = size;
             text.anchor = TextAnchor.MiddleLeft; text.color = Color.white; return text;
         }
         private void Update()

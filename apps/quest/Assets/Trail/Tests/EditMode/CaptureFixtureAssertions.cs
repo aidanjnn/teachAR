@@ -33,6 +33,12 @@ namespace Trail.Tests.EditMode
                 Near(reflected.PositionM, pose.PositionM, "basis position round trip");
                 Check(Math.Abs(Quaternion.Dot(reflected.OrientationXyzw, pose.OrientationXyzw)) > .99999f, "basis quaternion round trip");
             }
+            // Fixed golden marks/expected point, independent of the transform used to generate other cases.
+            var quarterTurn = WorkspaceCalibration.Fit(.5f, .35f,
+                new Vector3(1, .8f, 2), new Vector3(1, .8f, 1.5f),
+                new Vector3(.65f, .8f, 2), new Vector3(.65f, .8f, 1.5f), Vector3.UnitY);
+            Near(quarterTurn.ReferenceFromWorkspace.TransformPoint(new Vector3(.2f, .1f, -.1f)),
+                new Vector3(.9f, .9f, 1.8f), "fixed quarter-turn calibration golden");
             // A known non-roundtrip golden: Unity +Z becomes canonical -Z, and a +Y rotation reverses.
             var golden = CoordinateBasis.ReflectZ(new CanonicalPose(new Vector3(1, 2, 3), new Quaternion(0, .70710677f, 0, .70710677f)));
             Near(golden.PositionM, new Vector3(1, 2, -3), "golden reflected position");
@@ -67,6 +73,7 @@ namespace Trail.Tests.EditMode
             Check(!capture.Append(Obs(1020, 1, 2, Hand(Vector3.Zero))), "duplicate sequence");
             Check(capture.Append(Obs(1060, 3, 2, MotionSamples.Missing())), "missing hand frame retained");
             Check(capture.Append(Obs(1400, 4, 2, Hand(new Vector3(1.5f, 0, 0)))), "stall not filled");
+            Throws(() => capture.Finish("fixture", Workspace(), double.NaN), "nonfinite completion clock rejected");
             var recording = capture.Finish("fixture", Workspace(), 6000);
             Check(recording.Frames.Length == 3 && recording.Frames[2].TMs == 400, "actual times retained");
             Near(recording.Frames[0].Hands.Left.Joints["wrist"].PositionM, Vector3.Zero, "recorded in workspace");
@@ -79,6 +86,11 @@ namespace Trail.Tests.EditMode
             var bounded = new MotionCapture(0, 120000, 0, new RigidRegistration(Vector3.Zero, Quaternion.Identity), "synthetic-fixture");
             for (var i = 0; i < 10000; i++) bounded.Append(Obs(i * 34, i, 0, MotionSamples.Missing()));
             Check(bounded.FrameCount <= 3600 && bounded.IsFinished, "duration and memory bounded");
+            var bytes = new MotionCapture(0, 5000, 0, new RigidRegistration(Vector3.Zero, Quaternion.Identity), "synthetic-fixture", 10000);
+            for (var i = 0; i < 100; i++) bytes.Append(Obs(i * 40, i, 0, Hand(new Vector3(.1234567f, .2345678f, -.3456789f))));
+            Check(bytes.IsFinished && bytes.FrameCount > 0 && bytes.FrameCount < 100, "serialized byte budget stops admission");
+            var finalized = bytes.Finish("byte-bound", Workspace(), 4000);
+            Check(finalized.Frames.Length == bytes.FrameCount && bytes.StopReason == "serialized motion size limit", "byte-bound capture remains saveable");
         }
         public static void FreshnessRejectsJumps()
         {

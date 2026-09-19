@@ -331,6 +331,22 @@ code compile as separate assemblies. Native Unity components are not covered by
 that compile. Unity appeared during the concurrent work; coordinator evidence
 reports license exit 198, superseding the earlier absence-of-editor observation.
 Full final pnpm/browser and native wrapper results will be recorded on delivery.
+Task 3 integration verification: merged published contracts (through af35981)
+and native platform f626cd3. Full `pnpm check` passed strict typechecks, 144 tests,
+production builds and 74-asset static quest validation; `pnpm validate:fixtures`
+passed the synthetic 61-frame recording. Isolated `E2E_PORT=3403 pnpm test:e2e
+--workers=1` passed all three Chromium scenarios after the initial parallel run
+had one transient health-read failure despite HTTP 200; no check was weakened.
+Actual C# domain fixtures pass against the merged sources. Runtime capture,
+XR adapter, presentation and Unity test sources compile against actual Unity
+6000.3 DLLs plus official XR Hands 1.7.2/Core Utils 2.2.0 sources, without stubs;
+only the dependency's JsonUtility DTO-field warnings remain. This is SDK API
+compilation, not native runtime/import success. Added a reusable compile harness.
+Review fixes cover duplicate record starts, invalid completion clocks, explicit
+runtime text fonts, selected guide hand and discontinuous short-path cues.
+Unity became installed externally mid-task. First test attempt failed licensing
+(exit 198); a later external activation allowed the retry to enter real package
+import. Its final result follows separately. No physical/provider evidence yet.
 - Follow-up evidence: pinned Unity 6000.3.24f1 appeared at the default Hub path during this run (not installed by this task). All four real `quest:setup`, `quest:test`, `quest:test:play`, `quest:build` attempts exited 198 before import: no valid Unity Editor license/headless entitlement. This supersedes the earlier absent-editor note; no native gate passed.
 - Compiled `Runtime/Network` against that editor's real Unity Core/WebRequest/JSONSerialize managed DLLs through the .NET netstandard2.1 diagnostic project: zero warnings/errors. This is a managed API compile, not Unity import or IL2CPP proof. Actual HTTPS pairing with a test-generated certificate and Secure cookie also passed; production code does not bypass certificate checks.
 - Desktop fixture: initial parallel Playwright run had one existing 3-second health timeout under concurrent load (2/3 passed); isolated `E2E_PORT=3102 pnpm test:e2e --workers=1` passed all 3. Added E2E_PORT override and per-port data isolation without weakening assertions/timeouts. Added sharp 0.34.5 to the server on task6's request for decoded reviewed-reference validation; lockfile install passed.
