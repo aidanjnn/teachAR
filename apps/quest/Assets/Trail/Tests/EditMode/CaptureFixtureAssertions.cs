@@ -67,6 +67,7 @@ namespace Trail.Tests.EditMode
             Check(!capture.Append(Obs(1020, 1, 2, Hand(Vector3.Zero))), "duplicate sequence");
             Check(capture.Append(Obs(1060, 3, 2, MotionSamples.Missing())), "missing hand frame retained");
             Check(capture.Append(Obs(1400, 4, 2, Hand(new Vector3(1.5f, 0, 0)))), "stall not filled");
+            Throws(() => capture.Finish("fixture", Workspace(), double.NaN), "nonfinite completion clock rejected");
             var recording = capture.Finish("fixture", Workspace(), 6000);
             Check(recording.Frames.Length == 3 && recording.Frames[2].TMs == 400, "actual times retained");
             Near(recording.Frames[0].Hands.Left.Joints["wrist"].PositionM, Vector3.Zero, "recorded in workspace");
