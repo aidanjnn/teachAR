@@ -185,6 +185,44 @@ credentials. Vision reachability means the authenticated process responded;
 its baseline `imageInterpretation: false` / `ready: false` remains honest until
 the separate visual-inspection workstream deliberately extends those fields.
 
+## Authoring transport compatibility (PR #11)
+
+The existing authoring HTTP/WS envelopes are now explicitly included in the
+shared Zod-to-C# registry and golden corpus. This adds native DTO/parser/serializer
+coverage without changing any wire field, endpoint, Recording v1, Tutorial v1,
+or native capture sidecar. No stored recording/tutorial migration is required.
+Native upload wire construction remains unchanged; generated `TutorialJobCreate`
+and `RecordingByteChunk` codecs provide explicit C#/Zod fixture parity. The server
+continues validating hashes, decoded images, revisions and permissions at its boundary.
+The other generated DTOs establish wire parity and do not imply new native UI.
+
+| Contract | Existing transport | Current consumer |
+| --- | --- | --- |
+| TutorialJobCreate | POST /api/tutorial-jobs | Native upload and desktop authoring |
+| TutorialFinalize | POST /api/tutorials/:id/finalize | Desktop authoring |
+| ReferenceEdit | PUT /api/tutorials/:id/references | Desktop authoring |
+| ReferenceImageUpload | POST /api/reference-images | Desktop authoring |
+| SpectatorState | Read-only WS spectator-state message | Desktop spectator |
+| TutorialLabelBatch | Provider-neutral label application boundary | Server authoring; not a public route |
+| RecordingByteChunk | PUT /api/recordings/:id/bytes/:chunk | Native exact-byte upload |
+
+These existing envelopes have no `schemaVersion` field; their endpoint/message
+shape is frozen here, rather than silently inventing a version that would break
+strict consumers. Future incompatible changes require an explicit API/message
+version and coordinated migration. Reject unknown/missing fields and invalid
+revisions, hashes, sources, base64 and bounds. Decode/verify chunk bytes only at
+storage admission, and treat label provenance as declared input until validated
+by the label pipeline. Spectator messages never control guide progression.
+
+The corpus includes all seven contracts, connected/disconnected spectator states,
+unknown/missing fields and malformed/over-limit examples. Both Vitest/Zod and
+the actual pure C# parser consume the same files and expected acceptance results.
+The image-upload fixture carries labelled synthetic placeholder bytes, not a
+valid decoded image or camera evidence; image decoding remains a separate server
+test. Recording-byte fixtures contain only the synthetic canonical recording.
+Run the existing fixture/C# regeneration and parity commands above. Generated
+C# remains pure and AOT-safe, without Unity, provider, file or network dependencies.
+
 `VoiceUnavailable.error` additionally carries `unauthorized`, `forbidden`, `unknown_tutorial`,
 `stale_tutorial`, and `unknown_session` for paired, server-grounded coaching (additive;
 clients treat unknown codes as a failed request). `LiveStepUpdate` is the client's

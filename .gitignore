@@ -55,3 +55,6 @@ test-results/
 /apps/quest/Assets/Resources/DevAgentSettings.asset.meta
 /apps/quest/Assets/Resources/OVRPlatformToolSettings.asset
 /apps/quest/Assets/Resources/OVRPlatformToolSettings.asset.meta
+
+# Python native-CI verifier test caches
+__pycache__/

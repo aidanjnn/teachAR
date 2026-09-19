@@ -1,0 +1,32 @@
+name: Native private storage
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: storage-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  cache:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - name: Exercise production C# cache, hashes and interrupted writes
+        run: dotnet run --project apps/quest/storage-tests/Storage.csproj --configuration Release
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
+      - name: Verify shared authoring and domain wire fixtures in C#
+        run: dotnet run --project packages/contracts/native-tests/Contracts.csproj --configuration Release
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'

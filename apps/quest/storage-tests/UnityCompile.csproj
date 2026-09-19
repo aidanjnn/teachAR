@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>netstandard2.1</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><LangVersion>9.0</LangVersion><NoWarn>CS0649</NoWarn><UnityManagedPath Condition="'$(UnityManagedPath)' == ''">/Applications/Unity/Hub/Editor/6000.3.24f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine</UnityManagedPath></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Assets/Trail/Contracts/*.cs"/><Compile Include="../Assets/Trail/Motion/*.cs"/>
+    <Compile Include="../Assets/Trail/Runtime/Storage/*.cs"/><Compile Include="../Assets/Trail/Runtime/Network/NativeApiConnection.cs;../Assets/Trail/Runtime/Network/ConnectionPolicy.cs"/>
+    <Compile Include="../Assets/Trail/Runtime/Guide/*.cs"/><Compile Include="../Assets/Trail/Runtime/Record/*.cs"/>
+    <Compile Include="../Assets/Trail/Runtime/Platform/PlatformFeatures.cs"/><Compile Include="../Assets/Trail/Presentation/GhostPresentation.cs"/>
+    <Reference Include="$(UnityManagedPath)/*.dll"><Private>false</Private></Reference>
+  </ItemGroup>
+  <Target Name="RequireUnityAssemblies" BeforeTargets="ResolveReferences"><Error Condition="!Exists('$(UnityManagedPath)/UnityEngine.CoreModule.dll')" Text="Actual Unity managed assemblies required; set UnityManagedPath. This compile is not a Unity import or APK build."/></Target>
+</Project>

@@ -1,3 +1,4 @@
+import { mountWorkbench } from './authoring/workbench.js';
 import { HealthSchema, VisionDependencySchema } from '@trail/contracts';
 import { mountShell } from './dashboard/shell.js';
 import { fixture, frameAtTime } from './replay/fixture-source.js';
@@ -10,6 +11,7 @@ function element<T extends HTMLElement>(selector: string): T {
   return node;
 }
 mountShell(element('#app'));
+const disposeWorkbench = mountWorkbench(element('#workbench'));
 const play = element<HTMLButtonElement>('#play');
 const timeline = element<HTMLInputElement>('#timeline');
 const tracking = element('#tracking');
@@ -84,11 +86,11 @@ async function refreshVision() {
     const response = await fetch('/api/dependencies/vision', { signal: AbortSignal.timeout(3000), cache: 'no-store' });
     const dependency = VisionDependencySchema.parse(await response.json());
     element('#vision').textContent = dependency.status === 'reachable'
-      ? 'Connected · interpretation not implemented' : dependency.status === 'disabled'
+      ? dependency.health.capabilities.imageInterpretation ? 'Connected · image interpretation configured' : 'Connected · visual interpretation unavailable' : dependency.status === 'disabled'
       ? 'Not configured' : 'Unavailable';
   } catch { element('#vision').textContent = 'Unavailable'; }
 }
 element('#refresh-health').addEventListener('click', () => { void refreshVision(); });
 void refreshVision();
 show(0);
-if (import.meta.hot) import.meta.hot.dispose(() => { pause(); viewer?.dispose(); });
+if (import.meta.hot) import.meta.hot.dispose(() => { pause(); viewer?.dispose(); disposeWorkbench(); });

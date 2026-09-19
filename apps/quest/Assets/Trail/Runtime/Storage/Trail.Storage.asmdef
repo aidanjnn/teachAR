@@ -1,0 +1,6 @@
+{
+  "name": "Trail.Storage",
+  "rootNamespace": "Trail.Runtime.Storage",
+  "references": ["Trail.Contracts", "Trail.Motion", "Trail.Runtime", "Trail.Guide"],
+  "autoReferenced": true
+}

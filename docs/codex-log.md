@@ -240,23 +240,63 @@ Append a dated entry after each substantive Codex session. Keep historical resul
 ## 2026-09-19 — TRAIL-03 shared contract freeze (task 2)
 
 Added strict tutorial/draft, guide-event, native sidecar/calibration v2, scene-reference/inspection and upload boundary schemas. Recording v1 exports and audio sync enum remain compatible; native provenance stays separate. Tutorial binding verifies recording/hash/workspace identity and targets against valid recorded wrists. Initial focused validation: contracts TypeScript build and 15 existing recording tests passed. Strict native parser and shared corpus validation are in progress; this entry is not Unity, provider or headset evidence.
+## 2026-09-19 — Task 3 native capture/calibration/replay software
 
+Implemented TRAIL-04/05 software and TRAIL-19 rigid-transfer foundations: pure
+three-mark rigid fit with independent D rejection, stable median mark holds,
+explicit Unity basis reflection, bounded actual-time recording, missing/jump
+samples, gap-safe replay, native XR Hands Dynamic callback adapter, origin/lifecycle
+invalidation, opposite-hand world-space calibration controls and separate
+procedural articulated ghost/prefab. Added canonical DTO/storage events and
+platform feature registry integration; no narration/microphone/camera code.
+
+Actual C# domain fixtures passed under task-scoped .NET 8.0.425 (initial run used
+shared-contract task's generated C# sources before its publication). Includes
+rotated transfer, mirrored/scale/held-out failures, real timestamp and stale/gap
+behavior. Added Unity runtime tests; unavailable editor means they have not run.
+Static quest scaffold check passed. Final merged-dependency checks will be
+recorded separately. SDK APIs were checked against Unity XR Hands documentation;
+1.7.2 pin follows platform task's inspected Meta Core dependency. See
+[native capture runbook](native-capture.md) for interfaces, controls and evidence
+limits. No headset, physical LEGO, live sensor, shader/Unity import, Android or
+independent human transfer evidence is claimed.
+
+## 2026-09-19 — TRAIL-03 shared contract freeze (task 2)
+
+Added strict tutorial/draft, guide-event, native sidecar/calibration v2, scene-reference/inspection and upload boundary schemas. Recording v1 exports and audio sync enum remain compatible; native provenance stays separate. Tutorial binding verifies recording/hash/workspace identity and targets against valid recorded wrists. Initial focused validation: contracts TypeScript build and 15 existing recording tests passed. Strict native parser and shared corpus validation are in progress; this entry is not Unity, provider or headset evidence.
+
+### 2026-09-19 — Task 4 deterministic guide core
+
+Implemented a pure C# guide reducer/matcher and input-driven runtime session for
+TRAIL-06/07: start gating, ordered intermediate gates, bounded fresh-sample dwell,
+tracking reacquisition, pause/reset/repeat and distinct user-confirmed completion.
+Adaptive cue progress cannot pass gates. The shared temporary .NET 8.0.425 SDK
+compiled the actual sources and passed 19 synthetic scenarios, including a full
+multi-step effect trace without any backend. Unity EditMode, APK and physical
+LEGO/headset validation remain unavailable. Native DTO/capture integration is
+being completed on this task branch; this core result does not claim that wiring.
 TRAIL-03 native implementation update: explicit generated DTO readers/writers now compile with the task-scoped .NET 8 SDK. A dependency-free bounded JSON reader rejects duplicate keys, malformed input and nonfinite exponents; generated structural validation and handwritten semantic validation share the TS corpus. 112 TS contract tests and 99 pure C# corpus/binding/legacy/joint/basis checks passed. This is actual .NET behavior, not Unity import or IL2CPP proof. OpenXR enum names were verified against the Khronos XrHandJointEXT reference; palm is excluded explicitly.
-
-TRAIL-03 final software validation: retained parsed pose doubles for re-export, added sidecar identity binding and regeneration drift tests, and documented versions/migration/native representation limits in `docs/contracts.md`. Fixed strict TS array/fixture-union diagnostics found by the full gate without changing schemas. `pnpm check` passed (148 tests, typechecks, app builds and native static check), `pnpm validate:fixtures` passed, 124 contract tests passed, and the actual .NET parser harness passed 113 checks. Three Chromium fixture scenarios passed on isolated port 3103 with an owned temporary data directory; the server was cleaned up. The existing Vite large-chunk warning remains.
-
-Unity became available externally during this run. Full-project `pnpm quest:test` on the baseline manifest failed before tests on vendor CS1069 diagnostics requiring Animation and Asset Bundle modules; native-platform owns that repair. A minimal temporary project containing the unchanged production Contracts/Motion and their tests passed 5/5 EditMode tests in Unity 6000.3.24f1 with Test Framework 1.4.6. The repeatable `pnpm --filter @trail/contracts test:unity-isolated` runner records source hashes, setup and result XML; its verified run began 2026-09-19T18:00:43Z with 32 copied/hashed production/test files, all five passed. The temporary project and logs are outside Git; import-generated full-project settings/lock were preserved outside this PR for the platform owner. No Android IL2CPP build, live provider, headset or physical LEGO/transfer claim. Contracts PR remains independent against main, to be consumed before the capture, guide, authoring and inspection PRs.
-
-TRAIL-03 review follow-up: `MotionChunk` now rejects non-increasing `tMs` within a chunk in both Zod (`refine`) and pure C# (`ContractValidation.Validate(MotionChunk)`, wired through the generator's semantic set); cross-chunk ordering remains a storage-coordinator concern. Two corpus cases (duplicate and decreasing chunk timestamps) cover parity. `pnpm check` passed (150 tests) and the .NET harness passed 115 checks; no Unity, IL2CPP or headset claim.
-
-### 2026-09-19 — Babysit contracts PR #8
-
-Fast-forwarded to the existing review repair `9ccf520`, verified matching TS/C# chunk-order checks and the already-resolved review thread. Reproduced a remaining regression-maintenance bug: fixture regeneration silently removed both new chunk-order cases. Added those cases to the generator and a temporary-directory regeneration test covering every shared fixture; the test failed before the fix and passed afterward. No wire format, runtime behavior or committed fixture changed. Final local signoff passed `pnpm check` (151 tests), fixture validation, 127 focused contract tests, 115 actual .NET parser checks, and 5/5 isolated Unity EditMode tests. Existing browser evidence is reusable because app/runtime/fixture inputs are unchanged; newly pushed hosted checks are verified separately. Full-app Unity dependency limits and Android/headset/physical acceptance remain outside this evidence. No review replies, thread resolutions, bot invocations, merges or deployments were performed.
 ### 2026-09-19 — Task 1 native platform: pairing boundary and shared dependencies
 
 - Implemented ephemeral, bounded role/session-scoped native bearer and browser cookie pairing. Codes are single-use with five-minute expiry; credentials expire after one hour and revoke on logout/restart. Browser requests require exact allowed Origin, native requests require bearer even without Origin, present unexpected Origin is rejected. Transport defaults to HTTPS with an explicit actual-peer/Host loopback exception. Trusted initial author code is written atomically to a private operator file; no credentials are logged.
 - Published reusable authorization hooks for HTTP/WS and author-only code issuance; task 6 owns final server/UI composition. Five focused server tests cover expiry/reuse, revocation, role/session/client isolation, Origin, transport/forwarded-header rejection, guessing rate limits and private bootstrap file mode. Passing tests are automated synthetic evidence, not native connection evidence.
 - Added requested exact shared dependencies: sharp 0.34.5 (vision byte decoding), Fastify WebSocket 11.3.1, ws types 8.18.1 and internal motion workspace dependency (authoring/relay). Explicitly allow sharp's required install script under existing pnpm lifecycle policy. No unrelated package upgrades intended.
+## 2026-09-19 — TRAIL-03 shared contract freeze (task 2)
+
+Added strict tutorial/draft, guide-event, native sidecar/calibration v2, scene-reference/inspection and upload boundary schemas. Recording v1 exports and audio sync enum remain compatible; native provenance stays separate. Tutorial binding verifies recording/hash/workspace identity and targets against valid recorded wrists. Initial focused validation: contracts TypeScript build and 15 existing recording tests passed. Strict native parser and shared corpus validation are in progress; this entry is not Unity, provider or headset evidence.
+
+### 2026-09-19 — Task 6 authoring and storage implementation
+### 2026-09-19 — Task 5 visual inspection pipeline (in progress)
+
+- Replaced the vision skeleton with authenticated bounded image decoding, one active job, capped duplicate waiters, cancellation/deadlines and strict Responses output handling. Default mock remains explicitly unavailable; injected synthetic test providers carry mock provenance. No live provider calls or real images were sent.
+- Added delegated service/transport schemas while preserving task 2's canonical scene and recording contracts; base64 JSON has a precise HTTP cap and full JPEG/PNG decode, dimension/hash validation and metadata stripping. Main-server coordinator binds paused guide identity, source session/frame, one-use nonce, original deadline and reviewed references; findings cannot resume/complete motion.
+- Consulted official Responses image/structured-output documentation and actual Meta MRUK 205 package source. Added source-only camera readback with lifecycle cancellation and a pure freshness gate. .NET harness passed fresh/stale/duplicate/stall/cancel/restart/clock cases. This is not Unity compilation or headset evidence.
+- Initial checks: 30 vision/service tests plus 7 coordinator tests and workspace typecheck passed. Two-process failure/recovery smoke, final review and full gates follow before delivery.
+
+- Integrated published task 1 auth/dependencies and task 2 canonical TypeScript schemas. Implemented private atomic storage, bounded ordered hashed chunks, identical retry checks, final recording integrity, interrupted job recovery, revision-checked tutorial edits and immutable ready publication. Added deterministic marker-first/motion-pause segmentation, recorded-wrist gate derivation and an explicit synthetic four-step authoring input.
+- Desktop workbench retains fixture replay and adds pairing, upload/review/save/finalize/library and read-only spectator state. Protected browser reads use POST aliases because browsers cannot set Origin on same-origin GET. Native GET uses bearer auth. WebSocket implementation follows [Fastify's plugin guidance](https://github.com/fastify/fastify-websocket) for synchronous message handlers, upgrade auth and registration order.
+- Focused automated evidence so far: four motion/files tests and three real Fastify authoring-flow tests passed, including restart, stale revision, wrong role and hash failures. Native private-cache source and browser work are in progress; no native, headset, image-provider or physical task claim.
+TRAIL-03 native implementation update: explicit generated DTO readers/writers now compile with the task-scoped .NET 8 SDK. A dependency-free bounded JSON reader rejects duplicate keys, malformed input and nonfinite exponents; generated structural validation and handwritten semantic validation share the TS corpus. 112 TS contract tests and 99 pure C# corpus/binding/legacy/joint/basis checks passed. This is actual .NET behavior, not Unity import or IL2CPP proof. OpenXR enum names were verified against the Khronos XrHandJointEXT reference; palm is excluded explicitly.
 
 ### 2026-09-19 — Task 1 native platform: setup, composition and connection
 
@@ -265,13 +305,346 @@ Fast-forwarded to the existing review repair `9ccf520`, verified matching TS/C# 
 - Added Android APK, EditMode and PlayMode wrappers with unique result directories, nonempty passing-test checks, actual APK/report verification and missing-editor failure. Added a bounded, memory-only native bearer adapter with URL policy, lifecycle cancellation and stale-generation suppression; no certificate bypass or credential logging. Actual pure C# network policy/expiry harness passed using the temporary .NET 8.0.425 SDK. Unity PlayMode lifecycle tests are authored but unexecuted.
 - Automated uncommitted-worktree evidence: `pnpm check` passed 47 tests, typecheck, web/server/vision build and static GUID check; focused auth includes a real loopback WebSocket upgrade test (native bearer, browser Origin/cookie and negative cases). `pnpm validate:fixtures` passed the 61-frame synthetic fixture. Vite retains its existing large-chunk warning. These results do not establish native compilation, APK success, headset transport or physical transfer.
 
+### 2026-09-19 — Task 5 visual inspection pipeline (in progress)
+
+- Replaced the vision skeleton with authenticated bounded image decoding, one active job, capped duplicate waiters, cancellation/deadlines and strict Responses output handling. Default mock remains explicitly unavailable; injected synthetic test providers carry mock provenance. No live provider calls or real images were sent.
+- Added delegated service/transport schemas while preserving task 2's canonical scene and recording contracts; base64 JSON has a precise HTTP cap and full JPEG/PNG decode, dimension/hash validation and metadata stripping. Main-server coordinator binds paused guide identity, source session/frame, one-use nonce, original deadline and reviewed references; findings cannot resume/complete motion.
+- Consulted official Responses image/structured-output documentation and actual Meta MRUK 205 package source. Added source-only camera readback with lifecycle cancellation and a pure freshness gate. .NET harness passed fresh/stale/duplicate/stall/cancel/restart/clock cases. This is not Unity compilation or headset evidence.
+- Initial checks: 30 vision/service tests plus 7 coordinator tests and workspace typecheck passed. Two-process failure/recovery smoke, final review and full gates follow before delivery.
+- Follow-up evidence: pinned Unity 6000.3.24f1 appeared at the default Hub path during this run (not installed by this task). All four real `quest:setup`, `quest:test`, `quest:test:play`, `quest:build` attempts exited 198 before import: no valid Unity Editor license/headless entitlement. This supersedes the earlier absent-editor note; no native gate passed.
+- Compiled `Runtime/Network` against that editor's real Unity Core/WebRequest/JSONSerialize managed DLLs through the .NET netstandard2.1 diagnostic project: zero warnings/errors. This is a managed API compile, not Unity import or IL2CPP proof. Actual HTTPS pairing with a test-generated certificate and Secure cookie also passed; production code does not bypass certificate checks.
+- Desktop fixture: initial parallel Playwright run had one existing 3-second health timeout under concurrent load (2/3 passed); isolated `E2E_PORT=3102 pnpm test:e2e --workers=1` passed all 3. Added E2E_PORT override and per-port data isolation without weakening assertions/timeouts. Added sharp 0.34.5 to the server on task6's request for decoded reviewed-reference validation; lockfile install passed.
+### 2026-09-19 — Task 4 guide integration and adversarial checks
+
+Integrated published shared-contract, capture/calibration and native-platform
+branches without duplicating their implementations. Guide preload now uses the
+canonical ready tutorial/hash binding and copied execution values. The feature
+registry binds real workspace observation/calibration events, timestamp replay,
+separate ghost cues, physical fingertip controls and shared read-only telemetry.
+A synchronous inspection-pause acknowledgment preserves the same event sequence;
+visual findings have no completion or resume input. No voice code was changed.
+
+Actual .NET 8.0.425 checks pass 24 reducer/session scenarios plus shared fixture →
+rotated independent calibration → pose projection → guide → strict telemetry
+round-trip, including a golden phase trace. Contracts, domain and runtime adapter
+code compile as separate assemblies. Native Unity components are not covered by
+that compile. Unity appeared during the concurrent work; coordinator evidence
+reports license exit 198, superseding the earlier absence-of-editor observation.
+Full final pnpm/browser and native wrapper results will be recorded on delivery.
+Task 3 integration verification: merged published contracts (through af35981)
+and native platform f626cd3. Full `pnpm check` passed strict typechecks, 144 tests,
+production builds and 74-asset static quest validation; `pnpm validate:fixtures`
+passed the synthetic 61-frame recording. Isolated `E2E_PORT=3403 pnpm test:e2e
+--workers=1` passed all three Chromium scenarios after the initial parallel run
+had one transient health-read failure despite HTTP 200; no check was weakened.
+Actual C# domain fixtures pass against the merged sources. Runtime capture,
+XR adapter, presentation and Unity test sources compile against actual Unity
+6000.3 DLLs plus official XR Hands 1.7.2/Core Utils 2.2.0 sources, without stubs;
+only the dependency's JsonUtility DTO-field warnings remain. This is SDK API
+compilation, not native runtime/import success. Added a reusable compile harness.
+Review fixes cover duplicate record starts, invalid completion clocks, explicit
+runtime text fonts, selected guide hand and discontinuous short-path cues.
+Unity became installed externally mid-task. First test attempt failed licensing
+(exit 198); a later external activation allowed the retry to enter real package
+import. Its final result follows separately. No physical/provider evidence yet.
 - Follow-up evidence: pinned Unity 6000.3.24f1 appeared at the default Hub path during this run (not installed by this task). All four real `quest:setup`, `quest:test`, `quest:test:play`, `quest:build` attempts exited 198 before import: no valid Unity Editor license/headless entitlement. This supersedes the earlier absent-editor note; no native gate passed.
 - Compiled `Runtime/Network` against that editor's real Unity Core/WebRequest/JSONSerialize managed DLLs through the .NET netstandard2.1 diagnostic project: zero warnings/errors. This is a managed API compile, not Unity import or IL2CPP proof. Actual HTTPS pairing with a test-generated certificate and Secure cookie also passed; production code does not bypass certificate checks.
 - Desktop fixture: initial parallel Playwright run had one existing 3-second health timeout under concurrent load (2/3 passed); isolated `E2E_PORT=3102 pnpm test:e2e --workers=1` passed all 3. Added E2E_PORT override and per-port data isolation without weakening assertions/timeouts. Added sharp 0.34.5 to the server on task6's request for decoded reviewed-reference validation; lockfile install passed.
 - Final source review aligned the setup with Meta Core 205's required OVRInput profile rule by enabling the verified Oculus Touch profile ID, without adding a second provider or using controller poses as hand evidence. Disabled app-requested recentering on the Stage rig; system-origin changes still require feature-owned invalidation/recalibration. These native settings remain license-blocked for editor/device execution.
 - Native entitlement retry progressed into real package import. Task4's completed SDK compile exposed CS1069 errors in Meta Core/Interaction for exactly UnityEngine.AnimationModule and UnityEngine.AssetBundleModule. Added their built-in 1.0.0 modules centrally; no external package upgrade. Stopped only this worktree's still-resolving setup process to apply the repair and retry. License activation is no longer the current final blocker; import/build results remain pending.
+
+Task 4 verification update: full workspace check passed 145 TS tests, strict
+checking, production builds and static native GUID/purity checks. Fixture
+validation passed; isolated port 3105 Chromium smoke passed 3/3 with one worker.
+Release .NET guide checks pass 24 scenarios and the bound golden integration;
+new pinned .NET CI workflow passes actionlint. Added actual Unity lifecycle test
+and explicit runtime font/active-hand rendering; the source/clock are injected
+synthetic data, never headset evidence. Own Unity EditMode now resolves licensing
+and imports packages, but first failed Animation/AssetBundle SDK module imports,
+then after platform 5250e30 failed Physics2D/ParticleSystem SDK requirements.
+Platform owner is repairing the manifest; no native pass or APK claim yet.
 - Added an isolated .NET 8 CI workflow for the actual pure C# network policy harness, pinning setup-dotnet v4 to the official resolved commit. This intentionally does not label the separate policy harness as Unity/IL2CPP validation.
 - The next real SDK compile exposed ParticleSystemRenderer and Physics2D references; added only their required built-in particlesystem/physics2d 1.0.0 modules. Unity 6000.3.24f1 produced the checked-in `packages-lock.json`; every direct manifest pin matches its actual resolved version. Explicit Test Framework pin is now 1.6.0 because Unity resolves that built-in version. Complete native tests remain pending; Android Build Support is absent (only MacStandaloneSupport installed).
+
+### 2026-09-19 — Task 6 native preload, references and integrated relay
+
+- Added exact-byte native chunk upload/finalization to preserve C#/JS JSON spelling while validating the same canonical Recording and metadata. Native platform feature persists captures, retries private pending uploads, lists/downloads immutable ready guides in bounded chunks, validates cache bytes and calls the real GuideController.Preload; fresh learner calibration remains required. Added world-space upload/library/preload controls and a provider-neutral revision-bound label output boundary.
+- Reference uploads now decode PNG/JPEG through pinned sharp with pixel/byte/hash limits and bind to reviewed recorded checkpoint frames. Atomic tutorial wrappers carry approved references; edits invalidate approvals and ready publication rebinds the final revision. The actual visual coordinator uses this resolver and the relay's exact fresh paused/calibrated identity. Added native HTTP guide-event acknowledgment, role-scoped browser `/api/ws`, bounded queues, reconnect snapshot and stale display. TLS certificate/key file configuration uses actual HTTPS without proxy trust.
+- Automated focused evidence: six storage/reference/real-WebSocket tests passed; twelve actual C# private-cache behavior checks passed. Native storage/guide/capture/contract/network sources compiled with zero warnings/errors against installed Unity 6000.3.24f1 managed DLLs. Browser fixture scenarios all passed on the first expanded run; authoring reached editing and exposed a test locator issue, now repaired and awaiting rerun. Full gate and own Unity Editor run continue; no headset, live provider, camera-source or physical LEGO validation is claimed.
+### 2026-09-19 — Task 5 native inspection and integration hardening
+
+- Composed actual platform/guide dependencies: Order30 installs an exclusive MRUK source and fresh-hand world-space controls. Check pauses through the real GuideSession/shared sequence, acknowledges the canonical snapshot, then obtains nonce-bound pixels. Owned GPU copy/readback preserves sensor frame identity; permission/focus/pause, source stalls, guide changes, deadlines and receipt age suppress obsolete results. Strict C# transport uses the canonical parser. Voice remains an event hookup only.
+- Main/service review added strict duplicate-key parsing, capped upload readers and reference resolution, response-disconnect cancellation and retired-session replay protection. Full decode bounds include APNG refusal. Focused 38 TS tests and actual .NET freshness/transport harness pass. Real two-process mock smoke covers correct/wrong/obscured, exact cancellation and process kill/restart without taking down main. No real pixels/provider calls were sent.
+- Integrated published canonical contracts, capture/guide/platform branches with normal merges and retained all historical logs. Unity became available and licensed externally: first actual editor attempt failed on SDK module dependencies. Consumed platform d23754a with Unity-generated lock and explicit Physics2D/ParticleSystem/Test Framework repairs; new editor attempt running. Android Build Support is absent. Editor, synthetic, provider and physical evidence remain separate.
+
+TRAIL-03 final software validation: retained parsed pose doubles for re-export, added sidecar identity binding and regeneration drift tests, and documented versions/migration/native representation limits in `docs/contracts.md`. Fixed strict TS array/fixture-union diagnostics found by the full gate without changing schemas. `pnpm check` passed (148 tests, typechecks, app builds and native static check), `pnpm validate:fixtures` passed, 124 contract tests passed, and the actual .NET parser harness passed 113 checks. Three Chromium fixture scenarios passed on isolated port 3103 with an owned temporary data directory; the server was cleaned up. The existing Vite large-chunk warning remains.
+
+Unity became available externally during this run. Full-project `pnpm quest:test` on the baseline manifest failed before tests on vendor CS1069 diagnostics requiring Animation and Asset Bundle modules; native-platform owns that repair. A minimal temporary project containing the unchanged production Contracts/Motion and their tests passed 5/5 EditMode tests in Unity 6000.3.24f1 with Test Framework 1.4.6. The repeatable `pnpm --filter @trail/contracts test:unity-isolated` runner records source hashes, setup and result XML; its verified run began 2026-09-19T18:00:43Z with 32 copied/hashed production/test files, all five passed. The temporary project and logs are outside Git; import-generated full-project settings/lock were preserved outside this PR for the platform owner. No Android IL2CPP build, live provider, headset or physical LEGO/transfer claim. Contracts PR remains independent against main, to be consumed before the capture, guide, authoring and inspection PRs.
+
+- **Task 5 final software gate update:** `pnpm check` passed typecheck, 188 tests, production builds and native static checks after consuming final canonical contract fixes. Focused scene/service suite has 38 tests; portable .NET freshness/strict transport harness and actionlint pass. Fixture validation passes the existing 61-frame synthetic recording. First browser runs were 2/3: valid 200 health responses were followed by the existing client timeout during startup; diagnostic instrumentation confirmed AbortError, with no production/test timeout changes. Retry after imports remains pending.
+- **Native evidence correction:** The repaired Unity project compiled actual Trail.Scene/Scene.Tests and all dependency assemblies against MRUK. The full editor test run is still importing package assets. Android SDK/NDK/OpenJDK were found in the sibling PlaybackEngines path; the earlier absence claim was incorrect. Parent coordinates the final combined APK build in task 6, avoiding redundant heavy builds. No native test/APK/device success is inferred from compilation.
+- **Integration test repair:** Task6's combined run exposed a race in the ignored-abort provider test: its 30ms real timer could expire during sharp decode before the fake provider installed its completion callback. Repaired with controlled timers advanced only after actual provider entry; the deadline and production code are unchanged. All 20 focused inspection cases pass after the repair.
+
+Task 6 verification update: all four real Chromium scenarios now pass on isolated port 3107, including cookie pairing, upload/compile, review of four steps, immutable finalize, reload and authenticated spectator reconnect with a native HTTP snapshot. Inspected the full-page authoring screenshot. Added and passed integrated storage-reference → exact paused-guide admission → real vision HTTP test with an explicit mock assessment; resume rejects a new inspection. This is synthetic desktop/service evidence, not live model or headset validation. Full combined check initially passed 197/198 tests; the vision owner repaired a deterministic test-race exposed by load (provider admission could occur after its 30ms test deadline). Re-running full gate with two test workers, preserving all tests and production deadlines. Spectator freshness now uses server-relative age plus browser monotonic elapsed time, avoiding cross-computer wall-clock skew.
+- Corrected toolchain discovery: AndroidPlayer with SDK/NDK/OpenJDK exists beside the editor bundle at `Editor/6000.3.24f1/PlaybackEngines`; the prior absence note checked only `Unity.app/Contents/PlaybackEngines`. Real build execution, not that incomplete directory check, determines availability. Trail runtime/editor/test assemblies have compiled in Unity; setup is finishing initial package asset imports.
+- Native setup review found that OpenXR requires the new Input System (the editor default was legacy-only); setup now applies the actual serialized setting used by Unity's package. Meta also auto-generates a disabled local DevAgent resource containing a machine credential. Excluded that generated asset and metadata from Git, and added setup/final-build sanitization to clear the disabled tool's credentials/address before packaging. No application voice/provider implementation was changed.
+- Implemented visible native setup: a world-fixed head-directed 0.9-second dwell keyboard for bounded HTTPS endpoint and masked role-code input, explicit development USB preset, Pair, state/role, Disconnect/re-pair and UI-only recenter. It adds no hand provider or guide authority. Code clears on submit/pause/focus loss; endpoint/credentials remain memory-only. Actual pure C# input policy tests pass. Unity EditMode ran 2/2 passing against the imported project and compiled the new UI/runtime; PlayMode keyboard/lifecycle interaction tests are running. Physical legibility/dwell comfort are unverified.
+- **Task 5 desktop/native results:** All three unchanged Playwright scenarios passed on isolated port3106 once initial import contention subsided; the earlier health AbortError was not repaired by weakening checks. Real Unity EditMode passed17/17, including all4 scene freshness tests, against MRUK205 and Unity6000.3.24f1. Final cached EditMode/PlayMode run follows the last callback ownership/null guard hardening. Findings validation also rejects numeric coordinate/distance instructions; focused assertions cover that boundary.
+- **Task 5 final native gate:** Frozen-source Unity6000.3.24f1 runs passed17/17 EditMode (including4 Scene freshness tests) and4/4 PlayMode lifecycle tests. Artifacts: `test-e9359dda-943f-4c05-9d41-0136304d24c3` and `test-play-63a333a7-7a35-42fc-a0fc-455fd37919dc` under ignored `artifacts/quest`. Editor-generated settings/assets were preserved outside tracked source; platform-owned settings were restored unchanged. This establishes real editor compilation/tests, not Quest capture or physical transfer. Final combined Android build remains coordinated by task6.
+Task 4 actual native evidence: full-project Unity EditMode passed 10/10 tests and
+PlayMode passed 4/4, including the real GuideController/CaptureReplaySession
+lifecycle with injected synthetic hand events, independent calibration, ordered
+completion, inspection pause, resume, Repeat and origin reset. These runs compiled
+actual Unity/Meta assemblies and imported real packages; they do not establish
+physical/headset behavior. Android tooling was subsequently found in the editor's
+sibling PlaybackEngines directory, correcting the earlier absence claim. Parent
+assigned final combined IL2CPP build to task 6 to avoid duplicate heavy builds.
+
+Storage integration review added RebindTelemetrySession: same server session
+preserves sequence; a new session changes only the telemetry envelope. It publishes
+a full snapshot without mutating the loaded guide. The actual C# golden integration
+passes both recovery cases; refreshed Unity tests include the paused re-pair path.
+Final contracts 3d629fa and capture capacity fixes are integrated. Native/source
+checks are rerunning for this last recovery change; prior native passes remain
+at their explicitly recorded revisions.
+
+Task 6 full software gate passed 199 tests, strict workspace/tool typechecks, production builds and scaffold checks with VITEST_MAX_WORKERS=2 (concurrency only; no omitted assertions). Fixture validation follows. Reviewed actual native re-pair recovery: added a call to the guide owner's tested RebindTelemetrySession on Ready, preserving local run/calibration/attempt and same-session sequence while allowing a new server session envelope. Native private-cache behavior is now part of a pinned .NET CI workflow. Native final combined candidate awaits the platform owner's generated settings/security update before the single coordinated ARM64/IL2CPP attempt.
+- Unity setup completed successfully with actual generated Android/OpenXR/URP/Meta assets; committed those settings and preserved GUIDs. New Input System is enabled, required headset-camera manifest capability is declared for task5's explicit runtime permission flow, and disabled SDK AgentBridge credential/address fields were verified empty after setup. Standard Unity YAML trailing spaces were normalized without changing values. Empty duplicate SDK-created folders were omitted.
+- Actual Unity 6000.3.24f1 results: EditMode2/2 passed, PlayMode2/2 passed, then PlayMode2/2 passed again after enabling the new Input System and applying the final setup. Tests cover coordinate basis, native connection pause/disable, and head-directed keyboard entry/code clearing. These editor results do not prove Quest ergonomics, tracking or physical transfer. Final combined APK remains task6-owned; baseline platform build is attempted separately.
+- **Task 5 final dependency recheck:** PR #10 is stacked on guide #7. After consuming guide recovery1ed9659, final source94347c3 passed Unity17/17 EditMode and4/4 PlayMode. Results are `test-2c418f04-2873-48f6-89d9-5257d9491952` and `test-play-4f7dd709-2dec-4301-8d41-be0b3df90d66`. Local workspace check passed188 tests/typechecks/builds/static checks; hosted pure C# scene, guide, capture, network and workflow checks passed. Final app composition/combined APK belongs to task6; no hardware/provider success claimed.
+### 2026-09-19 — Task 4 final guide verification
+
+Final guide source at `1ed9659` passed full-project Unity 6000.3.24f1 EditMode
+13/13 (`2026-09-19 18:10:58Z`) and PlayMode 4/4 (`18:11:42Z`). The PlayMode
+scenario uses the actual native controller/capture/ghost adapters with injected
+synthetic samples and verifies same/new-session telemetry recovery while paused.
+Later capture merge `9a5befa` adds test tooling only; guide sources are unchanged.
+Full `pnpm check` passed 157 tests, typechecks/builds and static metadata checks;
+fixture validation passed. Release .NET passes 24 scenarios plus the shared
+fixture/calibration/golden telemetry integration and re-pairing assertions.
+Playwright regression uses isolated 3105 and one worker. Workflows pass actionlint.
+
+Archived this run's generated XR/default editor settings under ignored artifacts
+and restored the tracked build-settings file; canonical platform settings/locks
+remain task 1's ownership. Parent assigned the final combined APK/IL2CPP build to
+task 6; no build or device success is inferred from editor tests. No provider,
+headset, physical LEGO or independent learner evidence exists for this task.
+
+- Review repair: pairing codes now bind role/session and browser/native client kind. Bootstrap explicitly issues a browser-author code; author issuance accepts an explicit client (default native). Browser Origin/Fetch Metadata requests cannot exchange native codes for raw bearer credentials. Eight focused auth tests and server typecheck passed. Native 401 now increments the transport generation and aborts every other in-flight request before clearing the session/notifying consumers; real Unity-managed adapter compilation passed. Added a deterministic two-concurrent-request PlayMode regression, pending execution while the earlier baseline APK build owns the editor.
+- Verified an additional setup finding in exact XR Hands/OpenXR package sources: XR Hands HandTracking and MicrosoftHandInteraction share a feature ID. The generated Android settings had enabled the Microsoft profile while leaving the joint subsystem disabled. Setup now selects the concrete XR Hands type and disables the Microsoft profile. Actual setup reapplication and native test execution follow the running baseline toolchain build; that earlier build cannot validate this repair.
+- Added a final Android prebuild guard requiring one automatically initialized OpenXR loader, the concrete enabled XR Hands HandTracking subsystem, and enabled Meta/Quest/Touch support. New isolated platform EditMode tests assert the actual configured feature type and prove that an enabled Microsoft profile cannot substitute for disabled XR Hands. Static scaffold checks pass; actual Unity compile/test pending. Full pnpm check after client-binding repair passed 49 tests and all type/build/static gates.
+- **Task 5 combined-auth smoke repair:** Platform881bbd7 correctly rejects browser fetch metadata during native pairing. The real two-process test now exchanges its native code with node:http instead of Node fetch, which automatically sends Sec-Fetch-Mode:cors. No production authentication changed. The complete two-process scenario passed against both the current pairing source and the exact stricter881bbd7 source (temporarily applied then restored); tools/test typechecking passed.
+- Actual repaired platform evidence on Unity 6000.3.24f1: setup passed (setup-f67aad52), EditMode4/4 passed (test-b760c6d8) including concrete-subsystem/prebuild rejection tests, and PlayMode3/3 passed (test-play-60ebd226) including the concurrent401 cancellation regression. Committed the actual generated HandTracking-enabled/Microsoft-disabled Android flags. Quoted empty TagManager entries explicitly: bare empty sequence items produced a Unity parser warning after whitespace normalization; the quoted representation imported without parser errors.
+- Baseline08fd3a7 development Android attempt completed IL2CPP/native compilation and linking but failed Gradle packaging with “Gradle build daemon has been stopped: stop command received.” No APK was verified. No stop command was issued by this task; a shared-daemon interaction is suspected, not established. Task6 owns the combined final APK attempt with a private Gradle user home. Hosted software/browser/policy checks all passed on8190aaf. No device, live provider or physical transfer validation.
+
+### 2026-09-19 — Task 6 final combined delivery evidence
+
+- Completed client-bound browser/native pairing issuance and a separately paired read-only spectator. Final full software gate passed 200 tests, all typechecks/builds/static checks and fixture validation; Chromium passed 4/4 on isolated port3107. Production private-cache harness passed12 checks and its pinned hosted workflow is green. Real two-process inspection uses synthetic images and an explicit mock; no live-provider evidence is claimed.
+- Combined native candidate `d9f177fb11734da7218b3a305d931a3b33c5c170` includes final platform6a8a302 (concrete XR Hands feature, prebuild guard, client-bound pairing, concurrent401 invalidation and parser-safe TagManager), contracts3d629fa, capture/guide recovery and vision29ce5ee. Actual Unity6000.3.24f1 setup and final EditMode20/20 plus PlayMode6/6 passed. Final XML directories: `test-fcff0eb9-412b-4302-98ac-2c85982ae5f6` and `test-play-5d9c5b87-2799-44b2-a3c5-f30e2956122f` under ignored `artifacts/quest`. All306 recorded native/shared input hashes match the restored committed source.
+- The final development Android ARM64/IL2CPP build succeeded with a private `GRADLE_USER_HOME`; build/report/APK are in `artifacts/quest/build-92bd5665-2fa2-411c-b533-ee590061f37d`. APK size84,035,500 bytes; SHA256 `eda0603f83e43bf0b5174ea4568882f264b29c6c1fae17dc0c942ac52a449481`. Android build tools confirm `com.trail.guide`, minSDK32/target36, only arm64-v8a native libraries including libil2cpp, and a valid v2 signature. Final import contains no TagManager parser failure. Source manifest is `artifacts/combined-d9f177f/sources.json`; generated build/editor state is preserved outside tracked source. The earlier combined candidate also built successfully; final evidence above supersedes it.
+- These are software, synthetic desktop, real editor and APK build results. The APK has not been installed on Quest; fresh capture/calibration/transfer, camera pixels, simultaneous microphone/tracking, live providers, physical LEGO and a novice run remain unvalidated. Native guidance remains the only progression authority. Voice PR3 was not changed. Existing Vite bundle warning remains. No PR was merged or deployment performed.
+## 2026-09-19 — Task 3 final native and delivery evidence
+
+The actual full project now imports and compiles in externally installed/licensed
+Unity 6000.3.24f1 after native-platform's module/real-lock repair d23754a. With
+final shared contracts 3d629fa, `pnpm quest:test` passed 11/11 and
+`pnpm quest:test:play` passed 4/4. The latter instantiates the real capture installer,
+separate articulated ghost prefab and fonts/materials, checks no duplicate source
+and no ghost colliders, and exercises capture/calibration/replay invalidation
+with explicitly synthetic hand observations. Latest PlayMode evidence is
+`artifacts/quest/test-play-7aa7d645-f308-4f06-9158-cb183caeec72/results.xml`.
+Isolated real Unity source-hashing runner passes EditMode 6/6 and PlayMode 2/2;
+full-project results are distinct and stronger import/composition evidence.
+
+Added a serialized 31 MiB motion budget via the canonical frame writer, preserving
+a saveable accepted prefix plus visible StopReason before the 32 MiB parser ceiling;
+actual C# regression passed. Explicitly admit only the official OpenXR Hands
+provider; non-Android/Editor sources remain synthetic. Continuous pure C# capture
+CI is green. Runtime source is stable from 1b2d095, with final contract dependency
+and composition tests added afterward. .NET fixtures continue to pass.
+
+The final pnpm pass after contract integration passed 157 tests/typechecks/builds;
+its static tail encountered Unity's empty generated StreamingAssets folder before
+metadata existed. Removed/backed up only validation-generated files, restored only
+the engine-generated EditorBuildSettings delta, and reran the normal available gate.
+Generated platform settings/assets are preserved under ignored artifacts, not in
+this PR; platform owns their canonical publication. Existing Vite size warning
+remains. Prior desktop smoke passed 3/3; hosted branch checks including C# capture
+and network are green before this documentation-only completion update.
+
+PR #6 is stacked on shared-contracts PR #8 and also includes platform PR #5 dependencies.
+Merge those before capture, then the dependent guide/authoring/inspection work.
+Android support was found externally and the coordinator assigned the combined
+APK build to task 6; no APK result is preclaimed here. No headset, native live
+hand capture, physical LEGO/independent-user transfer, provider, or timing-accuracy
+claim follows from these editor/synthetic checks. No voice implementation changed.
+
+Task 4 final base synchronization: merged capture's final `9cf0bd7` without
+changing production guide source. Preserved both tasks' log entries and reran
+the expanded full PlayMode suite: 5/5 passed in Unity 6000.3.24f1, including the
+new real capture prefab/control composition test alongside the guide recovery
+scenario. Archived only this rerun's generated platform assets/settings. EditMode
+13/13 and other passing checks are reused for unchanged inputs.
+
+- **Task 5 final stack synchronization:** Merged guide88508b2 non-rewriting and preserved both work-log histories. Incoming changes add the capture prefab/control PlayMode test and validation documentation; no production runtime source changes. The expanded PlayMode suite and hosted executable gates are being verified on this merge; prior EditMode/software results are reused only where inputs are unchanged.
+
+Task 6 final stack synchronization: merged inspection7aba4b2 at `705bb5c`, retaining all work-log entries. All306 previously tested native/shared hashes still match APK candidate d9f177f; only the five new CapturePresentation test/assembly/meta files were added. Re-ran the affected expanded Unity PlayMode suite:7/7 passed (`artifacts/quest/test-play-4629a968-2aba-4238-8bc6-79abfaa850a1/results.xml`). Production/settings/shared inputs are unchanged, so the verified APK and EditMode20/20/software evidence remain applicable. PR11 remains ready and mergeable against the synchronized inspection base. Generated editor whitespace/metadata was preserved outside tracked source and restored.
+
+TRAIL-03 review follow-up: `MotionChunk` now rejects non-increasing `tMs` within a chunk in both Zod (`refine`) and pure C# (`ContractValidation.Validate(MotionChunk)`, wired through the generator's semantic set); cross-chunk ordering remains a storage-coordinator concern. Two corpus cases (duplicate and decreasing chunk timestamps) cover parity. `pnpm check` passed (150 tests) and the .NET harness passed 115 checks; no Unity, IL2CPP or headset claim.
+
+TRAIL-04 review follow-up: capture panel labels now arm after a 0.6 s fresh index-tip dwell and execute only on a tracked withdrawal, matching the on-screen instruction; tracking loss, stale or non-monotonic samples and drift to another label cancel the armed state. Merged the contracts chunk-order fix from `codex/shared-contracts`. `pnpm check` and the .NET capture harness passed; the panel is a MonoBehaviour, so this is unverified in Unity/headset. Manifest/lockfile ownership and Unity CI gates remain open for the platform owner.
+
+TRAIL-05 review follow-up: `Preload` now loads the recording into capture before dispatching `Preloaded`, so capture's synchronous invalidation is absorbed by the Preload phase and the first attempt stays `attempt-1`, revision 1. Merged the capture-panel and contracts fixes from `codex/capture-calibration-replay`. Guide harness passed (.NET; not Unity/headset). The user-confirmed-while-occluded question (reviewer P1 versus the existing `ManualOcclusion` scenario) is left for a product decision.
+
+TRAIL-07 review follow-up: vision re-encodes uploads in their source format (JPEG stays JPEG at quality 92, PNG stays PNG) so a realistic 1280×960 camera JPEG is no longer rejected for exceeding the PNG size ceiling; a noisy-JPEG test covers it. The coordinator's retired live-session memory is a bounded FIFO instead of a hard `busy` after 64 transitions. Non-success provider responses cancel their body. A GPU readback error on the current ticket now releases the copy slot and reports `readback-failed` immediately instead of waiting for the inspection timeout (MonoBehaviour path; unverified in Unity). Merged the guide/capture/contracts fixes from `codex/local-guide-progression`. `pnpm check` and the .NET scene harness passed; Unity CI gates remain open for the platform owner.
+
+## 2026-09-19 — PR #11 babysit: authoring/storage review findings
+
+- Caught `codex/tutorial-authoring-storage` up with `codex/visual-inspection` (append-only log conflict kept both sides).
+- `PrivateTutorialCache.LoadLatestCapture` restores the newest valid `capture-*.json` at startup so a saved demonstration survives an app restart before upload; corrupt files are skipped. Covered by the .NET storage harness (14 checks).
+- `SpectatorRelay` evicts the oldest retired run instead of rejecting all new runs after 128; server test drives 140 runs and still rejects a retired run.
+- Authoring workbench disables all controls during async save/finalize/import, and only trusts `trail-pending-upload` while `/api/recordings/uploads/query` still lists it; stale pointers are cleared.
+- `authoring.ts` keeps adjacent equal-time markers contiguous as half-open ranges and rejects empty steps; motion test added.
+- Automated evidence: `pnpm check` green, storage and relay harnesses green. No Unity Editor/PlayMode, Android IL2CPP, or headset evidence.
+
+## 2026-09-19 — PR #7 babysit: tracking loss cannot confirm
+
+- `GuideReducer.Confirm` and `GuideControlPanel` no longer accept user confirmation in `TrackingLost`; confirmation resumes after reacquisition (Guiding/Holding). The `ManualOcclusion` scenario previously asserted the opposite and was realigned with the product invariant that tracking loss cannot complete a step.
+- Automated evidence: guide-harness (.NET) green. No Unity Editor/PlayMode or headset evidence.
+
+## 2026-09-19 — PR #10 babysit follow-up: retired live sessions never forgotten
+
+- Review finding: FIFO eviction of retired `liveSessionId`s let a forgotten identity be replayed with a higher caller-supplied epoch. `InspectionCoordinator` now keeps retired identities for the current paired session in a fixed 16 KiB Bloom filter (no false negatives, constant memory); history for other paired sessions is dropped because they never pass `isCurrent`. Server test drives 300 transitions and confirms early, middle and latest retired identities stay rejected while a fresh identity is accepted.
+- Automated evidence only (`pnpm check`); no Unity/headset claim.
+
+### 2026-09-19 — PR10 inspection-session review repair
+
+Verified the remaining Bloom-filter review finding against current head72601d3.
+Replaced accumulated retired IDs with one server-issued current lease. The new
+learner-authenticated session endpoint requires the exact paused context; native
+Check/Retry obtains its lease after pause acknowledgment, then sends it in the
+existing start contract. Superseded/fabricated identities remain stale regardless
+of request epoch. Fixed memory use no longer trades replay rejection for false
+positives. Native transport parsing and additive endpoint migration are documented.
+
+Focused tests passed50,000 rotations plus old-identity/epoch/generation/scope
+rejection, exact cancellation and two-process crash/recovery. The .NET harness
+passed strict lease parsing, duplicate fields and unsupported version rejection.
+Real Unity EditMode/PlayMode and Android ARM64/IL2CPP gates are being run for this
+runtime change; no hardware/provider validation is inferred. Review comments are
+not replied to or resolved without explicit user authorization.
+## 2026-09-19 — PR #7 babysit verification follow-up
+
+Synchronized published head `2fc8d4a`; both prior review threads are resolved,
+all hosted checks pass, and the actual capture base has no conflict. Verified
+that preload invalidation stays in Preload and user confirmation excludes
+TrackingLost. Added real-adapter PlayMode assertions for initial attempt 1 and
+revision 1, and corrected the native guide documentation's stale occlusion rule.
+
+Actual local Unity 6000.3.24f1 EditMode passed 13/13 at 20:21:55Z and PlayMode
+passed 5/5 at 20:22:33Z, including the new assertions. Results are in
+`artifacts/quest/test-53e0fe31-0229-4409-ae1e-7e4d1ba0b051/results.xml` and
+`artifacts/quest/test-play-c7924ded-7346-4a5a-8a9f-f1a27ee223b4/results.xml`.
+The .NET Release guide harness passed 24 scenarios and golden/rebind integration;
+static scaffold validation passed 97 GUIDs. Reused passing hosted workspace,
+fixture, browser and workflow checks for unchanged inputs; final-head CI follows
+the push. Archived only this run's generated Unity settings/assets. Combined
+Android build remains with integration; no headset or provider evidence is claimed.
+
+PR10 repair verification: production source `f727100` passed full workspace
+checks (191 tests), synthetic fixtures, three Chromium scenarios, the Release
+.NET scene harness, actual Unity6000.3.24f1 EditMode17/17 and PlayMode5/5.
+Actual Android ARM64/IL2CPP build succeeded, producing a69,265,189-byte APK
+with SHA256 `d948fd9496be4a097561c47783d27fd518bb8bc24a830682a9b4826fd2c1d3db`.
+Build report and source hashes are retained in ignored artifact directory
+`build-85dd9b3e-b71f-4ffb-aeda-3141cea27e6f`. After normal base merge `c1cfc40`
+added two test assertions/docs only, actual PlayMode reran and passed5/5
+(`test-play-c37ea019-535d-414c-a792-76bfd08f0810`); player inputs are unchanged.
+Hosted executable gates passed at `c1cfc40`. Both sides of the shared log were
+preserved. Detailed commands and local evidence paths are in
+`docs/visual-inspection.md`; no hardware/provider success is claimed.
+## 2026-09-19 — PR 6 babysit: control withdrawal regression
+
+Verified the current review findings against head dba0886. The package manifest
+and lockfile changes originate in native-platform commits f626cd3, 5250e30 and
+d23754a; both files exactly match platform PR #5. They are inherited dependencies
+of this stacked PR, already owned separately by integration. PR #5 and the
+shared-contracts base PR #8 remain prerequisites; the ownership thread needs
+reviewer resolution rather than duplicated dependency edits here.
+
+The follow-up control fix still executed the armed action when the next sample
+hit another button. Added a synthetic PlayMode regression that failed on that
+behavior, then required an outside-all-buttons sample to confirm withdrawal.
+The regression also verifies dwell alone does not execute, confirmation happens
+once, and tracking loss, gaps over 100 ms and non-increasing timestamps cancel.
+Actual full-project Unity 6000.3.24f1 passed 5/5 PlayMode and 11/11 EditMode after
+the fix. Results are in ignored artifacts/quest/test-play-f62733a5-3078-4b83-9c60-c3009593179b
+and artifacts/quest/test-c30e20fd-998a-47ad-9e70-95c8526f9bf8. Generated settings
+and assets were preserved outside Git; no platform configuration was changed.
+
+The native-CI review remains an integration prerequisite: hosted workflows run
+the pure C# harnesses, not Unity/Android, and GitHub currently reports no repository
+Actions secrets or self-hosted runners. Local Editor tests are distinct from
+hosted enforcement. The earlier combined APK predates this panel change and is
+not claimed as current-revision ARM64/IL2CPP evidence. No headset or physical
+transfer evidence, review reply, thread resolution, merge or deployment occurred.
+
+Final local workspace gate passed `pnpm check` (159 tests, typechecks, production
+builds and 78-GUID static check) and `pnpm validate:fixtures` (61-frame synthetic
+recording). The existing Vite chunk-size warning remains. Desktop inputs are
+unchanged by this C# panel repair; current-head hosted browser evidence is checked
+separately after publication.
+
+### 2026-09-19 — Babysit contracts PR #8
+
+Fast-forwarded to the existing review repair `9ccf520`, verified matching TS/C# chunk-order checks and the already-resolved review thread. Reproduced a remaining regression-maintenance bug: fixture regeneration silently removed both new chunk-order cases. Added those cases to the generator and a temporary-directory regeneration test covering every shared fixture; the test failed before the fix and passed afterward. No wire format, runtime behavior or committed fixture changed. Final local signoff passed `pnpm check` (151 tests), fixture validation, 127 focused contract tests, 115 actual .NET parser checks, and 5/5 isolated Unity EditMode tests. Existing browser evidence is reusable because app/runtime/fixture inputs are unchanged; newly pushed hosted checks are verified separately. Full-app Unity dependency limits and Android/headset/physical acceptance remain outside this evidence. No review replies, thread resolutions, bot invocations, merges or deployments were performed.
+
+PR #6 catchup: merged base 1895f08 after an append-only work-log conflict, preserving both entries. Only fixture-generation tooling/tests changed upstream; native runtime inputs and the passing 11 EditMode/5 PlayMode evidence remain unchanged. The merged `pnpm check` passed 160 tests/typechecks/builds/static checks and fixture validation passed.
+
+## 2026-09-19 — Stack babysit: guide base catch-up
+
+Merged the actual capture base `9495c0e` into PR #7 without rewriting published
+history. Preserved both append-only activity-log sections. This brings the
+capture-panel drift cancellation regression and fixture-regeneration checks
+into the guide branch; no guide behavior was changed by the conflict resolution.
+The merged worktree passed `pnpm check` (160 tests), `pnpm validate:fixtures`,
+24 pure C# guide scenarios plus golden integration, and 115 C# contract checks.
+Unity validation is running separately; this entry is not new Android, live
+provider, headset or physical-transfer evidence. PR #6 is concurrently validating
+its newer main catch-up, which will be checked before the final stack report.
+
+Stack guide verification for source `31903fa`: Unity 6000.3.24f1 passed 13/13 EditMode and 6/6 PlayMode tests in `artifacts/quest/test-56878b9c-4990-41cf-86ff-5bf612621b58` and `artifacts/quest/test-play-db5ba2f7-8e3f-494c-8d01-861f2d472c8d`. The first Chromium run failed the health-request timeout while native imports/builds were active; an unchanged isolated rerun passed 3/3. No timeout/assertion was weakened. Engine-generated settings were archived under ignored artifacts. Android validation of the updated base remains in progress in the capture task; no headset or live-provider claim.
+
+## 2026-09-19 — Stack babysit: inspection base catch-up
+
+Merged guide base `92b768b` into PR #10 and preserved both activity-log histories.
+The combined worktree passed `pnpm check` (192 tests), fixture validation, actual
+Unity 6000.3.24f1 EditMode 17/17 and PlayMode 6/6. XML evidence is in ignored
+`artifacts/quest/test-d76ee5f4-12dc-469a-956c-40c7b8cbfae4` and
+`artifacts/quest/test-play-d53c12e5-df2b-4ea9-a08f-11cc02dd6332`.
+Browser inputs did not change in this merge; passing prior browser evidence is
+reused. The earlier inspection APK predates the inherited capture-panel repair;
+it is not current combined-player evidence. Final stack integration will check
+the authoring test's inspection-session handshake and the newer capture base.
+No review replies, thread resolutions, provider calls or headset tests occurred.
+
+## 2026-09-19 — Stack babysit: authoring inspection integration
+
+Merged inspection base `a6f9f25` into PR #11. Reproduced the real HTTP integration
+test failing with `409 stale`: it still invented a live-session ID after the
+inspection coordinator changed to server-issued leases. The test now obtains
+a lease through the authenticated paused-guide endpoint, rejects an invented
+ID, and completes the existing reviewed-reference/vision round trip.
+
+The combined worktree passed `pnpm check` (206 tests), fixture validation,
+4/4 Chromium scenarios, 14 pure C# storage checks, and the scene freshness and
+strict transport harness. Actual Unity 6000.3.24f1 passed EditMode 20/20 and
+PlayMode 8/8, including capture drift cancellation and guide preload identity.
+XML is retained in ignored `artifacts/quest/test-4bf03b42-3970-45e0-8fcf-a132cfc827f0`
+and `artifacts/quest/test-play-d94c4b1a-69d2-4a09-8da8-0aa03263273a`.
+Unity changed only trailing whitespace in three tracked settings, which was
+normalized back to the committed form. Combined Android build and final base
+synchronization follow separately; no device, live provider or physical evidence.
 - Corrected toolchain discovery: AndroidPlayer with SDK/NDK/OpenJDK exists beside the editor bundle at `Editor/6000.3.24f1/PlaybackEngines`; the prior absence note checked only `Unity.app/Contents/PlaybackEngines`. Real build execution, not that incomplete directory check, determines availability. Trail runtime/editor/test assemblies have compiled in Unity; setup is finishing initial package asset imports.
 - Native setup review found that OpenXR requires the new Input System (the editor default was legacy-only); setup now applies the actual serialized setting used by Unity's package. Meta also auto-generates a disabled local DevAgent resource containing a machine credential. Excluded that generated asset and metadata from Git, and added setup/final-build sanitization to clear the disabled tool's credentials/address before packaging. No application voice/provider implementation was changed.
 - Implemented visible native setup: a world-fixed head-directed 0.9-second dwell keyboard for bounded HTTPS endpoint and masked role-code input, explicit development USB preset, Pair, state/role, Disconnect/re-pair and UI-only recenter. It adds no hand provider or guide authority. Code clears on submit/pause/focus loss; endpoint/credentials remain memory-only. Actual pure C# input policy tests pass. Unity EditMode ran 2/2 passing against the imported project and compiled the new UI/runtime; PlayMode keyboard/lifecycle interaction tests are running. Physical legibility/dwell comfort are unverified.
@@ -284,6 +657,69 @@ Fast-forwarded to the existing review repair `9ccf520`, verified matching TS/C# 
 - Actual repaired platform evidence on Unity 6000.3.24f1: setup passed (setup-f67aad52), EditMode4/4 passed (test-b760c6d8) including concrete-subsystem/prebuild rejection tests, and PlayMode3/3 passed (test-play-60ebd226) including the concurrent401 cancellation regression. Committed the actual generated HandTracking-enabled/Microsoft-disabled Android flags. Quoted empty TagManager entries explicitly: bare empty sequence items produced a Unity parser warning after whitespace normalization; the quoted representation imported without parser errors.
 - Baseline08fd3a7 development Android attempt completed IL2CPP/native compilation and linking but failed Gradle packaging with “Gradle build daemon has been stopped: stop command received.” No APK was verified. No stop command was issued by this task; a shared-daemon interaction is suspected, not established. Task6 owns the combined final APK attempt with a private Gradle user home. Hosted software/browser/policy checks all passed on8190aaf. No device, live provider or physical transfer validation.
 
+PR #6 final catchup: PRs #5 and #8 merged while this run was waiting for checks, and GitHub retargeted PR #6 to main. Merged actual base 2a29871, preserving all capture/contract history and adding the platform evidence. Dependency ownership is now reflected in the PR base itself. Revalidating the expanded native platform and auth inputs before final publication.
+
+Final main-integrated native evidence: Unity 6000.3.24f1 passed 13/13 EditMode
+(test-c34aafe1-ee0c-46fc-ad5e-52bd15875c56) and 7/7 PlayMode
+(test-play-29860c9c-8ba3-492c-b8de-52e72ede5473), then the standard `quest:build`
+recipe succeeded for non-development Android ARM64/IL2CPP with an isolated
+Gradle user home. APK: artifacts/quest/build-ccc5b914-7a2b-4453-b38a-e1ba21096d4a/Trail.apk,
+69,218,821 bytes, SHA256 fb6f7b4ba2d2e5483020938ba9960e7383459392aaff791282ae5b9ac54b2050.
+The build report confirms the editor/backend/architecture, and the ZIP contains
+lib/arm64-v8a/libil2cpp.so. The same artifact directory records 215 native/shared
+input hashes, distinguishing staged inputs from eight settings regenerated by
+ProjectSetup.Apply; generated files were preserved there and staged platform
+settings restored after validation. No generated settings or APK are committed.
+The final merged workspace passed 161 tests/typechecks/builds, fixture validation
+and Chromium 3/3. This supersedes the earlier current-APK gap; hosted native-CI
+enforcement and review-thread disposition remain separate. No device install,
+headset, physical transfer or live-provider validation is claimed.
+
+Final guide-base synchronization: merged capture `82b0266`, including the
+platform/authentication changes now in main. `pnpm check` passed typechecks,
+161 tests and builds; its final static check encountered an empty Unity-created
+StreamingAssets folder left by switching this task's branches. Removed that
+untracked empty folder and reran the unchanged static check successfully (122
+GUIDs), then fixtures passed. Actual Unity 6000.3.24f1 passed EditMode 15/15 and
+PlayMode 8/8 on this combined guide tree; XML is in
+`artifacts/quest/test-52f7f34a-aaf8-4997-bdbf-97337238b69d` and
+`artifacts/quest/test-play-e6b422a3-8780-4b9a-938d-03c7ba604f31`.
+The complete combined authoring APK is building separately. No headset claim.
+
+Final inspection-base synchronization: merged guide `20186c6` and the validated
+capture/platform base. Typechecks, 193 tests and builds passed; removed the same
+empty Unity-generated StreamingAssets directory after native tests finished and
+reran the unchanged static check successfully (132 GUIDs), then fixtures passed.
+Actual Unity 6000.3.24f1 passed EditMode 19/19 and PlayMode 8/8, with XML in
+`artifacts/quest/test-c4f4ae19-39f7-400c-9f98-d9ec8517a449` and
+`artifacts/quest/test-play-543f3641-2d89-4ea8-a470-970f2d13a12f`.
+All native source/configuration files match the corresponding files in the
+already-tested combined authoring candidate; combined APK packaging is ongoing.
+No native CI enforcement or review-thread resolution is claimed by local tests.
+
+## 2026-09-19 — Final combined stack Android evidence
+
+Merged final inspection base `d84b490` into authoring; only this activity log
+changed relative to tested source `d59963e`. Reused its 206 workspace tests,
+fixtures, 4/4 Chromium, Unity EditMode 20/20 and PlayMode 8/8 evidence.
+The standard `pnpm quest:build` recipe succeeded on that source in the existing
+integration checkout with a private Gradle user home. Actual Unity 6000.3.24f1
+produced a non-development Android ARM64/IL2CPP APK, 69,315,761 bytes, SHA256
+`db0345c165c80a69129f94b1fa1cbbb4394693d6637803107cef092023544f77`.
+ZIP inspection found only arm64-v8a native libraries and libil2cpp.so.
+
+Integration-checkout evidence is in ignored
+`artifacts/quest/build-b309c4eb-dcd1-41db-8a36-314780a0c52b/`: build.json,
+Trail.apk, Unity log, 293-file source-manifest.json, generated-settings.patch,
+and generated/ snapshots. The manifest distinguishes committed input hashes
+from seven settings/assets rewritten by the normal Unity/ProjectSetup build
+pipeline (including URP profile/render settings); those generated changes were
+archived and the checkout restored. Neither generated settings nor APK entered
+Git. No device install, real camera/provider session, or physical-transfer claim.
+
+Stack repair left review-thread disposition and hosted Unity/Android enforcement
+separate from local validation. Final hosted checks are verified after publication;
+no review replies, resolutions, PR merges or deployments were performed here.
 ### 2026-09-19 16:50 EDT — Voice/AI workstream: contracts, provider, routes, coach, Voice Lab (PR #3)
 
 - **User goal / request:** Take the voice/AI role (TRAIL-09/10 software portions and the server half of TRAIL-16) from design to a mergeable PR with tests and a desktop way to exercise it, using `gpt-live-1` for the coach.
@@ -294,6 +730,135 @@ Fast-forwarded to the existing review repair `9ccf520`, verified matching TS/C# 
 - **Validation:** Automated on the PR head: `pnpm check` (typecheck, 252 unit/API tests, build), `pnpm validate:fixtures`, `pnpm test:e2e` 6/6 with Chromium's fake microphone; all CI jobs green. Live provider (desktop Chrome on macOS, `AI_PROVIDER=openai`, observed by Ali at revision `4c01b4e`): whisper-1 transcribed a 14.33 s clip into 4 spans with the 207 ms start offset applied; labels for 3 simulated segments carried provenance `model`; the GPT-Live-1 session reached mode `live`, answered "what do I do now" from the tutorial text, and refused to confirm completion ("The system only checks the hand movement checkpoint"). Latency was not measured. Headset: not tested; native mic and WebRTC on the Quest APK remain TRAIL-16.
 - **Remaining limits / next step:** Routes are unauthenticated and trust the submitted `CoachContext` until pairing and tutorial storage (#11) land; no per-learner live-session cap; whisper-1 is deprecated for 2027-02-26. Next: register the voice routes behind pairing auth with server-side tutorial lookup, then prove native mic → WebRTC → Live on the Quest APK.
 
+Final stack repair cycle: PR #3 merged externally into main `6e7b5b5` during final verification. Merged that actual base into capture, preserving both activity histories. No native inputs changed; prior capture Unity/APK evidence remains applicable. New voice/server/browser inputs are covered by the new-head hosted full workspace/browser gate and final combined-stack checks. Review #11 additionally requested authoring transport fixtures and migration notes; that repair is scoped to the authoring tip.
+
+Final guide cycle: inherited capture `27411fd` and the externally merged voice workstream. Conflict resolution only preserves both log histories. Native files are unchanged; the current-head hosted workspace/browser gate validates the new TS inputs.
+
+Final inspection cycle: inherited guide `f2ab1d0` after the external voice merge. Only the activity log conflicted. Native inputs remain unchanged and the final-head hosted workspace/browser gate covers the added voice TS surface.
+
+## 2026-09-19 — Final review cycle: authoring fixtures and voice integration
+
+Main advanced externally through voice PR #3. Propagated that base through capture,
+guide and inspection, then reconciled authoring's server TLS/pairing/vision options
+with voice provider options and retained both authoring and voice dashboard UI.
+The combined full workspace gate passed 333 tests, typechecks, builds and static
+checks; all seven Chromium voice/fixture/authoring scenarios passed.
+
+Verified PR #11's new missing-fixtures finding. Added eight synthetic envelopes
+and 36 valid/invalid shared-corpus cases for all seven authoring schemas, including
+connected/disconnected spectators. Explicitly extended the shared native registry,
+regenerated pure C# DTOs/parsers/serializers and shapes, and documented compatibility
+and consumer limits. Native job/byte upload now uses generated serializers with
+the same wire fields; no recording/tutorial format or stored-data migration changed.
+Image metadata fixtures contain synthetic placeholder bytes, not camera evidence.
+The existing pinned storage CI job now also runs the actual C# shared corpus.
+
+Zod contract tests passed 180 checks; pure C# passed 151 corpus/binding/legacy/math
+checks. Actual Unity 6000.3.24f1 passed EditMode 21/21 and PlayMode 8/8, including
+the new one-MiB native byte-chunk round trip and invalid authoring bounds. XML is
+in `artifacts/quest/test-13b3c32d-7c16-49e1-ad68-563f51a5e0cc` and
+`artifacts/quest/test-play-955f651f-0d31-403f-954f-0c7104e6f620`.
+A new APK build is required for these generated C#/serializer changes; earlier
+APK evidence is not attributed to this source. No provider or headset test ran.
+
+Fixture repair scope refinement: retained the existing native upload construction instead of adding full JSON parse/regex validation to every outgoing one-MiB chunk. Generated authoring codecs remain covered by the shared corpus and Unity boundary test; production upload fields and behavior remain unchanged. This supersedes the earlier note about replacing native upload construction.
+
+## 2026-09-19 — Published stack candidate native evidence
+
+Final source `0e16f4e` passed actual Unity 6000.3.24f1 EditMode **21/21**
+and PlayMode **8/8** after preserving the original production upload construction.
+The isolated babysit worktree retains XML under
+`artifacts/quest/test-de3b9ad4-514e-4f1b-8951-0d99711a248f/results.xml` and
+`artifacts/quest/test-play-7199a975-b6f4-4feb-8ee0-292f2b53c7ae/results.xml`.
+Previously passing 333 workspace tests, seven synthetic Chromium scenarios,
+180 Zod contract checks, 151 pure C# checks and 14 storage checks are reused for
+unchanged inputs. The post-editor static scaffold check also passed.
+
+Standard `pnpm quest:build` succeeded on this source using an isolated Gradle
+home in `/Users/aidanjeon/.codex/worktrees/198f/trail`. Artifact directory:
+`artifacts/quest/build-ecf08911-2135-4ae8-b353-7deaa54d688f`.
+The non-development Android ARM64/IL2CPP APK is **69,327,117 bytes**, SHA256
+`17c52461c5ce39115b1f71ef4e20146df2692696658e4984b789bdf74528c965`.
+ZIP inspection confirms only `arm64-v8a` native libraries and `libil2cpp.so`.
+`build.json`, `unity.log`, a 301-file committed/built-worktree hash manifest,
+and the seven generated settings/assets plus patch are preserved beside the APK.
+Generated tracked state was archived and restored; artifacts remain outside Git.
+The earlier interrupted build of superseded source is not passing evidence.
+
+Current published heads for capture `27411fd`, guide `f2ab1d0`, and inspection
+`d7ef1d2` have passing executable hosted checks. Authoring CI is checked after
+this evidence-only commit is published. Hosted native enforcement remains an
+infrastructure gap: repository Actions currently lists no secrets and no
+self-hosted runners. Local editor/player gates do not establish hosted gating.
+No headset, physical transfer, or new live provider run was performed. Open
+review threads are left for user disposition; no replies/resolutions or merges
+were performed by this repair.
+## 2026-09-19 — PR 7: enforce native validation in CI
+
+Confirmed the review finding: `guide.yml` ran only the standalone .NET harness,
+so it could not detect Unity integration or Android build regressions. Converted
+it to a reusable workflow called by Check, retained the harness, and added
+separate EditMode, PlayMode and Android ARM64/IL2CPP matrix gates using the
+existing evidence-validating wrappers. The existing aggregate `check` now
+requires that workflow to succeed. Native logs/results/build artifacts upload
+on success or failure. Documented isolated licensed-runner provisioning and
+updated the stale validation reference.
+
+Automated validation on the changed worktree: actionlint 1.7.12 and patch
+whitespace passed; eight runner-configuration cases and all 256 combinations
+of success/failure/cancelled/skipped aggregate inputs passed; both existing
+Unity-wrapper regression tests passed. Full `pnpm check` passed (252 tests,
+typechecks, production builds and static scaffold checks), and recording/voice
+fixture validation passed. Existing hosted browser evidence for f2ab1d0 is
+reused because application, fixtures and browser-test inputs are unchanged.
+
+Infrastructure boundary: GitHub reports no repository self-hosted runners or
+Actions variables. Missing `TRAIL_UNITY_RUNNER_LABELS` now fails explicitly;
+configure a disposable licensed runner and `TRAIL_UNITY_EDITOR` as documented
+in docs/ci.md before native CI can pass. No Unity test or APK execution is
+claimed from workflow validation, and no headset/provider evidence was added.
+No review replies, thread resolutions, merge or deployment were performed.
+### 2026-09-19 — PR #6 Greptile native-gate repair
+
+Rechecked every Greptile thread on head 27411fd. The withdrawal-confirmation
+finding is already fixed with its PlayMode regression. The Unity dependency
+ownership finding is stale: integration PR #5 and contracts PR #8 are merged,
+and `git diff origin/main...HEAD -- apps/quest/Packages` is empty. No dependency
+or lockfile edit is needed or included in this repair.
+
+Added a reusable Unity workflow to the existing Check aggregate: actual full
+project EditMode and PlayMode (Android target), then the production Android
+ARM64/IL2CPP build. All must succeed; missing activation fails the prerequisite
+and aggregate explicitly. The existing standalone C# harnesses stay supplemental.
+The CI build entry point sets output paths and calls the unchanged production
+setup/build guard. A verifier rejects missing/empty/failed/skipped test reports,
+wrong build configuration, mismatched APK size and a non-ARM64 IL2CPP ELF binary.
+Four regression tests exercise both accepted results and these failure modes.
+Pinned the GameCI actions/CLI and verified the Android-capable image tag exists.
+Updated the CI runbook and validation guidance without relaxing native or
+physical acceptance requirements.
+
+Repository inspection found no Actions secrets, no self-hosted runners and no
+branch protection on main. The new hosted native gate is therefore blocked on
+Unity activation credentials. Adding the workflow does not itself configure
+those credentials or a branch rule. No activation data was read, copied or
+published. Local licensed Unity results remain separate from hosted CI evidence.
+
+Local repair validation passed: frozen-lockfile install, `pnpm check` (252 tests,
+typechecks, production builds, static native checks), fixture validation,
+Chromium 6/6 with synthetic/fake-microphone inputs, actionlint 1.7.12, and all
+four native-verifier regression tests. Real Unity 6000.3.24f1 passed 13/13
+EditMode (test-1b3cc3cf-f31b-422b-9ec0-c1bc38f85a2e) and 7/7 PlayMode
+(test-play-3ca6524b-499d-4c66-8b15-ff53fbdf8dc6). Directly executing the new
+BuildAndroidCi entry point succeeded with an isolated Gradle home: non-development
+ARM64/IL2CPP APK, 69,218,837 bytes, SHA256
+99aacc614a212920cf33c101a2b975e61a334e67a8453e008a32c68f95e78ba6.
+The verifier also checked its actual ELF architecture. The ignored
+artifacts/quest-ci directory retains the APK, build report, generated settings
+and 220 native/shared input hashes. Eight Unity-regenerated tracked settings
+were preserved there and restored, keeping dependency/platform assets outside
+this repair. Existing Vite chunk-size and vendor Android manifest warnings
+remain. No live-provider, headset or physical acceptance result is claimed.
 ### 2026-09-19 — Align the README with the revised plan and rescaffold
 
 - **User request:** Update the README to follow the revised plan.
@@ -351,6 +916,30 @@ Fast-forwarded to the existing review repair `9ccf520`, verified matching TS/C# 
 
 - **Review finding / fix:** Confirmed that the stack table incorrectly described native strict DTO validation as unimplemented. Updated the Contracts row to match the implemented strict parsing and validation, including native capture sidecars and scene-reference manifests, and the README's existing status table.
 - **Validation / limits:** Checked the wording against the native contract implementation and verified patch whitespace. This documentation-only correction changes no code, dependencies or links; prior software test evidence remains applicable. No new headset or live-provider validation is claimed.
+
+### 2026-09-19 — Catch up open PR branches
+
+- User requested a fresh CI check and catchup for every open PR. In an isolated checkout, merged current main `c80d67b` into PR #6, preserving the hosted native gates and the newly merged Unity setup safeguards/assets. Reconciled validation guidance and retained both activity histories. The original dirty Unity setup checkout is untouched.
+- Before catchup, hosted licensing prerequisites passed after secret configuration, but the test runner stopped before Unity with `Unknown argument: noCoverageEnabled`. PR #7 separately requires a configured self-hosted runner. These existing CI failures are not evidence of passing native tests.
+- Validation on the merged worktree: `pnpm check` passed (252 tests, typechecks, production builds and 102 static native GUID checks), fixture validation passed, actionlint passed, and 4 native-result-verifier regressions passed. Native CI remains failing before Unity execution as recorded above; no new editor/APK, provider or headset evidence.
+
+### 2026-09-19 — Catch up guide PR #7 with capture
+
+Merged capture `370aee5` into the guide branch. Reconciled overlapping CI implementations by requiring one full-project hosted Unity EditMode/PlayMode/Android workflow plus the guide's pure C# scenario harness. The same native suites and production build remain mandatory, while the duplicate self-hosted matrix and its missing-runner prerequisite are superseded. The aggregate now checks all five job results. Preserved both logs and main's setup changes. The inherited GameCI CLI flag failure remains a separate known blocker; no native execution is claimed.
+
+Guide catchup validation: `pnpm check` and fixture validation passed; actionlint passed; the pure C# harness passed 24 guide scenarios plus golden recording/tutorial/telemetry integration; all 4 native-result verifier regressions passed. These are software/static checks, not a new Unity or headset run.
+
+### 2026-09-19 — Catch up inspection PR #10
+
+Merged updated guide `7945802`, including current main and reconciled native CI, into inspection. The only conflict was append-only activity history; both sides are retained. Inspected automatic changes to setup, generated assets and workflow wiring. No inspection/runtime implementation changed during resolution. Validation follows below; existing GameCI execution failure remains distinct from static/software results.
+
+Inspection catchup validation: `pnpm check` passed 284 tests, typechecks, production builds and 131 static native GUID checks; fixtures and actionlint passed. The scene harness passed freshness/lifecycle/strict request and server-issued session checks. No new Unity/APK/provider/headset run.
+
+### 2026-09-19 — Catch up authoring PR #11 and complete stack sync
+
+Merged inspection `6d767db` into authoring, carrying current main through all four stacked PRs. Kept both activity histories, the `.utmp` and Python-cache ignores, and main's intentionally tracked `OVRBuildConfig.asset` with its original GUID; removed the superseded ignore entries for that committed metadata. No feature code or serialized contract was altered by conflict resolution. PR #14 was separately merged with the same main base; its 260 workspace tests and six synthetic Chromium scenarios passed. Remaining CI failure before Unity execution is tracked separately; validation of this merged authoring tree follows below.
+
+Final authoring catchup validation: `pnpm check` passed 333 unit/API tests, typechecks, production builds and static native structure checks; all fixtures and seven Chromium scenarios passed (synthetic/fake-microphone/mock inputs, port 3395). Pure C# storage passed 14 checks and shared contracts passed 151 corpus/binding/legacy/math checks. Actionlint and patch whitespace passed. No new editor/APK, provider or headset result is claimed. All five open PR branches are published without rewriting history; none is merged into its PR base by this task.
 
 ### 2026-09-19 — Catch up voice authentication PR #14
 

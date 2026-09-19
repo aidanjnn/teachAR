@@ -7,6 +7,17 @@ namespace Trail.Tests.EditMode
     {
         private const string Ended = "{\"schemaVersion\":1,\"sessionId\":\"s\",\"runId\":\"r\",\"seq\":1,\"tMs\":0,\"type\":\"guide-ended\",\"reason\":\"cancelled\"}";
         private const string Calibration = "{\"schemaVersion\":2,\"id\":\"c\",\"referenceSpaceType\":\"native-device\",\"trackingSessionId\":\"s\",\"originRevision\":0,\"referenceFromWorkspace\":{\"positionM\":[0,0,0],\"orientationXyzw\":[0,0,0,0.9999]},\"sampledReferencePointsM\":[[0,0,0],[1,0,0],[0,0,-1]],\"verificationErrorM\":0,\"valid\":true}";
+        [Test] public void AuthoringRequestsKeepWireFieldsAndRejectInvalidBounds()
+        {
+            var job = new TutorialJobCreate { RecordingId = "recording-1", RecordingHash = new string('a', 64), SegmentationRevision = 1 };
+            Assert.That(ContractJson.ParseTutorialJobCreate(ContractJson.SerializeTutorialJobCreate(job)).RecordingId, Is.EqualTo(job.RecordingId));
+            job.SegmentationRevision = 0;
+            Assert.Throws<ContractException>(() => ContractJson.SerializeTutorialJobCreate(job));
+            var chunk = new RecordingByteChunk { DataBase64 = System.Convert.ToBase64String(new byte[1024 * 1024]), Sha256 = new string('a', 64) };
+            Assert.That(ContractJson.ParseRecordingByteChunk(ContractJson.SerializeRecordingByteChunk(chunk)).DataBase64, Is.EqualTo(chunk.DataBase64));
+            chunk.DataBase64 = "not base64";
+            Assert.Throws<ContractException>(() => ContractJson.SerializeRecordingByteChunk(chunk));
+        }
         [Test] public void RoundTripKeepsKnownEventAndSession()
         {
             var parsed = ContractJson.ParseGuideEvent(Ended);

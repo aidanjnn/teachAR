@@ -18,8 +18,9 @@ invariants. This reference selects evidence; it does not claim tests exist.
 4. Native changes need the implemented Unity EditMode/PlayMode and Android
    ARM64/IL2CPP build checks in addition to relevant web/server checks. Native
    wrappers `pnpm quest:setup`, `pnpm quest:test`, `pnpm quest:test:play` and
-   `pnpm quest:build` invoke the installed pinned editor. Native Unity CI remains
-   pending; inspect [local setup evidence](../../docs/native-setup.md) and report
+   `pnpm quest:build` invoke the installed pinned editor. Check requires the native
+   Unity workflow; hosted execution needs activation secrets (docs/ci.md).
+   Inspect [local setup evidence](../../docs/native-setup.md), and report
    activation/licensing or missing-check limitations. Test
    strict C# serialization/AOT in APK and compare shared golden fixtures. No
    Unity installation is necessary to check a documentation-only change.

@@ -1,0 +1,21 @@
+{
+  "name": "Trail.Scene",
+  "rootNamespace": "Trail.Runtime.Scene",
+  "references": [
+    "Trail.Contracts",
+    "Trail.Runtime",
+    "Trail.Motion",
+    "meta.xr.mrutilitykit",
+    "Trail.Guide",
+    "Unity.Collections"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

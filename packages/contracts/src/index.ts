@@ -5,5 +5,6 @@ export * from './guide.js';
 export * from './native.js';
 export * from './scene.js';
 export * from './storage.js';
+export * from './authoring.js';
 export * from './json.js';
 export * from './voice.js';

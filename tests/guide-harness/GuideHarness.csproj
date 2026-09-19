@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="GuideRuntime.csproj" />
+    <Compile Include="../../apps/quest/Assets/Trail/Tests/Guide/GuideScenarios.cs" />
+    <Compile Include="ContractIntegration.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+</Project>
