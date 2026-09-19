@@ -1,5 +1,10 @@
 # Trail: demonstration-to-guidance implementation plan
 
+> **Implementation handoff (19 September):** the [browser-to-Unity checklist](ux-unity-handoff.md)
+> records tested UX findings, unported features and acceptance gates for TRAIL-04/06/07/08/12/18/19.
+> The executable browser reference is retained for porting/regression work; Unity remains
+> the shipping runtime. Merging that reference does not complete any native/device gate.
+
 > Record a physical task once. Replay the expert's hand movements in another person's workspace, and let the learner progress at their own pace.
 
 **Planning snapshot:** September 19, 2026, approximately 03:35 EDT.
@@ -53,7 +58,7 @@ Use a **24-hour implementation budget**, with a working physical prototype withi
 
 Build a polished 3–5-step experience: stable workspace alignment, an articulated ghost that makes the movement obvious, learner-paced path progress, automatically proposed steps with quick review, and useful GPT Live conversation grounded in the current task and scene. The learner can ask for an explanation, interrupt an answer, or ask “Am I doing this right?” while manipulating objects. The authoring screen and spectator presentation should feel finished. Preserve a working checkpoint build throughout, then keep improving toward this target.
 
-**Use Unity + Meta XR for the headset application.** The user chose this after comparing the full workflow and has **committed to it** (September 19). Unity provides documented hand-bone access and hand assets, a visual scene/material workflow for ghost guidance, and native Quest camera access through MRUK. Spatial SDK is an alternative Kotlin/Android client, not a Unity dependency. No parallel browser runtime is maintained; the recovery path if native delivery slips is the disclosed reduced demo — explicit markers, a joint-skeleton ghost, a labeled webcam scene source and the HTTP voice loop — not a second engine. The existing TypeScript server, desktop viewer, schemas and authoring math remain useful. This is a product-fit decision, not proof of better tracking accuracy or shorter delivery time. [Unity hands](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/), [Unity camera access](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/)
+**Use Unity + Meta XR for the headset application.** The user chose this after comparing the full workflow and has **committed to it** (September 19). Unity provides documented hand-bone access and hand assets, a visual scene/material workflow for ghost guidance, and native Quest camera access through MRUK. Spatial SDK is an alternative Kotlin/Android client, not a Unity dependency. No parallel production browser runtime is maintained; the recovery path if native delivery slips is the disclosed reduced demo — explicit markers, a joint-skeleton ghost, a labeled webcam scene source and the HTTP voice loop — not a second engine. The existing TypeScript server, desktop viewer, schemas and authoring math remain useful. This is a product-fit decision, not proof of better tracking accuracy or shorter delivery time. [Unity hands](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/), [Unity camera access](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/)
 
 The first integrated proof is a **standalone Quest 3S APK** with valid live hand capture, calibrated recorded ghost replay, a fresh headset-camera image and two-way GPT Live speech operating together. A Unity Editor or simulator result does not pass this gate. Native voice, joint mapping, calibration transfer and frame timing remain measured risks. Do not reopen the engine decision for ordinary implementation friction; isolate concrete failures and report their effect on the target.
 

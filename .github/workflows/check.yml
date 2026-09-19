@@ -58,6 +58,11 @@ jobs:
         run: pnpm test:e2e --reporter=github,html
         env:
           PLAYWRIGHT_HTML_OPEN: never
+      - name: Run isolated browser tutor reference tests
+        run: |
+          python3 -m venv experiments/quest-browser/.venv
+          experiments/quest-browser/.venv/bin/python -m pip install -r experiments/quest-browser/requirements.txt
+          sh experiments/quest-browser/test-all.sh
       - name: Upload browser report and failure traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ !cancelled() }}
