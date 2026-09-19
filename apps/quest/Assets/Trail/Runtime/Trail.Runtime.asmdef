@@ -3,7 +3,9 @@
   "rootNamespace": "Trail.Runtime",
   "references": [
     "Trail.Contracts",
-    "Trail.Motion"
+    "Trail.Motion",
+    "Oculus.VR",
+    "Unity.XR.Management"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

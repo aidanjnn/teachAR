@@ -136,10 +136,10 @@ export function registerPairingRoutes(app: FastifyInstance, authority: PairingAu
     }
     return paired;
   });
-  app.get('/api/session', async (request, reply) => {
+  app.route({ method: ['GET', 'POST'], url: '/api/session', handler: async (request, reply) => {
     reply.header('Cache-Control', 'no-store');
     return authority.authorize(request, { roles });
-  });
+  } });
   app.delete('/api/session', async (request, reply) => {
     authority.revoke(request);
     reply.header('Cache-Control', 'no-store').header('Set-Cookie', `${cookieName}=; Path=/api; HttpOnly; SameSite=Strict; Max-Age=0${request.protocol === 'https' ? '; Secure' : ''}`);
