@@ -79,6 +79,7 @@ namespace Trail.Motion
         }
         public Recording Finish(string id, WorkspaceDefinition workspace, double nowMs)
         {
+            if (double.IsNaN(nowMs) || double.IsInfinity(nowMs) || nowMs < startedMs) throw new ArgumentException("Invalid completion clock.");
             IsFinished = true;
             if (frames.Count == 0) throw new InvalidOperationException("No fresh frames were captured.");
             var names = new string[JointNames.Canonical.Count];

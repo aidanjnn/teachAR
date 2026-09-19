@@ -26,6 +26,8 @@ namespace Trail.Runtime.Guide
         {
             var child = new GameObject(label); child.transform.SetParent(transform, false); child.transform.localPosition = position;
             var text = child.AddComponent<TextMesh>(); text.fontSize = 48; text.characterSize = size; text.anchor = TextAnchor.MiddleLeft;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            child.GetComponent<MeshRenderer>().sharedMaterial = text.font.material;
             text.color = Color.white; text.text = "● " + label; return text;
         }
         private void Update()
@@ -36,7 +38,7 @@ namespace Trail.Runtime.Guide
             if (MotionClock.NowMs - lastSampleMs > 100) ResetTouch();
             var session = Guide.Session;
             status.text = session == null ? Guide.Status : "TRAIL • " + (session.Definition.Source == GuideSource.NativeHands ? "native hands" : "SYNTHETIC DIAGNOSTIC") +
-                "\n" + session.Definition.Steps[session.State.StepIndex].Instruction + "\n" + Guide.Status + "\n" + Guide.LastCompletion +
+                "\nExpert motion: " + Guide.ExpertSource + "\n" + session.Definition.Steps[session.State.StepIndex].Instruction + "\n" + Guide.Status + "\n" + Guide.LastCompletion +
                 "\n" + (session.Definition.Steps[session.State.StepIndex].CompletionMode == GuideCompletionMode.UserConfirmed ? "USER-CONFIRMED • no automatic movement verification" : "Movement checkpoints only • not assembly verification");
             for (var i = 0; i < buttons.Length; i++) buttons[i].color = Available(i) ? Color.white : Color.gray;
         }

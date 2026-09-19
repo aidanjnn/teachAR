@@ -13,10 +13,12 @@ namespace Trail.Runtime.Guide
     public sealed class GuideController : MonoBehaviour
     {
         public CaptureReplaySession Capture;
+        public Func<double> Clock { get; set; } = () => MotionClock.NowMs;
         public GhostPresentation Ghost;
         public GuideSession Session { get; private set; }
         public string Status { get; private set; } = "Preload a reviewed tutorial to guide.";
         public string LastCompletion { get; private set; } = "";
+        public string ExpertSource => recording?.Source ?? "not loaded";
         public event Action<GuideEvent> Telemetry;
         public event Action<GuideTransition> Transitioned;
         private CaptureReplaySession subscribed;
@@ -57,9 +59,9 @@ namespace Trail.Runtime.Guide
             Ghost.ClearGuideFrame(); actions.Clear(); LastCompletion = "";
             tutorial = loadedTutorial; recording = loadedRecording; replay = new MotionReplay(recording);
             Session = new GuideSession(definition, Guid.NewGuid().ToString("N"));
-            telemetry = new GuideTelemetry(pairedSessionId, MotionClock.NowMs);
+            telemetry = new GuideTelemetry(pairedSessionId, Clock());
             Session.Transitioned += OnTransition;
-            Session.Dispatch(new GuideInput(GuideAction.Preloaded, MotionClock.NowMs));
+            Session.Dispatch(new GuideInput(GuideAction.Preloaded, Clock()));
             Bind();
             Capture.LoadRecording(recording); // Requires the learner's independent calibration.
             Status = "Preloaded locally. Calibrate the learner workspace.";
@@ -67,19 +69,19 @@ namespace Trail.Runtime.Guide
         private void Calibrated(CalibrationRegistration registration, int revision)
         {
             if (Session == null || registration == null || Capture.Source == null) return;
-            Session.Dispatch(new GuideInput(GuideAction.Calibrated, MotionClock.NowMs, trackingSessionId: Capture.Source.TrackingSessionId, originRevision: revision));
+            Session.Dispatch(new GuideInput(GuideAction.Calibrated, Clock(), trackingSessionId: Capture.Source.TrackingSessionId, originRevision: revision));
         }
         private void Invalidated(string reason, int revision)
         {
             actions.Clear(); Ghost?.ClearGuideFrame();
-            if (Session != null) Session.Invalidate(MotionClock.NowMs);
+            if (Session != null) Session.Invalidate(Clock());
         }
         private void Observe(ReferenceObservation observation)
         {
             if (Session == null || Capture.Source == null) return;
-            if (Capture.IsRecording) { Session.Pause(MotionClock.NowMs); return; }
+            if (Capture.IsRecording) { Session.Pause(Clock()); return; }
             var source = observation.Source == "live" ? GuideSource.NativeHands : GuideSource.SyntheticDiagnostic;
-            Session.Dispatch(new GuideInput(GuideAction.Sample, MotionClock.NowMs,
+            Session.Dispatch(new GuideInput(GuideAction.Sample, Clock(),
                 new GuideObservation(observation.TimestampMs, observation.Sequence, observation.OriginRevision, Capture.Source.TrackingSessionId, source,
                     Wrist(observation.Left), Wrist(observation.Right))));
         }
@@ -91,7 +93,7 @@ namespace Trail.Runtime.Guide
             if (Session == null || Session.State.Phase == GuidePhase.Preload || Session.State.Phase == GuidePhase.Calibrate || Session.State.Phase == GuidePhase.Complete)
                 throw new InvalidOperationException("An active calibrated guide is required for inspection.");
             actions.Clear();
-            var now = MotionClock.NowMs;
+            var now = Clock();
             Session.Pause(now);
             var acknowledgment = telemetry.SnapshotEvent(Session, now);
             Publish(acknowledgment);
@@ -106,7 +108,7 @@ namespace Trail.Runtime.Guide
         private void Update()
         {
             Bind(); if (Session == null) return;
-            var now = MotionClock.NowMs;
+            var now = Clock();
             while (actions.Count > 0) Session.Dispatch(new GuideInput(actions.Dequeue(), now));
             if (Capture.IsRecording) Session.Pause(now);
             Session.Dispatch(new GuideInput(GuideAction.Tick, now));
@@ -118,15 +120,15 @@ namespace Trail.Runtime.Guide
                 var positionMs = startMs + Math.Max(0, now - demoStartedMs);
                 if (positionMs >= endMs && state.StepRevision == demoRevision)
                     Session.Dispatch(new GuideInput(GuideAction.DemonstrationFinished, now));
-                else Ghost.ShowGuideFrame(replay.Sample(positionMs), step.Targets[0].CheckpointPose);
+                else Ghost.ShowGuideFrame(replay.Sample(positionMs), step.Targets[0].CheckpointPose, step.Targets[0].Side);
             }
             else if (state.Phase == GuidePhase.WaitingStart)
-                Ghost.ShowGuideFrame(recording.Frames[step.StartFrame], step.Targets[0].CheckpointPose);
+                Ghost.ShowGuideFrame(recording.Frames[step.StartFrame], step.Targets[0].CheckpointPose, step.Targets[0].Side);
             else if (state.Phase == GuidePhase.Guiding || state.Phase == GuidePhase.Holding)
             {
                 // Bounded visual lookahead; never feeds back into observations or gates.
                 var index = cueFrames[Math.Min(cueFrames.Count - 1, state.CueProgress[0] + 2)];
-                Ghost.ShowGuideFrame(recording.Frames[index], step.Targets[0].CheckpointPose);
+                Ghost.ShowGuideFrame(recording.Frames[index], step.Targets[0].CheckpointPose, step.Targets[0].Side);
             }
             else Ghost.ClearGuideFrame();
             if (now - lastSnapshotMs >= 100) { lastSnapshotMs = now; Publish(telemetry.SnapshotEvent(Session, now)); }
@@ -139,15 +141,15 @@ namespace Trail.Runtime.Guide
                 if (effect.Kind == GuideEffectKind.StopFeedback) Ghost.ClearGuideFrame();
                 if (effect.Kind == GuideEffectKind.ShowDemonstration)
                 {
-                    Capture.StopReplay(); demoStartedMs = MotionClock.NowMs; demoRevision = transition.State.StepRevision;
-                    var step = tutorial.Steps[transition.State.StepIndex]; Capture.UseLeftHand = step.Targets[0].Side == "left";
+                    Capture.StopReplay(); demoStartedMs = Clock(); demoRevision = transition.State.StepRevision;
+                    var step = tutorial.Steps[transition.State.StepIndex]; var useLeftHand = step.Targets[0].Side == "left";
                     cueFrames = Enumerable.Range(step.StartFrame, step.EndFrameExclusive - step.StartFrame)
-                        .Where(i => (Capture.UseLeftHand ? recording.Frames[i].Hands.Left : recording.Frames[i].Hands.Right).Status == "valid").ToList();
+                        .Where(i => (useLeftHand ? recording.Frames[i].Hands.Left : recording.Frames[i].Hands.Right).Status == "valid").ToList();
                 }
                 if (effect.Kind == GuideEffectKind.MovementCheckpointReached || effect.Kind == GuideEffectKind.UserConfirmed)
                     {
                     LastCompletion = effect.Kind == GuideEffectKind.UserConfirmed ? "Step completed by user confirmation." : "Movement checkpoint reached.";
-                    Publish(telemetry.CompletionEvent(Session, effect, MotionClock.NowMs));
+                    Publish(telemetry.CompletionEvent(Session, effect, Clock()));
                 }
             }
             if (Transitioned != null)
@@ -164,7 +166,7 @@ namespace Trail.Runtime.Guide
         private void Suspend()
         {
             actions.Clear(); Ghost?.ClearGuideFrame();
-            if (Session != null) Session.Invalidate(MotionClock.NowMs);
+            if (Session != null) Session.Invalidate(Clock());
         }
         private void OnApplicationPause(bool paused) { if (paused) Suspend(); }
         private void OnApplicationFocus(bool focused) { if (!focused) Suspend(); }

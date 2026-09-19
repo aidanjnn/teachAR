@@ -19,7 +19,9 @@ namespace Trail.Presentation
         private readonly Queue<Vector3> cuePoints = new Queue<Vector3>();
         private MotionFrame guideFrame;
         private CanonicalPose? guideTarget;
-        public void ShowGuideFrame(MotionFrame frame, CanonicalPose? checkpoint) { guideFrame = frame; guideTarget = checkpoint; }
+        private string guideHand;
+        private Vector3 lastCuePoint;
+        public void ShowGuideFrame(MotionFrame frame, CanonicalPose? checkpoint, string activeHand = null) { guideFrame = frame; guideTarget = checkpoint; guideHand = activeHand; }
         public void ClearGuideFrame() { guideFrame = null; guideTarget = null; Hide(); }
         private void Awake()
         {
@@ -51,7 +53,7 @@ namespace Trail.Presentation
             if (Session == null || Session.Registration == null || Session.Source == null || Session.Source.TrackingSpace == null)
             { Hide(); return; }
             var frame = guideFrame ?? Session.ReplayFrame;
-            var hand = frame == null ? null : (Session.UseLeftHand ? frame.Hands.Left : frame.Hands.Right);
+            var hand = frame == null ? null : ((guideFrame != null && guideHand != null ? guideHand == "left" : Session.UseLeftHand) ? frame.Hands.Left : frame.Hands.Right);
             if (hand == null || hand.Status != "valid") { Hide(); return; }
             for (var i = 0; i < joints.Length; i++)
             {
@@ -66,7 +68,9 @@ namespace Trail.Presentation
                 var radius = DiagnosticSkeleton ? .003f : .009f;
                 bone.localScale = new Vector3(radius, delta.magnitude * .5f, radius);
             }
-            cuePoints.Enqueue(joints[0].position); while (cuePoints.Count > 20) cuePoints.Dequeue();
+            if (cuePoints.Count > 0 && Vector3.Distance(lastCuePoint, joints[0].position) > .1f) cuePoints.Clear();
+            lastCuePoint = joints[0].position;
+            cuePoints.Enqueue(lastCuePoint); while (cuePoints.Count > 20) cuePoints.Dequeue();
             cue.positionCount = cuePoints.Count; cue.SetPositions(cuePoints.ToArray());
             if (guideTarget.HasValue)
             {

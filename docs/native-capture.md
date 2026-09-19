@@ -96,9 +96,14 @@ executes the actual pure C# domain and strict contracts. The assertions are also
 Unity EditMode tests. Additional Unity runtime tests cover lifecycle invalidation,
 subscriptions and the named SDK mapping; these are not console tests.
 
-Unity package resolution, runtime C# compilation, shader/prefab import,
-EditMode/PlayMode execution, Android ARM64/IL2CPP build and Quest smoke tests
-remain unavailable without the editor/device. Required physical checks: fresh
+Runtime adapter/session/presentation C# compiled against actual Unity 6000.3
+managed DLLs and official XR Hands 1.7.2/Core Utils 2.2.0 source using the portable
+.NET compiler. Full Unity package resolution, shader/prefab import,
+EditMode/PlayMode execution and Android ARM64/IL2CPP build are separate gates.
+The first Unity 6000.3.24f1 attempt exited 198 without a valid license; an
+externally resolved license allowed a retry to begin actual package import.
+Final gate results are recorded in the task delivery log. Quest smoke tests
+remain unavailable without a device. Required physical checks: fresh
 five-second recording/save/reload; right/left named joints; independent novice
 registration in a rotated mat and different room; fourth-mark error; occlusion,
 recenter, mat movement, suspension and headset removal; no false guide progress.
