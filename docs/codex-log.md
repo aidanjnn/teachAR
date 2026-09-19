@@ -418,8 +418,6 @@ the expanded full PlayMode suite: 5/5 passed in Unity 6000.3.24f1, including the
 new real capture prefab/control composition test alongside the guide recovery
 scenario. Archived only this rerun's generated platform assets/settings. EditMode
 13/13 and other passing checks are reused for unchanged inputs.
-||||||| 9cf0bd7
-||||||| 3d629fa
 
 TRAIL-03 review follow-up: `MotionChunk` now rejects non-increasing `tMs` within a chunk in both Zod (`refine`) and pure C# (`ContractValidation.Validate(MotionChunk)`, wired through the generator's semantic set); cross-chunk ordering remains a storage-coordinator concern. Two corpus cases (duplicate and decreasing chunk timestamps) cover parity. `pnpm check` passed (150 tests) and the .NET harness passed 115 checks; no Unity, IL2CPP or headset claim.
 
