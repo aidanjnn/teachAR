@@ -71,7 +71,7 @@ namespace Trail.Editor
                 throw new BuildFailedException("OpenXR loader assignment failed");
             FeatureHelpers.RefreshFeatures(BuildTargetGroup.Android);
             // IDs verified in the exact OpenXR 1.18 / Meta Core 205 / XR Hands 1.7.2 package sources.
-            foreach (var id in new[] { "com.meta.openxr.feature.metaxr", "com.unity.openxr.feature.metaquest", "com.unity.openxr.feature.input.handtracking" })
+            foreach (var id in new[] { "com.meta.openxr.feature.metaxr", "com.unity.openxr.feature.metaquest", "com.unity.openxr.feature.input.handtracking", "com.unity.openxr.feature.input.oculustouch" })
             {
                 var feature = FeatureHelpers.GetFeatureWithIdForBuildTarget(BuildTargetGroup.Android, id);
                 if (feature == null) throw new BuildFailedException("Required OpenXR feature is unavailable: " + id);

@@ -30,6 +30,7 @@ namespace Trail.Runtime.Platform
             ovr.trackingOriginType = OVRManager.TrackingOrigin.Stage;
             ovr.isInsightPassthroughEnabled = true;
             ovr.usePositionTracking = true;
+            ovr.AllowRecenter = false;
             rigRoot.AddComponent<OVRPassthroughLayer>().overlayType = OVROverlay.OverlayType.Underlay;
             foreach (var camera in rigRoot.GetComponentsInChildren<Camera>(true))
             { camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.clear; camera.nearClipPlane = 0.05f; }
