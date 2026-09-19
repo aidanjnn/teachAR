@@ -58,3 +58,6 @@ test-results/
 
 # Python native-CI verifier test caches
 __pycache__/
+
+# Retired local GitHub runner; configuration can contain credentials.
+/actions-runner/
