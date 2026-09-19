@@ -57,6 +57,7 @@ namespace Trail.Editor
             config.isPassthroughCameraAccessEnabled = true;
             OVRProjectConfig.CommitProjectConfig(config);
             SanitizeDevelopmentTools();
+            ValidateAndroidConfiguration();
             AssetDatabase.SaveAssets();
             Debug.Log("Trail Android settings applied. Review generated assets and UPM lock; device readiness remains unverified.");
         }
@@ -114,6 +115,22 @@ namespace Trail.Editor
             openxr.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
             EditorUtility.SetDirty(openxr); EditorUtility.SetDirty(manager); EditorUtility.SetDirty(general); EditorUtility.SetDirty(settings);
         }
+        public static void ValidateAndroidConfiguration()
+        {
+            var general = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
+            if (general == null || !general.InitManagerOnStart || general.Manager == null ||
+                general.Manager.activeLoaders.Count != 1 || !(general.Manager.activeLoaders[0] is UnityEngine.XR.OpenXR.OpenXRLoader))
+                throw new BuildFailedException("Trail requires exactly one automatically initialized Android OpenXR loader");
+            var openxr = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
+            var hands = openxr == null ? null : openxr.GetFeature<UnityEngine.XR.Hands.OpenXR.HandTracking>();
+            if (hands == null || !hands.enabled)
+                throw new BuildFailedException("Android XR Hands HandTracking subsystem must be enabled");
+            foreach (var id in new[] { "com.meta.openxr.feature.metaxr", "com.unity.openxr.feature.metaquest", "com.unity.openxr.feature.input.oculustouch" })
+            {
+                var feature = FeatureHelpers.GetFeatureWithIdForBuildTarget(BuildTargetGroup.Android, id);
+                if (feature == null || !feature.enabled) throw new BuildFailedException("Required Android OpenXR feature is disabled: " + id);
+            }
+        }
         private static void ConfigureRendering()
         {
             const string folder = "Assets/Trail/Rendering";
@@ -163,6 +180,10 @@ namespace Trail.Editor
     public sealed class NativeBuildGuard : IPreprocessBuildWithReport
     {
         public int callbackOrder => int.MaxValue;
-        public void OnPreprocessBuild(BuildReport report) => ProjectSetup.SanitizeDevelopmentTools();
+        public void OnPreprocessBuild(BuildReport report)
+        {
+            if (report.summary.platform == BuildTarget.Android) ProjectSetup.ValidateAndroidConfiguration();
+            ProjectSetup.SanitizeDevelopmentTools();
+        }
     }
 }
