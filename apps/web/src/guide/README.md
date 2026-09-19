@@ -1,3 +1,6 @@
-# Guide adapter
+# Guide adapters
 
-Reserved for TRAIL-07: feed fresh XR observations to the pure reducer and execute its effects. The browser owns progression. No guide reducer or adapter exists yet.
+`coach-state.ts` is the pure coach reducer (mute state, stale-reply rules).
+`coach.ts` runs it against GPT-Live over WebRTC with a text fallback; `live-transport.ts`
+wraps the SDK connection. The guide progression reducer (TRAIL-07) is still planned
+and the coach has no access to it.
