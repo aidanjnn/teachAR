@@ -44,7 +44,22 @@ describe('local scaffold server', () => {
       expect((await app.inject('/.env')).body).not.toContain('do-not-serve');
     } finally { await app.close(); }
   });
-  it.each([{ PORT: '0' }, { PORT: '65536' }, { HOST: '0.0.0.0' }, { AI_PROVIDER: 'openai' }, { HAPTICS_DRIVER: 'serial' }])('fails explicitly for unsupported configuration %j', env => {
+  it.each([{ PORT: '0' }, { PORT: '65536' }, { HOST: '0.0.0.0' }, { AI_PROVIDER: 'live' }, { HAPTICS_DRIVER: 'serial' }])('fails explicitly for unsupported configuration %j', env => {
     expect(() => readConfig(env)).toThrow('Invalid server configuration');
+  });
+  it('reads openai settings only when the provider is openai and never echoes the key', () => {
+    const mock = readConfig({ DATA_DIR: 'data' });
+    expect(mock.providers.ai).toBe('mock');
+    expect(mock.openai).toBeNull();
+    const live = readConfig({ AI_PROVIDER: 'openai', OPENAI_API_KEY: 'sk-test-key', OPENAI_LIVE_VOICE: 'cedar' });
+    expect(live.providers.ai).toBe('openai');
+    expect(live.openai).toEqual({
+      apiKey: 'sk-test-key', transcribeModel: 'whisper-1', textModel: 'gpt-4.1-mini',
+      liveModel: 'gpt-live-1', liveBackendModel: 'gpt-5.6-luna', liveVoice: 'cedar',
+    });
+    let message = '';
+    try { readConfig({ AI_PROVIDER: 'openai', OPENAI_API_KEY: '   ' }); } catch (error) { message = String(error); }
+    expect(message).toContain('OPENAI_API_KEY');
+    expect(message).not.toContain('sk-');
   });
 });
