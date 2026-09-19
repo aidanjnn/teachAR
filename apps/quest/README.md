@@ -2,8 +2,8 @@
 
 This project now contains the Android setup/build path, a single OpenXR/Meta
 passthrough bootstrap, and a scoped native API connection. **Unity import,
-compilation, APK build, and headset operation remain unverified** because no
-Unity editor is installed on the development machine. This branch supplies the
+compilation, APK build, and headset operation remain unverified** because the pinned editor
+currently stops at license activation (exit 198). This branch supplies the
 platform foundation; capture, guide, scene interpretation and storage are
 separate feature branches. Voice remains separately owned.
 
@@ -94,7 +94,10 @@ APK printed by the wrapper with `adb install -r <absolute-apk-path>` and launch
 
 `pnpm check:quest-scaffold` checks metadata and source boundaries only.
 `dotnet run --project tests/native-network/Network.csproj` executes actual pure C#
-URL/token/expiry policy tests. PlayMode sources cover native connection lifecycle,
+URL/token/expiry policy tests. `dotnet build tests/native-network/UnityCompile.csproj`
+compiles the network adapter against installed Unity managed assemblies (set
+`-p:UnityManagedPath=...` on other installations), without loading Unity or proving
+IL2CPP compatibility. PlayMode sources cover native connection lifecycle,
 but cannot count as passing until Unity executes them. WebSocket/HTTP server tests
 exercise real server authorization. None establishes tracking, simultaneous
 hands/audio/camera, physical calibration/transfer, APK networking or usable XR UI.
