@@ -412,3 +412,20 @@ Task 6 full software gate passed 199 tests, strict workspace/tool typechecks, pr
 - Unity setup completed successfully with actual generated Android/OpenXR/URP/Meta assets; committed those settings and preserved GUIDs. New Input System is enabled, required headset-camera manifest capability is declared for task5's explicit runtime permission flow, and disabled SDK AgentBridge credential/address fields were verified empty after setup. Standard Unity YAML trailing spaces were normalized without changing values. Empty duplicate SDK-created folders were omitted.
 - Actual Unity 6000.3.24f1 results: EditMode2/2 passed, PlayMode2/2 passed, then PlayMode2/2 passed again after enabling the new Input System and applying the final setup. Tests cover coordinate basis, native connection pause/disable, and head-directed keyboard entry/code clearing. These editor results do not prove Quest ergonomics, tracking or physical transfer. Final combined APK remains task6-owned; baseline platform build is attempted separately.
 - **Task 5 final dependency recheck:** PR #10 is stacked on guide #7. After consuming guide recovery1ed9659, final source94347c3 passed Unity17/17 EditMode and4/4 PlayMode. Results are `test-2c418f04-2873-48f6-89d9-5257d9491952` and `test-play-4f7dd709-2dec-4301-8d41-be0b3df90d66`. Local workspace check passed188 tests/typechecks/builds/static checks; hosted pure C# scene, guide, capture, network and workflow checks passed. Final app composition/combined APK belongs to task6; no hardware/provider success claimed.
+### 2026-09-19 — Task 4 final guide verification
+
+Final guide source at `1ed9659` passed full-project Unity 6000.3.24f1 EditMode
+13/13 (`2026-09-19 18:10:58Z`) and PlayMode 4/4 (`18:11:42Z`). The PlayMode
+scenario uses the actual native controller/capture/ghost adapters with injected
+synthetic samples and verifies same/new-session telemetry recovery while paused.
+Later capture merge `9a5befa` adds test tooling only; guide sources are unchanged.
+Full `pnpm check` passed 157 tests, typechecks/builds and static metadata checks;
+fixture validation passed. Release .NET passes 24 scenarios plus the shared
+fixture/calibration/golden telemetry integration and re-pairing assertions.
+Playwright regression uses isolated 3105 and one worker. Workflows pass actionlint.
+
+Archived this run's generated XR/default editor settings under ignored artifacts
+and restored the tracked build-settings file; canonical platform settings/locks
+remain task 1's ownership. Parent assigned the final combined APK/IL2CPP build to
+task 6; no build or device success is inferred from editor tests. No provider,
+headset, physical LEGO or independent learner evidence exists for this task.
