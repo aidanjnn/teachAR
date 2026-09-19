@@ -255,6 +255,35 @@ describe('coach startup and output gating', () => {
     expect(coach.state).toMatchObject({ mode: 'text', liveClosed: true });
     expect(track.stopped).toBe(true);
   });
+  it('ignores a late refusal for a step update that a newer one has already superseded', async () => {
+    const stepCalls: ((status: number) => void)[] = [];
+    const fetchImpl: typeof fetch = async input => {
+      if (String(input).endsWith('/step')) {
+        const status = await new Promise<number>(resolve => { stepCalls.push(resolve); });
+        return new Response(status === 204 ? null : JSON.stringify({ error: 'stale_update', message: 'old' }), { status });
+      }
+      return new Response(JSON.stringify(sessionOk), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const fake = fakeTransport();
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async () => stream, transportFactory: () => fake.transport });
+    const errors: string[] = [];
+    coach.onLiveError(error => errors.push(error.code));
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    coach.setStep('s2', 1);
+    coach.setAttempt('attempt-2');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stepCalls).toHaveLength(2);
+    stepCalls[1]?.(204);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state).toMatchObject({ mode: 'live', contextSync: 'idle', contextGeneration: 2 });
+    stepCalls[0]?.(409);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state).toMatchObject({ mode: 'live', contextSync: 'idle', liveClosed: false });
+    expect(errors).toEqual([]);
+  });
   it('settles connect() when the session closes or is disposed before session.started', async () => {
     const fake = fakeTransport();
     const closing: LiveTransport = { ...fake.transport, connect: async options => { await fake.transport.connect(options); options.onClosed(); } };

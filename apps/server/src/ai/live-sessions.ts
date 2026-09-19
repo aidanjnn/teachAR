@@ -28,7 +28,7 @@ export class LiveSessionRegistry {
       if (oldest === undefined) break;
       this.close(oldest);
     }
-    // Idle sessions expire on their own; this runtime adapter may own a timer (the pure reducers may not).
+    // Every session ends after ttlMs even if no request arrives; this runtime adapter may own a timer (the pure reducers may not).
     const expiry = setTimeout(() => { this.close(sessionId); }, this.ttl);
     expiry.unref?.();
     this.sessions.set(sessionId, { sessionId, context, generation: 0, createdAt: this.now(), control, expiry });

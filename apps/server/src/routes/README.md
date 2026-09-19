@@ -10,6 +10,6 @@ stored tutorial; `createApp` passes both through, and with `auth` it grounds aga
 the tutorial repository automatically. Live step context is pushed by the server
 over the SDK sideband (`ai/live-sessions.ts`): a session is only handed out once its
 control channel is open, step updates carry a client generation and older ones are
-refused, idle sessions expire on a timer, and a channel error drops the session so
-the browser falls back to text.
+refused, every session ends on its own 30-minute timer, and a channel error drops
+the session so the browser falls back to text.
 Recording uploads, jobs, and tutorial storage remain planned.

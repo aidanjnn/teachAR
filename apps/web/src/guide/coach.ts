@@ -125,12 +125,16 @@ export function createCoach(options: CoachOptions): CoachApi {
       body: JSON.stringify({ schemaVersion: 1, generation, currentStepId: context.currentStepId, stepRevision: context.stepRevision, attemptId: context.attemptId }),
     }).then(response => {
       if (response.ok) { dispatch({ type: 'context-synced', generation }); return; }
-      errorHandlers.forEach(handler => handler({ code: 'step_context_rejected', message: `Server refused the step update (${response.status}); live coaching stopped.` }));
-      dispatch({ type: 'context-sync-failed', generation });
+      failSync(generation, { code: 'step_context_rejected', message: `Server refused the step update (${response.status}); live coaching stopped.` });
     }, () => {
-      errorHandlers.forEach(handler => handler({ code: 'step_context_failed', message: 'Could not reach the server to update the coach step; live coaching stopped.' }));
-      dispatch({ type: 'context-sync-failed', generation });
+      failSync(generation, { code: 'step_context_failed', message: 'Could not reach the server to update the coach step; live coaching stopped.' });
     });
+  }
+  /** A late answer for an older generation is noise once a newer update is in flight; only the current one can end live coaching. */
+  function failSync(generation: number, error: LiveError) {
+    if (disposed || generation !== state.contextGeneration) return;
+    errorHandlers.forEach(handler => handler(error));
+    dispatch({ type: 'context-sync-failed', generation });
   }
   function dispatch(event: CoachEvent): CoachEffect[] {
     if (disposed) return [];
@@ -270,7 +274,7 @@ export function createCoach(options: CoachOptions): CoachApi {
       errorHandlers.clear();
       if (transport) { try { transport.send({ type: 'session.close', event_id: eventId('close') }); } catch { /* already closed */ } }
       if (liveSessionId) {
-        void fetchImpl(`/api/live/sessions/${encodeURIComponent(liveSessionId)}/`.replace(/\/$/, ''), { method: 'DELETE', keepalive: true }).catch(() => undefined);
+        void fetchImpl(`/api/live/sessions/${encodeURIComponent(liveSessionId)}`, { method: 'DELETE', keepalive: true }).catch(() => undefined);
       }
       releaseLive();
     },
