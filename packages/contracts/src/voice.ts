@@ -137,7 +137,10 @@ export const CoachSessionResponseSchema = z.strictObject({
 export type CoachSessionResponse = z.infer<typeof CoachSessionResponseSchema>;
 
 export const VoiceUnavailableSchema = z.strictObject({
-  error: z.enum(['live_unavailable', 'provider_unavailable', 'payload_too_large', 'unsupported_media_type', 'invalid_request']),
+  error: z.enum([
+    'live_unavailable', 'provider_unavailable', 'payload_too_large', 'unsupported_media_type', 'invalid_request',
+    'unauthorized', 'forbidden', 'rate_limited', 'unknown_tutorial', 'stale_tutorial',
+  ]),
   message: z.string().min(1).max(300),
 });
 export type VoiceUnavailable = z.infer<typeof VoiceUnavailableSchema>;

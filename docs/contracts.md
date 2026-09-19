@@ -184,3 +184,7 @@ unchanged. Health exposes mock modes/build/storage writability without paths or
 credentials. Vision reachability means the authenticated process responded;
 its baseline `imageInterpretation: false` / `ready: false` remains honest until
 the separate visual-inspection workstream deliberately extends those fields.
+
+`VoiceUnavailable.error` additionally carries `unauthorized`, `forbidden`, `rate_limited`,
+`unknown_tutorial`, and `stale_tutorial` for paired, server-grounded coaching (additive;
+clients treat unknown codes as a failed request).

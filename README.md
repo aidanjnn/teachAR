@@ -203,8 +203,12 @@ root `.env`, restart `pnpm dev`, and open the Voice Lab. Keys never leave the
 server: the browser exchanges an SDP offer through `POST /api/live/sessions`, and the
 server creates the GPT-Live session. Live mode is verified manually; CI covers mock
 and text paths. Answers are grounded in the tutorial text and cannot advance a step.
-There is no pairing or per-session cap yet, and each live session bills at least
-15 seconds, so keep the server on loopback until pairing lands. The browser coach,
+Once `createApp` is given the pairing authority, narration and label routes require
+an author token and the coach routes require a learner or author token on the
+current session; with a tutorial lookup configured, the coach speaks only from the
+stored tutorial and rejects unknown or stale revisions. Until integration wires
+both, dev mode stays open and trusts the client, so keep the server on loopback.
+There is no per-session cap yet, and each live session bills at least 15 seconds. The browser coach,
 recorder and Voice Lab are desktop diagnostics that validate the server protocol;
 the planned Unity client (TRAIL-16) reuses the same routes through a native WebRTC
 adapter, and native audio is verified only on the APK.

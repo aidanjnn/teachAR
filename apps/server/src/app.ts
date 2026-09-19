@@ -8,7 +8,8 @@ import { join } from 'node:path';
 import { createProvider } from './ai/index.js';
 import type { AiProvider } from './ai/provider.js';
 import type { ServerConfig } from './config.js';
-import { registerVoiceRoutes } from './routes/voice.js';
+import type { PairingAuthority } from './auth/pairing.js';
+import { registerVoiceRoutes, type CoachTutorialLookup } from './routes/voice.js';
 
 async function storageWritable(dataDir: string): Promise<boolean> {
   const probe = join(dataDir, `.health-${randomUUID()}`);
@@ -23,7 +24,10 @@ async function storageWritable(dataDir: string): Promise<boolean> {
   }
 }
 
-export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean; provider?: AiProvider } = {}) {
+export async function createApp(
+  config: ServerConfig,
+  options: { webRoot?: string; logger?: boolean; provider?: AiProvider; auth?: PairingAuthority; resolveTutorial?: CoachTutorialLookup } = {},
+) {
   const app = Fastify({
     logger: options.logger ?? false,
     logController: new LogController({ disableRequestLogging: true }),
@@ -42,7 +46,10 @@ export async function createApp(config: ServerConfig, options: { webRoot?: strin
     reply.header('Cache-Control', 'no-store');
     return probeVision(config.vision);
   });
-  await registerVoiceRoutes(app, options.provider ?? createProvider(config));
+  await registerVoiceRoutes(app, options.provider ?? createProvider(config), {
+    ...(options.auth ? { auth: options.auth } : {}),
+    ...(options.resolveTutorial ? { resolveTutorial: options.resolveTutorial } : {}),
+  });
   if (options.webRoot) {
     await app.register(fastifyStatic, { root: options.webRoot, dotfiles: 'deny' });
   }
