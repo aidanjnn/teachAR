@@ -399,3 +399,5 @@ and restored the tracked build-settings file; canonical platform settings/locks
 remain task 1's ownership. Parent assigned the final combined APK/IL2CPP build to
 task 6; no build or device success is inferred from editor tests. No provider,
 headset, physical LEGO or independent learner evidence exists for this task.
+
+- **Task 5 combined-auth smoke repair:** Platform881bbd7 correctly rejects browser fetch metadata during native pairing. The real two-process test now exchanges its native code with node:http instead of Node fetch, which automatically sends Sec-Fetch-Mode:cors. No production authentication changed. The complete two-process scenario passed against both the current pairing source and the exact stricter881bbd7 source (temporarily applied then restored); tools/test typechecking passed.

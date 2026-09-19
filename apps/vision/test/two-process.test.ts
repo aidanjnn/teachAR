@@ -1,5 +1,6 @@
 import { fork, type ChildProcess } from 'node:child_process';
 import { once } from 'node:events';
+import { request } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { afterEach, expect, it } from 'vitest';
 import type { InspectionCapture } from '@trail/contracts';
@@ -21,10 +22,24 @@ async function worker(service: 'main' | 'vision', port = 0, vision = '') {
   return { child, url: `http://127.0.0.1:${data.port}`, ...data };
 }
 async function mode(child: ChildProcess, value: string) { const changed = once(child, 'message'); child.send({ mode: value }); await changed; }
+// Node fetch adds Sec-Fetch-Mode: cors, which correctly disqualifies native pairing.
+function pairNative(url: string, code: string | undefined): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const req = request(`${url}/api/pair`, { method: 'POST', headers: { 'content-type': 'application/json' } }, res => {
+      let body = ''; res.setEncoding('utf8');
+      res.on('data', chunk => { body += String(chunk); });
+      res.on('error', reject);
+      res.on('end', () => resolve(new Response(body, { status: res.statusCode ?? 500 })));
+    });
+    req.on('error', reject);
+    req.setTimeout(5000, () => req.destroy(new Error('Native pairing timed out')));
+    req.end(JSON.stringify({ code, client: 'native' }));
+  });
+}
 it('runs authenticated main and vision processes through wrong/obscured, cancellation, crash and recovery', async () => {
   let vision = await worker('vision');
   const main = await worker('main', 0, vision.url);
-  const paired = await fetch(`${main.url}/api/pair`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: main.code, client: 'native' }) });
+  const paired = await pairNative(main.url, main.code);
   expect(paired.status).toBe(200);
   const credential = await paired.json() as { token: string };
   const headers = { 'content-type': 'application/json', authorization: `Bearer ${credential.token}` };
