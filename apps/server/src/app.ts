@@ -1,3 +1,7 @@
+import { SpectatorRelay } from './sessions/relay.js';
+import { PairingAuthority, registerPairingRoutes } from './auth/pairing.js';
+import { TutorialRepository } from './storage/repository.js';
+import { registerStorageRoutes } from './storage/routes.js';
 import { probeVision } from './vision/client.js';
 import Fastify, { LogController } from 'fastify';
 import fastifyStatic from '@fastify/static';
@@ -20,12 +24,20 @@ async function storageWritable(dataDir: string): Promise<boolean> {
   }
 }
 
-export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean } = {}) {
+export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority } = {}) {
   const app = Fastify({
     logger: options.logger ?? false,
     logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: 64 * 1024, requestTimeout: 10_000,
   });
+  if (options.auth) {
+    const relay = new SpectatorRelay();
+    await relay.register(app, options.auth);
+    registerPairingRoutes(app, options.auth);
+    const repository = new TutorialRepository(config.dataDir);
+    await repository.recover();
+    await registerStorageRoutes(app, repository, options.auth);
+  }
   app.get('/api/health', async (_request, reply) => {
     const writable = await storageWritable(config.dataDir);
     reply.code(writable ? 200 : 503).header('Cache-Control', 'no-store');

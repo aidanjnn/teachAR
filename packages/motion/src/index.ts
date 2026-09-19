@@ -22,3 +22,6 @@ export function invertTransform(transform: Pose): Pose {
     orientationXyzw: [rotation[0], rotation[1], rotation[2], rotation[3]],
   };
 }
+
+export { proposeSteps, deriveStep, type ProposedStep } from './authoring.js';
+export { createAuthoringFixture } from './synthetic.js';

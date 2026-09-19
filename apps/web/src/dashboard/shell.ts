@@ -6,11 +6,12 @@ export function mountShell(root: HTMLElement) {
       <span class="stage-label">Development preview</span>
     </header>
     <main>
-      <div class="introduction">
+      <div id="workbench"></div>
+      <div class="introduction" data-fixture-view>
         <div><h1>A movement, made visible.</h1><p>Explore a sample hand motion in workspace coordinates.</p></div>
         <span class="source-label">Synthetic fixture</span>
       </div>
-      <div class="workspace-layout">
+      <div class="workspace-layout" data-fixture-view>
         <section class="player" aria-label="Motion replay">
           <div class="scene-wrap"><div id="scene"></div><span class="scene-caption">50 × 35 cm workspace</span><span class="scene-axis">+Y up &nbsp; / &nbsp; +Z toward learner</span></div>
           <div class="transport">

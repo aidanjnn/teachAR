@@ -245,3 +245,9 @@ Append a dated entry after each substantive Codex session. Keep historical resul
 ## 2026-09-19 — TRAIL-03 shared contract freeze (task 2)
 
 Added strict tutorial/draft, guide-event, native sidecar/calibration v2, scene-reference/inspection and upload boundary schemas. Recording v1 exports and audio sync enum remain compatible; native provenance stays separate. Tutorial binding verifies recording/hash/workspace identity and targets against valid recorded wrists. Initial focused validation: contracts TypeScript build and 15 existing recording tests passed. Strict native parser and shared corpus validation are in progress; this entry is not Unity, provider or headset evidence.
+
+### 2026-09-19 — Task 6 authoring and storage implementation
+
+- Integrated published task 1 auth/dependencies and task 2 canonical TypeScript schemas. Implemented private atomic storage, bounded ordered hashed chunks, identical retry checks, final recording integrity, interrupted job recovery, revision-checked tutorial edits and immutable ready publication. Added deterministic marker-first/motion-pause segmentation, recorded-wrist gate derivation and an explicit synthetic four-step authoring input.
+- Desktop workbench retains fixture replay and adds pairing, upload/review/save/finalize/library and read-only spectator state. Protected browser reads use POST aliases because browsers cannot set Origin on same-origin GET. Native GET uses bearer auth. WebSocket implementation follows [Fastify's plugin guidance](https://github.com/fastify/fastify-websocket) for synchronous message handlers, upgrade auth and registration order.
+- Focused automated evidence so far: four motion/files tests and three real Fastify authoring-flow tests passed, including restart, stale revision, wrong role and hash failures. Native private-cache source and browser work are in progress; no native, headset, image-provider or physical task claim.

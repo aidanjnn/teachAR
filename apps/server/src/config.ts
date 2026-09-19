@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 export const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const EnvironmentSchema = z.object({
+  PAIRING_ORIGINS: z.string().default(''),
+  ALLOW_USB_LOOPBACK: z.enum(['true', 'false']).default('false'),
   HOST: z.literal('127.0.0.1').default('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   DATA_DIR: z.string().min(1).default('./data'),
@@ -37,6 +39,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     throw new Error('Invalid server configuration: VISION_SERVICE_TOKEN');
   }
   return {
+    pairing: { allowedOrigins: result.data.PAIRING_ORIGINS.split(',').map(value => value.trim()).filter(Boolean), allowUsbLoopback: result.data.ALLOW_USB_LOOPBACK === 'true' },
     vision: result.data.VISION_SERVICE_URL && result.data.VISION_SERVICE_TOKEN
       ? { url: result.data.VISION_SERVICE_URL, token: result.data.VISION_SERVICE_TOKEN } : null,
     host: result.data.HOST, port: result.data.PORT,

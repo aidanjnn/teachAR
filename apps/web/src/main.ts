@@ -1,3 +1,4 @@
+import { mountWorkbench } from './authoring/workbench.js';
 import { HealthSchema, VisionDependencySchema } from '@trail/contracts';
 import { mountShell } from './dashboard/shell.js';
 import { fixture, frameAtTime } from './replay/fixture-source.js';
@@ -10,6 +11,7 @@ function element<T extends HTMLElement>(selector: string): T {
   return node;
 }
 mountShell(element('#app'));
+const disposeWorkbench = mountWorkbench(element('#workbench'));
 const play = element<HTMLButtonElement>('#play');
 const timeline = element<HTMLInputElement>('#timeline');
 const tracking = element('#tracking');
@@ -89,4 +91,4 @@ async function refreshVision() {
 element('#refresh-health').addEventListener('click', () => { void refreshVision(); });
 void refreshVision();
 show(0);
-if (import.meta.hot) import.meta.hot.dispose(() => { pause(); viewer?.dispose(); });
+if (import.meta.hot) import.meta.hot.dispose(() => { pause(); viewer?.dispose(); disposeWorkbench(); });
