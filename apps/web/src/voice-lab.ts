@@ -35,6 +35,10 @@ element('#app').innerHTML = `
   </header>
   <main class="lab">
     <div class="introduction"><div><h1>Voice lab</h1><p>Record narration, turn it into step labels, and talk to the coach. Everything here runs against the local server; mock mode needs no key.</p></div><span class="source-label">Development tool</span></div>
+    <section id="pair-panel" class="pair-panel" aria-label="Pair this browser" hidden>
+      <form id="pair-form"><label>Pairing code <input id="pair-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required placeholder="8 digit code"></label><button type="submit">Pair browser</button></form>
+      <p id="pair-state" role="status">Checking pairing…</p>
+    </section>
 
     <section class="panel" aria-labelledby="narration-heading">
       <h2 id="narration-heading">1. Narration</h2>
@@ -74,7 +78,7 @@ element('#app').innerHTML = `
 
     <section class="panel" aria-labelledby="coach-heading">
       <h2 id="coach-heading">3. Coach</h2>
-      <p class="lede">Uses the labels above (or the fixture steps) as the approved tutorial. Live mode needs <code>AI_PROVIDER=openai</code>; otherwise answers come back as text.</p>
+      <p class="lede">Uses the labels above (or the fixture steps) as the approved tutorial. Live mode needs <code>AI_PROVIDER=openai</code>; otherwise answers come back as text. A paired server answers only from saved guides, so these unsaved steps fall back to local text there.</p>
       <div class="row">
         <label for="steps">Current step</label>
         <select id="steps"></select>
@@ -107,6 +111,48 @@ async function refreshProvider() {
   }
 }
 void refreshProvider();
+
+// ---- Pairing ---------------------------------------------------------------
+// Same-origin fetches carry the pairing cookie automatically; this panel only shows the state and exchanges a code.
+let pairedRole: string | null = null;
+const pairPanel = element('#pair-panel');
+const pairState = element('#pair-state');
+async function refreshPairing() {
+  try {
+    const response = await fetch('/api/session', { method: 'POST', cache: 'no-store', signal: AbortSignal.timeout(3000) });
+    if (response.status === 404) { pairPanel.hidden = true; pairedRole = null; return; }
+    pairPanel.hidden = false;
+    if (!response.ok) {
+      pairedRole = null;
+      setStatus(pairState, 'Pair this browser with an author code before recording, labeling, or coaching.', 'warn');
+      return;
+    }
+    const session = await response.json() as { role?: unknown };
+    pairedRole = typeof session.role === 'string' ? session.role : 'unknown';
+    setStatus(pairState, `Connected as ${pairedRole}.`, 'ok');
+  } catch {
+    pairPanel.hidden = false;
+    pairedRole = null;
+    setStatus(pairState, 'Pairing state unknown: the server did not answer.', 'warn');
+  }
+}
+element<HTMLFormElement>('#pair-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const input = element<HTMLInputElement>('#pair-code');
+  setStatus(pairState, 'Pairing…');
+  try {
+    const response = await fetch('/api/pair', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(5000),
+      body: JSON.stringify({ code: input.value, client: 'browser' }),
+    });
+    if (!response.ok) throw new Error(response.status === 401 ? 'Code not accepted. Codes are single-use and expire after five minutes.' : `Pairing failed (${response.status})`);
+    input.value = '';
+    await refreshPairing();
+  } catch (error) {
+    setStatus(pairState, error instanceof Error ? error.message : 'Pairing failed.', 'warn');
+  }
+});
+void refreshPairing();
 
 // ---- Narration -----------------------------------------------------------
 let recorder: NarrationRecorder | null = null;
@@ -320,7 +366,8 @@ element('#coach-connect').addEventListener('click', async () => {
   });
   renderMode('connecting');
   const mode = await coach.connect();
-  renderMode(mode, mode === 'text' ? 'Live coach unavailable; using text answers.' : '');
+  const textNote = pairedRole ? 'Paired server: these steps are not a saved guide, so answers use the local fallback.' : 'Live coach unavailable; using text answers.';
+  renderMode(mode, mode === 'text' ? textNote : '');
 });
 askButton.addEventListener('click', () => { coach?.ask(); });
 askTextButton.addEventListener('click', async () => {

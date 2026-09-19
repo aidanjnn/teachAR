@@ -257,14 +257,17 @@ root `.env`, restart `pnpm dev`, and open the Voice Lab. Keys never leave the
 server: the browser exchanges an SDP offer through `POST /api/live/sessions`, and the
 server creates the GPT-Live session. Live mode is verified manually; CI covers mock
 and text paths. Answers are grounded in the tutorial text and cannot advance a step.
-Once `createApp` is given the pairing authority, narration and label routes require
-an author token and the coach routes require a learner or author token on the
-current session; with a tutorial lookup configured, the coach speaks only from the
-stored tutorial and rejects unknown, stale, or draft tutorials for learners. Step
-changes reach the live model through the server's own channel: the client posts a
-step ID to `POST /api/live/sessions/:id/step` and the browser data channel can no
-longer append text. Until integration wires auth and lookup, dev mode stays open
-and trusts the client, so keep the server on loopback.
+When pairing is configured (`PAIRING_ORIGINS` or `ALLOW_USB_LOOPBACK`), narration
+and label routes require an author token, the coach routes require a learner or
+author token on the current session, and the coach speaks only from the stored
+tutorial, rejecting unknown, stale, or draft tutorials for learners. Step changes
+reach the live model through the server's own channel: the client posts a step ID
+to `POST /api/live/sessions/:id/step` and the browser data channel can no longer
+append text. The Voice Lab then shows a pairing form: paste the author code from
+`data/<dir>/pairing.json` (or one minted in the authoring workbench) to record and
+label; its coach falls back to local text because the lab's steps are not a saved
+guide. Plain `pnpm dev` configures no pairing, stays open, trusts the client
+context, and must stay on loopback.
 There is no per-session cap yet, and each live session bills at least 15 seconds. The browser coach,
 recorder and Voice Lab are desktop diagnostics that validate the server protocol;
 the planned Unity client (TRAIL-16) reuses the same routes through a native WebRTC
