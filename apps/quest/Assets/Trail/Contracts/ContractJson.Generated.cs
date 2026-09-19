@@ -572,6 +572,7 @@ namespace Trail.Contracts
             var result = new MotionChunk();
             if (map.ContainsKey("frames")) result.Frames = ((List<object>)map["frames"]).Select(item => ReadMotionFrame(item)).ToArray();
             if (map.ContainsKey("sha256")) result.Sha256 = (string)map["sha256"];
+            ContractValidation.Validate(result);
             return result;
         }
         private static object WriteMotionChunk(MotionChunk value)

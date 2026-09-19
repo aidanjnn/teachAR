@@ -445,3 +445,12 @@ scenario. Archived only this rerun's generated platform assets/settings. EditMod
 13/13 and other passing checks are reused for unchanged inputs.
 
 - **Task 5 final stack synchronization:** Merged guide88508b2 non-rewriting and preserved both work-log histories. Incoming changes add the capture prefab/control PlayMode test and validation documentation; no production runtime source changes. The expanded PlayMode suite and hosted executable gates are being verified on this merge; prior EditMode/software results are reused only where inputs are unchanged.
+||||||| 88508b2
+||||||| 9cf0bd7
+||||||| 3d629fa
+
+TRAIL-03 review follow-up: `MotionChunk` now rejects non-increasing `tMs` within a chunk in both Zod (`refine`) and pure C# (`ContractValidation.Validate(MotionChunk)`, wired through the generator's semantic set); cross-chunk ordering remains a storage-coordinator concern. Two corpus cases (duplicate and decreasing chunk timestamps) cover parity. `pnpm check` passed (150 tests) and the .NET harness passed 115 checks; no Unity, IL2CPP or headset claim.
+
+TRAIL-04 review follow-up: capture panel labels now arm after a 0.6 s fresh index-tip dwell and execute only on a tracked withdrawal, matching the on-screen instruction; tracking loss, stale or non-monotonic samples and drift to another label cancel the armed state. Merged the contracts chunk-order fix from `codex/shared-contracts`. `pnpm check` and the .NET capture harness passed; the panel is a MonoBehaviour, so this is unverified in Unity/headset. Manifest/lockfile ownership and Unity CI gates remain open for the platform owner.
+
+TRAIL-05 review follow-up: `Preload` now loads the recording into capture before dispatching `Preloaded`, so capture's synchronous invalidation is absorbed by the Preload phase and the first attempt stays `attempt-1`, revision 1. Merged the capture-panel and contracts fixes from `codex/capture-calibration-replay`. Guide harness passed (.NET; not Unity/headset). The user-confirmed-while-occluded question (reviewer P1 versus the existing `ManualOcclusion` scenario) is left for a product decision.

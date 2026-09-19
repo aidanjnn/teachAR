@@ -63,9 +63,9 @@ namespace Trail.Runtime.Guide
             Session = new GuideSession(definition, Guid.NewGuid().ToString("N"));
             telemetry = new GuideTelemetry(pairedSessionId, Clock());
             Session.Transitioned += OnTransition;
-            Session.Dispatch(new GuideInput(GuideAction.Preloaded, Clock()));
             Bind();
-            Capture.LoadRecording(recording); // Requires the learner's independent calibration.
+            Capture.LoadRecording(recording); // Requires the learner's independent calibration; its own invalidation is absorbed by the Preload phase.
+            Session.Dispatch(new GuideInput(GuideAction.Preloaded, Clock()));
             Status = "Preloaded locally. Calibrate the learner workspace.";
         }
         private void Calibrated(CalibrationRegistration registration, int revision)
