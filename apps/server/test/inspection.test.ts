@@ -81,3 +81,45 @@ it('authenticates routes before reading images, excludes spectators, and scopes 
     expect([401, 403]).toContain(result.statusCode); expect(h.calls()).toBe(0);
   } finally { await app.close(); }
 });
+it('allows a newly paired app generation but permanently rejects the retired app session', async () => {
+  const h = await setup();
+  try {
+    await h.coordinator.start('session', h.start);
+    await h.coordinator.start('session', { ...h.start, liveSessionId: 'new-app-session', requestEpoch: 0 });
+    await expect(h.coordinator.start('session', { ...h.start, requestEpoch: 999 })).rejects.toMatchObject({ code: 'stale' });
+  } finally { h.coordinator.close(); }
+});
+it('enforces learner role and exact paired session through real route composition', async () => {
+  const h = await setup(); const app = Fastify();
+  const { registerPairingRoutes } = await import('../src/auth/pairing.js');
+  const authority = createPairingAuthority({ allowedOrigins: ['http://localhost'], allowUsbLoopback: true });
+  await registerPairingRoutes(app, authority);
+  await registerInspectionRoutes(app, { authorizeLearner: request => authority.authorize(request, { roles: ['learner'] }), coordinator: h.coordinator });
+  async function pair(role: 'learner' | 'spectator') {
+    const code = authority.issueCode(role).code;
+    const response = await app.inject({ method: 'POST', url: '/api/pair', headers: { host: 'localhost' }, payload: { code, client: 'native' } });
+    expect(response.statusCode).toBe(200);
+    return { host: 'localhost', authorization: `Bearer ${response.json().token as string}` };
+  }
+  try {
+    const spectator = await pair('spectator'); const learner = await pair('learner');
+    expect((await app.inject({ method: 'POST', url: '/api/inspections', headers: spectator, payload: h.start })).statusCode).toBe(403);
+    const response = await app.inject({ method: 'POST', url: '/api/inspections', headers: learner, payload: h.start });
+    expect(response.statusCode).toBe(200);
+    const capture = response.json() as InspectionCapture;
+    expect((await app.inject({ method: 'DELETE', url: `/api/inspections/${capture.request.requestId}?epoch=999`, headers: learner })).statusCode).toBe(409);
+    expect((await app.inject({ method: 'DELETE', url: `/api/inspections/${capture.request.requestId}?epoch=1`, headers: learner })).statusCode).toBe(204);
+  } finally { await app.close(); }
+});
+it('bounds unresolved reference IO even if the resolver ignores cancellation', async () => {
+  const fixture = await input(); let finish!: () => void;
+  const h = await setup();
+  const coordinator = new InspectionCoordinator({ vision: { url: 'http://127.0.0.1:1', token: 'unused' }, isCurrent: () => true,
+    resolveReferences: async () => { await new Promise<void>(resolve => { finish = resolve; }); return { references: fixture.references, approvedStep: fixture.approvedStep }; },
+  });
+  const pending = coordinator.start('session', h.start);
+  const rejected = expect(pending).rejects.toMatchObject({ code: 'cancelled' });
+  await Promise.resolve(); coordinator.invalidate('session');
+  await expect(coordinator.start('session', { ...h.start, requestEpoch: 2 })).rejects.toMatchObject({ code: 'busy' });
+  finish(); await rejected; coordinator.close(); h.coordinator.close();
+});

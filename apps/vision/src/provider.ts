@@ -1,4 +1,4 @@
-import { CoachAssessmentSchema, type CoachAssessment, type VisionInspectionInput } from '@trail/contracts';
+import { CoachAssessmentSchema, parseContractJson, type CoachAssessment, type VisionInspectionInput } from '@trail/contracts';
 import { z } from 'zod';
 import { VisionError } from './errors.js';
 
@@ -41,7 +41,7 @@ async function readJson(response: Response, signal: AbortSignal): Promise<unknow
       if (bytes > 64 * 1024) throw new VisionError('invalid-assessment', 502);
       chunks.push(next.value);
     }
-    return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
+    return parseContractJson(z.unknown(), Buffer.concat(chunks).toString('utf8'));
   } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
 }
 const OutputEnvelope = z.object({
@@ -78,7 +78,7 @@ export function createOpenAIProvider(apiKey: string, model: string, transport: t
       if (!envelope.success) throw new VisionError('invalid-assessment', 502);
       const outputs = envelope.data.output.filter(item => item.type === 'message').flatMap(item => item.content ?? []);
       if (outputs.length !== 1 || outputs[0]?.type !== 'output_text' || !outputs[0].text) throw new VisionError('invalid-assessment', 502);
-      try { return validateAssessment(JSON.parse(outputs[0].text)); }
+      try { return validateAssessment(parseContractJson(CoachAssessmentSchema, outputs[0].text)); }
       catch { throw new VisionError('invalid-assessment', 502); }
     },
   };

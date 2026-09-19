@@ -26,6 +26,8 @@ interface Active {
 /** A one-headset coordinator. It can pause-check identity, never mutate guide progression. */
 export class InspectionCoordinator {
   private active: Active | null = null;
+  private resolving = false;
+  private readonly retiredLiveSessions = new Set<string>();
   private source: { sessionId: string; id: string; sequence: number } | null = null;
   private readonly now: () => number;
   private epoch: { sessionId: string; liveSessionId: string; generation: number; epoch: number } | null = null;
@@ -34,14 +36,21 @@ export class InspectionCoordinator {
   async start(sessionId: string, raw: unknown): Promise<InspectionCapture> {
     const parsed = InspectionStartSchema.safeParse(raw);
     if (!parsed.success) throw new InspectionError('invalid-input');
+    if (this.resolving) throw new InspectionError('busy', 429);
     const input = parsed.data;
     if (!this.deps.isCurrent(sessionId, input.context)) throw new InspectionError('stale', 409);
     if (!this.deps.vision && !this.deps.inspect) throw new InspectionError('provider-unavailable', 503);
     if (this.active && this.active.sessionId !== sessionId) throw new InspectionError('busy', 429);
     const prior = this.epoch;
-    if (prior?.sessionId === sessionId && (input.sessionGeneration < prior.generation ||
-        (input.sessionGeneration === prior.generation && (input.liveSessionId !== prior.liveSessionId || input.requestEpoch <= prior.epoch)))) {
+    const liveKey = JSON.stringify([sessionId, input.liveSessionId]);
+    if (this.retiredLiveSessions.has(liveKey)) throw new InspectionError('stale', 409);
+    if (prior?.sessionId === sessionId && input.liveSessionId === prior.liveSessionId &&
+        (input.sessionGeneration < prior.generation || (input.sessionGeneration === prior.generation && input.requestEpoch <= prior.epoch))) {
       throw new InspectionError('stale', 409);
+    }
+    if (prior && (prior.sessionId !== sessionId || prior.liveSessionId !== input.liveSessionId)) {
+      if (this.retiredLiveSessions.size >= 64) throw new InspectionError('busy', 429);
+      this.retiredLiveSessions.add(JSON.stringify([prior.sessionId, prior.liveSessionId]));
     }
     this.invalidate(sessionId);
     this.epoch = { sessionId, liveSessionId: input.liveSessionId, generation: input.sessionGeneration, epoch: input.requestEpoch };
@@ -59,7 +68,9 @@ export class InspectionCoordinator {
     this.active = active;
     try {
       // Resolve only immutable, reviewed references from storage. It cannot fetch arbitrary user URLs.
-      const references = await this.withAbort(this.deps.resolveReferences(input.context), controller.signal);
+      this.resolving = true;
+      const work = Promise.resolve().then(() => this.deps.resolveReferences(input.context)).finally(() => { this.resolving = false; });
+      const references = await this.withAbort(work, controller.signal);
       this.assertCurrent(active);
       active.references = references;
       capture.request.referenceIds = references.references.map(entry => entry.reference.id);

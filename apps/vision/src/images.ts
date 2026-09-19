@@ -16,6 +16,15 @@ export async function validateImage(image: EncodedImage, signal: AbortSignal): P
   const bytes = Buffer.from(image.dataBase64, 'base64');
   if (!bytes.length || bytes.length > MAX_IMAGE_BYTES || bytes.toString('base64') !== image.dataBase64 ||
       createHash('sha256').update(bytes).digest('hex') !== image.sha256) throw new VisionError('invalid-image');
+  if (image.mimeType === 'image/png') {
+    // libvips can decode the first APNG frame while omitting animation metadata. Reject the container flag explicitly.
+    for (let offset = 8; offset + 12 <= bytes.length;) {
+      const length = bytes.readUInt32BE(offset);
+      if (length > bytes.length - offset - 12) throw new VisionError('invalid-image');
+      if (bytes.toString('ascii', offset + 4, offset + 8) === 'acTL') throw new VisionError('invalid-image');
+      offset += 12 + length;
+    }
+  }
   const decoder = sharp(bytes, { failOn: 'warning', limitInputPixels: MAX_EDGE * MAX_EDGE, animated: false });
   const abort = () => decoder.destroy();
   signal.addEventListener('abort', abort, { once: true });
