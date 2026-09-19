@@ -24,6 +24,16 @@ publication, and a request to review is read-only unless fixes are also requeste
 For an end-to-end delivery request, complete all authorized steps without asking
 again at each workflow boundary. Keep unrelated changes intact.
 
+## Browser reference and pending Unity UX work
+
+For recording, tutorial UI, ghost presentation or learner-following changes, consult
+[the Unity handoff checklist](docs/ux-unity-handoff.md) alongside the plan. It records
+unported browser behavior and concrete acceptance gaps. Update relevant checklist
+items with implementation/test evidence; do not infer native completion from the
+reference merge. `experiments/quest-browser` is a runnable porting reference, not a
+second production runtime or a source of native-format recordings. Preserve the
+native reducer, storage, calibration and strict contract authority.
+
 ## Skills
 
 Canonical skills live in `.agents/skills/workflow/`. `.claude/skills/` and

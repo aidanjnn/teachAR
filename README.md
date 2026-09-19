@@ -19,23 +19,33 @@ than task-specific code or cached answers.
 [Run the desktop](#run-the-desktop-and-backend-scaffold) →
 [Install Unity and build Android](#prepare-the-quest-app).
 
+## Browser prototype and Unity handoff
+
+The tested local tutor UX is preserved as an [executable browser reference](experiments/quest-browser/README.md).
+**Hamza / native integration: start with the [Unity gap and acceptance checklist](docs/ux-unity-handoff.md).**
+It maps one-time save-position setup, clean recording, paired holograms, learner-paced
+following and the Create/Follow shell onto existing native controllers. The browser
+format is not the native contract; merging this reference does not complete the port.
+No private recordings or API keys are included.
+
 ## Current status
 
-This repository is a working desktop/backend scaffold with prepared Unity source
-files. The native platform and browser voice diagnostics are implemented; the complete
-headset experience described below is still being integrated and validated.
+The native platform, capture, motion progression, inspection transport and durable
+authoring/storage implementations are merged. The complete headset experience is
+still being integrated and validated. Source availability is not device acceptance.
 
-| Component | Available now | Still required |
+| Component | Available in source | Still required |
 | --- | --- | --- |
-| Quest app | Resolved package lock, Android/OpenXR/URP setup, single-rig passthrough bootstrap, pairing client and native tests | Device validation, hand capture, calibration, ghost guidance, camera and voice adapters |
-| Desktop | Synthetic Three.js replay, tracking-gap diagnostics, backend status and Voice Lab | Expert review, tutorial authoring and live spectator tools |
-| Main API | Fastify health/static serving, scoped pairing primitives, authenticated vision health client and mock/OpenAI voice routes | Paired application composition, recording storage/uploads, inspection coordination and live-provider acceptance |
-| Vision backend | Separate authenticated Fastify process with health and explicit non-readiness | Image decoding, visual model calls, structured assessments, cancellation and result delivery |
-| Shared packages | Versioned recording/tutorial/inspection schemas, strict native parsing, parity fixtures and rigid transforms | Feature integration and physical calibration/transfer acceptance |
+| Quest app | Unity/Meta/OpenXR setup, pairing, hand capture, registration, ghost presentation, local guide reducer, MRUK inspection and verified preload | Unified Create/Follow UX, one-time save zone, paired ghost presentation, native voice and end-to-end device validation |
+| Desktop | Replay diagnostics, authoring review, storage/spectator tools and Voice Lab | Integration polish and live-provider acceptance |
+| Main API | Scoped pairing, durable recording/tutorial publication, inspection coordination and voice routes | Complete paired native composition; open PR 14 voice grounding/auth integration |
+| Vision backend | Authenticated inspection jobs, input validation, bounded provider adapter and cancellation | Fresh-headset/live-model acceptance and measured reliability; not continuous object tracking |
+| Shared packages | Versioned strict recording/tutorial/inspection schemas, native parity fixtures and rigid transforms | Explicit versioning for new save-zone metadata; physical calibration/transfer acceptance |
 
-The vision service returns **503 for readiness** and **501 for inspections**;
-a successful health check means only that the process is reachable. No live AI
-or headset capability is implied. See [scaffold evidence](docs/scaffold.md).
+Health means reachability, not provider or headset readiness. See the
+[current Unity handoff](docs/ux-unity-handoff.md), [native setup evidence](docs/native-setup.md)
+and [historical scaffold scope](docs/scaffold.md). Hosted checks no longer run Unity;
+record local native validation separately.
 
 ## Intended experience
 
