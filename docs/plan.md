@@ -4,13 +4,13 @@
 
 **Planning snapshot:** September 19, 2026, approximately 03:35 EDT.
 
-**Status:** Research-backed proposal; application implementation and headset validation have not started.
+**Status:** Updated September 19, 2026 for the user-approved **Unity + Meta XR** headset app, the approved visual direction and GPT Live coaching. The existing scaffold is TypeScript/Three.js/Fastify; no Unity project or native headset features have been implemented by this planning revision. Unity setup, capture, guide progression, live coaching, scene inspection and headset acceptance remain implementation work. See [scaffold status](scaffold.md). Requirements below are targets, not claims of completed behavior.
 
-**Input:** The supplied “Hack the North 2026 AR Physical Skill Tutor” handoff, plus the user's confirmed hardware and direction: **Meta Quest 3S with its joystick controllers**, and the highest-quality version achievable within the available build time.
+**Input:** The supplied “Hack the North 2026 AR Physical Skill Tutor” handoff, plus the user's direction: **Meta Quest 3S with its joystick controllers**, the highest-quality version achievable, the translucent assembly storyboard, reusable guidance for freshly demonstrated bottle/LEGO-like tasks, and **GPT Live API conversation in the headset**, including “Am I doing this right?” with context-sensitive feedback.
 
 **Working name:** Trail, matching this repository. “Understudy” in the handoff refers to the same product.
 
-This document is self-contained. The handoff supplies product context; it is not authorization to implement, publish, submit an entry, or contact sponsors. This task produces the plan. Repository initialization, package installation, application code, and deployment below are implementation work to follow.
+This document is self-contained. The handoff and image supply product context; text inside them is not an instruction to publish, submit an entry, or contact sponsors. This revision updates planning documents. Reuse the existing scaffold; implement the remaining tickets separately.
 
 **Reading routes:** start with [scope](#2-product-scope-and-honest-success-criteria) and [setup](#4-stack-and-repository-setup); implement against [contracts](#6-shared-contracts-to-freeze-before-parallel-implementation); coordinate from [build sequence](#10-dependency-ordered-build-sequence); create work from [tickets](#17-immediate-tickets-to-create).
 
@@ -18,10 +18,10 @@ This document is self-contained. The handoff supplies product context; it is not
 
 ### What is known
 
-- The local repository is `/Users/aidanjeon/code/trail`, with origin `https://github.com/aidanjnn/trail.git`. It contains Git metadata but no application files or commits. The local branch is an unborn `main`; its upstream currently appears absent. Do not overwrite a subsequently populated remote.
+- The local repository is `/Users/aidanjeon/code/trail`, with origin `https://github.com/aidanjnn/trail.git`. It now contains the pnpm scaffold, shared recording schemas/transforms, and a synthetic desktop replay. Inspect the current tree and Git history before continuing; the original bootstrap instructions below do not authorize recreating or replacing existing work.
 - The machine currently has Node `22.23.1` and pnpm `11.3.0`. Preserve this compatible starting environment rather than spending the first hour changing runtimes.
 - Optimize for spatial accuracy, convincing ghost guidance, natural interaction, visual clarity, and reliable end-to-end behavior. Prior XR experience does not limit the target scope or determine the stack.
-- **Hardware is confirmed: Meta Quest 3S with its joystick controllers.** Record the installed OS and Browser versions for reproducibility, then validate the required capabilities on that device. The model itself is not an open question.
+- **Hardware is confirmed: Meta Quest 3S with its joystick controllers.** Record the installed Horizon OS, app build and SDK versions for reproducibility, then validate the required capabilities on that device. The model itself is not an open question.
 - Assume four people and one headset until corrected. The headset is a shared test resource; three workstreams must be productive without it.
 
 ### Deadline-aware execution
@@ -34,25 +34,28 @@ Use a **24-hour implementation budget**, with a working physical prototype withi
 
 | Decision | Choice | Reason |
 | --- | --- | --- |
-| Headset runtime | Meta Browser, WebXR, TypeScript, Three.js | Documented AR/hand capabilities, direct rendering control, shared replay/runtime code |
-| Physical task | Four large pieces on one rigid marked mat | Stable geometry, visible outcome, easy reset |
+| Headset runtime | Unity 6.3 candidate, C#, Unity OpenXR + Meta XR Core/Interaction + MRUK | Native standalone Quest app with hand input, passthrough cameras and an articulated ghost; exact compatible versions frozen in TRAIL-18 |
+| Physical tasks | Fresh bottle assembly and large LEGO-style assembly on a marked mat | Exercise one reusable engine with two different demonstrations and fixed starting layouts |
 | XR rendering | Articulated translucent ghost hand, adaptive path cue, target ring | Legible expert movement with controlled visual density; skeleton view for diagnostics |
-| Motion logic | Pure TypeScript in a shared package | Tests and replay work without the headset |
+| Motion logic | Pure C# headset engine; existing TypeScript authoring/math utilities retained | Runtime progression stays on the headset; shared golden JSON fixtures prevent cross-language drift |
 | Authoring | Motion-based boundary proposals, narration labels, fast expert review | A natural demonstration becomes an editable tutorial; explicit markers remain a recovery path |
 | Completion | Ordered motion gates, relevant hand pose, continuous dwell | Verify meaningful movement progress at the learner's pace without an AI round trip |
-| AI | Transcription, structured labels, contextual push-to-talk help | A coherent record-to-tutorial-to-coaching experience |
-| Server | One Fastify process on the demo laptop | Simple storage, API, WebSocket relay, optional AI |
-| Storage | Local files plus browser IndexedDB | No cloud database or accounts needed for the demo |
-| Device connection | USB reverse-port route first; trusted HTTPS for untethered use | Prove the loop before debugging venue networking |
+| Spoken coaching | GPT Live API, `gpt-live-1`, native Unity WebRTC adapter | Natural headset conversation, interruptions, and explanations adapted to the current step |
+| Visual coaching | Fresh scene snapshot + reviewed expert reference → image-capable Responses model → GPT Live | Answer visible-placement questions using actual evidence; never infer object state from wrist position |
+| Server | One Fastify process on the demo laptop | Storage, API, relay, Live sideband, bounded inspection jobs; keys stay here |
+| Storage | Laptop files + headset application-private files; optional IndexedDB for desktop tools | Tutorial preload and recording recovery without a cloud database |
+| Device connection | Installed Android ARM64 APK; USB reverse to Fastify for local development, HTTPS/WSS for untethered use | The headset runs Unity locally; only data/coaching need the server |
 | Sponsor priority | OpenAI first; Sentry and Huawei only after core gates | Natural integrations with explicit eligibility checks |
 
-**Critical path:** device access → valid hand capture → independent workspace calibration → recorded ghost replay → learner completion → four-step transfer. AI, cameras, casting enhancements, and haptics cannot repair a failure on that path.
+**Spatial critical path:** device access → valid hand capture → independent workspace calibration → recorded ghost replay → learner completion → fresh multi-step transfer. In parallel, prove **GPT Live access → native headset WebRTC audio → fresh scene source → grounded spoken inspection**. Both paths must pass for the requested end result; neither substitutes for the other. Motion continues locally during a voice outage, with coaching visibly unavailable.
 
 ### Quality target and architecture rule
 
-Build a polished four-step experience: stable workspace alignment, an articulated ghost that makes the movement obvious, learner-paced path progress, concise corrective feedback, automatically proposed steps with quick review, and useful contextual voice help. The authoring screen and spectator presentation should feel finished. Preserve a working checkpoint build throughout, then keep improving toward this target.
+Build a polished 3–5-step experience: stable workspace alignment, an articulated ghost that makes the movement obvious, learner-paced path progress, automatically proposed steps with quick review, and useful GPT Live conversation grounded in the current task and scene. The learner can ask for an explanation, interrupt an answer, or ask “Am I doing this right?” while manipulating objects. The authoring screen and spectator presentation should feel finished. Preserve a working checkpoint build throughout, then keep improving toward this target.
 
-WebXR remains the recommended stack because the researched capabilities match this product and its shared TypeScript runtime supports deterministic testing and rapid device iteration. Compare stacks on measured alignment, tracking availability, frame timing, rendering control, and integration cost. If a required core capability fails specifically in the browser, time-box a native Unity/Meta XR proof of that same capability; switch only after the native spike demonstrates the needed improvement and a feasible migration. Team familiarity is not the decision criterion.
+**Use Unity + Meta XR for the headset application.** The user chose this after comparing the full workflow. Unity provides documented hand-bone access and hand assets, a visual scene/material workflow for ghost guidance, and native Quest camera access through MRUK. Spatial SDK is an alternative Kotlin/Android client, not a Unity dependency. IWSDK remains an alternative browser runtime; neither is part of the selected headset stack. The existing TypeScript server, desktop viewer, schemas and authoring math remain useful. This is a product-fit decision, not proof of better tracking accuracy or shorter delivery time. [Unity hands](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/), [Unity camera access](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/)
+
+The first integrated proof is a **standalone Quest 3S APK** with valid live hand capture, calibrated recorded ghost replay, a fresh headset-camera image and two-way GPT Live speech operating together. A Unity Editor or simulator result does not pass this gate. Native voice, joint mapping, calibration transfer and frame timing remain measured risks. Do not reopen the engine decision for ordinary implementation friction; isolate concrete failures and report their effect on the target.
 
 ## 2. Product scope and honest success criteria
 
@@ -60,9 +63,30 @@ WebXR remains the recommended stack because the researched capabilities match th
 
 An expert calibrates the mat, narrates and performs a short task with brief natural checkpoint holds. Trail records hand poses and audio on one timeline, proposes step boundaries and instructions, and lets the expert review them. A different person resets the parts, calibrates the same mat, watches an articulated ghost movement for each step, and follows at their own speed. Guidance responds to their progress along the movement; the system waits for the required motion gates and checkpoint hold before advancing. Explicit markers support authoring corrections and recovery.
 
-The product is **spatial motion guidance**. A successful hand checkpoint means the tracked hand reached the configured pose; it does not prove that a part was grasped, inserted, or assembled correctly. Display “Movement checkpoint reached,” not “Assembly verified.”
+The product combines **spatial motion guidance and spoken visual coaching**. A successful hand checkpoint means the tracked hand satisfied the movement rules. A separate camera-based answer may assess a visible placement or mismatch, with stated uncertainty. Neither proves hidden contact, thread engagement, tightness, or a watertight seal. Display “Movement checkpoint reached”; voice can say “In this view, the cap appears tilted,” or “That looks aligned with the demonstrated step.” Never turn either signal into “Assembly verified.”
 
-### One concrete demonstration
+### Visual and interaction target
+
+Yes: [the three-panel storyboard](mockups/translucent-assembly-2026-09-19/guidance-sequence.png) is the intended end-result direction. It shows the experience through the headset's passthrough view. Its imagery is illustrative, not a screenshot or evidence of tracking, alignment, occlusion, or passthrough quality. The screenshot editing toolbar is not part of Trail.
+
+| Storyboard moment | Required implementation |
+| --- | --- |
+| Watch the motion | One articulated translucent cyan expert hand, short path cue, target ring, and a small step card outside the working area |
+| Follow at your pace | Ghost lookahead follows local learner progress through the recorded movement; it slows/waits rather than racing on an expert timer |
+| Reach the checkpoint | Fade the ghost/path, show a restrained movement-checkpoint indicator; physical-placement feedback remains separately attributed |
+| Ask while working, added to the storyboard | A small listening/checking/speaking/muted/unavailable indicator, concise captions, natural spoken questions, and interruption; no large chat panel covering the hands |
+
+Use the canonical recorded 25-joint pose to drive a separate articulated ghost in the Unity scene through an explicit rig adapter. Meta's OpenXR skeleton includes 26 joints; map named joints and treat its extra palm separately. The live tracked hand is not the recorded expert hand. Build small world-space Canvas/TextMeshPro controls with Meta Interaction SDK input; retain ordinary HTML/CSS for desktop review. Do not promise generated object meshes, a scanned room, or perfect depth occlusion. Validate ghost opacity, hand proportions, text readability, registration and frame time on the Quest 3S. Speech changes the explanation and can suggest a local replay or slower preview; it cannot synthesize a new hand trajectory. The checkpoint card can offer “Ask me to check the placement” when visual coaching is ready.
+
+### Generality: fresh demonstrations, shared engine
+
+Bottle assembly and LEGO-style assembly are the first two acceptance tasks, not special cases in code. Every tutorial gets its own freshly captured hand motion, narration, reviewed steps, starting-layout reference, and visible step references. The same schemas, calibration, matcher, renderer, and coaching pipeline handle both, without task-name branches, seeded coordinates, cached answers, or hardcoded part lists.
+
+The accepted scope uses the same parts, mat scale, starting layout and dominant hand for expert and learner **within each tutorial**. Different tutorials can use different parts and layouts. Automatic relocation of rearranged objects, arbitrary precision tasks, or proof that all physical objects are supported is outside this release. Saving/reloading the user's real tutorial is expected; presenting a seeded tutorial as a fresh capture is not.
+
+### Initial physical demonstration and transfer check
+
+Choose a simple bottle with large removable parts for the primary run, then a different 3–5-step assembly using large LEGO-style pieces for the generality check. Use an empty bottle, loose forgiving connections, and visible checkpoints. Freeze exact parts after testing hand visibility. The following four-piece stand is an equivalent fallback and matches the storyboard; its shape must not become an application dependency.
 
 Use a 50 × 35 cm rigid mat or tray with three labeled calibration marks, one verification mark, and outlined starting locations. Prepare four large, lightweight pieces with an obvious final silhouette:
 
@@ -84,15 +108,15 @@ Use the same physical mat, part sizes, initial layout, and dominant hand for bot
 | Physical proof, H+4 | A real recorded hand movement replays on the calibrated mat | AI, semantic labels, automatic progression |
 | Interactive proof, H+7 | A second person completes one step; tracking loss pauses correctly | Multi-step task and AI |
 | Minimum demo, H+11 | Fresh recording produces 3–5 marked steps; learner completes them locally | Automatic segmentation, questions, haptics |
-| Semantic integration, H+15 | Motion proposals plus narration become reviewed steps; save/reload works | Scene vision, open-ended conversation |
-| Quality target, H+18 | Polished articulated ghost, ordered path gates, corrective feedback, contextual push-to-talk help, finished review/spectator screens | Haptics, scene vision, always-on conversation |
-| Stretch, only after core gates | One grounded multimodal answer, useful sponsor observability, optional haptics | Never required to reach or complete a checkpoint |
+| Semantic integration, H+15 | Motion proposals plus narration become reviewed steps; save/reload works; Live voice and scene inspection integrated | Final visual polish and broader conversational topics |
+| Quality target, H+18 | Polished ghost, ordered gates, hands-free GPT Live questions with fresh visual feedback, reviewed tutorials, finished review/spectator screens | Haptics, continuous video understanding, optional sponsor integrations |
+| Stretch, only after core gates | Useful sponsor observability, separate eligible OMNI interaction, optional haptics | Never required to reach or complete a checkpoint |
 
 The minimum demo is a recovery milestone, not the planned finish line. Explicitly marked steps and a skeleton renderer establish the pipeline early; automatic proposals, polished guidance, and contextual help remain scheduled target work. Any fallback and its effect on the delivered experience must be recorded. Manually edited labels do not satisfy the automatic semantic tutorial generation target.
 
 ### Explicit non-goals
 
-No arbitrary object tracking, scene reconstruction, physical assembly verification, universal skill understanding, robotic planning, precision tool use, remote multiplayer, persistent cloud spatial anchors, user accounts, billing, custom hand-model rigging, or production mobile application. No dangerous tasks. No model-generated spatial coordinates or model-controlled progression.
+No arbitrary object tracking, scene reconstruction, guaranteed physical assembly verification, universal skill understanding, robotic planning, precision tool use, remote multiplayer, persistent cloud spatial anchors, user accounts, billing, custom hand-model rigging, or production store launch. A sideloaded native Android headset app is in scope. Bounded visible-state assessment is in scope; continuous scene tracking is not. No dangerous tasks. No model-generated spatial coordinates or model-controlled progression.
 
 ### Definition of done
 
@@ -106,134 +130,119 @@ No arbitrary object tracking, scene reconstruction, physical assembly verificati
 8. Claims distinguish motion matching, generated instructions, and actual observed physical outcome.
 9. Target steps use ordered movement gates where the path matters; reaching the endpoint by skipping those gates cannot complete them.
 10. Ghosts, labels, feedback, review controls, and spectator output pass an in-headset clarity review with the real task.
-11. Automatic boundary proposals and contextual voice help each work on a fresh recording; any cut is documented against the quality target.
+11. Automatic boundary proposals and GPT Live conversation work on a fresh recording, on the headset while hands/XR are active. The learner can interrupt and ask a follow-up without a push-to-talk requirement after explicitly starting conversation.
+12. “Am I doing this right?” uses a fresh image and current reviewed step. Correct-looking, visibly wrong, and obscured/ambiguous placements produce appropriately different spoken feedback. No-image mode explicitly limits itself to instruction/movement evidence.
+13. A second fresh bottle/LEGO-style tutorial runs through the same pipeline without code changes. Record differences in tracking, visibility, and coaching accuracy; two tasks demonstrate reuse, not universal validation.
+14. Stale images, old attempts and delayed model replies never produce a current success message or change progression. Any missing voice/visual capability is a documented quality-target gap.
 
 ## 3. Platform research that changes the implementation
 
 | Finding | Consequence | Evidence / validation boundary |
 | --- | --- | --- |
-| Meta documents immersive AR and articulated WebXR hands | Use `immersive-ar` with `hand-tracking`; read actual joint poses | [Meta mixed reality](https://developers.meta.com/horizon/documentation/web/webxr-mixed-reality/), [Meta hands](https://developers.meta.com/horizon/documentation/web/webxr-hands/) |
-| The hand API exposes 25 joints; occlusion can yield emulated poses or a missing hand | Non-null is API-valid, not a confidence score or contact proof; exact-task testing is mandatory | [W3C hand-input specification](https://www.w3.org/TR/webxr-hand-input-1/) |
-| Reference-space origins can reset | Invalidate calibration and pause rather than silently relocating guidance | [WebXR spatial tracking](https://immersive-web.github.io/webxr/spatial-tracking-explainer.html) |
-| Entering immersive XR requires user activation; new non-XR permission prompts can interrupt it | Grant mic/camera permissions before XR, then use a fresh Enter AR button | [WebXR specification](https://immersive-web.github.io/webxr/) |
-| Secure contexts include trustworthy loopback origins | Use USB port reversal plus headset localhost, or genuinely trusted HTTPS; a plain laptop LAN IP is insufficient | [Meta debugging](https://developers.meta.com/horizon/documentation/web/browser-remote-debugging/), [Secure Contexts](https://www.w3.org/TR/secure-contexts/) |
-| Camera documentation is inconsistent across generations | Treat camera access as a capability test, not a core dependency | [Browser 40.1 camera support](https://developers.meta.com/horizon/downloads/package/browser/40.1/?view=full_width), [Browser 146 camera fixes](https://developers.meta.com/horizon/downloads/package/browser/146.0/?view=full_width) |
-| MediaRecorder chunk boundaries are not narration timestamps | Keep a complete recording and explicit timestamps; do not transcribe arbitrary chunks as independent audio files | [Media Recording specification](https://www.w3.org/TR/mediastream-recording/) |
+| Meta supports Unity OpenXR; the Oculus XR provider is deprecated | Select one OpenXR provider; OVR-prefixed Meta components do not require enabling the obsolete provider | [Compatibility](https://developers.meta.com/horizon/documentation/unity/unity-and-openxr-compatibility/) |
+| Meta's setup uses Unity 6.1+ and Universal 3D/URP with Android tooling | Start with Unity 6.3 as the candidate required by the researched WebRTC package; validate the complete package set | [Project setup](https://developers.meta.com/horizon/documentation/unity/unity-project-setup/) |
+| Unity hand setup distinguishes OpenXR's 26 joints from the legacy 24-joint OVR skeleton | Choose OpenXR hand skeleton explicitly; map by name into Trail's 25-joint format, with explicit bone-axis conversion | [Hands setup](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/) |
+| Hand-bone position/rotation access and hand prefabs are documented | Build capture and a separate replay rig; cached visual transforms are not validity evidence | [Hand capture tutorial](https://developers.meta.com/horizon/documentation/unity/unity-tutorial-basic-hand-tracking/) |
+| MRUK PassthroughCameraAccess supplies camera images, poses, intrinsics and timestamps | Obtain real source pixels without rendered ghost overlays; test frame freshness and view coverage | [Camera integration](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/) |
+| Native camera API supports Quest 3/3S, Horizon OS v74+ and camera permission | Verify installed OS, permission denial/recovery and actual frames; passthrough rendering alone does not pass | [Camera overview](https://developers.meta.com/horizon/documentation/unity/unity-pca-overview/) |
+| Unity WebRTC 3.0.0 documents Unity 6000.3 and Android ARM64/IL2CPP | Candidate native audio transport; pin/test with Meta XR rather than assuming browser sample code works | [WebRTC requirements](https://docs.unity3d.com/Packages/com.unity.webrtc@3.0/manual/requirements.html) |
+| GPT Live accepts audio/text; visual interpretation uses a separate backend | Preserve Live conversation plus image-capable Responses assessment, with stale-result rejection | [Visual context delegation](https://developers.openai.com/api/docs/guides/live-delegation#add-images-and-visual-context) |
 
-Compositor passthrough, a browser RGB camera stream, and WebXR Raw Camera Access textures/intrinsics are different capabilities. Seeing the real room behind a Three.js cube does not establish that the model can receive that room's pixels. Prove actual workspace images during immersive AR; use a laptop webcam if that optional spike fails.
+Controllers support menus, calibration controls and recovery; they do not supply bare-hand skeletons. Put controllers down and prove bare-hand tracking during real assembly. Do not assume simultaneous controller/hand modes or hand visibility through held objects. General scene/plane/depth APIs do not provide arbitrary bottle/LEGO object recognition or physical-result verification.
 
-Controllers are useful for setup, menu rays, and recovery. They do **not** supply a bare-hand skeleton. Do not assume controllers and articulated hands can be used simultaneously on the installed configuration. Put controllers down and confirm the switch to hand tracking before recording or learning. Controller-only pose replay is an explicitly reduced demonstration, not completion of the ghost-hand MVP.
+The required visual-coaching source is the **Quest headset camera**. A paired workspace webcam may assist development or a disclosed reduced demo, but it does not pass the headset-first acceptance target. The native route replaces the earlier ten-minute browser-camera probe/webcam-default policy.
 
 ## 4. Stack and repository setup
 
 ### Package choices
 
-Use TypeScript/HTML/CSS for authoring and spectator screens and Three.js for XR, with reusable components and a coherent visual system. These choices keep the rendering/runtime boundary explicit and avoid infrastructure that does not improve the experience. A framework change needs a concrete benefit to implementation or product quality; a small dependency count is not a reason to accept unfinished UI.
+Keep the current pnpm workspace intact and add a separate Unity project at `apps/quest/`. Desktop review, synthetic replay and spectator screens stay in `apps/web`; the headset does not run that site or a WebView. Do not downgrade Vite or install IWSDK/Spatial SDK. These are proposed changes, not installations performed by this document.
 
-The following versions were observed in package-registry metadata during planning. Their combined integration has **not** been installed or tested. Freeze the resolved working set and lockfile after the setup gate; if a plugin reports an incompatible major, select its documented Fastify-5-compatible release rather than bypassing peer checks.
-
-| Layer | Starting selection |
+| Layer | Selection / version policy |
 | --- | --- |
-| Runtime / package manager | Existing Node 22.23.1, pnpm 11.3.0 |
-| Compiler | TypeScript 5.9.3, strict mode; a deliberate conservative pin |
-| Web | Vite 8.3.0, Three.js 0.186.0, matching `@types/three` 0.186.0 |
-| XR types | `@types/webxr` 0.5.24 |
-| API | Fastify 5.12.5; `@fastify/static` 10.1.4, `@fastify/websocket` 11.3.1, `@fastify/multipart` 10.1.1 |
-| Validation / utilities | Zod 4.6.5, `gl-matrix` 3.x in pure math package, exact resolved version pinned |
-| Tests | Vitest 5.0.1, Playwright 1.63.0 |
-| Node development | `tsx` 4.23.13, `@types/node` 22.20.4, `@types/ws` 8.18.1 |
-| AI | Official `openai` Node SDK; pin the resolved version after schema/transcription smoke tests |
-| Optional telemetry | `@sentry/browser` and `@sentry/node` after core integration |
+| Headset engine | Unity 6.3 (`6000.3.x`) Universal 3D/URP candidate; choose and commit one exact editor patch after compatibility checks |
+| XR provider | Unity XR Plug-in Management and Unity OpenXR with required Meta feature groups; one provider, no legacy Oculus XR provider |
+| Meta features | Meta XR Core, Interaction SDK and MRUK; resolve a compatible release family and commit exact UPM lock entries |
+| Spatial UI / ghost | World-space Canvas + TextMeshPro, Interaction SDK UI; separate licensed hand mesh/rig with translucent material and pooled path geometry |
+| Camera | MRUK `PassthroughCameraAccess`; one selected camera with bounded CPU readback for snapshots |
+| Voice candidate | `com.unity.webrtc` 3.0.0, microphone PCM bridge and remote audio output; prove Android ARM64/IL2CPP interoperability with GPT Live |
+| Native domain | C# `Trail.Contracts` and `Trail.Motion` assemblies with no UnityEngine/Meta/network dependency |
+| Native JSON | Pinned IL2CPP-compatible serializer supporting strict DTO validation; test stripping/AOT in APK, not just Editor |
+| Server / web | Preserve current Node/pnpm/TypeScript, Vite, Three.js desktop viewer, Fastify, Zod and installed test versions |
+| Server AI | Official OpenAI Node SDK or documented HTTP/WebSocket transport for Live/Responses/transcription; provider credentials stay here |
+| Persistence | Unity application-private persistent files; Fastify atomic local files; optional browser cache for desktop views |
+| Testing | Unity EditMode/PlayMode and Android build/smoke gates alongside existing Vitest/Playwright/pnpm gates |
 
-Vite and Vitest's documented runtime minimums are satisfied by the observed Node version; that is an engine check, not a tested application build. Zod 4 supports TypeScript 5.5+. Use exact dependencies and `workspace:*` for internal packages. [Vite setup](https://vite.dev/guide/), [Vitest setup](https://vitest.dev/guide/), [Zod requirements](https://zod.dev/), [pnpm workspaces](https://pnpm.io/workspaces)
+Meta's v203 Core release notes require at least Unity 6000.0.66f2, while the researched WebRTC 3.0.0 page specifies 6000.3. This supports the editor-family candidate, not an already-tested combined dependency set. Freeze actual editor/OpenXR/Core/Interaction/MRUK/WebRTC versions in `ProjectVersion.txt`, `Packages/manifest.json`, `Packages/packages-lock.json` and a setup evidence note. Check asset licenses and package requirements at installation. Keep the independent `pnpm-lock.yaml`; Unity packages do not belong in it. [Core release notes](https://developers.meta.com/horizon/downloads/package/meta-xr-core-sdk/203.0/?view=full_width)
 
-### Repository tree to create
+### Unity runtime boundary
+
+| Responsibility | Framework supplies | Trail implements |
+| --- | --- | --- |
+| Tracking/rendering | OpenXR runtime, one Meta camera rig, passthrough layer | Permission/capability preflight, common tracking origin, lifecycle recovery, registration |
+| Live hands | Meta tracked skeleton/validity and Interaction SDK controls | Current-observation adapter, named-joint mapping, source provenance, strict missing-hand handling |
+| Recorded ghost | Meshes, skinning, materials, scene transforms | Separate pose-driven rig, rig-axis mapping, lookahead, gaps, checkpoint cues |
+| Camera | MRUK source texture and capture metadata | Nonce-bound fresh snapshot, CPU copy/encoding, reference images and upload limits |
+| Audio | Android mic and tested WebRTC package | Ring buffer/clock mapping, permissions, duplex playback, echo handling, session lifecycle |
+| Domain | No SDK dependency | Calibration, matching, segmentation contracts and deterministic progression |
+
+Use one Meta camera rig with a documented device-relative tracking origin; disable locomotion, teleport and snap turns. Put all live poses through one `NativePoseAdapter` and render the calibrated workspace against that same origin. Never fit calibration in one rig space and render in another. Any recenter, origin change, focus loss with uncertain tracking continuity, headset removal or app restart invalidates registration and clears partial dwell. The rig is not rescaled to fit a mat.
+
+Choose one live hand provider in the first spike: Meta Core tracked `OVRHand`/`OVRSkeleton` with OpenXR skeleton selection is the initial candidate. Explicitly validate tracking and required joint data in the selected release; do not read a cached skin, controller-driven hand, Interaction SDK synthetic pose, or replay rig as recorded evidence. Inspect the actual update ordering and sample once per fresh tracking update. Use one ordered capture → canonical conversion → pure reducer → effects path. Rendering may refresh at headset cadence without crediting duplicated samples to dwell. No blanket claim that every bone transform carries an independent confidence flag.
+
+Keep Unity/Meta objects outside serialized contracts. `Trail.Motion` gets numeric observations, validity, revisions and monotonic time; it has no MonoBehaviours, coroutines, file/network I/O or timers. `Trail.Runtime` owns those effects. A separate recorded ghost has its live tracking scripts removed/disabled; its explicit named-bone adapter handles bind rotations and missing intervals.
+
+Use a small world-space step/voice card beside the mat. Add local Repeat/Pause/Resume/Check controls and captions with Meta Interaction SDK. Do not parent a large panel rigidly to the head. Defer physics, virtual grabbing, room scans and depth occlusion until the basic ghost is accurate and readable; real object assembly does not require simulated object physics.
+
+### Target repository tree
 
 ~~~text
 trail/
-├── README.md                    # fresh-clone and headset quickstart
-├── AGENTS.md                    # boundaries, conventions, required checks
-├── package.json                # private workspace; root scripts
-├── pnpm-workspace.yaml
-├── pnpm-lock.yaml
-├── tsconfig.base.json
-├── .node-version
-├── .npmrc                      # save-exact=true
-├── .env.example
-├── .gitignore
-├── .github/workflows/check.yml
 ├── apps/
-│   ├── web/
-│   │   ├── package.json
-│   │   ├── vite.config.ts
-│   │   └── src/
-│   │       ├── main.ts
-│   │       ├── xr/              # session, hand-source, calibration UI, ghosts
-│   │       ├── record/          # recorder, audio capture, marker controls
-│   │       ├── guide/           # runtime adapter, feedback, XR controls
-│   │       ├── replay/          # fixture source, desktop 3D viewer
-│   │       ├── dashboard/       # record/review/guide/spectate screens
-│   │       └── storage/         # IndexedDB recording/tutorial cache
-│   └── server/
-│       ├── package.json
-│       └── src/
-│           ├── main.ts
-│           ├── routes/         # recordings, jobs, tutorials, coach, pairing
-│           ├── sessions/       # WebSocket relay and spectator snapshots
-│           ├── ai/             # providers, transcription, labeler, coach
-│           ├── storage/        # atomic files, manifest, import/export
-│           ├── telemetry/      # structured logs; optional Sentry
-│           └── haptics/        # mock first; hardware driver only if earned
-├── packages/
-│   ├── contracts/src/          # runtime schemas + inferred TS types
-│   └── motion/src/             # math, segmentation, matching, reducer
-├── fixtures/                   # synthetic plus consented real test recordings
-├── tests/e2e/
-├── scripts/                    # fixture validation, recording export
-├── docs/
-│   ├── plan.md                  # product and implementation plan
-│   ├── device-check.md
-│   ├── contracts.md
-│   ├── demo.md
-│   ├── limitations.md
-│   ├── sponsor-notes.md
-│   └── validation.md
-└── data/                       # ignored; recordings, audio, tutorials, jobs
+│   ├── quest/                         # NEW native Unity project
+│   │   ├── Assets/Trail/
+│   │   │   ├── Contracts/             # pure C# DTOs/validation, asmdef
+│   │   │   ├── Motion/                # pure C# calibration/matcher/reducer, asmdef
+│   │   │   ├── Runtime/
+│   │   │   │   ├── XR/                # tracked hands, coordinates, lifecycle
+│   │   │   │   ├── Record/            # motion capture/markers/narration
+│   │   │   │   ├── Guide/             # state/effect integration
+│   │   │   │   ├── Coach/             # native WebRTC/mic/playback/context
+│   │   │   │   ├── Scene/             # MRUK frame acquisition
+│   │   │   │   ├── Network/           # pairing, HTTP, WebSocket
+│   │   │   │   └── Storage/           # private files, manifests, recovery
+│   │   │   ├── Presentation/          # ghost, cues, UI scripts
+│   │   │   ├── Prefabs/               # owned by feature owner
+│   │   │   ├── Scenes/Trail.unity      # integration owns scene composition
+│   │   │   ├── Editor/                # proposed build/check entry points
+│   │   │   └── Tests/                 # EditMode/PlayMode fixtures
+│   │   ├── Packages/                  # manifest.json, packages-lock.json
+│   │   └── ProjectSettings/           # exact editor/settings/build profile
+│   ├── web/src/                       # desktop review, fixture replay, spectator
+│   └── server/src/                    # routes, files, AI, relay, session security
+├── packages/contracts/src/           # Zod wire schemas / TypeScript types
+├── packages/motion/src/              # existing math; offline authoring/reference logic
+├── fixtures/                         # shared canonical JSON and expected results
+├── scripts/                          # existing pnpm tooling; planned Unity build/test wrappers
+├── docs/                             # plan, team, device and validation evidence
+├── pnpm-lock.yaml                    # preserve web/server dependency set
+└── data/                             # ignored private server media
 ~~~
 
-**Dependency direction:** `contracts` imports Zod only. `motion` imports `contracts` and pure math utilities only. `web` and `server` may import both. Shared packages cannot import DOM/WebXR, Three.js, Node filesystem, provider SDKs, or hardware code. Declare hand-joint names in contracts rather than importing browser-only types into motion.
+**Dependency direction:** C# Contracts → no engine; C# Motion → Contracts/pure math; Unity runtime/presentation → both plus SDKs. TypeScript contracts → Zod only; TypeScript motion → contracts/pure math; web/server → shared packages. C# is the sole learner-runtime authority. TypeScript performs offline tutorial compilation and supports desktop diagnostics; it does not independently advance a live guide. Shared JSON fixtures and expected numeric results are the cross-language contract. Preserve the existing tests while porting; do not claim a TypeScript pass proves the C# implementation.
 
-### Bootstrap sequence, owned by integration
+### Unity migration sequence, owned by integration and XR
 
-These are instructions for the next implementation task, not commands executed during planning.
+1. Record the existing revision, manifests and passing-check baseline. Keep the web diagnostic and server working. Install Unity Hub/editor with Android Build Support, SDK/NDK/OpenJDK on the build machine; account/editor activation is a setup gate, not something pnpm supplies. Select the candidate editor patch only after checking the SDK/audio requirements. [Meta setup](https://developers.meta.com/horizon/documentation/unity/unity-project-setup/)
+2. Create the Universal 3D project in `apps/quest`, add the selected packages, choose the Quest/Android build profile, OpenXR and ARM64/IL2CPP. Review Meta Project Setup Tool diagnostics. Set a stable application ID and version code; document the exact build settings. Do not add platform accounts, social features or store entitlement dependencies unless actually required by the chosen SDK setup.
+3. Enable Visible Meta Files and Force Text serialization; commit `.meta`, scene/prefab assets, `ProjectSettings`, UPM manifests and locks. Ignore `Library`, `Temp`, `Obj`, `Logs`, `UserSettings`, build outputs, recordings, keys and signing secrets. Use Git LFS only for necessary licensed binary assets. Person 4 owns the main scene/settings/locks; feature owners supply separate prefabs to avoid concurrent scene edits.
+4. Build the minimal passthrough scene with hands and a small world-space control. Install and run a standalone APK via ADB/MQDH. Verify the app can contact Fastify and return authenticated diagnostics. A desktop Editor play session does not pass this step.
+5. Freeze native/wire schemas with Person 2. Implement the coordinate and skeleton adapters described in section 6, pure C# tests, raw capture and separate ghost. Preserve existing TypeScript fixtures and compare numerical results across both implementations.
+6. Person 3 proves native WebRTC mic/output; Person 1 proves fresh MRUK frames. Integrate both into the same APK early. The WebRTC requirements include Android build and frame-pacing constraints: check these against Meta's settings and measure XR cadence; do not blindly apply contradictory recommendations. Failure to deliver duplex speech is a real blocker, not permission to claim a desktop call as headset success.
+7. Add reproducible Unity test/build wrappers and CI when editor licensing is available. Keep current `pnpm check`, fixture and browser gates for the web/server. Proposed `check:quest`/`build:quest` wrappers do not exist yet; document exact commands once implemented. Produce EditMode/PlayMode XML and an Android build artifact; if CI cannot activate Unity, report that gap and retain a reproducible local build requirement.
+8. Pass the joint hand/ghost/camera/voice device slice, then proceed with the dependency graph. Record tested package versions, build/commit and actual observations in `docs/validation.md`. Freeze one working APK plus server revision before expanding scope.
 
-1. Inspect `git status` and `git ls-remote origin` before creating the first commit. If a remote history now exists, reconcile it without resetting or force-pushing. Coordinate one initial scaffold commit before developers branch.
-2. Create the root package manifest with `"private": true`, `"packageManager": "pnpm@11.3.0"`, `"type": "module"`, and `"engines": { "node": ">=22.13.0 <23" }`. Write `22.23.1` to `.node-version`.
-3. Write `pnpm-workspace.yaml` with `packages: ["apps/*", "packages/*"]`. Set `save-exact=true`. Add ignores before recording audio or creating secrets: `node_modules/`, `dist/`, `.env`, `.env.*` except `.env.example`, `data/`, local recordings, logs, traces, and test output.
-4. Scaffold web with `pnpm dlx create-vite@9.2.1 apps/web --template vanilla-ts`. Rename package to `@trail/web`; replace generated dependency ranges with the selected exact pins. Create `@trail/server`, `@trail/contracts`, and `@trail/motion` manifests.
-5. Shared packages export compiled ESM and declarations from `dist/`. Use TypeScript NodeNext for Node/shared code, explicit `.js` internal import suffixes, and Bundler resolution for Vite. Root builds shared packages before consumers; dev builds once before starting watchers.
-6. Install dependencies in their owning packages, with `workspace:*` internal dependencies. Commit one lockfile. Do not independently regenerate the scaffold or lockfile in four branches.
-7. Implement root commands below, a health route, one schema round-trip, a pure transform test, and a visible desktop fixture. Run the setup acceptance gate before distributing work.
-8. Add CI using the same Node/pnpm pins and `pnpm install --frozen-lockfile` followed by the agreed checks. Keep ordinary CI independent of secrets and XR hardware.
-9. Add a README with a two-terminal development path, verified device connection instructions, and the exact known-good commit. Push/PR operations are a later implementation workflow.
-
-~~~json
-{
-  "scripts": {
-    "dev": "pnpm build:shared && concurrently -k \"pnpm dev:shared\" \"pnpm --filter @trail/web dev\" \"pnpm --filter @trail/server dev\"",
-    "build:shared": "pnpm --filter @trail/contracts build && pnpm --filter @trail/motion build",
-    "dev:shared": "concurrently -k \"pnpm --filter @trail/contracts dev\" \"pnpm --filter @trail/motion dev\"",
-    "build": "pnpm build:shared && pnpm --filter @trail/web build && pnpm --filter @trail/server build",
-    "typecheck": "pnpm build:shared && pnpm -r typecheck",
-    "test": "vitest run",
-    "test:e2e": "playwright test",
-    "check": "pnpm typecheck && pnpm test && pnpm build",
-    "start": "node apps/server/dist/main.js"
-  }
-}
-~~~
-
-Pin `concurrently` as a root dev dependency. Configure Vitest to discover pure-package/server tests, and Playwright to start the desktop app with mock providers. Define matching package scripts; the names above are a contract to implement, not existing commands. Use a formatter/linter only if it does not delay the physical spike.
+**Migration pass:** preserved web/server checks, pure C# fixture tests, reproducible native build/install, valid hand observations, one separate ghost, permission/restart cleanup, fresh headset images and actual duplex voice together. TRAIL-18 owns setup; TRAIL-04/16/17 supply the feature evidence. No Unity installation, generated project, dependency migration or headset test is performed by this planning task.
 
 ### Environment contract
 
@@ -246,6 +255,11 @@ AI_PROVIDER=mock
 OPENAI_API_KEY=
 OPENAI_TRANSCRIBE_MODEL=whisper-1
 OPENAI_TEXT_MODEL=gpt-4.1-mini-2025-04-14
+LIVE_PROVIDER=mock
+OPENAI_LIVE_MODEL=gpt-live-1
+OPENAI_VISION_MODEL=gpt-4.1-mini-2025-04-14
+SCENE_SOURCE=mock
+# Planned live scene choices: quest-camera or workspace-webcam
 OMNI_API_KEY=
 OMNI_BASE_URL=
 OMNI_MODEL=
@@ -256,22 +270,21 @@ HAPTICS_SERIAL_PORT=
 DEMO_PAIRING_SECRET=
 ~~~
 
-Load `.env` explicitly in server startup; Vite's env loading does not configure a separately started Node process. Set mock providers by default. No provider key belongs in a `VITE_*` variable or browser bundle. Camera frames, raw narration, API keys, and full hand recordings stay out of logs and source control unless a small test fixture was deliberately consented and approved for inclusion.
+Load `.env` explicitly in server startup; Vite's env loading does not configure a separately started Node process. Set mock providers by default. No provider key belongs in `VITE_*`, a browser bundle, Unity assets/Resources/StreamingAssets, an APK or a native client config. Camera frames, raw narration, API keys, and full hand recordings stay out of logs and source control unless a small test fixture was deliberately consented and approved for inclusion.
+
+These Live/scene settings are proposed additions, not options implemented by the current scaffold. Mock mode must be labeled in the UI and cannot satisfy live acceptance. The integration owner adds configuration validation and pins a Live-capable SDK with the voice owner; no unrelated dependency upgrades are needed.
 
 ### Device connection and runtime validation
 
-1. Charge the Quest 3S and controllers. Record Browser/OS versions. Enable hand tracking and validate switching from controllers to bare hands.
-2. Open an official WebXR hand example to establish a device baseline for Enter AR, system-menu interruption, exit, and tracking recovery before comparing application behavior.
-3. For USB development, enable the account/device's required developer mode, install Android platform tools or Meta Quest Developer Hub, connect a data-capable USB cable, and accept the headset's debugging prompt.
-4. Run `adb devices`; the headset must be listed as authorized. Run `adb reverse tcp:5173 tcp:5173`. Start the app and open `http://localhost:5173` in **the headset browser**. Confirm `window.isSecureContext` and `navigator.xr` in diagnostics.
-5. Vite binds to `127.0.0.1:5173` with a fixed port; proxy `/api` and `/ws` to `http://127.0.0.1:3001`, with WebSocket proxying enabled. Browser code uses relative HTTP URLs and derives WS/WSS from the page origin. No headset request should accidentally target its own `localhost:3001`.
-6. Use Chrome remote inspection to view errors and joint diagnostics. Accept microphone permission before entering AR, then press a fresh Enter AR button. Do not depend on an HTML overlay being available inside immersive mode; render essential controls in 3D.
-7. If USB/developer setup exceeds 20 minutes, expose the single development origin through a trusted HTTPS tunnel with WebSocket support. Explicitly allow only its hostname in Vite, pair the headset, and verify HTTPS/WSS. Do not set permissive allowed-host settings globally.
-8. For the final wired demo, build once, serve web assets and API together from Fastify on port 3001, reverse that port, and open headset `http://localhost:3001`. Verify XR and audio on that exact origin; permissions are origin-specific.
+1. Charge the confirmed Quest 3S, enable hand tracking/developer mode, connect a data-capable USB cable and accept the debugging prompt. Record Horizon OS, app ID/version, editor and SDK versions; browser version is relevant only to desktop/browser diagnostics.
+2. Build and install the standalone Android ARM64 APK with Unity/MQDH/ADB. `adb devices` must report an authorized device. Use the official hand and CameraViewer samples to isolate capability failures from Trail adapters. On macOS, plan to test via installed APKs; do not make the workflow depend on Windows-only PC Link tooling.
+3. For the wired development data path, start Fastify on its actual port (currently 3001), run `adb reverse tcp:3001 tcp:3001`, and configure the development app endpoint as `http://127.0.0.1:3001`. This is a native HTTP route, not a browser secure-context/XR permission trick. Enable cleartext only for loopback in a development Android network-security configuration; release/untethered builds use a trusted HTTPS/WSS endpoint. No global certificate bypass.
+4. Pair the app with a short-lived code to obtain a scoped native bearer token. The browser UI retains its same-origin cookie path. Check authentication on every HTTP/WS connection; see section 6. A native client need not send Origin, so absence of Origin is never sufficient authentication.
+5. Request Android microphone and headset-camera permissions visibly. Recheck permission/focus after return from OS dialogs. Start passthrough, bare-hand tracking and local UI; test denial/retry, removal/recenter, suspend/resume and app restart. Registration and partial dwell cannot survive an uncertain origin change.
+6. Use ADB/logcat and Unity profiling with bounded metadata-only diagnostics. Prove real fresh frames, hand gaps, actual audio output and concurrent casting. Retain no raw media/secrets in logs.
+7. For untethered use, configure the authenticated HTTPS/WSS API explicitly and test network reachability/voice ICE behavior. A tunnel reaches the server but does not install or run the Unity app. Do not expose unpaired scaffold endpoints. Verify the exact release build and network before the demo.
 
-The USB route is documented by Meta; the fallback tunnel requires venue internet. A certificate trusted by the laptop is not automatically trusted by the Quest. Never assume `http://192.168.x.x` provides a secure context. [Meta remote debugging](https://developers.meta.com/horizon/documentation/web/browser-remote-debugging/)
-
-**Setup pass condition:** another teammate can install from the lockfile, run `pnpm check`, open the desktop fixture, and have the headset reach the health route and enter AR. Save the exact working instructions in `README.md`. A successful desktop build alone does not pass device setup.
+**Setup pass:** a second teammate can restore both dependency sets, run the implemented checks, build/install the APK, pair it, and operate passthrough/hands while reaching the server. The desktop fixture remains a separate useful diagnostic. Until native setup is implemented, README commands continue to describe only the existing scaffold.
 
 ## 5. Component ownership and end-to-end data flow
 
@@ -289,7 +302,13 @@ flowchart LR
   H --> G
   G --> V[Ghost path and checkpoint feedback]
   G -. sampled events .-> D[Spectator and telemetry]
-  G -. optional question .-> Q[Backend contextual coach]
+  G -. current step and movement evidence .-> Q[Fastify coaching coordinator]
+  Mic[Quest microphone and speaker] <-->|WebRTC audio| Live[GPT Live voice agent]
+  Live <-->|trusted sideband and delegation| Q
+  Camera[Quest MRUK camera] -->|fresh snapshot| Vision[Responses visual assessor]
+  R -->|reviewed step and expert images| Vision
+  Q -->|bounded inspection request| Vision
+  Vision -->|validated visible findings| Q
   G -. bounded pulses .-> P[Optional haptic relay]
 ~~~
 
@@ -297,9 +316,10 @@ flowchart LR
 
 1. Preflight permissions, enter AR, calibrate, and verify a held-out mark.
 2. Start audio, establish a monotonic recording clock, then start motion capture. Show a visible recording state.
-3. Sample poses from the live XR frame, transform into workspace coordinates, and append into preallocated/bounded buffers at 30 Hz. Render and match at the XR frame rate.
+3. Sample fresh named hand observations through the Unity native adapter, convert to canonical reference/workspace coordinates, and append bounded buffers at 30 Hz. Render/match at headset cadence without reusing an observation for dwell; never record cached visuals, controller proxies or simulated input as physical capture.
 4. Record missing hands as missing; record explicit step markers and tracking-gap intervals. Never fill gaps with stale poses.
-5. Stop capture, await the final audio data/stop event, persist the complete local recording, and upload motion metadata and audio separately.
+   During authoring, also capture the starting layout and a bounded stream of local scene stills (initial target 2 Hz, ≤240 images and ≤64 MiB total for a 120 s recording). Keep frame-delivery timestamps, source identity and the associated motion-time interval/uncertainty; use request/ack markers for a separate webcam clock. Explicit checkpoint markers request a still immediately. After automatic segmentation, select clear reference images from these captured states. If a relevant state was missed or its timing is ambiguous, require an explicit recapture/review rather than inventing it. Capture limits produce a visible failure, not silent loss.
+5. Stop capture, drain the bounded native audio buffer and finalize its WAV header, persist the complete local recording, and upload motion metadata and audio separately.
 6. The upload is complete only when the manifest, frame data, and required assets validate. A failed upload can be retried without repeating the demonstration.
 
 ### Processing flow
@@ -308,15 +328,20 @@ flowchart LR
 2. Transcribe narration; align words/segments to the same motion timeline using the stored audio offset.
 3. Ask the model only for labels/instructions associated with existing segment IDs. Deterministic code owns frame ranges, poses, tolerances, and completion rules.
 4. Produce a draft tutorial, display any missing narration or tracking gaps, and let the expert review boundaries, active hand, and instructions.
+   Select a starting-layout image and a clear expert checkpoint image for each step from the authoring capture; review its visible outcome description and timing association. Bind assets to the actual recording and reviewed segment revision, then prune unselected stills. They provide task-specific evidence without task-specific code. Never substitute a reference from another tutorial or assume earlier physical states can be photographed after assembly without repeating them.
 5. Finalize an immutable tutorial version and preload its recording, instructions, and assets into the learner client.
 
 ### Guide flow
 
-Reset parts → enter AR → calibrate → verify → preload → show one movement → arm start gate → track learner attempt and required ordered gates → dwell at checkpoint → advance exactly once. A repeat replays the current step and invalidates pending asynchronous responses. The browser remains the sole progression authority.
+Reset parts → enter AR → calibrate → verify → preload → show one movement → arm start gate → track learner attempt and required ordered gates → dwell at checkpoint → advance exactly once. A repeat replays the current step and invalidates pending asynchronous responses. The Unity headset client remains the sole progression authority.
 
-### Question flow
+### Conversation and inspection flow
 
-A push-to-talk interaction or a simple “What now?” control sends current tutorial/step/revision plus a short question. The backend returns a short answer grounded in approved instructions. The client discards outdated replies. Repeat/pause are local controls; the model has no general command execution or “advance” permission.
+The learner explicitly starts GPT Live conversation once, then asks naturally while using their hands. General questions use the reviewed tutorial and current movement state. Physical-correctness questions trigger a fresh image request and comparison with that step's reviewed expert reference. The backend supplies validated findings to GPT Live for a short spoken answer and a follow-up if the view is unclear. Captions and evidence source remain visible.
+
+When an inspection is admitted, the headset acknowledges its exact step/attempt and locally pauses the guide, clearing partial dwell. This keeps the question about the same step; the learner can Resume or Repeat locally afterward. An explicit resume, repeat, new step, new question, recalibration or session restart invalidates outstanding inspection work. Routine conversation does not pause motion. Neither a favorable assessment nor speech automatically completes/resumes a step. This is not mandatory confirmation after every checkpoint.
+
+The agent adapts wording, explanation detail, and a suggested next action. Replay/slower-preview suggestions use existing controls and recorded motion. No model-generated coordinates, tolerance changes, arbitrary commands or “advance” permission. See [GPT Live implementation](#gpt-live-conversation-and-fresh-visual-coaching) for transport and evidence rules.
 
 ### Spectator and haptic flow
 
@@ -324,7 +349,7 @@ The headset sends low-rate state snapshots and optionally downsampled poses to t
 
 ## 6. Shared contracts to freeze before parallel implementation
 
-Implement schemas in `packages/contracts` and infer TypeScript types from them. The examples below specify the intended interface; they are not compiled source. Version the external format independently of internal helper types.
+Keep wire schemas in `packages/contracts` and infer TypeScript types from them. Implement equivalent strict C# DTO validation in `Trail.Contracts`; Zod does not execute inside Unity. Validate shared fixtures in both languages, including required fields, enum/union cases, bounds and unknown versions. Use an IL2CPP-safe serializer and test the actual Android build. The examples below specify the intended interface; they are not compiled source. Version the external format independently of internal helper types.
 
 ### Coordinate and time conventions
 
@@ -332,7 +357,7 @@ Implement schemas in `packages/contracts` and infer TypeScript types from them. 
 - Right-handed workspace: +X to the learner's right, +Y above the mat, +Z toward the learner; the far edge is −Z.
 - Quaternions use normalized `[x, y, z, w]`. A pose quaternion maps joint-local axes into its containing frame. `q` and `−q` represent the same orientation.
 - A rigid transform is named by its direction: `referenceFromWorkspace`. Prefer position/quaternion serialization; if matrices are serialized later, use column-major order.
-- Recording `tMs` uses a browser monotonic clock relative to capture start, never a server receipt time. Store actual timestamps, not frame index divided by nominal Hz.
+- Recording `tMs` uses one native monotonic clock relative to capture start, never a server receipt time. Store actual timestamps, not frame index divided by nominal Hz.
 - Frame ranges are half-open: `[startFrame, endFrameExclusive)`. Checkpoint frames must lie inside them.
 - Store explicit validity; zero position is a valid coordinate, not a missing-data sentinel.
 
@@ -341,7 +366,7 @@ type Vec3 = [number, number, number];
 type Quat = [number, number, number, number];
 type Side = "left" | "right";
 // JointName is the literal union of the 25 WebXR skeleton names.
-// Put JOINT_NAMES and its schema in contracts; there is no native "palm" joint.
+// Preserve the canonical v1 25 names; native OpenXR adds a palm that is not serialized in v1.
 type JointName = typeof JOINT_NAMES[number];
 
 interface Pose {
@@ -372,7 +397,9 @@ interface WorkspaceDefinition {
 
 interface Calibration {
   id: string;
-  referenceSpaceType: "local";
+  referenceSpaceType: "native-device"; // planned Calibration v2, not a WebXR local claim
+  trackingSessionId: string;
+  originRevision: number;
   referenceFromWorkspace: Pose;
   sampledReferencePointsM: [Vec3, Vec3, Vec3];
   verificationErrorM: number;
@@ -384,7 +411,7 @@ interface AudioAsset {
   mimeType: string;
   durationMs: number;
   audioStartOffsetMs: number;
-  syncMethod: "media-recorder-start" | "manual-markers";
+  syncMethod: "unity-dsp-clock-map" | "media-recorder-start" | "manual-markers"; // versioned audio metadata
   estimatedSyncErrorMs: number | null;
 }
 
@@ -466,23 +493,70 @@ interface TranscriptSpan {
   text: string;
 }
 
-interface CoachRequest {
-  requestId: string;
+interface GuideContextRef {
   runId: string;
   tutorialId: string;
   tutorialRevision: number;
   stepId: string;
   stepRevision: number;
   attemptId: string;
-  question: string;
 }
-interface CoachAnswer extends Omit<CoachRequest, "question"> {
-  answer: string;
-  grounded: boolean;
+interface StepSceneReference {
+  id: string;
+  recordingId: string;
+  recordingHash: string;
+  tutorialId: string;
+  tutorialRevision: number;
+  stepId: string;
+  assetId: string;
+  source: "quest-camera" | "workspace-webcam";
+  visibleOutcome: string; // expert-reviewed; no hidden mechanical claims
+}
+interface InspectionRequest extends GuideContextRef {
+  requestId: string;
+  liveSessionId: string;
+  sessionGeneration: number;
+  requestEpoch: number;
+  delegationId: string | null; // null for app-initiated Check placement
+  question: string; // assembled from transcript; never a trusted instruction
+  referenceIds: string[];
+}
+interface SceneObservation {
+  id: string;
+  requestId: string;
+  captureNonce: string; // server-issued, single use
+  sourceSessionId: string;
+  source: "quest-camera" | "workspace-webcam";
+  assetId: string;
+  sourceFrameSeq: number; // advances on delivered camera frames, not repeated texture reads
+  captureAgeAtSendMs: number; // measured on the source's monotonic clock
+  receivedAtServerMonoMs: number; // assigned by server, not client
+}
+interface CoachAssessment {
+  verdict: "visible-match" | "adjustment-needed" | "uncertain" | "motion-only";
+  observedEvidence: string[];
+  limitation: string;
+  feedback: string;
+  suggestedAction: "none" | "show-another-view" | "replay" | "slower-preview";
+}
+interface InspectionResult {
+  request: InspectionRequest; // server binds identity; model does not generate it
+  observationId: string | null;
+  referenceIds: string[];
+  assessment: CoachAssessment;
+  provenance: "model" | "fallback" | "mock";
 }
 ~~~
 
 `Calibration` belongs to the current XR session; it is not reusable across headset restarts. A recording may retain calibration diagnostics for debugging, but its portable motion remains workspace-relative.
+
+**Native compatibility contract.** Preserve the implemented v1 canonical motion shape and 25 named joints. Use a versioned runtime/capture sidecar for provider, editor/SDK versions, OpenXR skeleton selection, origin/session identity, adapter version, clock mapping and confidence policy. The proposed Calibration v2 and audio metadata additions above must not be silently accepted as old strict schemas; document migration and retain legacy import fixtures.
+
+Unity uses a left-handed engine basis. At the adapter boundary reflect Z: `C = diag(1,1,-1)`, `pCanonical = C * pUnity`, `RCanonical = C * RUnity * C`. For the same local basis this maps quaternion `(x,y,z,w)` to `(-x,-y,z,w)` up to sign. Normalize and round-trip test; do not negate just a position and leave orientation unchanged. Bone-local conventions may differ independently: explicit per-joint basis corrections and bind-pose offsets belong in the versioned rig adapter. Only after reference conversion apply the rigid `workspaceFromReference` transform. Playback uses the inverse conversion. Reflection belongs in this adapter, never in the calibration fit, which remains a proper rotation without scale.
+
+Select Meta's OpenXR 26-joint skeleton. Map wrist and all finger joints by explicit semantic names into the existing WebXR-derived 25-joint order, excluding the extra palm. Never copy array indices or accidentally use the legacy OVR 24-joint skeleton. Required missing joints invalidate that canonical hand sample; an extra native palm does not justify inventing missing finger data. Test each finger, both sides, a known wrist rotation and translated/rotated workspaces. Store actual provider provenance separately from the portable poses.
+
+Use one injected monotonic millisecond clock for motion/guide state; map Unity DSP sample positions and MRUK camera timestamps to that epoch using measured offsets/uncertainty. Do not equate scaled `Time.time`, DSP seconds, sensor nanoseconds and server time. Recalibration/recenter increments origin revision and invalidates outstanding observations. Simulator/editor fixtures stay explicitly synthetic.
 
 Use a discriminated schema for guide state and events; never expose `payload: unknown` as the final runtime contract:
 
@@ -524,9 +598,13 @@ type GuideEvent = EventEnvelope & (
 
 **Contract freeze:** integration owns shared schemas. Propose changes with a fixture and migration note; coordinate before merging. All four workstreams start from the same synthetic recording/tutorial/event files.
 
+The scene/Live types above are new planned contracts. Keep scene assets in a versioned sidecar manifest keyed to recording hash and tutorial revision; do not silently add fields to the implemented strict `RecordingSchema` v1. Add synthetic reference/inspection fixtures and document sidecar versioning in `docs/contracts.md` when implemented. A step-boundary edit invalidates its reviewed references until reapproved. The model returns only `CoachAssessment`; the server supplies identities, source, age and provenance. Neither `visible-match` nor `motion-only` is a completion event.
+
 ### Pure motion API
 
-~~~ts
+The signatures below are language-neutral pseudocode. Implement the learner engine in pure C#; retain matching TypeScript offline helpers only where server authoring or diagnostics need them. Shared expected-result fixtures cover their overlap.
+
+~~~text
 calibrateWorkspace(points, matDefinition): CalibrationResult
 transformPose(pose, transform): Pose
 proposeSegments(recording, options): SegmentProposal[]
@@ -543,7 +621,7 @@ No timers inside the reducer; callers supply time and observations. Effects are 
 | Interface | Request / response | Owner and failure behavior |
 | --- | --- | --- |
 | `GET /api/health` | Build ID, mock/live provider flags, storage writable status | Integration; no secrets |
-| `POST /api/pair` | Short-lived pairing code → session cookie | Integration; rate-limited; do not expose APIs unauthenticated through a tunnel |
+| `POST /api/pair` | Short-lived pairing code → browser session cookie or scoped native bearer token | Integration; rate-limited; do not expose APIs unauthenticated through a tunnel |
 | `POST /api/recordings` | Validated manifest → server-generated recording ID | Integration; draft/incomplete until committed |
 | `PUT /api/recordings/:id/motion/:chunk` | Ordered frame chunk, hash; retry replaces identical content only | Integration; ≤2 MiB/chunk, conflict on differing retry |
 | `POST /api/recordings/:id/audio` | Binary multipart asset | Voice/integration; explicit size/MIME limits |
@@ -554,10 +632,13 @@ No timers inside the reducer; callers supply time and observations. Effects are 
 | `GET /api/tutorials/:id` | Immutable versioned tutorial | Integration; schema-validated |
 | `PATCH /api/tutorials/:id/draft` | Base revision + reviewed step boundaries/active hands/instructions → updated draft revision | Integration; validate edits, recompute targets, reject conflicting revisions |
 | `POST /api/tutorials/:id/finalize` | Reviewed draft revision → ready version | Integration/AI; reject stale edits |
-| `POST /api/coach` | CoachRequest → CoachAnswer or typed unavailable result | AI; deadline and stale-response protection |
-| `WS /ws` | Role-scoped guide events, reduced pose updates, snapshot request | Integration; spectator is read-only |
+| `POST /api/live/sessions` | Paired learner's SDP offer + run identity → session ID/generation and SDP answer | Voice; server chooses model/config, one active session per learner, idempotent start and typed unavailable result |
+| `DELETE /api/live/sessions/:id` | Owner-scoped graceful close → closed or finalization-incomplete | Voice; cancel jobs, bounded cleanup, no leaked mic/session |
+| `POST /api/scene-observations` | Paired source uploads requested nonce + metadata + bounded image → observation ID | Integration; bind request purpose to authoring recording or learner inspection; reject unsolicited, duplicate-conflicting, old-source or late captures |
+| `POST /api/tutorials/:id/scene-references` | Draft revision + reviewed scene assets/descriptions → versioned sidecar | Integration; same draft/revision and asset validation as tutorial edits |
+| `WS /ws` | Role-scoped guide context, scene capture request/ack, inspection status, spectator snapshots | Integration; camera role only answers authorized capture requests; spectator is read-only |
 
-Generate IDs server-side; do not interpolate supplied paths into filenames. Same-origin cookies and an Origin check protect the demo endpoints; verify Origin on WebSocket upgrade as well. This is one paired demo session, not an account system.
+Generate IDs server-side; do not interpolate supplied paths into filenames. Browser routes require same-origin cookies plus strict Origin checks, including WebSocket upgrade. Native routes require a short-lived role/session-scoped bearer token on HTTP and the WebSocket handshake; absence of Origin never bypasses authentication. Reject present unexpected Origins, expired tokens and role mismatches. Do not put tokens in URLs/logs. Keep native tokens in memory and re-pair after restart for the demo. Pairing codes are short-lived, single-use and rate-limited. TLS is required off the explicitly configured USB loopback development path. Spectators cannot advance the guide or request arbitrary camera frames. This is one paired demo session, not an account system.
 
 Freeze a `TutorialDraftEdit` schema containing `baseRevision` and an ordered list of `{ id, startFrame, endFrameExclusive, checkpointFrame, activeHands, completionMode, title, instruction }`. The server validates ranges/IDs, recomputes start/checkpoint targets and ordered motion gates from the recording, and invalidates affected narration associations/labels for review. Gate indices must increase inside the step range and reference valid active-hand observations; `path-and-pose` requires at least one reviewed intermediate gate. The client never submits authoritative computed coordinates. Only drafts can be patched; finalization publishes an immutable snapshot. Later edits create a new draft/version. Bind compile results to the segmentation revision so a delayed job cannot overwrite newer edits.
 
@@ -591,17 +672,19 @@ Initial calibration gates to tune on the device:
 - Approximately ≤1 cm sampling spread; mat edge lengths agree within 2 cm.
 - Computed upward axis agrees with the XR reference-space vertical and the expected point order. Reject flipped axes.
 - Use a **fourth mark D**, not used in fitting, to measure transferred alignment. Aim for ≤2 cm independent check error and repeat after a 90° rotation and session restart.
-- Abort/retry calibration if the tray moves. On reference-space `reset`, session end, or suspicious scene jump, clear calibration and dwell, stop feedback, and require re-registration.
+- Abort/retry calibration if the tray moves. On native recenter/origin change, app suspension/end, or suspicious scene jump, clear calibration and dwell, stop feedback, and require re-registration.
 
 If two people cannot reproduce alignment within roughly 2–3 cm, enlarge geometry and improve mark sampling before changing matcher tolerances. Do not hide calibration failure with a huge acceptance radius.
 
 ### Motion capture and rendering
 
-Use `renderer.setAnimationLoop` and obtain poses from the current live XR frame. Set `renderer.xr.setReferenceSpaceType("local")` before attaching the session, then obtain `renderer.xr.getReferenceSpace()` for sampling, calibration, and reset listeners. Ghost rendering must use that same space; do not mix a separate `local` space with Three.js's default `local-floor`. Request `hand-tracking` as a required session feature; expose unsupported/missing input clearly. Identify each source by `handedness`; do not assume array ordering. Read `wrist` and named joints, not `targetRaySpace`. Keep a flat numeric buffer internally; serialize outside the XR hot path. [Three.js WebXRManager](https://threejs.org/docs/pages/WebXRManager.html)
+Use the [Unity runtime boundary](#unity-runtime-boundary). Read live provider observations against the one tracking origin and immediately convert numeric data to canonical coordinates. Begin each sampling tick with both hands missing, then fill only current validated hands. Preserve raw validity and explicit timestamps; confidence policy is frozen after real-task trials. Keep a flat numeric buffer and serialize outside the render hot path.
 
-Capture 30 Hz for at most 120 seconds. Rendering/matching continues at headset cadence. Store both hands when available even if only one is active. Persist invalid samples and stop with a clear message on buffer exhaustion; do not silently truncate.
+Handle application focus/pause, headset removal, tracking-origin/recenter events and scene teardown outside the sample loop too: frames may stop during suspension. Stop dwell and admission immediately, invalidate calibration when tracking continuity is uncertain, mute voice and release owned camera/audio/network resources. Resume reacquires permissions/resources and requires recalibration. Unsubscribe once; repeated scene loads must not create duplicate recorders, rigs or audio sinks.
 
-First wire a skeleton renderer to prove pose fidelity, then deliver a translucent articulated hand for the target build. Reuse a maintained hand asset with verified licensing, bundle it locally, and adapt recorded joint poses into its bone hierarchy. Three.js provides mesh, sphere, and box hand profiles; its live-input factory does not remove the need for a recording-playback adapter. Keep the skeleton as a diagnostic/fallback view. [Three.js hand models](https://threejs.org/docs/pages/XRHandModelFactory.html)
+Capture 30 Hz for at most 120 seconds. Matching/rendering continue at headset cadence. Store both hands when available even if only one is active. Persist invalid samples and stop with a clear error on buffer exhaustion. Never silently truncate or invent samples across a gap.
+
+Start with a diagnostic skeleton, then drive a separate licensed skinned hand asset from recorded canonical poses. Resolve named bones, bind rotations and local/world transforms in a tested adapter. Remove live-tracking components from the ghost. Hide duplicate live visual meshes only when needed for legibility, while keeping the real tracking source active. Meta SDK assets are not a promise that arbitrary recorded poses can be assigned without rig conversion. [Hand setup](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/)
 
 Interpolate valid positions and quaternion orientations, preserve original timestamps, and hide the ghost across missing intervals. Use pooled geometry/materials and profile on the Quest 3S. Visual quality must fit the frame budget; avoid per-frame allocations and effects that obscure the physical task.
 
@@ -658,11 +741,11 @@ Algorithm:
 2. WAITING_START arms an attempt only after the active hand holds the demonstrated start region. This prevents most accidental endpoint completions. Segments with overlapping start/end regions need review; choose a separated start or an explicit local Start control.
 3. In GUIDING, show direction/path feedback. Compare current learner pose in **workspace coordinates** to the next ordered gate and endpoint, independent of expert elapsed time. Only the next unpassed gate can accept evidence.
 4. HOLDING accumulates real elapsed time only after required gates have been observed and every required active-hand endpoint condition is satisfied on consecutive fresh observations. Clear dwell on failure. Inactive-hand loss does not block a one-handed step.
-5. Cap credited frame delta at 50 ms and reset after a large stall. A tab pause must never return with a completed dwell.
+5. Cap credited frame delta at 50 ms and reset after a large stall. An app pause must never return with a completed dwell.
 6. Emit exactly one completion for `runId + stepId + attemptId`, then transition. Repeat creates a new attempt and increments `stepRevision`.
 7. On missing/nonfinite/jumping active-hand data, enter TRACKING_LOST immediately, clear dwell, suppress directional-error feedback, and stop haptics. Do not interpret disappearance as a large positional error.
 8. After valid tracking returns, resume the current attempt with empty dwell and a reacquisition notice. A new calibration invalidates the attempt and returns to SHOWING/WAITING_START. Never extrapolate across the gap.
-9. Visibility loss, headset removal, session end, user pause, and tab suspension suspend progression. Cancel outstanding voice requests or invalidate their revisions.
+9. Visibility loss, headset removal, session end, user pause, and application suspension suspend progression. Cancel outstanding voice requests or invalidate their revisions.
 
 The initial `pose-match` mode verifies only start/end poses. The quality target uses `path-and-pose` for steps whose intermediate movement matters: derive one or two gates from meaningful path changes or arc-length positions, review them, and require them in order before endpoint dwell. Begin with approximately 6 cm gate radii and 100 ms holds; tune from valid recordings and learner attempts. Gates must be separated enough to discriminate progress and must not lie in tracking gaps. A simple straight placement can retain `pose-match` where an extra gate would add no meaningful information.
 
@@ -674,9 +757,9 @@ An explicit “I completed this step” action may exist for a physically occlud
 
 ### Audio timing and semantic labeling
 
-Obtain mic permission before XR. Use `MediaRecorder.isTypeSupported` to select a supported format, preferring WebM/Opus if the device supports it. Preserve the complete blob with its actual MIME type.
+Request Android microphone permission before capture. Use a single native microphone owner with a bounded PCM ring buffer; persist narration as a complete WAV asset with correct header/sample count/channel count. Close narration before starting learner conversation, rather than opening competing mic pipelines. Convert/upload the actual encoded asset with its true MIME type.
 
-Use one browser monotonic epoch. Record the approximate audio start event offset and measure its error; chunk count is not a clock. Check a visible/spoken cue at the start and end of a 30–60 second recording. Initial alignment target is ±150 ms. If that fails, use explicit markers plus review to associate narration instead of claiming sample-accurate synchronization.
+Map the microphone sample counter/Unity DSP clock into the common motion epoch; record offset, sample rate, estimated start uncertainty and measured drift. Never timestamp audio using buffer arrival count. Check a visible/spoken cue at both ends of a 30–60 second recording. Initial alignment target is ±150 ms. If that fails, preserve explicit markers and review with honest provenance instead of claiming precise automatic alignment.
 
 For the first implementation, use `whisper-1` with `verbose_json` and word/segment timestamps. The current transcription guide limits `timestamp_granularities` to that model; do not substitute another transcriber and assume equivalent timestamp support. It documents a 25 MB upload limit, so cap narration at 20 MiB and show a size error before upload. [OpenAI transcription guide](https://developers.openai.com/api/docs/guides/speech-to-text)
 
@@ -697,13 +780,49 @@ Handle refusal, incomplete output, timeout, parsing errors, duplicate/unknown ID
 
 Aim for ≤15 seconds to compile the short demo recording, but show truthful elapsed status and allow retry/cancel. Do not wait indefinitely: preserve the recording and offer transcript/manual labels on failure. Cache by recording hash, segmentation revision, model, and prompt/schema version; never label a cached result as freshly generated.
 
-### Learner questions
+### GPT Live conversation and fresh visual coaching
 
-Implement local Repeat/Pause/What now buttons first, then deliver push-to-talk and concise contextual answers as part of the quality target. Start with file transcription for a short question and measure actual interaction latency. Consider a streaming voice transport only if it produces a material improvement within the remaining integration budget; always-on listening and wake-word detection remain optional. Voice quality includes interruption, stale-response handling, clear listening/thinking states, and a dependable local fallback.
+**Required stack:** GPT Live API with `gpt-live-1` for natural full-duplex speech; a native Unity WebRTC adapter for microphone/speaker media; the existing Fastify backend for authenticated session creation, trusted sideband and inspection coordination; a separate image-capable Responses request for visual analysis. GPT Live does not accept images/video directly. The initial visual assessor is `gpt-4.1-mini-2025-04-14`, already used for bounded labels; evaluate its visible-placement accuracy on real tasks before freezing it. The Live model choice remains GPT Live. [GPT-Live capabilities](https://developers.openai.com/api/docs/models/gpt-live-1), [Image-capable backend pattern](https://developers.openai.com/api/docs/guides/live-delegation#add-images-and-visual-context), [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini)
 
-Send only current approved instruction, nearby narration, known part names/layout, and the question. The answer should acknowledge unavailable physical information. A five-second question deadline falls back to the stored instruction. Apply replies only if request/run/tutorial revision/step revision/attempt all still match, including after repeating the same step.
+**Connection and lifecycle.** Request Android microphone permission from an explicit Start action. Acquire the native mic once and use a dedicated speech playback sink. Start conversation explicitly; keep a visible mic state with Mute and End controls inside XR. After that, speech is hands-free for the active session. Optional push-to-talk is an alternate control, not the primary interaction. Test echo cancellation and speaker-to-mic feedback on the headset.
 
-For optional vision, attach a recent timestamped workspace image and explicitly identify its source. Do not treat an old webcam frame as the current state. Only an approved, tested OMNI integration counts as the Huawei sponsor path.
+1. The Unity `Coach` adapter creates its native WebRTC peer, adds a microphone-backed audio track, installs event handlers and creates the `oai-events` data channel. Set the local SDP and await ICE gathering before sending the offer. Marshal events onto the runtime thread and keep audio work allocation-bounded. Unity API calls are not browser `navigator.mediaDevices` calls.
+2. Send the offer to Trail's paired `/api/live/sessions`. The server calls OpenAI `POST /v1/live/sessions` with `model: "gpt-live-1"`, `delegation: { type: "client" }`, `store: false`, app-authored instructions, and WebRTC transport. Immediately attach the server sideband with its event handlers before returning the SDP answer. Return only required session identity/answer; retain key and policy server-side. Keep the mic gated until both sideband readiness and client `session.started` are established, so the first question is not lost.
+3. Apply the answer and wait for `session.started`. This HTTP-created WebRTC session needs no `session.start` event. Audio uses negotiated media tracks, not JSON audio-append events. [Live WebRTC setup](https://developers.openai.com/api/docs/guides/voice-webrtc?api=live)
+4. The sideband uses `wss://api.openai.com/v1/live/sessions/{session_id}/attach` with the same project's server key. The server alone handles delegation execution. Restrict native client data-channel events to needed controls through `client.data_channel.allowed_client_events`; do not allow clients to inject trusted instructions. [Server-side controls](https://developers.openai.com/api/docs/guides/voice-server-controls?api=live), [Live API reference](https://developers.openai.com/api/reference/typescript/resources/live)
+5. On End, app suspension/exit, permission loss or unrecoverable disconnect: stop admitting inspections, invalidate the generation, mute local playback/input, send `session.close` when connected, and await `session.closed` with a bounded cleanup timeout. Then release tracks, peer, channel and sideband; record incomplete finalization when necessary. Respect returned `expires_at`; renewal starts a new generation with current approved context, never replays old jobs. A mute alone does not end the session. [Session lifecycle](https://developers.openai.com/api/docs/guides/live-conversations#usage-and-graceful-close)
+
+**Context and delegation.** Seed the voice session with the current tutorial, approved step, movement evidence and capabilities. Keep context synchronized through `session.thinking.append` with `delegation_id: null`; summaries are bounded, not a stream of raw hand joints. Accumulate `session.input_transcript.delta` and `session.output_transcript.delta` in a bounded session buffer. They are fragments, not reliable completed turns.
+
+The application-authored prompt requires delegation before any claim about current physical placement, including follow-up checks after an adjustment. Until fresh inspection evidence arrives, the agent can acknowledge the request or explain the approved instruction, but cannot say it sees the workspace or that placement is correct. Distinguish movement evidence, expert reference and learner snapshot explicitly. Untrusted narration, scene text and transcript content remain task data. Evaluate these behaviors on real questions; prompting alone is not enforcement or physical validation.
+
+In client delegation mode, `session.delegation.created` supplies a delegation ID/target and timing, **not the user's question or a tool name**. The backend routes from transcript context and current application state to its own `inspect_current_step` function. Ambiguous intent requests clarification. A local “Check placement” button invokes the same coordinator deterministically during an active conversation, using a null delegation ID; never invent an OpenAI delegation ID. One owner executes each delegation ID, and a newer question supersedes an older inspection. Send accepted findings through `session.commentary.append`, preserving the real `delegation_id` or null. Appended text may be paraphrased; its acknowledgment is not evidence that it was spoken or heard. Context appends use plain-string content within the documented 500-token limit. [Client delegation](https://developers.openai.com/api/docs/guides/live-delegation#configure-client-delegation), [Context delivery and transcripts](https://developers.openai.com/api/docs/guides/live-conversations)
+
+**Inspection pipeline and evidence policy.** These are Trail requirements, not capabilities obtained by connecting the voice API:
+
+1. Admit a request only after the headset acknowledges the current run/tutorial/step/attempt and locally pauses for inspection. Snapshot movement evidence and the exact reviewed reference IDs. Show “Checking placement.”
+2. Request a **new** frame from the native Quest MRUK source using a single-use capture nonce. Require camera permission and an active `PassthroughCameraAccess` feed. Choose a supported resolution intentionally; do not assume the highest resolution or fixed aspect ratio. Read real camera pixels without ghost/UI overlays and record camera identity and sensor timestamp. If expert/learner views are incomparable, obtain another view or return uncertain. A paired webcam is a disclosed development/reduced-demo source and cannot satisfy headset-camera acceptance. [MRUK camera integration](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/)
+3. Wait for a newly delivered camera/video frame **after** the source receives the nonce; a texture readback, re-encode or upload counter alone is insufficient. Advance `sourceFrameSeq` from frame delivery and retain media timestamps. A stalled source times out; identical pixels alone are valid for a stationary scene. Validate source session, sequence, request identity, MIME, dimensions and size. Proposed bounds: one in-flight inspection, ≤2 MiB per image, longest edge ≤1280 pixels, frame-to-send age ≤500 ms, and a ≤2 s server request-to-upload window. Retain the server's request timestamp: server-now minus request-start is a conservative upper bound on frame age when capture follows the nonce. Use that bound at result dispatch, plus source-local elapsed times; never subtract unrelated device clocks. These thresholds need device/network tuning.
+4. Send the fresh learner image, relevant expert checkpoint/layout images, approved visible-outcome description, question and movement summary to the Responses assessor. References come from this actual demonstration and are explicitly labeled as **expert references**, not current observations. No hardcoded bottle/LEGO recognition branches. No cached learner verdicts. Existing tutorial assets may be reused by immutable identity.
+5. Validate structured `CoachAssessment` output and recheck request/session generation, every guide revision, observation age and source health before display or commentary. Initial maximum observation-age bound at answer dispatch: 5 seconds. If exceeded, reject the verdict; allow at most one recapture within an 8-second total inspection deadline, then show/speak unavailable with explicit Retry/Resume. Never retry indefinitely. Answers describe the checked snapshot, not continuous observation. A new view after adjustment always gets a new image and request.
+6. Return one concise actionable observation and, when needed, one follow-up. Describe visible evidence; choose `uncertain` for occlusion, poor lighting, indistinguishable parts or a missing reference. Use `motion-only` without an image and say so. The learner decides whether to Resume or Repeat; the result cannot emit a movement-completion event.
+
+| Question / evidence | Appropriate behavior |
+| --- | --- |
+| “What do I do next?” | Explain the approved current step; offer the existing replay control |
+| “Am I doing this right?” + clear visible mismatch | Describe that mismatch against the demonstrated step and suggest an adjustment supported by the image |
+| Same question + visible agreement | Say it appears aligned in the checked view; avoid certifying hidden attachment or tightness |
+| Same question + blocked view or no camera | State what cannot be seen and ask to reveal the connection or provide another view; do not guess yes |
+| “Is the bottle watertight?” | Explain that an image cannot establish a watertight seal; refer to the task's approved physical check if one exists |
+| “Can you explain that more simply?” | Rephrase the reviewed instruction and refer to the recorded preview; do not invent an unseen action |
+
+**Interruption and stale speech.** Native conversational interruption does not cancel application inspection jobs. Invalidate the request epoch on a superseding question/cancel/repeat/advance/resume/recalibration, abort the owned Responses request when possible, and suppress late captions/commentary. Do not use old Realtime `response.cancel` or `conversation.item.truncate` as Live commands. For already-playing stale audio, mute the local audio player immediately; a context acknowledgment cannot prove old audio is gone. Restore playback only under a tested recovery policy; use a fresh Live session/generation when old output cannot be reliably excluded. A trusted `session.instructions.append` correction may steer speech but is not an audio-stop acknowledgment. [Playback and server controls](https://developers.openai.com/api/docs/guides/voice-server-controls?api=live#control-playback-when-needed)
+
+**Failure and data handling.** Keep Repeat/Pause/Resume, stored instructions and motion progression available when Live or vision fails. Show distinct connecting/listening/checking/speaking/muted/unavailable states; never label a caption or accepted commentary as audible success. Authoring narration uses the separate recorder/transcription pipeline; close it before the learner conversation to avoid competing mic lifecycles. Explain mic/camera transmission at preflight, restrict the frame to the workspace where practical, and collect images on request rather than uploading continuous video. Keep ephemeral learner images/transcripts in bounded memory with cleanup after the request/session. Persist only deliberately approved expert references as private tutorial assets; no media or transcripts in logs/Git. `store: false` is a request setting, not a blanket claim about provider retention.
+
+The native scene adapter owns the MRUK camera component and bounded readback/encoding jobs. A returned texture alone does not prove freshness: bind its sensor timestamp/new-frame sequence to the nonce receipt and do not relabel a retained texture as new. Copy a specific frame into owned storage before asynchronous encoding; retain frame identity through GPU readback. Drop obsolete work, cap queued readbacks at one and dispose owned textures/buffers on teardown. Disable/release camera ownership on pause/exit; recheck permissions on resume. Native mic/WebRTC remain owned by `Coach`, independently of the camera.
+
+**Native voice feasibility gate:** Unity WebRTC 3.0.0 is the initial transport candidate, not a built-in OpenAI/Meta integration. Prove Android ARM64/IL2CPP build, SDP/ICE/data-channel compatibility, inbound/outbound audio, resampling, echo/feedback control, interruption and cleanup on the actual headset. Its documented frame-pacing constraints must be reconciled with XR settings and measured. A successful browser or Editor call is only a server/protocol diagnostic. If this package cannot meet the gate, evaluate a maintained Android WebRTC bridge behind the same interface, record the dependency/license cost and rerun all audio/XR checks; do not silently drop hands-free conversation or substitute another model. [Unity transport requirements](https://docs.unity3d.com/Packages/com.unity.webrtc@3.0/manual/requirements.html)
 
 ## 8. Persistence, recovery, and performance budgets
 
@@ -722,12 +841,12 @@ JSON and in-memory objects will be significantly larger. Initial application lim
 
 Set Fastify body and multipart limits explicitly; their defaults are too small for this design. Avoid a global unrestricted upload limit. Stream audio to disk, validate hashes/counts, and report a typed size/format error. [Fastify server limits](https://fastify.dev/docs/latest/Reference/Server/#bodylimit), [Multipart plugin](https://github.com/fastify/fastify-multipart)
 
-Cache completed tutorial data and assets in IndexedDB before Guide begins. Keep a last-good exported recording/tutorial on the laptop. Export includes schema version, joint order, coordinate conventions, asset hashes, audio, and provenance; import validates all of them. A browser `blob:` URL is never durable storage.
+Cache and validate completed tutorial data/assets in Unity application-private persistent storage before Guide begins. Use bounded temporary files plus atomic finalized manifests; check free space and surface partial writes. Browser IndexedDB is optional for desktop tools only. Keep a last-good exported recording/tutorial on the laptop. Export includes schema version, joint order, coordinate conventions, asset hashes, audio, and provenance; import validates all of them. A browser `blob:` URL is never durable storage.
 
 ### Reliability boundaries
 
 - Losing the backend after preload leaves the open guide running locally; spectator/AI/haptics report disconnected.
-- A cold browser launch with no server is **not** promised unless an offline app-shell cache is later implemented and tested.
+- A cold offline app launch and tutorial selection are **not** accepted merely because the APK is installed; test cached asset completeness and startup separately. The baseline guarantee is continued local guidance in an already preloaded run.
 - Server restart preserves finalized recordings but invalidates in-memory connections; the active headset resends its snapshot.
 - Headset session restart requires calibration; loading a tutorial does not restore spatial registration.
 - Duplicate upload retries are idempotent. Duplicate/stale guide events do not change local progression.
@@ -743,75 +862,71 @@ Cache completed tutorial data and assets in IndexedDB before Guide begins. Keep 
 | Calibration transfer | ≤2 cm held-out mark error where feasible | Two independent users, three repeated registrations |
 | End checkpoint | 500 ms dwell with no false advance | Wrong-pose and interrupted-dwell fixtures plus device test |
 | Compile | ≤15 s for chosen demo clip | End-to-end stop-to-ready timing, including upload |
-| Question | ≤5 s or visible fallback | Click/utterance finish to visible answer |
+| Spoken response | First audible acknowledgment ≤2 s; useful answer ≤5 s or explicit unavailable/checking state | Measure utterance end to actual Quest playback; acknowledgment alone is not useful-answer success |
+| Visual inspection | Fresh frame at request, ≤5 s age at result dispatch; one active request | Record source/request/capture/receipt/assessment/playback durations without media content; reject stale results |
 | Spectator | ≈10 Hz, stale indicator after 1 s without updates | Disconnect/reconnect drill |
 
 These are acceptance targets, not measured results or vendor guarantees. If performance slips, simplify ghost geometry and serialization before changing runtimes.
 
 ## 9. First two hours: feasibility spikes
 
-Prepare a data-capable USB cable, charger, laptop, tape/ruler, rigid mat, four large pieces, and a way to reset them. A downward-facing webcam and haptic kit are optional. One person operates the headset; others work from fixtures and observe its debug output.
+One headset is a shared test resource. Reconcile these windows with actual time remaining; the Unity decision does not restart the original build clock. Editor/toolchain installation can exceed the nominal setup window: record readiness before promising the H+4 gate. Keep the current desktop fixture working while native setup proceeds.
 
-| Spike / time box | Owner | Concrete procedure | Pass artifact | Failure decision |
-| --- | --- | --- | --- | --- |
-| Device and origin, first 20 min | XR + integration | Record Quest 3S OS/Browser versions; hands enabled; headset opens secure app origin and health route | Device/version/URL checklist | Try HTTPS route if USB setup stalls |
-| AR and hands, next 20 min | XR | Transparent AR, cube, both hand names/validity, 5 s capture and replay | Real recording fixture and visible replay | Recheck requested features/settings; obtain mentor help before changing stack |
-| Exact task, 15 min | XR + motion | Grasp/place intended parts; hold checkpoints; obscure and restore hands | Tracking-gap report and task decision | Use larger/open-hand-friendly parts, simplify task |
-| Spatial transfer, 30 min | XR | Two people calibrate independently; verify fourth mark; rotate mat/restart XR | Error measurements and transferred ghost | Fix calibration before adding semantic features |
-| Repo/fixture, first 60 min | Integration + motion | Workspace install, schema, transform round-trip, desktop ghost | Passing setup checks and fixture commit | Remove optional tooling; isolate install issue |
-| Audio/AI, 30 min | Voice | Mic permission before XR; speak while manipulating/casting; listen to saved blob; transcribe and parse labels | Actual audio, timestamp alignment, valid response or typed failure | Keep capture and manual labels; investigate AI off critical path |
-| Spectator/network, 20 min | Integration | Receive events, disconnect/reconnect, cast actual AR scene | Snapshot recovery and usable audience view | Webcam plus schematic spectator |
-| Camera, optional ≤10 min | Voice/integration | Obtain real workspace pixels and keep feed working in AR | One current image successfully interpreted | Laptop webcam; cut vision if that also stalls |
-| Haptics, optional ≤15 min after core proof | Integration | Identify kit/firmware; vendor tool emits one capped pulse | Known protocol and physical pulse | Cut haptics |
+| Spike | Owner | Procedure / pass evidence | If blocked |
+| --- | --- | --- | --- |
+| Native setup, first integration slice | 4 + 1 | Freeze compatible editor/packages, build/install minimal passthrough APK; authenticated server health | Isolate activation, Android tools, provider/settings or app permissions; a tunnel does not replace APK installation |
+| Hand source, first headset slot | 1 + 2 | Named 26→25 mapping, both hands, known rotations, validity gaps, five-second real capture/replay | Diagnose provider vs adapter; no controller hand or stale visual substitutes |
+| Exact task, 15 min | 1 + 2 | Grasp/place actual bottle/LEGO parts and restore occluded hands; report gaps | Use larger forgiving parts while keeping a fresh task |
+| Registration, 30 min after raw replay | 1 + 2 | Independent two-user calibration, fourth-mark error, rotated mat, recenter recovery | Fix basis/mapping/calibration before semantic polish |
+| Contracts/domain, first hour | 2 + 4 | Same synthetic wire JSON parses in C#/TS; transforms and reducer cases pass | Explicit schema migration, no permissive parser to hide drift |
+| Native voice, first available APK | 3 + 1 | Actual `gpt-live-1` speech both ways, data channel/delegation, interruption/echo/close while XR active | Isolate native audio/ICE/provider; browser call is a diagnostic only |
+| Scene source, first two hours if setup ready | 1 + 3/4 | Fresh MRUK frame after nonce, image of actual task, timestamp/source checks, wrong/obscured response | Debug permission/readback; webcam is a disclosed reduced demo, not native target acceptance |
+| Narration/labels | 3 | Playable WAV, sample-clock alignment, timestamped transcription and fixed-segment labels | Preserve recording and marker fallback |
+| Spectator/network | 4 | Authenticated events, reconnect snapshot, casting with physical context/audio | Webcam plus schematic audience view |
+| Optional haptics | 4 after core gates | Identify hardware and one bounded pulse | Cut it |
 
-Mic, hand tracking, XR, and casting must be tested **together**; independent successes do not prove simultaneous operation. If a laptop microphone is needed, synchronize using explicit shared markers and review; do not align independent device clocks by subtracting wall-clock timestamps.
-
-At H+2, record one of: **go**, **reduced physical task**, or **blocked physical premise**. If the headset still cannot expose usable hands, continue desktop package work while the XR owner/mentor resolves that single blocker. Do not spend the remaining day building AI around an unproven capture loop.
+Before broad feature work, the **same standalone APK** must show hands/ghost, fresh headset imagery and duplex speech together. Separate sample successes are not concurrency proof. At the first shared gate record: go, reduced physical task, or named blocker with owner. Keep useful fixture/backend work moving while the device owner resolves the blocker.
 
 ## 10. Dependency-ordered build sequence
 
-Time estimates start when implementation begins. Workstreams overlap; the table is not a promise that all optional work fits. Move the sponsor-selection action earlier if implementation starts later than the planning snapshot.
+The windows below retain the original elapsed build budget; review them against actual remaining time and installation readiness. Preserve the full quality target and report cuts honestly.
 
-| Phase / window | Owner | Goal and modules | Required evidence before moving on | Fallback |
-| --- | --- | --- | --- | --- |
-| 0: baseline, H0–1.5 | Integration + all | Root scaffold, contracts, fixture, dev origin, `AGENTS.md` | Fresh install/check; desktop replay; health in headset | Drop optional tooling and use mocks |
-| 1: physical proof, H0–4 | XR, motion supporting | `xr/session`, `hand-source`, calibration, recorder, ghost renderer | New 5–10 s recording replays after second-person calibration | Simpler task/markers; stop extra features until resolved |
-| 2: one interactive step, H4–7 | Motion + XR | Pure reducer/matcher, feedback, repeat, tracking-loss states | Second person advances once at own pace; invalid data never advances | Wrist-only match, remove orientation/gesture; preserve validity and dwell |
-| 3: four-step transfer, H7–11 | XR + motion + integration | Markers, reviewed motion gates, save/load, guide, spectator | Fresh four-step recording; learner finishes without operator progression; skipped required gate does not pass | Three steps, explicit markers, documented pose-only fallback if gates are unreliable |
-| 4: natural authoring, H8–15 | Motion + voice + integration | Motion proposals, audio upload/alignment, tutorial-builder, editable review | Natural recording produces reviewed boundaries and labels; AI failure preserves data | Explicit markers and transcript/manual labels with clear provenance |
-| 5: quality completion, H11–18 | All, ownership below | Articulated ghost, adaptive path cues, contextual push-to-talk, polished review/spectator screens | Useful voice answer on a fresh run; no path skipping; in-headset clarity/frame-budget checks | Drop optional integrations first; record any remaining target gap |
-| 5b: sponsor additions, only with spare capacity before H18 | Voice + integration | Sentry Logs/Tracing; eligible OMNI call if proven | Complete useful flow and sponsor evidence | Cut addition if it displaces quality completion |
-| 6: freeze and failure drills, H18–20 | All; integration leads | Built server, reconnect/restart cases, imported backup | Three consecutive target-task runs; real loss/recovery tests | Roll back to last-good build |
-| 7: demo/submission, H20–22 | Integration + all | `docs/demo.md`, backup video, README, limitations, Devpost assets | Non-builder run; timed 60–120 s demo; source/setup reproducible | Pre-recorded backup clearly labeled |
-| 8: reserve, H22–24 | All | Bug fixes, submission verification, recharge/reset | Entry prepared/submitted by team with time remaining | No feature additions |
+| Phase / window | Owner | Goal | Required evidence |
+| --- | --- | --- | --- |
+| 0: baseline, H0–1.5 target | 4 + 1, all supporting | Preserve scaffold; Unity toolchain/project, native pairing path, contracts | Current pnpm checks intact; compatible native build/install; C#/TS fixture validation |
+| 1: physical proof, H0–4 | 1 + 2 | Raw hands, mapping, recorder, separate ghost and calibration | Fresh recording replays after second-person registration; no stale samples |
+| 1b: voice/camera proof, H0–4 in parallel | 3 + 1 + 4 | Native WebRTC, MRUK snapshots, server coordination | Same APK runs hands/ghost/camera/audio; actual heard response |
+| 2: one interactive step, H4–7 | 2 + 1 | Pure C# reducer/matcher, local effects/repeat/loss states | Slow learner advances once; invalid input never completes |
+| 3: multi-step transfer, H7–11 | 1 + 2 + 4 | Markers, native cache, uploads, reviewed gates, spectator | Fresh 3–5-step run, save/reload and rejected shortcut |
+| 4: natural authoring, H8–15 | 2 + 3 + 4 | Motion proposals, WAV alignment, bounded labels, reference review | Fresh narration/steps become a reviewed immutable tutorial |
+| 4b: grounded coaching, by H15 | 3 + 1 + 4 | Step-bound image/voice, stale work suppression, captions | Correct/wrong/occluded trials, interruption and Resume/Repeat |
+| 5: quality, H11–18 | All | Ghost/material/UI polish, second task, review/spectator | Two fresh task families, readable overlays, measured device frame budget |
+| 6: freeze/drills, H18–20 | All, 4 coordinates | Known-good APK/server pair, preload/reconnect/restart | Three clean runs and real failure recovery |
+| 7: demo/submission, H20–22 | 4 + all | Non-builder trial, runbook, video, evidence | Reproducible setup and timed demo; team handles submission |
+| 8: reserve, H22–24 | All | Fix bugs and verify submission | No feature additions |
 
-**Absolute event action:** integration checks and selects sponsor tracks by **13:30 EDT on September 19**, leaving a margin before the published 14:00 cutoff. Confirm final submission before **08:00 EDT September 20**. Do not treat an internal 24-hour schedule as an extension of the official deadline.
+Sponsor work and haptics fit only after core gates. The original event research recorded September 19 14:00 EDT sponsor selection and September 20 08:00 EDT submission; Person 4 rechecks the live participant portal immediately. These historical schedule assumptions were not refreshed by the Unity planning revision and are not extra build time.
 
 ### Four parallel workstreams
 
-| Person | Owns | Starts immediately | Blocked on | Artifact that unblocks others |
-| --- | --- | --- | --- | --- |
-| 1: XR/spatial | `apps/web/src/xr`, spatial recorder, articulated ghost and in-headset presentation | Headset setup, AR cube, hand source, calibration | Working app origin and shared pose schema | Real fixture, tested transforms, polished ghost playback |
-| 2: motion/runtime | `packages/motion`, segmentation, motion gates, adaptive path progress, fixtures/tests | Synthetic recording, calibration math, dwell/reducer | Frozen contracts; real samples for tuning | Deterministic guide API, proposed boundaries, replay cases |
-| 3: voice/AI | `apps/server/src/ai`, audio capture, contextual voice help | Mock provider, transcript fixture, label schema, credential spike | Audio contract; real sample for sync test | Valid tutorial labels, useful contextual answer, typed failure results |
-| 4: integration/demo | Server routes/storage/sessions, review/spectator UI, CI, demo | Scaffold, health, fixture viewer, spectator events, deadline tracking | Schemas; real runtime later | Shared working build, usable authoring, composed audience view |
+Use [the four-person execution plan](team-plan.md) for file ownership, handoffs and headset scheduling.
 
-Person 4 owns a compact, finished authoring and spectator experience with consistent typography, spacing, status feedback, and predictable controls. Person 1 owns its in-headset counterpart. Build this presentation alongside integration, preserving a known-good build throughout rather than postponing product quality until the final hour.
+| Person | Owns | Starts immediately | Unblocks others with |
+| --- | --- | --- | --- |
+| 1: headset/spatial | Unity XR/record/guide adapters, MRUK camera, ghost and world-space UI | App scene/hands with 4; raw pose and fresh frame probes | Real canonical recording, camera source and calibrated replay |
+| 2: motion/contracts | Pure C# engine, cross-language fixtures; TS offline segmentation/math | Frozen DTO/schema fixtures, handedness/joint conversion cases, dwell/reducer | Tested C# APIs, tutorial boundaries/gates and expected results |
+| 3: voice/AI | Native mic/WebRTC/audio, narration, server Live/Responses | Native transport spike plus provider/account diagnostic | Heard headset exchange, timestamps, bounded labels and assessment |
+| 4: platform/integration | Unity project/locks/main scene/build, API/auth/files, web review/spectator | Toolchain/APK, scoped native pairing, storage and review | Reproducible build, network contracts, immutable tutorials and audience view |
 
-**Integration checkpoints:** H+1 schema/fixture; H+2 actual joint sample; H+4 calibrated replay; H+7 one-step advancement; H+11 multi-step run and visual review; H+15 natural authoring; H+18 quality acceptance and freeze. At each checkpoint run the same short smoke script and archive the working commit plus fixture. Give the headset to Person 1 continuously through physical proof, then reserve test slots for voice, rendering performance, and usability.
+Person 1 supplies feature prefabs; Person 4 composes the main scene. Person 3 owns a separate Coach prefab. Do not edit one Unity scene concurrently. Person 2 can take a bounded review widget after the engine gates pass; Person 4 is the coordinator, not the owner of everyone's unfinished implementation.
+
+**Integration checkpoints:** initial setup/fixture gate; H+2 if ready, first raw sample and native voice/camera diagnostics; H+4 same-APK calibrated replay/audio/image; H+7 one step; H+11 multi-step inspection; H+15 natural authoring/second task; H+18 freeze. Record the actual build and gaps rather than moving the clock. Reserve early shared headset slots for voice/camera before Person 1 spends the whole window on spatial tuning.
 
 ### Agent and branch coordination
 
-Create `AGENTS.md` in the first implementation commit with:
+Keep `AGENTS.md` aligned with native and web boundaries, C#/TS contract ownership, source provenance and evidence requirements. Use `codex/<bounded-task>` branches. Delegated implementation, when authorized, should own a narrow assembly/module and its tests; humans retain device testing. Example: implement C# dwell/loss/repeat transitions against shared golden fixtures, without touching scene assets or provider code.
 
-- Package dependency direction, file ownership, coordinate/time conventions, and contract-version policy.
-- Required `pnpm check` and relevant fixture/end-to-end checks; headset evidence must be reported separately.
-- Server-only secrets; no committed raw personal recordings.
-- No unilateral shared-schema changes, dependency upgrades, or refactoring another workstream's files.
-- No fabricated hardware/API success; distinguish mock, fixture, and live observations.
-- Bounded task instructions and explicit directories an agent may edit.
-
-Use `codex/<bounded-task>` branches for coding agents. The integration owner merges the scaffold first and owns lockfile changes. A useful delegated task is “implement dwell and tracking-loss transitions in `packages/motion` against frozen schemas, with the slow-learner and interrupted-dwell fixtures.” Agents can implement isolated logic while humans run headset tests; avoid assigning four agents unrestricted ownership of the whole application.
+Person 4 owns `ProjectSettings`, UPM locks, the main scene and pnpm dependency changes. Preserve `.meta` GUIDs. Feature owners commit their own prefab with its script/tests; coordinate schema changes with all consumers and supply fixture/migration notes. Do not place UnityEngine, networking or provider APIs in the pure motion assemblies.
 
 ## 11. Verification strategy and acceptance checklist
 
@@ -844,13 +959,32 @@ Use synthetic data for edge cases and the first real capture for realism. Inject
 | T21 | Recorded path crosses or loops near its endpoint | Cue stays in its local path neighborhood; gate order remains intact |
 | T22 | Hand disappears before a gate and reappears beyond it | No inferred gate passage; previous completed gates preserved, partial dwell cleared |
 | T23 | Boundary edit races an earlier compilation result | Old result rejected; gates/targets recomputed for the reviewed revision |
+| T24 | Duplicate Live start/delegation, denied mic, disconnect or close timeout | One session/job per identity; typed state, no leaked tracks; incomplete close reported accurately |
+| T25 | Old inspection after repeat/resume/recalibration, new question or Live generation | Abort/invalidate; no late caption/commentary, no changed guide state; local stale playback muted |
+| T26 | Cached, wrong-source, duplicate-conflicting, frozen or late camera frame; repeatedly slow assessor | Reject nonce/source/age mismatch; no positive visual verdict; bounded retry ends in unavailable with Resume |
+| T27 | Assessor refusal, malformed output, no reference or occluded scene | Explicit uncertain/motion-only result; no invented placement proof or model-produced identity |
+| T28 | Valid `visible-match` result or malicious narration/image text | Advice only; cannot emit step completion, change targets or override trusted instructions |
+| T29 | Edited step boundaries or swapped reference assets | Stale sidecar invalidated; assessment cannot use another revision's reference |
+| T30 | Live/vision unavailable after preload | Stored instructions and local movement continue; coaching clearly unavailable |
+| T31 | SDK receives controller-only input, a missing joint or a cached visual pose | Raw observation is invalid; no controller fingertip fallback, recording of stale transforms or dwell |
+| T32 | Hands/origin unavailable; recenter, suspend or repeated scene/app entry | Clear failure or recalibration; no duplicate sampler, retained dwell or stale attempt |
+| T33 | Native clock/DSP/camera units differ; Editor/simulator input | Explicit epoch conversion and uncertainty; no duplicate-sample dwell; simulated provenance stays synthetic |
+| T34 | Repeated scene load/pause/resume; UI input; APK permissions | One rig/sampler/mic/camera owner; controls work; resources released; retry rechecks permissions |
+| T35 | Native dependency/build migration and ghost/live-hand separation | Existing web checks plus native build pass; replay cannot mutate real input; no second XR provider |
+| T36 | 26→25 named joints, both hands, reflected basis and bone axes | Known fingers/rotations and inverse conversion agree across C#/TS fixtures; reject legacy/wrong mapping |
+| T37 | Strict C# parsing, AOT/stripping, schema/sidecar versions | Same accept/reject cases as Zod; APK reads fixtures; no silent coercion/version overwrite |
+| T38 | Native bearer vs browser cookie auth; missing Origin; wrong role/token | HTTP/WS reject unauthenticated native requests; browser Origin enforced; spectators cannot control/capture |
+| T39 | Camera texture reused during async readback; denied permission | Sensor/frame identity bound to copied pixels; stale/late readback rejected; no positive verdict |
+| T40 | Native PCM clock, duplex echo/interrupt, suspend/resume | Measured audio alignment; no self-triggered conversation, leaked mic, stale playback or progression during gap |
 
-Use Fastify `inject()` for API validation/storage failures and Playwright for the desktop recording-review-guide flow. Browser tests exercise fixture input, rendered controls, persistence, and reconnect. They cannot validate Quest passthrough, hand accuracy, audio concurrency, casting, or physical calibration. [Fastify testing](https://fastify.dev/docs/latest/Guides/Testing/), [Playwright web-server testing](https://playwright.dev/docs/test-webserver)
+Use Unity EditMode tests for C# domain/contract fixtures and PlayMode tests for adapters, lifecycle and UI with injected inputs. Add an Android ARM64/IL2CPP build/smoke gate for serialization and native plugins. Use Fastify `inject()` for API/auth/storage failures and Playwright for desktop review/fixture/spectator flows. Browser tests exercise fixture input, rendered controls, persistence, and reconnect. They cannot validate Quest passthrough, hand accuracy, audio concurrency, casting, or physical calibration. [Fastify testing](https://fastify.dev/docs/latest/Guides/Testing/), [Playwright web-server testing](https://playwright.dev/docs/test-webserver)
 
 ### Hardware and human acceptance
 
-- [ ] Confirmed Quest 3S OS/Browser versions recorded; hands and controller modes validated.
-- [ ] Passthrough plus ghost visible; source pose names and units verified.
+- [ ] Confirmed Quest 3S OS, APK/build, editor/OpenXR/Meta/audio package versions recorded; hands and controller modes validated.
+- [ ] Standalone Unity APK launches on Quest with OpenXR, passthrough and real hands; correct tracking origin, no simulator, no duplicate rig/provider.
+- [ ] Passthrough plus independent recorded ghost visible; raw source pose names, validity and time units verified.
+- [ ] Unity world-space step/voice panel is readable and operable with selected hand/controller input; live hand visuals do not obscure the ghost or physical task.
 - [ ] The actual part grasp/placement keeps enough hand visibility for the task.
 - [ ] Two users independently calibrate; held-out mark checked, including rotated mat.
 - [ ] Five-second real recording survives save/reload and replays spatially.
@@ -859,7 +993,11 @@ Use Fastify `inject()` for API validation/storage failures and Playwright for th
 - [ ] A natural demonstration produces useful motion boundary proposals without per-step marker controls.
 - [ ] Articulated ghost, path feedback, and text remain clear during real manipulation and meet the frame budget.
 - [ ] Required gates reject an endpoint shortcut; adaptive cues stay paced to a slower learner.
-- [ ] Contextual push-to-talk help answers a question on the current fresh tutorial and survives interruption.
+- [ ] GPT Live conversation is heard in the Quest while XR/hands and spectator run; questions require no push-to-talk after Start. Test Mute, interruption, follow-up, End and reconnect.
+- [ ] “Am I doing this right?” inspects a newly captured view on both fresh tutorials. A correct-looking placement, visible mismatch and obscured view produce different, appropriately qualified answers; record actual responses and human judgments.
+- [ ] Repeat/resume/change question during a slow inspection: no stale spoken success or old-step captions. Measure first audible and first useful answer, including image latency.
+- [ ] Camera denial/frozen feed and a moved/covered part yield unavailable/uncertain feedback, not cached success. Show the actual camera source and inspect what pixels the model receives.
+- [ ] Bottle and LEGO-style tasks use new recordings/references with no application code changes, seeded motion, or canned verdicts.
 - [ ] Slow learner succeeds; wrong checkpoint fails; hand loss clears dwell.
 - [ ] Remove headset/recenter/restart: no false advance, recalibration is available.
 - [ ] Disconnect AI/backend after preload: physical guide completes.
@@ -867,13 +1005,13 @@ Use Fastify `inject()` for API validation/storage failures and Playwright for th
 - [ ] At least one non-builder finishes with no step-by-step verbal help.
 - [ ] Spectator/backup media contain the actual intended visuals; verify audio separately.
 
-Write `docs/validation.md` as a table of test, commit, device/browser, observed result, measurements, and unresolved issue. Record “not tested” where appropriate. A unit-test pass is not a substitute for the non-builder trial.
+Write `docs/validation.md` as a table of test, commit/APK, device/OS/editor/SDK versions, observed result, measurements, and unresolved issue. Record “not tested” where appropriate. A unit-test pass is not a substitute for the non-builder trial.
 
 ## 12. Sponsor integrations and optional haptics
 
 ### OpenAI: the default sponsor fit
 
-Use timestamped narration and structured labels in the real record-to-guide pipeline. Document one concrete Codex contribution with a commit/test/demo explanation—for example, fixing false advancement after tracking loss. Actual OpenAI API use plus a meaningful Codex contribution are current track requirements. Do not imply that this research plan alone proves a working API integration. [Official 2026 prize requirements](https://hackthenorth2026.devpost.com/)
+Use timestamped narration, structured labels, GPT Live conversation and Responses-backed visual coaching in the real pipeline. Document one concrete Codex contribution with a commit/test/demo explanation—for example, fixing false advancement after tracking loss. Actual OpenAI API use plus a meaningful Codex contribution are the researched track requirements; recheck the portal before submission. A plan is not working API evidence. [Official 2026 prize requirements](https://hackthenorth2026.devpost.com/)
 
 ### Sentry: only with a useful debugging story
 
@@ -881,11 +1019,11 @@ The current track requires **at least two products beyond error monitoring**. Ch
 
 ### Huawei OMNI Live: an optional complete multimodal interaction
 
-Use an approved OMNI model for one grounded learner question: raw speech, a recent workspace webcam image, and current tutorial context produce useful guidance about the next piece. The three modalities must contribute to the same interaction. AR rendering is not model vision, and an ordinary text-only call does not satisfy this requirement.
+Use an approved OMNI model for one grounded learner question: raw speech, a recent Quest-camera image, and current tutorial context produce useful guidance about the next piece. The three modalities must contribute to the same interaction. AR rendering is not model vision, and an ordinary text-only call does not satisfy this requirement.
 
 The official challenge permits a cloud model and requires a functional scenario plus repository setup instructions. Its example is Qwen3.5-Omni where applicable; obtain the actual supported model ID, endpoint, schema, and credits from the sponsor. Do not assume OpenAI-compatible request formats or that a different text/vision model qualifies. API access and usable latency still need testing. [Official Huawei challenge](https://github.com/cari-waterloo-rc/OMNI-Live-Build-the-Next-Generation-of-Real-Time-Multimodal-AI)
 
-Time-box the access/payload spike, capture one valid response, and keep the integration behind `AI_PROVIDER`/capability flags. If raw Quest images fail, use the laptop webcam openly. If the multimodal interaction is not working by feature freeze, omit the feature and its eligibility claim.
+Time-box the access/payload spike, capture one valid response, and keep this additional integration behind capability flags. The required GPT Live + Responses path does not establish Huawei eligibility. If the OMNI interaction is not working by feature freeze, omit that sponsor feature/claim while retaining the core GPT Live and scene-inspection work.
 
 ### Haptics: first feature to cut
 
@@ -908,17 +1046,21 @@ Only pulse during an armed attempt for a sustained path deviation—not merely b
 
 | If this happens… | Then do this… | Claim affected |
 | --- | --- | --- |
-| Installed Quest 3S OS/Browser does not expose a required capability | Test settings/build and isolate the browser limitation; use the architecture rule for any native spike | Hardware model stays confirmed; runtime capability needs proof |
-| Developer mode or USB authorization stalls | Switch to trusted HTTPS route; cap setup troubleshooting | USB/offline route remains unverified |
+| Unity/Meta/audio packages or settings conflict | Pin one compatible set, isolate plugin/frame-pacing issue, preserve web checks | Editor success does not prove Android XR/audio readiness |
+| SDK visual hand looks tracked while raw joints are missing | Treat the observation as invalid and clear dwell | A rendered hand is not evidence of a current physical pose |
+| Installed OS/app does not expose a required capability | Check OS, manifest, permission and provider; isolate with official native sample | Hardware model stays confirmed; actual runtime behavior needs proof |
+| Developer mode, activation or USB installation stalls | Resolve account/toolchain/ADB blocker with device owner; use fixtures meanwhile | A web URL is not a substitute for installing the native app |
 | Hand tracking fails during grasp | Change parts/motion; use wrist-level checkpoints after grasp | No fine-grip or object-state verification |
 | Hands unavailable after feature/settings checks | Seek a working device/mentor; use desktop/controller proof only if necessary | Full bare-hand MVP is not achieved |
 | Calibration cannot transfer | Improve marks/sampling and task scale; keep ghost replay local until solved | Cross-user spatial transfer is not achieved |
 | Tray or origin moves mid-run | Pause and recalibrate | No persistent automatic anchoring claim |
 | Automatic segmentation is poor | Use explicit markers and small review UI | Assisted segmentation rather than automatic authoring |
 | Audio timing is inaccurate | Use markers and review transcript associations | No precise narration alignment claim |
-| Headset mic fails in AR | Laptop mic with explicit synchronization/review | Capture source disclosed |
+| Headset mic fails in AR | Diagnose preflight/permissions/audio transport; laptop mic may support authoring with explicit synchronization | External learner mic is a disclosed fallback; headset conversation target is unmet |
 | AI fails or is slow | Keep recording; use stored transcript/fallback labels; guide locally | Automatic semantic generation may be degraded |
-| Camera access fails | Webcam input, then cut vision | Core AR remains unaffected |
+| Quest image access fails | Diagnose native permission/component/readback; webcam only for a disclosed reduced demo | Headset-camera acceptance remains unmet |
+| Neither scene source works or evidence is stale | Instruction/motion-only answer, explicit unavailable state | Visual coaching target is unmet; no claim to see current placement |
+| GPT Live access/transport fails | Local controls and stored instructions; preserve current tutorial | Hands-free live conversation target is unmet; do not silently replace API |
 | Casting fails or excludes passthrough | Webcam plus schematic spectator; labeled backup video | Schematic is not a headset recording |
 | Venue internet fails | Wired local built server + preloaded tutorial + static instructions | Fresh cloud AI unavailable |
 | Server/tunnel fails after preload | Continue local guide, display disconnected spectator state | No uninterrupted remote-view claim |
@@ -928,12 +1070,12 @@ Only pulse during an armed attempt for a sustained path deviation—not merely b
 Use measured blockers and remaining time to trigger cuts. Prior experience is not a cut criterion. Remove optional breadth before reducing the quality of the central interaction:
 
 1. Real haptics and its hardware integration.
-2. Open-ended voice conversation, TTS, and Realtime-style interaction.
-3. Scene vision and Huawei OMNI integration.
+2. Continuous video analysis, wake-word/background listening, unsolicited proactive commentary, and off-task conversation.
+3. Additional Huawei OMNI integration; retain GPT Live and on-demand visual assessment.
 4. Optional Sentry track work if its required evidence cannot be completed.
 5. Extra dashboard views, custom-created hand assets, decorative effects.
 6. A fifth step, or reduce four to three meaningful movements while keeping their guidance polished.
-7. Only if still necessary, revert automatic segmentation to explicit markers or contextual questions to stored instructions; record these as quality-target gaps.
+7. Only if still necessary, deliver a disclosed reduced prototype with explicit markers or unavailable voice/visual feedback. These are unmet requirements, not a redefinition of the requested finish line.
 
 Preserve calibration, real recording/save/replay, legible spatial ghost/path, local learner-paced completion, truthful feedback, and tracking-loss behavior. Keep the articulated hand, useful motion gates, and finished core controls wherever the device budget permits. If any core behavior fails, describe the result as a reduced prototype rather than claiming the quality target.
 
@@ -947,15 +1089,15 @@ Preserve calibration, real recording/save/replay, legible spatial ghost/path, lo
 | 10–35 s | Expert performs the small task with narration and brief checkpoint holds | Live motion and recording state; explicit markers only if using the disclosed fallback |
 | 35–50 s | Stop and compile; display generated/reviewed labels | Actual compile status, no fake countdown |
 | 50–65 s | Reset parts, swap headset, quick learner calibration | Different person and alignment confirmation |
-| 65–105 s | Learner follows ghosts, pauses, repeats once, completes | System visibly waits and advances from the learner's input |
-| 105–120 s | Show final object and one limitation | “We verify movement checkpoints, not physical assembly.” |
+| 65–105 s | Learner follows ghost, asks “Am I doing this right?”, hears a scene-grounded correction, then resumes | Guide waits during inspection; current frame and actual spoken feedback shown |
+| 105–120 s | Show final object and limitation | Motion checkpoint and visual advice are distinct; hidden physical properties remain unverified |
 
-Rehearse headset swap and calibration; if they do not fit the timing, announce a longer live run or show a clearly labeled short capture clip followed by live learner guidance. Do not silently replace fresh capture/compilation with a cached tutorial. Include a short contextual question in the rehearsed target demo, while retaining the local fallback for a failed live request.
+Rehearse headset swap, calibration and actual voice/vision latency; if they do not fit the timing, announce a longer live run or show a clearly labeled capture clip followed by live learner guidance. Do not silently replace fresh capture/compilation with a cached tutorial or replayed AI answer. Keep evidence of the second fresh task available even if the stage demo shows only one. Retain local controls for a failed live request and disclose the failure.
 
 ### Recovery kit
 
-- Known-good built app and exported real tutorial on the laptop.
-- Preloaded headset page and verified USB fallback.
+- Known-good standalone APK plus server build/revision and exported real tutorial on the laptop.
+- Installed APK with preloaded tutorial and verified USB API connection; separate startup/recalibration runbook.
 - Battery/charger, stable cable routing, reset layout photo, spare large parts.
 - A 60–90 second backup recording labeled “Recorded demonstration.”
 - Side-by-side webcam and schematic spectator if casting is unreliable.
@@ -975,45 +1117,50 @@ The narrow demo establishes only the first step toward broader physical-skill tr
 | --- | --- | --- |
 | Reliable task library | Better authoring, asset export, repeatable calibration, onboarding | Several novice users can complete multiple approved tasks |
 | Richer motion adaptation | Extend initial ordered gates to richer trajectory matching, hand-size handling, left/right retargeting | Measured false-accept/false-reject rates; no degraded usability |
-| Limited object awareness | One instrumented or visually distinguishable task with explicit uncertainty | Labeled real-world evaluation proves the particular object-state check |
+| Stronger object-state verification | Extend snapshot coaching to measured task-specific state checks, tracking or sensors | Labeled real-world evaluation proves each claimed check; avoid inferring hidden state from appearance |
 | Durable product | Auth/storage, privacy controls, deployment, analytics, accessibility, device support | Recovery/security testing and longitudinal use; cloud anchors justified by a real need |
 
-Do not infer training effectiveness from one successful demo. A later study should compare completion time, errors, assistance requests, and retention against an ordinary video/manual. Generalizing to a second task is a research milestone, not a hidden hackathon requirement.
+Do not infer training effectiveness or universal object support from the two-task reuse check. A later study should compare completion time, errors, assistance requests, and retention against an ordinary video/manual across more tasks and learners.
 
 ## 16. Remaining decisions and evidence status
 
 | Question | Current default | Who resolves it / by when |
 | --- | --- | --- |
-| Installed OS and Browser versions | Hardware confirmed: Quest 3S with joystick controllers; software versions to record | XR owner at H0 |
+| Installed OS/app/tool versions | Hardware confirmed: Quest 3S with controllers; native versions to record | XR + integration at setup |
+| Unity/Meta/audio compatibility | Unity 6.3/WebRTC 3.0.0 candidate; Meta release family and exact patches unverified | Integration + XR/voice in TRAIL-18 |
 | Actual team size and available hours | Four people; 24 h cap | Team at kickoff; compress optional scope if fewer |
-| Physical parts and mat | Large four-piece assembly | XR + motion in first 30 min |
+| Physical parts and mat | Bottle + large LEGO-style assemblies, fixed layout per tutorial; stand fallback | XR + motion in first 30 min |
 | Hands while manipulating chosen parts | Unverified | Exact-task spike before H+2 |
 | Registration accuracy across people | Unverified | Physical proof before H+4 |
-| Model credentials and account access | Mock provider until real smoke test | Voice in first hour |
-| Camera access in immersive session | Unverified; webcam fallback | Optional ten-minute spike |
+| Model credentials and account access | `gpt-live-1` + image-capable Responses + narration; mocks are development only | Voice in first hour |
+| Native camera access | MRUK headset frames required; actual readback/freshness unverified | XR first native slot; integrated by physical proof |
+| Live conversation with immersive XR | Unverified; core acceptance gate | Voice + XR before H+2, full conversation by H+7 |
 | Spectator passthrough and audio | Unverified | Integration in first two hours |
 | Borrowed haptic hardware/protocol | Unconfirmed; mock | Only after physical loop |
 
-Research used official platform/specification/provider documentation, the current event page, and live package metadata. Device behavior, the proposed package combination, API-account access, latency targets, and the human task have not been validated by writing this plan. Source links sit beside the decisions they support; algorithm thresholds and schedule estimates are project proposals.
+This revision uses official Unity/Meta/OpenAI documentation. Earlier event and package research remains historical context; refresh it where the implementation depends on a current deadline or release. Device behavior, the proposed package combination, API-account access, latency targets, and the human task have not been validated by writing this plan. Source links sit beside the decisions they support; algorithm thresholds and schedule estimates are project proposals.
 
 ## 17. Immediate tickets to create
 
-Create these in order, with the listed dependencies. Every ticket should include its owned files and evidence requirement.
+Use these stable ticket labels and their dependencies, checking existing implementation before starting each. Every ticket should include owned files and evidence requirements. Later-numbered Live/scene tickets begin early in parallel.
 
-- [ ] **TRAIL-01 — Validate Quest 3S runtime, task, deadlines.** Owner XR/integration; no dependency. Record OS/browser, hand mode, parts/layout, remaining hours, and sponsor cutoff in `docs/device-check.md`.
-- [ ] **TRAIL-02 — Bootstrap workspace and known-good dev origin.** Owner integration; depends on 01 for device access only. Create manifests/scripts/CI/README/AGENTS/env policy; pass fresh-install and headset health checks.
-- [ ] **TRAIL-03 — Freeze schemas and synthetic fixture.** Owner motion + integration; depends on 02. Add conventions, recording/tutorial/events, validator, translated/rotated fixture, and contract documentation.
-- [ ] **TRAIL-04 — Prove real AR capture and replay.** Owner XR; depends on 02/03. Transparent AR, named hand joints, five-second real fixture, ghost skeleton; report tracking gaps.
+- [ ] **TRAIL-01 — Validate Quest 3S runtime, task, deadlines.** Owner XR/integration; no dependency. Record OS/APK/tool versions, hand mode, parts/layout, remaining hours, and sponsor cutoff in `docs/device-check.md`.
+- [ ] **TRAIL-02 — Preserve scaffold and establish native API connection.** Owner integration; software scaffold already exists. Preserve manifests/scripts/CI and fixture; add native pairing/auth and fresh-install/API checks. Native project bootstrap is TRAIL-18; do not recreate the web repo.
+- [ ] **TRAIL-03 — Freeze schemas and synthetic fixture.** Owner motion + integration; starts from the existing scaffold portion of 02 without waiting for native auth, and coordinates assembly integration with 18. Freeze canonical recording/tutorial/events plus versioned native sidecar, strict C# and Zod validators, handedness/joint maps and translated/rotated golden fixtures; T36/T37. Native auth T38 belongs to 02. Preserve existing v1 imports.
+- [ ] **TRAIL-04 — Prove real AR capture and replay.** Owner XR; depends on 03/18. Unity passthrough/OpenXR, fresh native hand adapter, five-second canonical real fixture and separate ghost; report gaps and provenance.
 - [ ] **TRAIL-05 — Implement and validate workspace registration.** Owner XR + motion; depends on 03/04. Three-point transform plus held-out mark; second-person and rotated-mat evidence.
-- [ ] **TRAIL-06 — Build local motion progression.** Owner motion; depends on 03, tunes against 04. Start gate, ordered intermediate gates, adaptive cue progress, dwell, validity, repeat, pause, exactly-once completion; pass T03–T12 and T20–T22.
+- [ ] **TRAIL-06 — Build pure C# local motion progression.** Owner motion; depends on 03, tunes against 04. Start gate, ordered intermediate gates, adaptive cue progress, dwell, validity, repeat, pause, exactly-once completion; pass T03–T12 and T20–T22.
 - [ ] **TRAIL-07 — Connect one interactive step.** Owner XR + motion; depends on 05/06. Second learner completes at their own speed and survives hand loss.
 - [ ] **TRAIL-08 — Record, segment, review, persist a multi-step task.** Owner motion + integration + XR; depends on 04/06. Explicit-marker pipeline followed by motion proposals, bounded upload/finalize, cache/reload, editable boundary/gate review, fresh 3–5-step run.
-- [ ] **TRAIL-09 — Capture synchronized narration.** Owner voice; depends on 02/03. Actual mic/AR concurrency, playable blob, offset/drift measurement, fallback provenance.
-- [ ] **TRAIL-10 — Generate semantic labels and contextual voice help.** Owner voice; depends on 08/09. Transcription timestamps, fixed-segment labeling, strict validation, push-to-talk Q&A, interruption/stale-response handling, reviewed ready tutorial.
+- [ ] **TRAIL-09 — Capture synchronized narration.** Owner voice; depends on 02/03. Native mic/XR concurrency, complete WAV, offset/drift measurement, fallback provenance.
+- [ ] **TRAIL-10 — Generate reviewed semantic labels.** Owner voice; depends on 08/09. Transcription timestamps, fixed-segment labeling, strict validation and provenance, immutable reviewed tutorial. Live conversation is a separate parallel ticket, not blocked on full authoring.
 - [ ] **TRAIL-11 — Deliver spectator and recovery path.** Owner integration; starts with 03 mocks, completes after 07. Snapshot relay, stale indicator, real audience view, server/network recovery.
-- [ ] **TRAIL-12 — Complete visual and interaction quality.** Owner XR + integration, with motion/voice support; depends on 07/08/10/11. Articulated ghost adapter, clear corrective feedback, adaptive path cues, polished authoring/spectator screens, in-headset clarity and frame-budget review.
-- [ ] **TRAIL-13 — Complete learner acceptance and demo.** Owner all; depends on 12. Three clean runs, non-builder test, fresh automatic authoring and voice interaction, backup video, setup/limitations, verified submission assets.
+- [ ] **TRAIL-12 — Complete visual and interaction quality.** Owner XR + integration, with motion/voice support; depends on 07/08/10/11/16/17. Storyboard-aligned ghost/cues, small voice states/captions, review/spectator polish, in-headset clarity and frame-budget review.
+- [ ] **TRAIL-13 — Complete learner acceptance and demo.** Owner all; depends on 12. Two fresh task families without code changes, three clean runs, non-builder test, correct/wrong/uncertain spoken visual feedback, recovery drills, backup video and setup/limitations.
 - [ ] **TRAIL-14 — Optional sponsor additions and evidence.** Owner voice/integration; only with spare capacity after core quality work. Useful OMNI scenario or Sentry Logs+Tracing debugging story; preserve OpenAI/Codex evidence from core work.
 - [ ] **TRAIL-15 — Optional bounded haptics.** Owner integration; only after core quality gates and a passing hardware spike. Mock-compatible adapter, duration cutoff/watchdog, disconnect test; otherwise close as cut.
+- [ ] **TRAIL-16 — Deliver GPT Live headset conversation.** Owner voice; starts immediately on account/desktop spike, depends on 02/03 for integration and 07 for live guide context. Native Unity WebRTC/mic/playback, paired session routes, trusted sideband, client delegation, captions, interruption/echo handling, stale-generation protection and clean close; T24/T25/T30/T40 plus actual APK/Quest audio evidence. Requires 18 for native acceptance; desktop checks are diagnostics. Coordinate rendering with XR.
+- [ ] **TRAIL-17 — Deliver fresh-scene inspection and spoken feedback.** Owner integration coordinates reference storage/review; voice owns Responses/Live, XR owns native MRUK acquisition/readback and freshness. Start native source spike with 18; contracts/auth from 02/03, reviewed step references from 08, spoken delivery from 16. Nonce/age/revision checks, visible/uncertain verdicts, T26–T29 and real correct/wrong/obscured-view trials. No spatial coordinates or completion actions from AI.
+- [ ] **TRAIL-18 — Add Unity + Meta XR headset project.** Owner integration + XR, voice coordinates audio dependency. Preserve existing 02 scaffold. Create `apps/quest`, pin compatible editor/OpenXR/Core/Interaction/MRUK/WebRTC set, configure Android ARM64/IL2CPP, versioned assets/locks and reproducible test/build wrappers. Install a minimal standalone APK with one rig and world-space UI. Pass T31–T35 plus native mapping/serialization/auth/audio gates T36–T40 as consumers land. Supplies setup for 04/09/16/17; their combined acceptance proves the full hand/ghost/image/voice slice. No IWSDK install or Vite downgrade.
 
-**First working session:** integration establishes the origin and scaffold; XR verifies the headset and five-second hand capture; motion freezes the coordinate contract and builds a synthetic learner; voice tests a short narration and schema response. Meet at H+2 with evidence, then put the team's effort behind calibrated replay.
+Ticket numbering preserves earlier references; execute dependencies rather than numeric order. **First working session:** Person 4 starts Unity setup/native connection; Person 1 prepares the rig, hand/camera probes and physical task; Person 2 builds shared fixtures and the C# domain engine; Person 3 proves native Live audio alongside server integration. Meet with actual APK, spatial, voice and image evidence before broader authoring/polish. Reconcile elapsed targets with remaining time; the stack change does not restart the build clock.

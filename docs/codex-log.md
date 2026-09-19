@@ -1,0 +1,177 @@
+# Trail Codex development log
+
+This log records how we used **OpenAI Codex to build Trail**, for our OpenAI / Codex track submission. It covers research, product decisions, implementation, debugging, testing, design exploration, and delivery—not just generated code.
+
+**Last backfilled:** September 19, 2026. Times below are EDT (America/Toronto).
+**Sources:** all five earlier Trail Codex tasks available in the local task history, including the archived workflow task, checked against repository files, commits, PR #1, and GitHub Actions. This is a summary of substantive work, not a raw conversation or tool-call export. Future sessions should append entries using the template below.
+
+## What Codex has contributed so far
+
+Codex helped turn the original product handoff into a researched implementation plan, refined it with the team, established repository workflows, divided work among four people, generated visual concepts, and implemented and delivered the first runnable application scaffold.
+
+The strongest implemented contribution is [PR #1: feat(app): bootstrap the Trail application scaffold](https://github.com/aidanjnn/trail/pull/1). Before that change, the repository contained plans and agent workflows. After it, a teammate could install the workspace, run a Three.js hand-motion fixture, exercise a Fastify health API, and run automated checks without credentials or a headset. The change includes recording validation, rigid transforms, explicit tracking gaps, **27 unit/API tests**, and **3 desktop browser tests**.
+
+The team supplied the product goal, hardware clarification, quality expectations, scope decisions, and delivery instructions. Codex researched, proposed, implemented, checked, and documented work in response. The PR's merge is recorded as a repository event; the Codex task created the PR and did not perform the merge.
+
+## Activity timeline
+
+All entries below occurred on **2026-09-19**. Task letters refer to the source register at the end.
+
+| Time | Request and Codex contribution | Result and evidence |
+| --- | --- | --- |
+| 03:32–03:42 | **Research and initial plan.** Read the supplied product handoff; used web research and three requested research subagents to develop the stack, architecture, contracts, calibration approach, build sequence, acceptance criteria, and sponsor/demo preparation. | Created the original `plan.md`; task A reported 28 source links and structural/technical review. The plan was later committed in [`292ac99`](https://github.com/aidanjnn/trail/commit/292ac99cb76181e82b2d8e0ee50713a03b05e6a3) and moved to [docs/plan.md](plan.md). Planning evidence, not a working application. |
+| 03:42–03:47 | **Agent workflows.** Adapted the team's Copperlane delivery workflows to Trail's smaller TypeScript/WebXR project. Added nine skills, architecture and validation rules, Claude/Cursor discovery links, a PR template, and ignore rules. | [AGENTS.md](../AGENTS.md), [workflow skills](../.agents/skills/workflow/), and [validation guidance](../.agents/references/validation.md). Task B reported passing skill, link, and ignore checks. |
+| 03:43–03:47 | **Hardware and quality revision.** Applied the user's confirmation of Quest 3S with controllers and request to target the best achievable experience regardless of limited XR experience. | Revised the plan toward articulated ghost hands, path-aware progression, automatic step proposals, contextual voice help, and polished interfaces. Scope cuts were tied to measured blockers and remaining time. Task A; included in `292ac99`. |
+| 04:11–04:12 | **Workflow delivery.** Inspected and committed the agent workflow files, then pushed them to `main` on request. | [`d13ec55` — chore(agents): add Trail delivery skills](https://github.com/aidanjnn/trail/commit/d13ec55e70f6a7afed8caf0af2d33a19fee701f8). Task B verified local/remote agreement; the then-untracked plan was excluded. |
+| 04:13–04:16 | **README and plan delivery.** Wrote the product overview, architecture, setup expectations, Quest connection instructions, milestones, and validation limits. Committed both README and plan so their documentation links resolved. | [`292ac99` — docs: add Trail README and implementation plan](https://github.com/aidanjnn/trail/commit/292ac99cb76181e82b2d8e0ee50713a03b05e6a3). Task B reported link/format checks and a clean, synchronized `main`. |
+| 04:33 | **Documentation organization.** Moved the plan into `docs/` and updated README, agent guidance, and skill references. | Task A reported link and whitespace checks. The move and reference updates were subsequently included in the scaffold commit `3b1b1d2`. |
+| 04:35–04:38 | **Four-person execution plan.** Defined XR, motion, voice/AI, and platform/integration ownership; starting tasks; file boundaries; concrete handoffs; headset sharing; integration gates; and accountability for all 15 plan tickets. | Created local draft `docs/team-plan.md` with README/main-plan references. Task A checked local links, ticket coverage, and ownership. This draft and its references were still uncommitted when this log was written. |
+| 04:52–05:12 | **Plan critique and product clarification.** Challenged the unspecified physical demo task and discussed bottle/LEGO assembly, fresh demonstrations, object layouts, and the limits of hand tracking. | In task A, the user accepted a reusable, recording-driven engine with a consistent starting layout. Codex explained that reaching a hand checkpoint cannot independently verify correct assembly; explicit learner confirmation was discussed as a recommendation, not implemented behavior. |
+| 04:52–04:55 | **Overlay concepts.** Used the built-in image generation tool to illustrate a translucent cyan ghost hand, short movement cue, and restrained floating instructions. | Task D produced local `first-person.png`, `guidance-sequence.png`, and saved prompts under `docs/mockups/translucent-assembly-2026-09-19/`. These remained uncommitted visual concepts, not screenshots or headset evidence. |
+| 05:03–05:04 | **Stack explanation.** Explained why the plan uses WebXR, Three.js, strict TypeScript, pure motion logic, Zod, Vite, Fastify, local persistence, and desktop tests; emphasized local progression authority and measured criteria for a native alternative. | Task C provided a source-linked architectural explanation. This was decision support, with no implementation claimed for the explanation itself. |
+| 05:20–05:30 | **Application scaffold.** Created an isolated worktree and `codex/initial-scaffold`; implemented four workspace packages, a synthetic replay screen, recording contracts, transforms, server health/static serving, test suites, CI, and setup notes. Iterated on compatibility and typecheck failures. | Task E completed a clean frozen install, typecheck/build, 27 unit/API tests, fixture validation, and 3 Playwright tests; also inspected desktop/mobile screenshots. See the implementation and validation sections below. |
+| 05:30–05:33 | **Scaffold delivery and CI.** Staged only the scaffold and related documentation, committed, pushed, and opened PR #1 against `main` with the repository template and explicit validation limits. | [`3b1b1d2` — feat(app): bootstrap the Trail application scaffold](https://github.com/aidanjnn/trail/commit/3b1b1d214f50d054b2d6be55d977fd289492a3bc). Both PR check runs passed; the [PR CI run](https://github.com/aidanjnn/trail/actions/runs/35434938486) is retained as evidence. Team-plan/mockup drafts were excluded. |
+| 09:31 | **Repository milestone.** PR #1 was merged after the Codex delivery task had finished. | Merge [`013e2ed`](https://github.com/aidanjnn/trail/commit/013e2ed84b663d9e974bc0306cdee9fd33f3ec58). The subsequent [main-branch CI run](https://github.com/aidanjnn/trail/actions/runs/35446014069) passed. Merge status and CI were checked live while preparing this log. |
+| Current log task | **Evidence collection.** Reviewed the five task histories, Git history, merged PR, CI results, and current source/tests; backfilled this log. Updated local `main` to the merged scaffold while preserving existing documentation and image drafts. | This file is the deliverable. Its introducing commit records the log change; only this file is included in that commit. The user requested direct delivery to `main`. |
+
+## Implemented contribution: the initial scaffold
+
+Delivered in `3b1b1d2`, merged through PR #1:
+
+| Area | What Codex implemented | Evidence |
+| --- | --- | --- |
+| Reproducible workspace | Four pnpm packages, strict TypeScript, exact dependency pins, shared package builds/watchers, and one lockfile. | [Root manifest](../package.json), [workspace](../pnpm-workspace.yaml), [lockfile](../pnpm-lock.yaml), [scaffold notes](scaffold.md). |
+| Recording boundaries | Version-1 recording/pose schemas, 25 named joints, explicit valid/missing hand samples, quaternion validation, ordered timestamps, and recording limits. | [Contracts](../packages/contracts/src/index.ts), [contract tests](../packages/contracts/test/recording.test.ts), [version/migration notes](contracts.md). |
+| Pure spatial math | Rotation/translation transforms and inverses without scaling, separated from browser and server effects. | [Motion implementation](../packages/motion/src/index.ts), [round-trip tests](../packages/motion/test/transform.test.ts), [architecture test](../packages/motion/test/architecture.test.ts). |
+| Desktop replay | Three.js diagnostic skeleton, actual-time fixture sampling, play/pause/reset, keyboard scrubbing, tracking-gap rendering, and a read-only AR-support query. | [Replay viewer](../apps/web/src/replay/viewer.ts), [fixture source](../apps/web/src/replay/fixture-source.ts), [browser tests](../tests/e2e/fixture.spec.ts). |
+| Local server | Injectable Fastify app, loopback-only configuration, root environment loading, writable-storage health probe, built static assets, and explicit rejection of unsupported live modes. | [Server app](../apps/server/src/app.ts), [configuration](../apps/server/src/config.ts), [API/config tests](../apps/server/test/app.test.ts). |
+| Validation and handoff | Unit/API tests, built-app browser tests, GitHub Actions, setup instructions, contract notes, pending device checklist, and module ownership notes. | [CI workflow](../.github/workflows/check.yml), [README](../README.md), [device checklist](device-check.md). |
+
+One concrete correctness example is **preserving missing tracking data**. The synthetic fixture has 61 frames over 2,000 ms, including eight missing right-hand samples. Codex added a schema round-trip test that preserves those gaps and a browser test that verifies the rendered hand disappears during a gap and returns on reset. This supports honest diagnostic replay. It does not establish tracking-loss behavior for the future guide reducer, which is not implemented yet.
+
+Another example is **workspace-transform correctness**: tests rotate and translate every valid fixture pose into another workspace and back, check a nonidentity orientation, and verify quaternion-sign equivalence. These are deterministic math checks; physical calibration accuracy still needs hardware measurements.
+
+During implementation, Codex also resolved a shared-package typecheck failure involving the universal `URL` type referenced by Zod declarations. The final scaffold retains declaration checking and includes an architecture test restricting shared source imports and platform globals. This iteration is recorded in task E and explained in [contracts.md](contracts.md).
+
+## Validation evidence and limits
+
+Earlier checks below are historical results from task E and the linked CI runs. They were inspected for this log, not represented as newly run application tests. This documentation-only change uses focused link, reference, scope, and whitespace checks.
+
+| Evidence category | Recorded result | Scope |
+| --- | --- | --- |
+| Clean installation | Passed `pnpm install --offline --frozen-lockfile` in a temporary source copy without existing dependencies, builds, environment file, or runtime data. Initial network installation also succeeded. | Node 22.23.1 / pnpm 11.3.0; recorded in [scaffold validation](scaffold.md#validation). |
+| Automated application checks | Passed `pnpm check`: strict typecheck, **27 unit/API tests**, and production build. | Recording boundaries, rigid transforms, shared-package architecture, server configuration, health/storage failure, and static serving. |
+| Synthetic fixture | Passed `pnpm validate:fixtures`: **61 frames / 2,000 ms**. | [Synthetic fixture](../fixtures/synthetic-reach.v1.json); not a real person's recording. |
+| Desktop browser | Passed `pnpm test:e2e`: **3 Chromium tests**. Development startup/proxy/watchers also ran; desktop/mobile screenshots were inspected. | Replay/tracking gaps/reset, failed health request/recovery, and narrow-screen keyboard controls. Task E records Chromium 153.0.8010.12. |
+| Remote CI | PR checks and the merged-main [Check run](https://github.com/aidanjnn/trail/actions/runs/35446014069) succeeded. | CI installs dependencies, runs `pnpm check`, installs Chromium, and runs `pnpm test:e2e`. |
+| Build limitation | Non-blocking Vite warning: client chunk **757.33 kB minified / 174.07 kB gzip**. | Historical scaffold build; headset load/render performance remains unmeasured. |
+| Live OpenAI API inside Trail | **Not implemented or tested.** | Transcription, semantic labels, and contextual voice help remain planned. Codex development assistance and image generation do not establish a runtime API integration. |
+| Headset and human use | **Not tested.** | Live AR entry, hand capture, calibration, guidance/progression, physical transfer, and simultaneous mic/XR/hands/casting are unproven. See [device-check.md](device-check.md). |
+
+Other planned work includes authoring/persistence, the complete tutorial/event contract, pairing, spectator relay, and guide recovery. The implemented fixture remaining usable after a health-request failure does not prove a preloaded interactive guide or cold offline launch.
+
+## Evidence to add as implementation continues
+
+- For a live OpenAI integration: the implementing commit/PR, actual model and operation, input provenance, reviewed output, latency/failure observations, and a reproducible demo. Keep keys, raw narration, and personal recordings out of this log.
+- For a Codex-assisted fix: the observed problem, relevant prompt or request summary, code change, and regression test or measured before/after result. Avoid inventing time savings or treating proposed work as completed.
+- For a headset milestone: tested commit, device/OS/Browser, scenario, observed measurements, and remaining issues in `docs/validation.md` once evidence exists.
+- For submission: select a concrete implemented Codex contribution and connect its commit, tests, and demo. This log supplies the development history; track registration and final submission remain team actions.
+
+## Source task register
+
+Task titles are preserved as shown in Codex. IDs allow the team to locate the original sessions; they are not public transcript links. No conversations have been shared publicly by creating this log.
+
+| Ref | Codex task | Task ID |
+| --- | --- | --- |
+| A | Create repo and stack plan | `01a0b892-e9f2-7da3-a272-5c6f565d2c8b` |
+| B | Add plan-aligned agent skills (archived) | `01a0b89b-b494-74f0-804c-260262c8629d` |
+| C | Explain Trail tech stack choices | `01a0b8e8-0651-76d3-b2fc-fd32e1d27c53` |
+| D | Generate assembly overlay mockups | `01a0b8dd-c679-7992-9d93-77a5160b63e3` |
+| E | Scaffold repo from plan | `01a0b8f7-c3f8-78e1-acca-b667ef0cad91` |
+| F | Create Codex activity log | `01a0ba3a-9558-7881-abb7-c4ae7af8113c` |
+
+The team-plan and mockup paths above are deliberately recorded as local drafts rather than published links. They were inspected locally but are not included in the log commit. Committed evidence is linked to repository files, immutable commits, the PR, and CI runs.
+
+## New entry template
+
+Append a dated entry after each substantive Codex session. Keep historical results tied to their original revision; add a correction when later evidence changes a claim.
+
+```markdown
+### YYYY-MM-DD HH:MM EDT — Contribution title
+
+- User goal / request:
+- Codex work: research, decisions, code, debugging, tests, or design performed.
+- Human input: decisions, corrections, review, or physical testing supplied.
+- Result: implemented / planned / draft / blocked; concrete behavior changed.
+- Evidence: commit/PR, repository artifacts, and Codex task title/ID.
+- Validation: commands and results; distinguish automated, desktop fixture,
+  live provider, and headset/human evidence. Identify the tested revision.
+- Remaining limits / next step:
+```
+
+### 2026-09-19 11:33 EDT — GPT Live plan revision and ongoing activity logging
+
+- **User goal / request:** Make the assembly storyboard the intended end-result direction, add GPT Live conversation in the Quest headset with “Am I doing this right?” feedback, update the plan, and remember to keep Codex logs under `docs/` current.
+- **Codex work:** Researched official GPT Live model, WebRTC, delegation, sideband and lifecycle documentation with a research subagent. Updated [the plan](plan.md) to require hands-free spoken conversation and a separate image-capable Responses assessor, since GPT Live itself accepts audio/text rather than images. Defined fresh scene capture, reviewed expert reference images, stale-result/audio handling, bounded inspection retries, and local progression authority. An independent technical pass caught missing during-demonstration image capture, application-triggered delegation IDs, startup sideband ordering, frozen-frame detection and unbounded retries; the plan now addresses these.
+- **Human input:** The user supplied the visual target and GPT Live requirement. Earlier accepted decisions included reusable fresh demonstrations, bottle/LEGO examples, a fixed starting layout within each tutorial, and the confirmed Quest 3S hardware.
+- **Result:** Planning changes only. The storyboard is an explicit visual target; GPT Live and bounded scene inspection are core requirements. Added TRAIL-16/17, two-task reuse acceptance and T24–T30 scenarios. Updated [four-person assignments](team-plan.md), [README](../README.md), [agent guidance](../AGENTS.md) and [validation routes](../.agents/references/validation.md). Saved the user's ongoing logging preference in an authorized memory extension note and appended this entry.
+- **Evidence:** Local uncommitted documents on `codex/live-coaching-plan`; task A, `01a0b892-e9f2-7da3-a272-5c6f565d2c8b`. [Official visual-context delegation](https://developers.openai.com/api/docs/guides/live-delegation#add-images-and-visual-context) supports the separate voice/vision architecture. Existing mockups and unrelated work were preserved. No publication or runtime integration was performed.
+- **Validation:** The planning turn checked five Markdown files, 42 local links/anchors, the JSON example, all 17 ticket mappings, code fences and discovery links; all passed. `git diff --check` passed. These are documentation checks on the uncommitted worktree, not newly run application tests.
+- **Remaining limits / next step:** Implement and test Live audio and fresh-scene coaching on the actual Quest 3S. Account access, camera route, latency, visual-assessment accuracy and simultaneous XR/audio behavior remain unverified. Continue appending substantive Codex activity to this log without another reminder.
+
+### 2026-09-19 — IWSDK research and plan migration
+
+- **User goal / request:** Check Meta's Immersive Web SDK documentation and update Trail's implementation plan to use the appropriate SDK.
+- **Codex work:** Searched and read Meta/IWSDK setup, manifest, testing, spatial UI, camera and runtime documentation; checked official source and published package metadata. A research subagent verified raw frame access, reference-space negotiation, input fallback behavior, ghost separation and teardown. Confirmed Meta recommends IWSDK over assembling the immersive workflow from separate WebXR examples. It is a framework over WebXR/Three.js, not a browser requirement.
+- **Human input:** The user identified IWSDK as the expected framework and explicitly requested research and a plan update.
+- **Result:** Selected IWSDK for the planned immersive runtime and UIKitML controls. Added an existing-workspace migration, TRAIL-18, SDK ownership boundaries, required hands/local reference space, raw-joint sampling, IWER provenance and T31–T35 scenarios. Revised [plan.md](plan.md), [team-plan.md](team-plan.md), [README](../README.md), [AGENTS.md](../AGENTS.md) and [validation guidance](../.agents/references/validation.md). Kept pure motion/contracts, GPT Live coaching and the paired webcam fallback.
+- **Concrete findings:** IWSDK 0.5.3's dev plugin declares Vite 7 compatibility; the official starter requires a Three.js alias to `super-three@0.181.0`. Trail currently has Vite 8.3.0/Three.js 0.186.0, so the plan requires a coordinated migration rather than adding a package unchanged. SDK visual transforms can remain stale or represent controller fallback input. `CameraSource` accesses browser-exposed media devices, not automatic compositor passthrough. World destruction is required on route teardown to stop its loop.
+- **Evidence:** [Meta WebXR recommendation](https://developers.meta.com/horizon/documentation/web/webxr-overview/), [official setup](https://developers.meta.com/horizon/documentation/iwsdk/guides/01-project-setup/), [pinned World source](https://github.com/facebook/immersive-web-sdk/blob/22ae62df4ba2ee73b611b02ba5636940bd4dabe6/packages/core/src/ecs/world.ts), [camera guide](https://iwsdk.dev/guides/13-camera-access.html), and versioned registry links in the plan. Confirmed frame APIs also exist in the published core 0.5.3 declarations. Task A, `01a0b892-e9f2-7da3-a272-5c6f565d2c8b`; uncommitted documentation on `codex/live-coaching-plan`.
+- **Validation:** Focused checks passed for five planning/guidance files, 43 local links/anchors, 18 fenced code blocks, all 18 ticket mappings and all 35 scenario IDs. `git diff --check` passed. No SDK was installed, package/lockfile changed, application test rerun, or headset result claimed by this documentation task.
+- **Remaining limits / next step:** Implement TRAIL-18 against the existing scaffold, prove the compatible dependency set and preserve current automated checks, then validate actual Quest entry/exit, raw tracking, calibration, spatial UI and concurrent audio/camera behavior. IWER cannot establish physical accuracy or camera access.
+
+### 2026-09-19 — IWSDK versus Spatial SDK decision clarification
+
+- **User goal / request:** Compare IWSDK with Meta Spatial SDK for Trail's intended experience.
+- **Codex work:** Compared official runtime, camera and input documentation. IWSDK is the TypeScript/WebXR path; Spatial SDK is the Kotlin/Android native path. Meta's recommendation of IWSDK applies to immersive web development, not every Quest application. Both require Trail-specific recording, calibration, replay and coaching logic.
+- **Result:** Recommend retaining IWSDK for the currently planned web implementation, conditional on proving the camera requirement on the actual Quest 3S. A headset-only product requiring direct native camera control is a reason to evaluate Spatial SDK before further runtime investment. Do not treat an external webcam as an equivalent headset-only experience or silently switch the stack. The existing implementation plan was not rewritten by this comparison.
+- **Evidence:** [IWSDK overview](https://developers.meta.com/horizon/documentation/iwsdk/guides/overview/), [Spatial SDK overview](https://developers.meta.com/horizon/documentation/spatial-sdk/spatial-sdk-explainer/), [native Quest 3/3S Camera2 access](https://developers.meta.com/horizon/documentation/spatial-sdk/spatial-sdk-pca-overview/), [IWSDK browser camera boundary](https://iwsdk.dev/guides/13-camera-access.html), [Browser 40.1 passthrough-camera release note](https://developers.meta.com/horizon/downloads/package/browser/40.1/?view=full_width), and [open browser permission investigation](https://developers.meta.com/horizon/feedback/vr/investigations/1557993751977106/). The investigation is an AI-summarized developer report, not proof of behavior on this team's device. Together these sources do not justify claiming browser RGB access is universally unavailable or reliable.
+- **Validation:** Documentation research and `git diff --check` only; no runtime, provider or headset tests performed in this comparison.
+- **Remaining limits / next step:** Prove fresh headset RGB frames, raw hand capture, ghost rendering and microphone/audio concurrently before committing further to the browser camera route. A native alternative must independently prove articulated joint capture/replay and voice transport; its documented camera API alone does not establish complete Trail feasibility.
+
+### 2026-09-19 — Native headset direction
+
+- **User goal / request:** Favor Spatial SDK given access to the physical Quest 3S and its controllers.
+- **Codex work / result:** Clarified that both SDKs run on physical Quest hardware. Endorsed Spatial SDK for a native headset-first version because its documented Camera2 integration fits headset-camera visual coaching. Controller ownership alone does not select the SDK or establish articulated hand capture. This is an architectural direction, not a completed migration.
+- **Evidence:** [Spatial SDK overview](https://developers.meta.com/horizon/documentation/spatial-sdk/spatial-sdk-explainer/) and [Quest 3/3S native camera access](https://developers.meta.com/horizon/documentation/spatial-sdk/spatial-sdk-pca-overview/), researched in the preceding comparison.
+- **Validation:** `git diff --check` passed; no application, provider or hardware tests run.
+- **Remaining limits / next step:** The detailed plan still describes IWSDK. A native revision needs Kotlin/Android headset ownership, local motion-engine portability, native audio transport and real joint/camera/audio acceptance before implementation. The TypeScript backend and desktop tools can remain; the existing TypeScript motion engine is not directly a native Kotlin library.
+
+### 2026-09-19 — Full-workflow comparison recommends Unity and Meta XR
+
+- **User goal / request:** Give a logically grounded choice among Spatial SDK, Unity with Meta XR, and IWSDK against the actual Trail plan.
+- **Codex work:** Re-read the product requirements and compared official Unity hand/bone capture, skeleton setup, passthrough camera and WebRTC documentation with Spatial SDK and IWSDK capabilities. Corrected the earlier camera-focused recommendation: native Quest camera access is available to Unity as well as Spatial SDK. Prior discussion correctly distinguished Unity/C# from Spatial SDK/Kotlin; they are alternative headset clients.
+- **Result:** Recommend Unity + Meta XR for Trail's complete recorded-hand, articulated-ghost, calibrated spatial-guidance and visual-coaching workflow. This is an engineering judgment about the combination of supported components and authoring/debugging tools, not a measured claim of better tracking accuracy or guaranteed delivery time. IWSDK retains advantages for web distribution and existing TypeScript reuse; Spatial SDK remains viable for Android/Kotlin-focused work. Recommendation supersedes the earlier preference for Spatial SDK; no full plan or application migration was performed by this comparison.
+- **Evidence:** [Unity hand capture tutorial](https://developers.meta.com/horizon/documentation/unity/unity-tutorial-basic-hand-tracking/), [hand/skeleton setup](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/), [MRUK camera integration](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/), [Spatial SDK overview](https://developers.meta.com/horizon/documentation/spatial-sdk/spatial-sdk-explainer/), [IWSDK overview](https://developers.meta.com/horizon/documentation/iwsdk/guides/overview/), and [Unity WebRTC platform requirements](https://docs.unity3d.com/Packages/com.unity.webrtc@3.0/manual/requirements.html). Unity's documented WebRTC package lists Android ARM64 support but includes build constraints; this is not proof of GPT Live compatibility or simultaneous XR/audio performance.
+- **Migration implications:** Keep Fastify and desktop authoring/spectator tools. Put capture, calibration, replay and deterministic progression on the headset in testable C#. Port motion logic using shared golden fixtures; explicitly adapt coordinate handedness, joint names/counts, bone axes and clocks rather than copying WebXR array indices. Preserve AI/progression separation and fresh-frame/context checks. Pin a mutually compatible Unity/Meta/audio package set during setup.
+- **Validation:** `git diff --check` passed on the uncommitted documentation. No application tests, Unity build, live-provider or headset checks run.
+- **Remaining limits / next step:** Before broad implementation, run a standalone Quest 3S vertical slice: real hand capture and replay after calibration, fresh camera image and bidirectional voice concurrently, plus tracking-loss recovery. Current `plan.md` still contains IWSDK-specific implementation details and needs a coordinated Unity revision if this recommendation is adopted.
+
+### 2026-09-19 — Adopt Unity + Meta XR in the implementation plan
+
+- **User goal / request:** Update the plan to the approved Unity + Meta XR direction.
+- **Codex work:** Researched official Unity/Meta setup, OpenXR compatibility, hand skeletons, native camera access and Android WebRTC requirements; applied the OpenAI Docs skill to verify GPT Live WebRTC and visual-context delegation. Reworked [plan.md](plan.md) for a standalone C# headset app at `apps/quest`, retaining the existing TypeScript/Fastify server and desktop tools. Replaced the IWSDK migration, browser-only setup and runtime assumptions with native project/build, permissions, pairing/authentication, private-file storage and recovery requirements.
+- **Human input:** The user selected Unity + Meta XR after the full-workflow SDK comparison. Quest 3S, fresh generic demonstrations, the ghost-hand visual target and GPT Live conversation remain the requirements.
+- **Result:** Updated the [four-person plan](team-plan.md), [README](../README.md), [AGENTS.md](../AGENTS.md), [validation routes](../.agents/references/validation.md) and [pending device gate](device-check.md). Preserved all 18 ticket identities and existing product algorithms/contracts while defining strict C#/Zod compatibility, versioned native metadata, 26-to-25 joint mapping, handedness/bone-axis conversion and clock mapping. Replaced T31–T35 and added T36–T40 for native risks. Fresh Quest-camera evidence is required; a webcam is a disclosed reduced outcome.
+- **Concrete setup boundary:** Unity 6.3 and WebRTC 3.0.0 are researched candidates, not a validated combined package set. Exact editor/OpenXR/Meta/audio versions must be frozen after build/device checks. Native voice requires actual Android duplex audio/echo/interruption tests. Unity ownership is split into feature prefabs and pure C# assemblies, with integration owning the main scene, project settings and locks. No Unity or SDK installation, source migration, manifest/lockfile edit, publication or headset test was performed.
+- **Evidence:** [Meta Unity setup](https://developers.meta.com/horizon/documentation/unity/unity-project-setup/), [hands](https://developers.meta.com/horizon/documentation/unity/unity-handtracking-hands-setup/), [MRUK camera](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/), [Unity WebRTC requirements](https://docs.unity3d.com/Packages/com.unity.webrtc@3.0/manual/requirements.html), [GPT Live WebRTC](https://developers.openai.com/api/docs/guides/voice-webrtc?api=live) and [visual delegation](https://developers.openai.com/api/docs/guides/live-delegation#add-images-and-visual-context). Local uncommitted planning work in task A; historical log entries remain unchanged.
+- **Validation:** Focused documentation checks passed for six planning/guidance files, 43 local links/anchors, 16 fenced blocks, all 18 ticket mappings and all 40 scenario IDs. `git diff --check` passed. Stale-runtime search found no remaining active IWSDK/World/UIKitML/browser-capture instructions in the updated documents. No application tests were rerun for this documentation-only change.
+- **Remaining limits / next step:** Implement the setup portion of TRAIL-18 and the parallel contract/native voice/camera probes. Prove a single standalone Quest APK with fresh hands, calibrated recorded ghost, real camera frames and two-way speech before expanding the tutorial workflow. Actual remaining build time and event deadlines must be reconciled; the Unity decision does not restart the original schedule.
+
+### 2026-09-19 — Prepare documentation delivery to main
+
+- **User goal / request:** Commit and push the updated documentation directly to `main`.
+- **Codex work:** Followed the Trail commit workflow, fetched `origin`, confirmed local `main` matched `origin/main`, inspected the documentation changes and switched to `main` without discarding work. Included the generated concept images and their provenance README so the plan's visual links remain usable after publication. These are illustrative assets, not personal recordings or headset evidence.
+- **Result / scope:** Prepared the Unity/Meta XR plan, four-person assignments, README, agent/validation guidance, pending device checklist, activity log and referenced mockups as one documentation commit. No application source, dependency manifests or lockfiles are included. Push and remote-SHA verification follow the commit; their final outcome is reported in the delivery response and Git history.
+- **Validation:** Rechecked six planning/guidance files, 43 local links/anchors, 16 fenced blocks, 18 ticket mappings and 40 scenario IDs; all passed. `git diff --check` passed. Inspected both generated images and their source prompts. Application, provider and hardware tests were not rerun for this documentation-only delivery.
+- **Remaining limits:** The native app remains planned; publishing the plan does not establish Unity build or Quest readiness. Historical log descriptions of uncommitted drafts refer to their earlier revisions; this delivery includes those planning artifacts.
