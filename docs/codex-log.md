@@ -341,3 +341,20 @@ Platform owner is repairing the manifest; no native pass or APK claim yet.
 TRAIL-03 final software validation: retained parsed pose doubles for re-export, added sidecar identity binding and regeneration drift tests, and documented versions/migration/native representation limits in `docs/contracts.md`. Fixed strict TS array/fixture-union diagnostics found by the full gate without changing schemas. `pnpm check` passed (148 tests, typechecks, app builds and native static check), `pnpm validate:fixtures` passed, 124 contract tests passed, and the actual .NET parser harness passed 113 checks. Three Chromium fixture scenarios passed on isolated port 3103 with an owned temporary data directory; the server was cleaned up. The existing Vite large-chunk warning remains.
 
 Unity became available externally during this run. Full-project `pnpm quest:test` on the baseline manifest failed before tests on vendor CS1069 diagnostics requiring Animation and Asset Bundle modules; native-platform owns that repair. A minimal temporary project containing the unchanged production Contracts/Motion and their tests passed 5/5 EditMode tests in Unity 6000.3.24f1 with Test Framework 1.4.6. The repeatable `pnpm --filter @trail/contracts test:unity-isolated` runner records source hashes, setup and result XML; its verified run began 2026-09-19T18:00:43Z with 32 copied/hashed production/test files, all five passed. The temporary project and logs are outside Git; import-generated full-project settings/lock were preserved outside this PR for the platform owner. No Android IL2CPP build, live provider, headset or physical LEGO/transfer claim. Contracts PR remains independent against main, to be consumed before the capture, guide, authoring and inspection PRs.
+
+Task 4 actual native evidence: full-project Unity EditMode passed 10/10 tests and
+PlayMode passed 4/4, including the real GuideController/CaptureReplaySession
+lifecycle with injected synthetic hand events, independent calibration, ordered
+completion, inspection pause, resume, Repeat and origin reset. These runs compiled
+actual Unity/Meta assemblies and imported real packages; they do not establish
+physical/headset behavior. Android tooling was subsequently found in the editor's
+sibling PlaybackEngines directory, correcting the earlier absence claim. Parent
+assigned final combined IL2CPP build to task 6 to avoid duplicate heavy builds.
+
+Storage integration review added RebindTelemetrySession: same server session
+preserves sequence; a new session changes only the telemetry envelope. It publishes
+a full snapshot without mutating the loaded guide. The actual C# golden integration
+passes both recovery cases; refreshed Unity tests include the paused re-pair path.
+Final contracts 3d629fa and capture capacity fixes are integrated. Native/source
+checks are rerunning for this last recovery change; prior native passes remain
+at their explicitly recorded revisions.

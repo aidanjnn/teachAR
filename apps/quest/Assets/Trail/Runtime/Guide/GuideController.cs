@@ -88,6 +88,14 @@ namespace Trail.Runtime.Guide
                     Wrist(observation.Left), Wrist(observation.Right))));
         }
         private static CanonicalPose? Wrist(HandSample hand) => hand != null && hand.Status == "valid" && hand.Joints != null && hand.Joints.TryGetValue("wrist", out var pose) ? pose : (CanonicalPose?)null;
+        // Re-pairing changes transport identity only. An open guide survives backend restarts.
+        public void RebindTelemetrySession(string pairedSessionId)
+        {
+            if (Session == null || telemetry == null) return;
+            telemetry.RebindSession(pairedSessionId);
+            lastSnapshotMs = Clock();
+            Publish(telemetry.SnapshotEvent(Session, lastSnapshotMs));
+        }
         // Inspection calls this on the main thread, outside Transitioned callbacks.
         // The returned event is the exact locally paused acknowledgment, using the shared sequence.
         public GuideEvent PauseForInspection()

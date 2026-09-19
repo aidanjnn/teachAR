@@ -3,6 +3,7 @@
 TRAIL-06/07 software runs in pure C# `Trail.Motion` and the native `Trail.Guide`
 assembly. Unity is the sole learner progression authority. Desktop/server consumers
 receive read-only `GuideEvent` telemetry; they cannot drive this reducer.
+Snapshots publish on phase/revision changes and at a 100 ms heartbeat.
 
 `GuidePlatformFeature` registers after the capture feature (order 20 after 10).
 It binds `CaptureReplaySession.WorkspaceObserved`, calibration/invalidation events,
@@ -43,6 +44,12 @@ reached.** It does not verify grasp, attachment, hidden properties or full traje
 Explicit user-confirmed steps never auto-complete and retain their distinct visible
 mode/evidence. Confirmation may complete an armed, occluded manual step, but cannot
 bypass pause, calibration or the initial start gate.
+
+`RebindTelemetrySession(pairedSessionId)` publishes the complete current snapshot
+after re-pairing. The same server session keeps its increasing event sequence;
+a new server session starts a new envelope sequence. Run/step/attempt, calibration,
+progress and run-relative time are preserved. The transport owns cancellation of
+old-session requests; it never needs to reload or reset the guide to reconnect.
 
 World-space fingertip controls expose Start, Repeat, Pause, Resume and I completed
 this step. Activation requires 600 ms of fresh fingertip contact with the dot, then
