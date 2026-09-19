@@ -16,6 +16,10 @@ namespace Trail.Contracts
             foreach (var frame in r.Frames) { Require(frame.TMs > previous && frame.TMs <= r.DurationMs, "Frame time must strictly increase within duration"); previous = frame.TMs; }
         }
         internal static void Validate(RecordingMetadata r) => ValidateRecordingMetadata(r.JointOrder, r.Markers, r.DurationMs);
+        internal static void Validate(MotionChunk c)
+        {
+            for (int i = 1; i < c.Frames.Length; i++) Require(c.Frames[i].TMs > c.Frames[i - 1].TMs, "Chunk frame time must strictly increase");
+        }
         private static void ValidateRecordingMetadata(string[] joints, StepMarker[] markers, double duration)
         {
             Require(joints.SequenceEqual(JointNames.Canonical), "Joint order must match canonical 25");
