@@ -121,3 +121,31 @@ it('applies the same gate to real WebSocket upgrades for native and browser clie
     expect(await connect({ cookie })).toBe(401);
   } finally { await app.close(); }
 });
+
+it('pairs over real TLS with a Secure browser cookie and authorizes a protected POST', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const https = await import('node:https');
+  const dir = await mkdtemp(join(tmpdir(), 'trail-tls-'));
+  let app: ReturnType<typeof Fastify> | undefined;
+  try {
+    execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', join(dir, 'key.pem'), '-out', join(dir, 'cert.pem'), '-days', '1', '-subj', '/CN=localhost'], { stdio: 'ignore' });
+    app = Fastify({ https: { key: await readFile(join(dir, 'key.pem')), cert: await readFile(join(dir, 'cert.pem')) } });
+    const auth = createPairingAuthority({ allowedOrigins: ['https://localhost'] });
+    registerPairingRoutes(app, auth);
+    const address = await app.listen({ host: '127.0.0.1', port: 0 });
+    async function post(path: string, payload: unknown, cookie?: string) {
+      return new Promise<{ status: number; cookie: string; body: string }>((done, reject) => {
+        // Test-generated self-signed certificate only. Production/native transport never bypasses TLS checks.
+        const request = https.request(address + path, { method: 'POST', rejectUnauthorized: false, headers: { origin: 'https://localhost', 'content-type': 'application/json', ...(cookie ? { cookie } : {}) } }, response => {
+          let body = ''; response.setEncoding('utf8'); response.on('data', chunk => { body += chunk; });
+          response.on('end', () => done({ status: response.statusCode!, cookie: response.headers['set-cookie']?.[0] ?? '', body }));
+        });
+        request.on('error', reject); request.end(JSON.stringify(payload));
+      });
+    }
+    const paired = await post('/api/pair', { code: auth.issueCode('author').code, client: 'browser' });
+    expect(paired.status).toBe(200); expect(paired.cookie).toContain('; Secure');
+    const current = await post('/api/session', {}, paired.cookie.split(';')[0]);
+    expect(current.status).toBe(200); expect(JSON.parse(current.body).role).toBe('author');
+  } finally { await app?.close(); await rm(dir, { recursive: true, force: true }); }
+});
