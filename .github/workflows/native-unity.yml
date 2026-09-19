@@ -62,12 +62,16 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          # Coverage stays off to keep the package set unchanged. The runner input `coverageEnabled: false`
+          # emits `--no-coverageEnabled`, which game-ci/cli v0.1.69 rejects as an unknown argument
+          # (its parser disables negation prefixes) and exits before Unity starts. The CLI also reads every
+          # option from GAME_CI_<OPTION>, so the same setting is passed through the environment instead.
+          GAME_CI_COVERAGE_ENABLED: 'false'
         with:
           cliVersion: v0.1.69
           projectPath: apps/quest
           customImage: unityci/editor:ubuntu-${{ steps.editor.outputs.version }}-android-3
           testMode: ${{ matrix.mode }}
-          coverageEnabled: false
           customParameters: -buildTarget Android
           artifactsPath: artifacts/quest-ci/${{ matrix.mode }}
           githubToken: ''

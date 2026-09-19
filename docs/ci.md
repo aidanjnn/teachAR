@@ -91,7 +91,10 @@ this change was prepared, and this PR does not change repository settings.
 
 Both test jobs use the editor pinned in `ProjectVersion.txt`, an Android-capable
 GameCI image and `-buildTarget Android`. Coverage injection is disabled to keep
-the package set unchanged. The build starts in a separate clean checkout and
+the package set unchanged; it is switched off through the `GAME_CI_COVERAGE_ENABLED`
+environment variable because the runner's `coverageEnabled: false` input produces
+a `--no-coverageEnabled` flag that the pinned game-ci CLI rejects before Unity
+starts. The build starts in a separate clean checkout and
 calls `Trail.Editor.ProjectSetup.BuildAndroidCi`, which delegates to the same
 production configuration/prebuild guard as `quest:build`. It produces a
 non-development APK. Actions are SHA-pinned and the test runner's CLI is pinned.
