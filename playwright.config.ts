@@ -14,6 +14,6 @@ export default defineConfig({
     command: 'pnpm start',
     url: `${origin}/api/health`,
     reuseExistingServer: false,
-    env: { HOST: '127.0.0.1', PORT: String(port), DATA_DIR: `./data/e2e-${port}`, AI_PROVIDER: 'mock', HAPTICS_DRIVER: 'mock' },
+    env: { HOST: '127.0.0.1', PORT: String(port), DATA_DIR: `./data/e2e-${port}`, AI_PROVIDER: 'mock', HAPTICS_DRIVER: 'mock', ALLOW_USB_LOOPBACK: 'true', PAIRING_ORIGINS: origin },
   },
 });

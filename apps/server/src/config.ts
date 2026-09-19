@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 export const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const EnvironmentSchema = z.object({
+  TLS_CERT_FILE: z.string().min(1).optional(),
+  TLS_KEY_FILE: z.string().min(1).optional(),
   PAIRING_ORIGINS: z.string().default(''),
   ALLOW_USB_LOOPBACK: z.enum(['true', 'false']).default('false'),
   HOST: z.literal('127.0.0.1').default('127.0.0.1'),
@@ -30,7 +32,7 @@ export function loadEnvironment(): void {
 }
 
 export function readConfig(env: NodeJS.ProcessEnv = process.env) {
-  const result = EnvironmentSchema.safeParse({ ...env, VISION_SERVICE_URL: env.VISION_SERVICE_URL || undefined, VISION_SERVICE_TOKEN: env.VISION_SERVICE_TOKEN || undefined });
+  const result = EnvironmentSchema.safeParse({ ...env, TLS_CERT_FILE: env.TLS_CERT_FILE || undefined, TLS_KEY_FILE: env.TLS_KEY_FILE || undefined, VISION_SERVICE_URL: env.VISION_SERVICE_URL || undefined, VISION_SERVICE_TOKEN: env.VISION_SERVICE_TOKEN || undefined });
   if (!result.success) {
     // Report field names only; environment values can contain credentials.
     throw new Error(`Invalid server configuration: ${result.error.issues.map(issue => issue.path.join('.')).join(', ')}`);
@@ -38,7 +40,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   if (result.data.VISION_SERVICE_URL && !result.data.VISION_SERVICE_TOKEN) {
     throw new Error('Invalid server configuration: VISION_SERVICE_TOKEN');
   }
+  if (Boolean(result.data.TLS_CERT_FILE) !== Boolean(result.data.TLS_KEY_FILE)) throw new Error('Invalid server configuration: TLS_CERT_FILE/TLS_KEY_FILE');
   return {
+    tls: result.data.TLS_CERT_FILE && result.data.TLS_KEY_FILE ? { certFile: resolve(result.data.TLS_CERT_FILE), keyFile: resolve(result.data.TLS_KEY_FILE) } : null,
     pairing: { allowedOrigins: result.data.PAIRING_ORIGINS.split(',').map(value => value.trim()).filter(Boolean), allowUsbLoopback: result.data.ALLOW_USB_LOOPBACK === 'true' },
     vision: result.data.VISION_SERVICE_URL && result.data.VISION_SERVICE_TOKEN
       ? { url: result.data.VISION_SERVICE_URL, token: result.data.VISION_SERVICE_TOKEN } : null,

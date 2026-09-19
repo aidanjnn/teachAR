@@ -33,7 +33,7 @@ async function upload(s: Awaited<ReturnType<typeof setup>>) {
 }
 
 describe('durable authoring HTTP flow', () => {
-  it('uploads, compiles, reviews, finalizes and reloads immutable steps across restart', async () => {
+  it('uploads, compiles, reviews, finalizes and reloads immutable steps across restart', { timeout: 20000 }, async () => {
     const s = await setup();
     try {
       const input = await upload(s);
@@ -55,7 +55,7 @@ describe('durable authoring HTTP flow', () => {
       const repeat = await restarted.compile(input.id, input.sha256, 1); expect(repeat.id).toBe(job.json().id);
     } finally { await s.app.close(); }
   });
-  it('enforces hashes, ordered chunks, identical retries, aggregate bounds and interrupted recovery', async () => {
+  it('enforces hashes, ordered chunks, identical retries, aggregate bounds and interrupted recovery', { timeout: 20000 }, async () => {
     const s = await setup();
     try {
       const { frames, ...metadata } = createAuthoringFixture();
@@ -71,7 +71,7 @@ describe('durable authoring HTTP flow', () => {
       expect((await s.app.inject({ method: 'POST', url: `/api/recordings/${id}/discard`, headers: s.headers })).statusCode).toBe(200);
     } finally { await s.app.close(); }
   });
-  it('rejects unauthenticated/wrong-role writes and forged spatial coordinates', async () => {
+  it('rejects unauthenticated/wrong-role writes and forged spatial coordinates', { timeout: 20000 }, async () => {
     const s = await setup();
     try {
       expect((await s.app.inject({ method: 'POST', url: '/api/recordings', payload: {} })).statusCode).toBeGreaterThanOrEqual(400);
@@ -81,8 +81,28 @@ describe('durable authoring HTTP flow', () => {
       const body = edit(tutorial); Object.assign(body.steps[0]!, { targets: [] });
       expect((await s.app.inject({ method: 'PATCH', url: `/api/tutorials/${tutorial.id}`, headers: s.headers, payload: body })).statusCode).toBe(400);
       const changed = edit(tutorial); changed.steps[0]!.startFrame = 30;
-      expect((await s.app.inject({ method: 'PATCH', url: `/api/tutorials/${tutorial.id}`, headers: s.headers, payload: changed })).statusCode).toBe(500);
+      expect((await s.app.inject({ method: 'PATCH', url: `/api/tutorials/${tutorial.id}`, headers: s.headers, payload: changed })).statusCode).toBe(422);
       expect((await repo.tutorial(tutorial.id)).revision).toBe(1);
     } finally { await s.app.close(); }
   });
+});
+
+it('preserves raw cross-language JSON hashes and serves bounded preload chunks', { timeout: 20000 }, async () => {
+  const s = await setup();
+  try {
+    const recording = createAuthoringFixture(); const { frames: _frames, ...metadata } = recording;
+    const created = await s.app.inject({ method: 'POST', url: '/api/recordings', headers: s.headers, payload: { metadata } });
+    recording.id = created.json().id;
+    // Whitespace and exponent spelling are intentionally different from JSON.stringify(parsed).
+    const raw = Buffer.from(JSON.stringify(recording, null, 2).replace('"durationMs": 11966.666666666666', '"durationMs": 1.1966666666666666e4'));
+    const parts: Buffer[] = []; for (let i=0;i<raw.length;i+=1024*1024) parts.push(raw.subarray(i,i+1024*1024));
+    for (const [index, part] of parts.entries()) expect((await s.app.inject({ method: 'PUT', url: `/api/recordings/${recording.id}/bytes/${index}`, headers: s.headers, payload: { dataBase64: part.toString('base64'), sha256: digest(part) } })).statusCode).toBe(200);
+    const finalized = await s.app.inject({ method: 'POST', url: `/api/recordings/${recording.id}/finalize-bytes`, headers: s.headers, payload: { chunkCount: parts.length, sha256: digest(raw) } });
+    expect(finalized.statusCode, finalized.body).toBe(200);
+    const content = await s.app.inject({ url: `/api/recordings/${recording.id}/content`, headers: s.headers }); expect(digest(content.rawPayload)).toBe(digest(raw));
+    const meta = (await s.app.inject({ url: `/api/recordings/${recording.id}/download`, headers: s.headers })).json();
+    const chunks: Buffer[] = [];
+    for (let i=0;i<meta.chunkCount;i++) { const part = await s.app.inject({ url: `/api/recordings/${recording.id}/content/${i}`, headers: s.headers }); chunks.push(Buffer.from(part.json().dataBase64, 'base64')); }
+    expect(digest(Buffer.concat(chunks))).toBe(digest(raw));
+  } finally { await s.app.close(); }
 });

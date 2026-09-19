@@ -1,3 +1,6 @@
+import { ReferenceStore } from './storage/references.js';
+import { InspectionCoordinator } from './vision/coordinator.js';
+import { registerInspectionRoutes } from './vision/routes.js';
 import { SpectatorRelay } from './sessions/relay.js';
 import { PairingAuthority, registerPairingRoutes } from './auth/pairing.js';
 import { TutorialRepository } from './storage/repository.js';
@@ -5,9 +8,10 @@ import { registerStorageRoutes } from './storage/routes.js';
 import { probeVision } from './vision/client.js';
 import Fastify, { LogController } from 'fastify';
 import fastifyStatic from '@fastify/static';
-import { HealthSchema } from '@trail/contracts';
+import { z } from 'zod';
+import { HealthSchema, parseContractJson } from '@trail/contracts';
 import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, unlink, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ServerConfig } from './config.js';
 
@@ -25,10 +29,17 @@ async function storageWritable(dataDir: string): Promise<boolean> {
 }
 
 export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority } = {}) {
+  const https = config.tls ? { cert: await readFile(config.tls.certFile), key: await readFile(config.tls.keyFile) } : null;
   const app = Fastify({
+    ...(https ? { https } : {}),
     logger: options.logger ?? false,
     logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: 64 * 1024, requestTimeout: 10_000,
+  });
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_request, body, done) => {
+    try { done(null, parseContractJson(z.unknown(), String(body))); }
+    catch { done(Object.assign(new Error('Invalid JSON input'), { statusCode: 400 })); }
   });
   if (options.auth) {
     const relay = new SpectatorRelay();
@@ -36,7 +47,19 @@ export async function createApp(config: ServerConfig, options: { webRoot?: strin
     registerPairingRoutes(app, options.auth);
     const repository = new TutorialRepository(config.dataDir);
     await repository.recover();
+    relay.bindTutorials(repository);
     await registerStorageRoutes(app, repository, options.auth);
+    const references = new ReferenceStore(repository);
+    const auth = options.auth;
+    const inspection = new InspectionCoordinator({ vision: config.vision, resolveReferences: context => references.resolveReferences(context), isCurrent: (sessionId, context) => {
+      const { snapshot, connected, updatedAt } = relay.snapshot();
+      if (!connected || Date.now() - updatedAt >= 3000 || !snapshot || !('state' in snapshot) || snapshot.sessionId !== sessionId || snapshot.runId !== context.runId) return false;
+      const state = snapshot.state;
+      return state.phase === 'paused' && state.calibrationValid && state.tutorialId === context.tutorialId && state.tutorialRevision === context.tutorialRevision && state.stepId === context.stepId && state.stepRevision === context.stepRevision && state.attemptId === context.attemptId;
+    } });
+    const unsubscribe = relay.subscribe(() => inspection.guideChanged(auth.sessionId));
+    await registerInspectionRoutes(app, { coordinator: inspection, authorizeLearner: request => auth.authorize(request, { roles: ['learner'], sessionId: auth.sessionId }) });
+    app.addHook('onClose', async () => { unsubscribe(); inspection.close(); });
   }
   app.get('/api/health', async (_request, reply) => {
     const writable = await storageWritable(config.dataDir);

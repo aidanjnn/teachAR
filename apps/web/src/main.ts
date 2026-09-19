@@ -84,7 +84,7 @@ async function refreshVision() {
     const response = await fetch('/api/dependencies/vision', { signal: AbortSignal.timeout(3000), cache: 'no-store' });
     const dependency = VisionDependencySchema.parse(await response.json());
     element('#vision').textContent = dependency.status === 'reachable'
-      ? 'Connected · interpretation not implemented' : dependency.status === 'disabled'
+      ? dependency.health.capabilities.imageInterpretation ? 'Connected · image interpretation configured' : 'Connected · visual interpretation unavailable' : dependency.status === 'disabled'
       ? 'Not configured' : 'Unavailable';
   } catch { element('#vision').textContent = 'Unavailable'; }
 }

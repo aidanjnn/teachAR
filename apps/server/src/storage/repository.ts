@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { rm } from 'node:fs/promises';
+import { rm, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { RecordingSchema, TutorialSchema, TutorialDraftEditSchema, parseTutorialForRecording, type MotionFrame, type Recording, type Tutorial, type TutorialDraftEdit, type StepSceneReference, type TutorialLabelBatch, TutorialLabelBatchSchema } from '@trail/contracts';
+import { RecordingSchema, parseContractJson, TutorialSchema, TutorialDraftEditSchema, parseTutorialForRecording, type MotionFrame, type Recording, type Tutorial, type TutorialDraftEdit, type StepSceneReference, type TutorialLabelBatch, TutorialLabelBatchSchema } from '@trail/contracts';
 import { deriveStep, proposeSteps } from '@trail/motion';
 import { digest, PrivateFiles, StoreError } from './files.js';
 
 type TutorialBundle = { tutorial: Tutorial; references: StepSceneReference[] };
-type Upload = { id: string; status: 'uploading' | 'ready'; metadata: Omit<Recording, 'id' | 'frames'>; chunks: { hash: string; bytes: number; frames: number }[]; hash: string | null };
+type Upload = { id: string; status: 'uploading' | 'ready'; metadata: Omit<Recording, 'id' | 'frames'>; chunks: { hash: string; bytes: number; frames: number }[]; hash: string | null; format?: 'frames' | 'bytes' };
 export type CompileJob = { id: string; recordingId: string; recordingHash: string; segmentationRevision: number; status: 'running' | 'complete' | 'interrupted' | 'failed'; tutorialId: string | null; error: string | null };
 const MAX_CHUNK_BYTES = 2 * 1024 * 1024;
 const MAX_MOTION_BYTES = 64 * 1024 * 1024;
@@ -37,6 +37,8 @@ export class TutorialRepository {
   async upload(id: string, index: number, frames: MotionFrame[], expectedHash: string) {
     return this.files.serial(id, async () => {
       const upload = await this.files.read<Upload>('recordings', id);
+      if (upload.format === 'bytes') throw new StoreError(409, 'Cannot mix upload formats');
+      upload.format = 'frames';
       const encoded = JSON.stringify(frames); const hash = digest(encoded); const bytes = Buffer.byteLength(encoded);
       if (hash !== expectedHash) throw new StoreError(422, 'Chunk hash mismatch');
       if (bytes > MAX_CHUNK_BYTES) throw new StoreError(413, 'Motion chunk exceeds 2 MiB');
@@ -61,6 +63,11 @@ export class TutorialRepository {
       return { discarded: true };
     }));
   }
+  async pendingUploads() {
+    const result: Upload[] = [];
+    for (const id of await this.files.ids('recordings')) { const upload = await this.uploadStatus(id); if (upload.status === 'uploading') result.push(upload); }
+    return result;
+  }
   async uploadStatus(id: string) { return this.files.read<Upload>('recordings', id); }
   async finalizeRecording(id: string, chunkCount: number, expectedHash: string) {
     return this.files.serial(id, async () => {
@@ -69,6 +76,7 @@ export class TutorialRepository {
         if (upload.hash !== expectedHash || upload.chunks.length !== chunkCount) throw new StoreError(409, 'Finalization retry differs');
         return { id, sha256: upload.hash, status: 'ready' as const };
       }
+      if (upload.format === 'bytes') throw new StoreError(409, 'Use byte finalization for this recording');
       if (chunkCount !== upload.chunks.length || !chunkCount) throw new StoreError(409, 'Missing motion chunks');
       const frames: MotionFrame[] = [];
       for (let i = 0; i < chunkCount; i++) {
@@ -89,16 +97,57 @@ export class TutorialRepository {
   async recording(id: string) {
     const manifest = await this.uploadStatus(id);
     if (manifest.status !== 'ready' || !manifest.hash) throw new StoreError(409, 'Recording upload is incomplete');
-    const recording = RecordingSchema.parse(await this.files.read('recordings', id, 'recording.json'));
-    if (digest(JSON.stringify(recording)) !== manifest.hash) throw new StoreError(422, 'Recording integrity check failed');
+    const bytes = await readFile(this.files.path('recordings', id, 'recording.json'));
+    const recording = parseContractJson(RecordingSchema, bytes.toString('utf8'));
+    if (digest(bytes) !== manifest.hash) throw new StoreError(422, 'Recording integrity check failed');
     return { recording, sha256: manifest.hash };
+  }
+  async recordingContent(id: string) { await this.recording(id); return readFile(this.files.path('recordings', id, 'recording.json')); }
+  async uploadBytes(id: string, index: number, bytes: Buffer, expectedHash: string) {
+    return this.files.serial(id, async () => {
+      const upload = await this.uploadStatus(id);
+      if (upload.format === 'frames') throw new StoreError(409, 'Cannot mix upload formats');
+      if (bytes.length === 0 || bytes.length > MAX_CHUNK_BYTES || digest(bytes) !== expectedHash) throw new StoreError(422, 'Byte chunk size/hash mismatch');
+      const existing = upload.chunks[index];
+      if (existing) { if (existing.hash !== expectedHash) throw new StoreError(409, 'Byte chunk retry differs'); return { id, repeated: true }; }
+      if (upload.status !== 'uploading' || index !== upload.chunks.length || index >= 64) throw new StoreError(409, 'Byte chunk order/immutability conflict');
+      if (upload.chunks.reduce((sum, chunk) => sum + chunk.bytes, bytes.length) > MAX_MOTION_BYTES) throw new StoreError(413, 'Recording byte limit exceeded');
+      await this.files.writeBytes('recordings', id, bytes, `bytes-${index}.bin`);
+      upload.format = 'bytes'; upload.chunks.push({ hash: expectedHash, bytes: bytes.length, frames: 0 });
+      await this.files.write('recordings', id, upload); return { id, repeated: false };
+    });
+  }
+  async finalizeBytes(id: string, chunkCount: number, expectedHash: string) {
+    return this.files.serial(id, async () => {
+      const upload = await this.uploadStatus(id);
+      if (upload.format !== 'bytes' || upload.chunks.length !== chunkCount) throw new StoreError(409, 'Incomplete byte upload');
+      if (upload.status === 'ready') { if (upload.hash !== expectedHash) throw new StoreError(409, 'Finalization retry differs'); return { id, sha256: upload.hash, status: 'ready' }; }
+      const chunks: Buffer[] = [];
+      for (let index = 0; index < chunkCount; index++) {
+        const bytes = await readFile(this.files.path('recordings', id, `bytes-${index}.bin`));
+        if (digest(bytes) !== upload.chunks[index]!.hash) throw new StoreError(422, 'Stored byte chunk corrupted'); chunks.push(bytes);
+      }
+      const bytes = Buffer.concat(chunks);
+      if (digest(bytes) !== expectedHash) throw new StoreError(422, 'Recording byte hash mismatch');
+      let recording: Recording;
+      try { recording = parseContractJson(RecordingSchema, new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { throw new StoreError(422, 'Invalid recording JSON'); }
+      if (recording.id !== id || recording.audio) throw new StoreError(422, 'Recording identity or unsupported narration asset');
+      const { frames: _frames, id: _id, ...metadata } = recording;
+      const expected = { ...upload.metadata } as Record<string, unknown>; delete expected.id;
+      if (JSON.stringify(metadata) !== JSON.stringify(expected)) throw new StoreError(409, 'Recording metadata changed during upload');
+      await this.files.writeBytes('recordings', id, bytes, 'recording.json');
+      await this.files.write('recordings', id, { ...upload, status: 'ready', hash: expectedHash });
+      return { id, sha256: expectedHash, status: 'ready' };
+    });
   }
   async compile(recordingId: string, recordingHash: string, segmentationRevision: number) {
     return this.files.serial('compile', async () => {
-      for (const id of await this.files.ids('jobs')) {
+      const jobIds = await this.files.ids('jobs');
+      for (const id of jobIds) {
         const job = await this.files.read<CompileJob>('jobs', id);
         if (job.recordingId === recordingId && job.recordingHash === recordingHash && job.segmentationRevision === segmentationRevision && job.status === 'complete') return job;
       }
+      if (jobIds.length >= 128) throw new StoreError(413, 'Local compile history limit reached');
       const { recording, sha256 } = await this.recording(recordingId);
       if (sha256 !== recordingHash) throw new StoreError(409, 'Recording revision changed');
       const job: CompileJob = { id: randomUUID(), recordingId, recordingHash, segmentationRevision, status: 'running', tutorialId: null, error: null };
@@ -126,7 +175,9 @@ export class TutorialRepository {
       const current = await this.tutorial(id);
       this.assertDraft(current, edit.baseRevision);
       const { recording, sha256 } = await this.recording(current.recordingId);
-      const next = parseTutorialForRecording({ ...current, revision: current.revision + 1, steps: edit.steps.map(step => deriveStep(recording, step)), provenance: { ...current.provenance, labels: edit.steps.some(step => step.instruction === 'Review this movement and describe the visible action.') ? 'fallback' : 'manual', model: null } }, recording, sha256);
+      let steps;
+      try { steps = edit.steps.map(step => deriveStep(recording, step)); } catch (error) { throw new StoreError(422, (error as Error).message); }
+      const next = parseTutorialForRecording({ ...current, revision: current.revision + 1, steps, provenance: { ...current.provenance, labels: edit.steps.some(step => step.instruction === 'Review this movement and describe the visible action.') ? 'fallback' : 'manual', model: null } }, recording, sha256);
       await this.files.write('tutorials', id, { tutorial: next, references: [] });
       return next;
     });

@@ -13,13 +13,16 @@ export const storageId = (id: string) => {
 
 /** One process owns this directory. Per-object serialization covers read/modify/write. */
 export class PrivateFiles {
+  private pending = 0;
   private readonly locks = new Map<string, Promise<unknown>>();
   constructor(readonly root: string) {}
   async serial<T>(key: string, action: () => Promise<T>): Promise<T> {
+    if (this.pending >= 32) throw new StoreError(429, 'Storage queue is full');
+    this.pending++;
     const previous = this.locks.get(key) ?? Promise.resolve();
     const pending = previous.catch(() => undefined).then(action);
     this.locks.set(key, pending);
-    try { return await pending; } finally { if (this.locks.get(key) === pending) this.locks.delete(key); }
+    try { return await pending; } finally { this.pending--; if (this.locks.get(key) === pending) this.locks.delete(key); }
   }
   path(collection: 'recordings' | 'tutorials' | 'jobs' | 'assets', id: string, name = 'manifest.json') {
     storageId(id);
