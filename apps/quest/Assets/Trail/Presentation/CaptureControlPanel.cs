@@ -67,7 +67,7 @@ namespace Trail.Presentation
             if (selected != touching)
             {
                 // Only a fresh, tracked withdrawal from an armed label confirms; loss, stalls or drift cancel instead.
-                var armed = latched ? touching : -1;
+                var armed = latched && selected < 0 ? touching : -1;
                 ResetTouch();
                 if (selected >= 0) { touching = selected; touchStarted = observation.TimestampMs; }
                 if (armed >= 0) actions[armed]();
