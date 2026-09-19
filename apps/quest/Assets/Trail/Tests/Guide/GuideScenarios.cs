@@ -52,7 +52,7 @@ namespace Trail.Tests.Guide
         {
             var tests = new Action[] { FullSlowLearner, OrderedGates, InactiveHandLoss, ActiveLossDuringDwell, StaleAndOutOfOrder, StallAndCreditCap,
                 PauseResumeReset, RepeatExactlyOnce, BackendIndependentMultiStep, UserConfirmed, TwoHands, ShowingCannotComplete, BadPoseAndJump,
-                SourceIsolation, ImmutablePreviousState, OrientationAndCue, ReacquisitionCannotBorrowDwell, OverlapRequiresStart, InvalidDefinitions };
+                SourceIsolation, ImmutablePreviousState, OrientationAndCue, ReacquisitionCannotBorrowDwell, OverlapRequiresStart, InvalidDefinitions, ZeroDwellStillRequiresMatch, ManualOcclusion, OriginChangeWhileShowing, ClockRollback, EffectIdentityOrder };
             foreach (var test in tests) { test(); }
             return tests.Length;
         }
@@ -145,6 +145,37 @@ namespace Trail.Tests.Guide
         private static void InvalidDefinitions()
         {
             var rejected = false; try { new GuideGate(Vector3.Zero, double.NaN); } catch (ArgumentException) { rejected = true; } True(rejected, "NaN threshold rejected");
+        }
+
+        private static void ZeroDwellStillRequiresMatch()
+        {
+            var d = new GuideDefinition("zero-dwell", 0, new[] { new GuideStep("s", "", new[] { new GuideTarget(GuideHand.Left, Pose(0), Pose(.4f)) }, dwellMs: 0, startDwellMs: 0) }, GuideSource.SyntheticDiagnostic);
+            var r = new Rig(d); r.Act(GuideAction.DemonstrationFinished); r.Sample(.4f); Equal(GuidePhase.WaitingStart, r.State.Phase, "zero start dwell still needs start pose");
+            r.Sample(0); Equal(GuidePhase.Guiding, r.State.Phase, "zero dwell matching start"); r.Sample(.2f); Equal(0, r.Completions, "zero endpoint dwell still needs endpoint"); r.Sample(.4f); Equal(1, r.Completions, "zero matching dwell");
+        }
+        private static void ManualOcclusion()
+        {
+            var r = new Rig(Definition(mode: GuideCompletionMode.UserConfirmed)); r.Arm(); r.Sample(null); r.Act(GuideAction.Confirm);
+            Equal(1, r.Completions, "explicit manual completion supports occluded actions");
+            var paused = new Rig(Definition(mode: GuideCompletionMode.UserConfirmed)); paused.Arm(); paused.Act(GuideAction.Pause); paused.Act(GuideAction.Confirm); Equal(0, paused.Completions, "manual cannot bypass pause");
+        }
+        private static void OriginChangeWhileShowing()
+        {
+            var r = new Rig(); r.Now += 50; r.Session.Dispatch(new GuideInput(GuideAction.Sample, r.Now,
+                new GuideObservation(r.Now, 1, 2, "synthetic-session", GuideSource.SyntheticDiagnostic, Pose(0), null)));
+            Equal(GuidePhase.Calibrate, r.State.Phase, "origin mismatch invalidates even during showing");
+        }
+        private static void ClockRollback()
+        {
+            var r = new Rig(); r.Arm(); r.Hold(.4f, 8); r.Session.Dispatch(new GuideInput(GuideAction.Tick, r.Now - 1));
+            Equal(GuidePhase.TrackingLost, r.State.Phase, "rollback clears evidence"); Equal(0d, r.State.DwellMs, "rollback no credit");
+        }
+        private static void EffectIdentityOrder()
+        {
+            var r = new Rig(Definition(2)); r.Arm(); r.Hold(.4f, 11);
+            var completion = r.Effects.FindIndex(e => e.Kind == GuideEffectKind.MovementCheckpointReached);
+            True(completion >= 0 && r.Effects[completion].StepId == "step-1", "completion captures old step identity");
+            True(r.Effects.Skip(completion + 1).Any(e => e.Kind == GuideEffectKind.ShowDemonstration && e.StepId == "step-2"), "next demo follows completion");
         }
         public static string DiagnosticTrace()
         {

@@ -285,3 +285,21 @@ TRAIL-03 native implementation update: explicit generated DTO readers/writers no
 - Inspected official Meta Core 205, Unity OpenXR 1.18, XR Management 4.5.4 and XR Hands 1.7.2 package sources. Added explicit XR Hands 1.7.2 (Core's declared dependency). Android setup uses the actual public loader/feature APIs, generates URP assets and applies ARM64/IL2CPP/Vulkan/HandsOnly/passthrough settings. No Unity/UPM resolution or lock is invented. Native voice is unchanged.
 - Added Android APK, EditMode and PlayMode wrappers with unique result directories, nonempty passing-test checks, actual APK/report verification and missing-editor failure. Added a bounded, memory-only native bearer adapter with URL policy, lifecycle cancellation and stale-generation suppression; no certificate bypass or credential logging. Actual pure C# network policy/expiry harness passed using the temporary .NET 8.0.425 SDK. Unity PlayMode lifecycle tests are authored but unexecuted.
 - Automated uncommitted-worktree evidence: `pnpm check` passed 47 tests, typecheck, web/server/vision build and static GUID check; focused auth includes a real loopback WebSocket upgrade test (native bearer, browser Origin/cookie and negative cases). `pnpm validate:fixtures` passed the 61-frame synthetic fixture. Vite retains its existing large-chunk warning. These results do not establish native compilation, APK success, headset transport or physical transfer.
+
+### 2026-09-19 — Task 4 guide integration and adversarial checks
+
+Integrated published shared-contract, capture/calibration and native-platform
+branches without duplicating their implementations. Guide preload now uses the
+canonical ready tutorial/hash binding and copied execution values. The feature
+registry binds real workspace observation/calibration events, timestamp replay,
+separate ghost cues, physical fingertip controls and shared read-only telemetry.
+A synchronous inspection-pause acknowledgment preserves the same event sequence;
+visual findings have no completion or resume input. No voice code was changed.
+
+Actual .NET 8.0.425 checks pass 24 reducer/session scenarios plus shared fixture →
+rotated independent calibration → pose projection → guide → strict telemetry
+round-trip, including a golden phase trace. Contracts, domain and runtime adapter
+code compile as separate assemblies. Native Unity components are not covered by
+that compile. Unity appeared during the concurrent work; coordinator evidence
+reports license exit 198, superseding the earlier absence-of-editor observation.
+Full final pnpm/browser and native wrapper results will be recorded on delivery.

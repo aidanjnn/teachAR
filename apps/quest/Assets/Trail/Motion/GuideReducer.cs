@@ -131,6 +131,7 @@ namespace Trail.Motion
                         (t.Gesture == GuideGesture.Any || o.Gesture(t.Hand) == t.Gesture));
                     s.DwellMs = endpoint ? (s.EndMatching ? s.DwellMs + credit : 0) : 0; s.EndMatching = endpoint;
                     s.Phase = endpoint ? GuidePhase.Holding : GuidePhase.Guiding;
+                    s.Notice = endpoint ? "Hold the movement checkpoint." : "Follow the movement at your pace.";
                     if (endpoint && s.DwellMs >= step.DwellMs) Complete(false);
                     break;
             }
