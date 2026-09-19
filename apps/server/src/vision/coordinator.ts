@@ -23,11 +23,34 @@ interface Active {
   controller: AbortController; timer: ReturnType<typeof setTimeout>;
   references: ReviewedInspectionReferences | null; uploadHash: string | null; promise: Promise<InspectionResult> | null;
 }
+/**
+ * Retired live-session identities for the current paired session, kept in a fixed-size Bloom filter:
+ * a retired identity is never forgotten (no false negatives), memory is constant, and the rare false
+ * positive only rejects a fresh identity as stale. Other paired sessions never pass `isCurrent`, so
+ * their history is dropped when the paired session changes.
+ */
+class RetiredLiveSessions {
+  private static readonly BITS = 1 << 17;
+  private static readonly HASHES = 4;
+  private sessionId: string | null = null;
+  private readonly bits = new Uint8Array(RetiredLiveSessions.BITS / 8);
+  has(sessionId: string, liveSessionId: string): boolean {
+    return this.sessionId === sessionId && RetiredLiveSessions.indices(liveSessionId).every(i => (this.bits[i >> 3]! & (1 << (i & 7))) !== 0);
+  }
+  add(sessionId: string, liveSessionId: string): void {
+    if (this.sessionId !== sessionId) { this.bits.fill(0); this.sessionId = sessionId; }
+    for (const i of RetiredLiveSessions.indices(liveSessionId)) this.bits[i >> 3]! |= 1 << (i & 7);
+  }
+  private static indices(liveSessionId: string): number[] {
+    const digest = createHash('sha256').update(liveSessionId).digest();
+    return Array.from({ length: RetiredLiveSessions.HASHES }, (_, k) => digest.readUInt32BE(k * 4) % RetiredLiveSessions.BITS);
+  }
+}
 /** A one-headset coordinator. It can pause-check identity, never mutate guide progression. */
 export class InspectionCoordinator {
   private active: Active | null = null;
   private resolving = false;
-  private readonly retiredLiveSessions = new Set<string>();
+  private readonly retiredLiveSessions = new RetiredLiveSessions();
   private source: { sessionId: string; id: string; sequence: number } | null = null;
   private readonly now: () => number;
   private epoch: { sessionId: string; liveSessionId: string; generation: number; epoch: number } | null = null;
@@ -42,17 +65,12 @@ export class InspectionCoordinator {
     if (!this.deps.vision && !this.deps.inspect) throw new InspectionError('provider-unavailable', 503);
     if (this.active && this.active.sessionId !== sessionId) throw new InspectionError('busy', 429);
     const prior = this.epoch;
-    const liveKey = JSON.stringify([sessionId, input.liveSessionId]);
-    if (this.retiredLiveSessions.has(liveKey)) throw new InspectionError('stale', 409);
+    if (this.retiredLiveSessions.has(sessionId, input.liveSessionId)) throw new InspectionError('stale', 409);
     if (prior?.sessionId === sessionId && input.liveSessionId === prior.liveSessionId &&
         (input.sessionGeneration < prior.generation || (input.sessionGeneration === prior.generation && input.requestEpoch <= prior.epoch))) {
       throw new InspectionError('stale', 409);
     }
-    if (prior && (prior.sessionId !== sessionId || prior.liveSessionId !== input.liveSessionId)) {
-      // Bounded FIFO of retired identities: the oldest is forgotten rather than blocking legitimate re-pairing.
-      if (this.retiredLiveSessions.size >= 64) this.retiredLiveSessions.delete(this.retiredLiveSessions.values().next().value!);
-      this.retiredLiveSessions.add(JSON.stringify([prior.sessionId, prior.liveSessionId]));
-    }
+    if (prior?.sessionId === sessionId && prior.liveSessionId !== input.liveSessionId) this.retiredLiveSessions.add(sessionId, prior.liveSessionId);
     this.invalidate(sessionId);
     this.epoch = { sessionId, liveSessionId: input.liveSessionId, generation: input.sessionGeneration, epoch: input.requestEpoch };
     const started = this.now();

@@ -458,3 +458,8 @@ TRAIL-07 review follow-up: vision re-encodes uploads in their source format (JPE
 
 - `GuideReducer.Confirm` and `GuideControlPanel` no longer accept user confirmation in `TrackingLost`; confirmation resumes after reacquisition (Guiding/Holding). The `ManualOcclusion` scenario previously asserted the opposite and was realigned with the product invariant that tracking loss cannot complete a step.
 - Automated evidence: guide-harness (.NET) green. No Unity Editor/PlayMode or headset evidence.
+
+## 2026-09-19 — PR #10 babysit follow-up: retired live sessions never forgotten
+
+- Review finding: FIFO eviction of retired `liveSessionId`s let a forgotten identity be replayed with a higher caller-supplied epoch. `InspectionCoordinator` now keeps retired identities for the current paired session in a fixed 16 KiB Bloom filter (no false negatives, constant memory); history for other paired sessions is dropped because they never pass `isCurrent`. Server test drives 300 transitions and confirms early, middle and latest retired identities stay rejected while a fresh identity is accepted.
+- Automated evidence only (`pnpm check`); no Unity/headset claim.

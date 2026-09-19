@@ -89,11 +89,15 @@ it('allows a newly paired app generation but permanently rejects the retired app
     await expect(h.coordinator.start('session', { ...h.start, requestEpoch: 999 })).rejects.toMatchObject({ code: 'stale' });
   } finally { h.coordinator.close(); }
 });
-it('keeps accepting legitimate live-session transitions beyond the bounded retirement memory', async () => {
+it('never forgets retired live sessions while accepting unbounded legitimate transitions', async () => {
   const h = await setup();
   try {
-    for (let i = 0; i < 70; i++) await h.coordinator.start('session', { ...h.start, liveSessionId: `app-${i}` });
-    await expect(h.coordinator.start('session', { ...h.start, liveSessionId: 'app-69', requestEpoch: 0 })).rejects.toMatchObject({ code: 'stale' });
+    for (let i = 0; i < 300; i++) await h.coordinator.start('session', { ...h.start, liveSessionId: `app-${i}` });
+    for (const retired of ['app-0', 'app-1', 'app-150', 'app-298']) {
+      await expect(h.coordinator.start('session', { ...h.start, liveSessionId: retired, requestEpoch: 999 }), retired).rejects.toMatchObject({ code: 'stale' });
+    }
+    await expect(h.coordinator.start('session', { ...h.start, liveSessionId: 'app-299', requestEpoch: 0 })).rejects.toMatchObject({ code: 'stale' });
+    await h.coordinator.start('session', { ...h.start, liveSessionId: 'app-300', requestEpoch: 0 });
   } finally { h.coordinator.close(); }
 });
 it('enforces learner role and exact paired session through real route composition', async () => {
