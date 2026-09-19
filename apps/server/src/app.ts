@@ -4,7 +4,10 @@ import { HealthSchema } from '@trail/contracts';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { createProvider } from './ai/index.js';
+import type { AiProvider } from './ai/provider.js';
 import type { ServerConfig } from './config.js';
+import { registerVoiceRoutes } from './routes/voice.js';
 
 async function storageWritable(dataDir: string): Promise<boolean> {
   const probe = join(dataDir, `.health-${randomUUID()}`);
@@ -19,7 +22,7 @@ async function storageWritable(dataDir: string): Promise<boolean> {
   }
 }
 
-export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean } = {}) {
+export async function createApp(config: ServerConfig, options: { webRoot?: string; logger?: boolean; provider?: AiProvider } = {}) {
   const app = Fastify({
     logger: options.logger ?? false,
     logController: new LogController({ disableRequestLogging: true }),
@@ -33,6 +36,7 @@ export async function createApp(config: ServerConfig, options: { webRoot?: strin
       providers: config.providers, storage: { writable },
     });
   });
+  await registerVoiceRoutes(app, options.provider ?? createProvider(config));
   if (options.webRoot) {
     await app.register(fastifyStatic, { root: options.webRoot, dotfiles: 'deny' });
   }
