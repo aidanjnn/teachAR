@@ -115,7 +115,9 @@ namespace Trail.Tests.Guide
         private static void UserConfirmed()
         {
             var r = new Rig(Definition(mode: GuideCompletionMode.UserConfirmed)); r.Act(GuideAction.Confirm); Equal(0, r.Completions, "no confirmation during showing"); r.Arm(); r.Hold(.4f, 50);
-            Equal(0, r.Completions, "user mode no automatic substitute"); r.Act(GuideAction.Confirm); Equal(1, r.Completions, "explicit confirmation");
+            Equal(0, r.Completions, "user mode no automatic substitute"); r.Sample(null); Equal(GuidePhase.TrackingLost, r.State.Phase, "user mode loses tracking");
+            r.Act(GuideAction.Confirm); Equal(0, r.Completions, "tracking loss cannot confirm"); r.Hold(.4f, 5); Equal(GuidePhase.Guiding, r.State.Phase, "user mode reacquired");
+            r.Act(GuideAction.Confirm); Equal(1, r.Completions, "explicit confirmation");
             Equal(GuideEffectKind.UserConfirmed, r.Effects.First(e => e.Kind == GuideEffectKind.UserConfirmed).Kind, "distinct provenance");
             var automatic = new Rig(); automatic.Arm(); automatic.Act(GuideAction.Confirm); Equal(0, automatic.Completions, "automatic mode cannot be bypassed");
         }
@@ -156,7 +158,8 @@ namespace Trail.Tests.Guide
         private static void ManualOcclusion()
         {
             var r = new Rig(Definition(mode: GuideCompletionMode.UserConfirmed)); r.Arm(); r.Sample(null); r.Act(GuideAction.Confirm);
-            Equal(1, r.Completions, "explicit manual completion supports occluded actions");
+            Equal(0, r.Completions, "manual confirmation is unavailable while tracking is lost");
+            r.Hold(0, 5); Equal(GuidePhase.Guiding, r.State.Phase, "tracking reacquired"); r.Act(GuideAction.Confirm); Equal(1, r.Completions, "manual confirmation resumes once hands are tracked again");
             var paused = new Rig(Definition(mode: GuideCompletionMode.UserConfirmed)); paused.Arm(); paused.Act(GuideAction.Pause); paused.Act(GuideAction.Confirm); Equal(0, paused.Completions, "manual cannot bypass pause");
         }
         private static void OriginChangeWhileShowing()

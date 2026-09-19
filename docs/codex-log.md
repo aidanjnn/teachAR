@@ -510,3 +510,10 @@ TRAIL-07 review follow-up: vision re-encodes uploads in their source format (JPE
 - Authoring workbench disables all controls during async save/finalize/import, and only trusts `trail-pending-upload` while `/api/recordings/uploads/query` still lists it; stale pointers are cleared.
 - `authoring.ts` keeps adjacent equal-time markers contiguous as half-open ranges and rejects empty steps; motion test added.
 - Automated evidence: `pnpm check` green, storage and relay harnesses green. No Unity Editor/PlayMode, Android IL2CPP, or headset evidence.
+||||||| 4c88639
+||||||| 6d500aa
+
+## 2026-09-19 — PR #7 babysit: tracking loss cannot confirm
+
+- `GuideReducer.Confirm` and `GuideControlPanel` no longer accept user confirmation in `TrackingLost`; confirmation resumes after reacquisition (Guiding/Holding). The `ManualOcclusion` scenario previously asserted the opposite and was realigned with the product invariant that tracking loss cannot complete a step.
+- Automated evidence: guide-harness (.NET) green. No Unity Editor/PlayMode or headset evidence.
