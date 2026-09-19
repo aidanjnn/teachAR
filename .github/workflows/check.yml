@@ -88,10 +88,14 @@ jobs:
       - name: Validate all GitHub Actions workflows
         run: '"$RUNNER_TEMP/actionlint" -color'
 
+  native-guide:
+    name: Native guide validation
+    uses: ./.github/workflows/guide.yml
+
   # Preserve the original check name for existing branch-protection rules.
   check:
     if: ${{ always() }}
-    needs: [quality, browser, workflows]
+    needs: [quality, browser, workflows, native-guide]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -100,8 +104,9 @@ jobs:
           QUALITY_RESULT: ${{ needs.quality.result }}
           BROWSER_RESULT: ${{ needs.browser.result }}
           WORKFLOWS_RESULT: ${{ needs.workflows.result }}
+          NATIVE_RESULT: ${{ needs.native-guide.result }}
         run: |
-          for result in "$QUALITY_RESULT" "$BROWSER_RESULT" "$WORKFLOWS_RESULT"; do
+          for result in "$QUALITY_RESULT" "$BROWSER_RESULT" "$WORKFLOWS_RESULT" "$NATIVE_RESULT"; do
             if [[ "$result" != success ]]; then
               echo "::error::A required job did not succeed ($result)."
               exit 1

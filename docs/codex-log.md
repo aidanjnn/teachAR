@@ -552,3 +552,29 @@ The complete combined authoring APK is building separately. No headset claim.
 Final stack repair cycle: PR #3 merged externally into main `6e7b5b5` during final verification. Merged that actual base into capture, preserving both activity histories. No native inputs changed; prior capture Unity/APK evidence remains applicable. New voice/server/browser inputs are covered by the new-head hosted full workspace/browser gate and final combined-stack checks. Review #11 additionally requested authoring transport fixtures and migration notes; that repair is scoped to the authoring tip.
 
 Final guide cycle: inherited capture `27411fd` and the externally merged voice workstream. Conflict resolution only preserves both log histories. Native files are unchanged; the current-head hosted workspace/browser gate validates the new TS inputs.
+
+## 2026-09-19 — PR 7: enforce native validation in CI
+
+Confirmed the review finding: `guide.yml` ran only the standalone .NET harness,
+so it could not detect Unity integration or Android build regressions. Converted
+it to a reusable workflow called by Check, retained the harness, and added
+separate EditMode, PlayMode and Android ARM64/IL2CPP matrix gates using the
+existing evidence-validating wrappers. The existing aggregate `check` now
+requires that workflow to succeed. Native logs/results/build artifacts upload
+on success or failure. Documented isolated licensed-runner provisioning and
+updated the stale validation reference.
+
+Automated validation on the changed worktree: actionlint 1.7.12 and patch
+whitespace passed; eight runner-configuration cases and all 256 combinations
+of success/failure/cancelled/skipped aggregate inputs passed; both existing
+Unity-wrapper regression tests passed. Full `pnpm check` passed (252 tests,
+typechecks, production builds and static scaffold checks), and recording/voice
+fixture validation passed. Existing hosted browser evidence for f2ab1d0 is
+reused because application, fixtures and browser-test inputs are unchanged.
+
+Infrastructure boundary: GitHub reports no repository self-hosted runners or
+Actions variables. Missing `TRAIL_UNITY_RUNNER_LABELS` now fails explicitly;
+configure a disposable licensed runner and `TRAIL_UNITY_EDITOR` as documented
+in docs/ci.md before native CI can pass. No Unity test or APK execution is
+claimed from workflow validation, and no headset/provider evidence was added.
+No review replies, thread resolutions, merge or deployment were performed.
