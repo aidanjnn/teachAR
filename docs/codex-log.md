@@ -236,3 +236,24 @@ Append a dated entry after each substantive Codex session. Keep historical resul
 - **Scope:** Applied babysit, signoff and commit workflows; inspected paginated reviews/checks and preserved pending README/log edits. Published the local main catch-up merge and repaired the verified review finding in `2b3d7d8`: development vision URL now follows the launched port even when a stale URL is configured.
 - **Validation:** `pnpm check` (39 tests, builds and static native checks), fixture validation, three Chromium scenarios, actionlint and whitespace checks passed. Real development smoke with ports 3301/5373/3302 and stale URL at port 1 reached vision while preserving its explicit non-readiness. Owned processes were stopped; no installs. Existing Vite warning remains. No native compilation, provider or headset validation.
 - **Delivery:** Monitor hosted checks on the published head; report final status separately. Review-thread resolution requires the user; replies/resolution, merging and deployment were not authorized. A log-staging script initially rejected a non-ASCII byte literal before writing; corrected without changing the pending user edits.
+
+## 2026-09-19 — Task 3 native capture/calibration/replay software
+
+Implemented TRAIL-04/05 software and TRAIL-19 rigid-transfer foundations: pure
+three-mark rigid fit with independent D rejection, stable median mark holds,
+explicit Unity basis reflection, bounded actual-time recording, missing/jump
+samples, gap-safe replay, native XR Hands Dynamic callback adapter, origin/lifecycle
+invalidation, opposite-hand world-space calibration controls and separate
+procedural articulated ghost/prefab. Added canonical DTO/storage events and
+platform feature registry integration; no narration/microphone/camera code.
+
+Actual C# domain fixtures passed under task-scoped .NET 8.0.425 (initial run used
+shared-contract task's generated C# sources before its publication). Includes
+rotated transfer, mirrored/scale/held-out failures, real timestamp and stale/gap
+behavior. Added Unity runtime tests; unavailable editor means they have not run.
+Static quest scaffold check passed. Final merged-dependency checks will be
+recorded separately. SDK APIs were checked against Unity XR Hands documentation;
+1.7.2 pin follows platform task's inspected Meta Core dependency. See
+[native capture runbook](native-capture.md) for interfaces, controls and evidence
+limits. No headset, physical LEGO, live sensor, shader/Unity import, Android or
+independent human transfer evidence is claimed.
