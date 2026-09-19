@@ -2,13 +2,13 @@
 
 This project now contains the Android setup/build path, a single OpenXR/Meta
 passthrough bootstrap, and a scoped native API connection. The pinned editor has resolved the checked-in UPM lock, compiled the project,
-applied Android/OpenXR/URP settings, and passed EditMode4/4 plus PlayMode3/3 tests.
-**APK and headset acceptance remain separate gates**; physical operation is not
-proven by editor tests. This branch supplies the
+applied Android/OpenXR/URP settings, passed EditMode 7/7 plus PlayMode 3/3 tests,
+and built a release-mode ARM64/IL2CPP APK. **Headset acceptance remains unverified**;
+physical operation is not proven by editor tests or packaging. This branch supplies the
 platform foundation; capture, guide, scene interpretation and storage are
 separate feature branches. Voice remains separately owned.
 
-## Exact proposed toolchain
+## Exact resolved toolchain
 
 | Component | Pin |
 | --- | --- |
@@ -18,7 +18,8 @@ separate feature branches. Voice remains separately owned.
 | URP / uGUI | 17.3.0 / 2.0.0 |
 | Unity WebRTC / Test Framework | 3.0.0 / 1.6.0 |
 
-These are exact proposed pins, not a tested combined package set. The official
+These packages have resolved and compiled together in the pinned editor; device
+interoperability remains unverified. The official
 Meta Core 205 package itself requires XR Hands 1.7.2. Setup uses APIs inspected in
 those exact Core/OpenXR/Management/Hands package sources. References:
 [Meta registry](https://npm.developer.oculus.com/com.meta.xr.sdk.core/205.0.0),
@@ -32,10 +33,16 @@ The checked-in `Packages/packages-lock.json` is actual Unity 6000.3.24f1 resolve
 output. Test Framework 1.6.0 matches its editor-bundled resolution. Built-in
 Animation, AssetBundle, ParticleSystem and Physics2D modules satisfy concrete
 Meta Core/Interaction compiler requirements. Preserve existing GUIDs when saving
-generated XR/URP/Meta assets. The editor import/setup/tests pass; native Android/IL2CPP and device compatibility
-still require their separate build/runtime checks.
+generated XR/URP/Meta assets. The editor import/setup/tests and Android/IL2CPP build pass; device compatibility
+still requires runtime checks.
+
+See [current integration evidence](../../docs/native-setup.md) for the tested
+revision, APK result and evidence boundaries.
 
 ## Reproduce setup and build
+
+For a new machine, follow the [root installation guide](../../README.md#install-dependencies-on-a-new-machine)
+first, including Node/pnpm, Unity activation and Android child modules.
 
 Install/activate the pinned editor separately with Android Build Support,
 SDK/NDK and OpenJDK. Set `UNITY_EDITOR` to its executable if outside the normal
@@ -57,7 +64,7 @@ sets a positive version code (default 1). Application ID is `com.trail.guide`.
 The wrapper selects Android before script compilation to avoid the wrong platform
 symbols. Setup generates URP assets, enables a single OpenXR loader, the Meta XR,
 Meta Quest, Hand Tracking Subsystem and Oculus Touch input-profile features,
-Vulkan, linear color and a
+Vulkan, linear color, disabled optimized frame pacing for WebRTC and a
 HandsOnly/required-passthrough Android manifest. Check Meta Project Setup Tool
 and permissions on the actual resolved project before hardware acceptance.
 

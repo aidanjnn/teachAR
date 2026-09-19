@@ -37,6 +37,7 @@ test-results/
 /apps/quest/MemoryCaptures/
 /apps/quest/Recordings/
 /apps/quest/.vs/
+/apps/quest/.utmp/
 /apps/quest/*.csproj
 /apps/quest/*.sln
 /apps/quest/*.slnx
@@ -54,3 +55,6 @@ test-results/
 /apps/quest/Assets/Resources/DevAgentSettings.asset.meta
 /apps/quest/Assets/Resources/OVRPlatformToolSettings.asset
 /apps/quest/Assets/Resources/OVRPlatformToolSettings.asset.meta
+
+# Python native-CI verifier test caches
+__pycache__/
