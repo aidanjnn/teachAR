@@ -14,3 +14,7 @@ system is introduced. Browser playback and path rendering retain the missing gap
 
 Real recordings, narration, traces, and camera frames are excluded from Git by
 default. Add a real fixture only with explicit consent, inspection, and provenance.
+
+`vision-health.v1.json` is synthetic service-protocol evidence, not scene data.
+It explicitly reports that image interpretation is unavailable and is exercised
+by the authenticated vision service test. Recording v1 fixtures are unchanged.
