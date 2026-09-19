@@ -16,6 +16,15 @@ namespace Trail.Contracts
     // Delegated transport extension; shares the canonical strict grammar and request parser.
     public static partial class ContractJson
     {
+        public static string ParseInspectionSession(string json)
+        {
+            if (json == null || json.Length > 1024) throw new ContractException("Session response too large");
+            var map = StrictJson.Parse(json) as Dictionary<string, object>;
+            if (map == null || map.Count != 2 || !map.ContainsKey("schemaVersion") || !map.ContainsKey("liveSessionId"))
+                throw new ContractException("Invalid session fields");
+            CaptureNumber(map["schemaVersion"], 1, 1);
+            return CaptureId(map["liveSessionId"]);
+        }
         public static InspectionCapture ParseInspectionCapture(string json)
         {
             if (json == null || json.Length > 16384) throw new ContractException("Capture response too large");

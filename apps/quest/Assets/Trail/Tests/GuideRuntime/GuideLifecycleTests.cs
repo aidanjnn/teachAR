@@ -48,6 +48,8 @@ namespace Trail.Tests.GuideRuntime
             {
                 root.SetActive(true); guide.Preload(tutorial, recording, tutorial.RecordingHash, "fixture-paired", true);
                 Assert.AreEqual(GuidePhase.Calibrate, guide.Session.State.Phase);
+                Assert.AreEqual(1, guide.Session.State.Attempt, "loading capture must not count as a learner retry");
+                Assert.AreEqual(1, guide.Session.State.StepRevision, "initial preload must not emit a reference-reset revision");
                 var marks = recording.Workspace.CalibrationMarksM;
                 foreach (var mark in new[] { marks.A, marks.B, marks.C, marks.D })
                 {

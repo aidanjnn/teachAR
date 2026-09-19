@@ -34,6 +34,7 @@ export async function registerInspectionRoutes(app: FastifyInstance, options: In
       const typed = error instanceof InspectionError ? error : new InspectionError('invalid-input', status === 413 ? 413 : 400);
       void reply.code(typed.status).send({ schemaVersion: 1, error: typed.code });
     });
+    routes.post('/api/inspection-sessions', { bodyLimit: 4096 }, request => options.coordinator.openSession(principals.get(request)!, request.body));
     routes.post('/api/inspections', { bodyLimit: 16 * 1024 }, request => options.coordinator.start(principals.get(request)!, request.body));
     routes.post('/api/scene-observations', { bodyLimit: Math.ceil(2 * 1024 * 1024 / 3) * 4 + 16 * 1024 }, async (request, reply) => {
       const parsed = InspectionUploadSchema.safeParse(request.body);

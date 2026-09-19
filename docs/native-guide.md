@@ -42,8 +42,9 @@ Completion effects are emitted once per run/step/attempt, with the completed ste
 identity captured before advancing. Automatic evidence says **Movement checkpoint
 reached.** It does not verify grasp, attachment, hidden properties or full trajectory.
 Explicit user-confirmed steps never auto-complete and retain their distinct visible
-mode/evidence. Confirmation may complete an armed, occluded manual step, but cannot
-bypass pause, calibration or the initial start gate.
+mode/evidence. Confirmation requires Guiding or Holding after active-hand tracking
+has been reacquired; it cannot bypass tracking loss, pause, calibration or the
+initial start gate.
 
 `RebindTelemetrySession(pairedSessionId)` publishes the complete current snapshot
 after re-pairing. The same server session keeps its increasing event sequence;

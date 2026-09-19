@@ -4,6 +4,10 @@ import { GuideContextRefSchema } from './guide.js';
 import { InspectionRequestSchema, SceneSourceSchema } from './scene.js';
 import { VisionImageSchema } from './vision-image.js';
 
+// A fresh authenticated Check obtains a server-issued incarnation. Generation is 1 within this v1 lease.
+export const InspectionSessionSchema = z.strictObject({ schemaVersion: z.literal(1), liveSessionId: IdSchema });
+export type InspectionSession = z.infer<typeof InspectionSessionSchema>;
+
 // Public authenticated native/browser transport. Server assigns request/observation IDs and receipt times.
 export const InspectionStartSchema = z.strictObject({
   schemaVersion: z.literal(1), context: GuideContextRefSchema,

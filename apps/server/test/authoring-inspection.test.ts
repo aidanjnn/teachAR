@@ -34,7 +34,10 @@ it('wires approved storage references through paused guide admission to the real
     const context={runId:'run',tutorialId:tutorial.id,tutorialRevision:tutorial.revision,stepId:tutorial.steps[0]!.id,stepRevision:1,attemptId:'attempt'};
     const event:GuideEvent={schemaVersion:1,type:'snapshot',sessionId:auth.sessionId,runId:context.runId,seq:1,tMs:10,state:{phase:'paused',tutorialId:tutorial.id,tutorialRevision:tutorial.revision,stepId:context.stepId,stepRevision:1,attemptId:'attempt',dwellProgress:0,pathProgress:0,nextGateByHand:{right:0},calibrationValid:true,tracking:{left:'missing',right:'valid'}}};
     expect((await app.inject({method:'POST',url:'/api/guide-events',headers,payload:event})).statusCode).toBe(204);
-    const start={schemaVersion:1,context,liveSessionId:'inspection-test',sessionGeneration:1,requestEpoch:1,question:'What is visible?',sourceSessionId:'camera-test',source:'workspace-webcam',sourceFrameSeq:0};
+    const lease=await app.inject({method:'POST',url:'/api/inspection-sessions',headers,payload:context});
+    expect(lease.statusCode,lease.body).toBe(200);
+    const start={schemaVersion:1,context,liveSessionId:lease.json().liveSessionId,sessionGeneration:1,requestEpoch:1,question:'What is visible?',sourceSessionId:'camera-test',source:'workspace-webcam',sourceFrameSeq:0};
+    expect((await app.inject({method:'POST',url:'/api/inspections',headers,payload:{...start,liveSessionId:'invented-session'}})).statusCode).toBe(409);
     const capture=await app.inject({method:'POST',url:'/api/inspections',headers,payload:start});expect(capture.statusCode,capture.body).toBe(200);const instruction=capture.json();
     const result=await app.inject({method:'POST',url:'/api/scene-observations',headers,payload:{schemaVersion:1,requestId:instruction.request.requestId,requestEpoch:1,captureNonce:instruction.captureNonce,sourceSessionId:'camera-test',source:'workspace-webcam',sourceFrameSeq:1,captureAgeAtSendMs:1,image}});
     expect(result.statusCode,result.body).toBe(200);expect(result.json().provenance).toBe('mock');expect(observed?.approvedStep.instruction).toBe('Move the large part.');expect(observed?.references[0]?.reference.tutorialRevision).toBe(tutorial.revision);

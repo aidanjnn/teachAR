@@ -44,11 +44,15 @@ it('runs authenticated main and vision processes through wrong/obscured, cancell
   const credential = await paired.json() as { token: string };
   const headers = { 'content-type': 'application/json', authorization: `Bearer ${credential.token}` };
   const fixture = await input(); let epoch = 0; let sequence = 1;
+  const r = fixture.request;
+  const context = { runId: r.runId, tutorialId: r.tutorialId, tutorialRevision: r.tutorialRevision, stepId: r.stepId, stepRevision: r.stepRevision, attemptId: r.attemptId };
+  const lease = await fetch(`${main.url}/api/inspection-sessions`, { method: 'POST', headers, body: JSON.stringify(context) });
+  expect(lease.status).toBe(200);
+  const { liveSessionId } = await lease.json() as { liveSessionId: string };
   async function start() {
-    const r = fixture.request;
     const response = await fetch(`${main.url}/api/inspections`, { method: 'POST', headers, body: JSON.stringify({ schemaVersion: 1,
       context: { runId: r.runId, tutorialId: r.tutorialId, tutorialRevision: r.tutorialRevision, stepId: r.stepId, stepRevision: r.stepRevision, attemptId: r.attemptId },
-      liveSessionId: 'app-check', sessionGeneration: 1, requestEpoch: ++epoch, question: r.question,
+      liveSessionId, sessionGeneration: 1, requestEpoch: ++epoch, question: r.question,
       sourceSessionId: 'synthetic-camera', source: 'quest-camera', sourceFrameSeq: sequence++,
     }) });
     expect(response.status).toBe(200); return await response.json() as InspectionCapture;

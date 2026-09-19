@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { JOINT_NAMES, OPENXR_JOINT_MAP, RecordingSchema, parseTutorialForRecording, type Pose, type Tutorial } from '../src/index.js';
-const dir = 'fixtures/contracts'; mkdirSync(dir, { recursive: true });
+const dir = process.argv[2] ?? 'fixtures/contracts'; mkdirSync(dir, { recursive: true });
 function save(name: string, value: unknown) { writeFileSync(`${dir}/${name}.json`, JSON.stringify(value, null, 2) + '\n'); }
 const pose = (x: number, y: number, z: number): Pose => ({ positionM: [x, y, z], orientationXyzw: [0, 0, 0, 1] });
 const workspace = { id: 'mat-v1', version: 1 as const, widthM: 0.6, depthM: 0.4, calibrationMarksM: { A: [0,0,0], B: [0.6,0,0], C: [0,0,-0.4], D: [0.6,0,-0.4] }, layoutId: 'synthetic-layout', dominantHand: 'right' as const, calibrationMethod: 'three-point-index-tip-v1' as const };
@@ -40,7 +40,14 @@ const valid: [string,string][]=[['Recording','recording'],['Tutorial','tutorial'
 type Case={name:string;contract:string;file?:string;valid:boolean;patches?:{path:(string|number)[];value?:unknown;remove?:boolean}[];json?:string};
 const cases:Case[]=valid.map(([contract,file])=>({name:`valid ${file}`,contract,file:`${file}.json`,valid:true}));
 function bad(contract:string,file:string,name:string,path:(string|number)[],value?:unknown,remove=false){cases.push({name,contract,file:`${file}.json`,valid:false,patches:[{path,...(remove?{remove:true}:{value})}]});}
-for (const [contract,file] of valid) {bad(contract,file,`${file} unknown field`,['unexpected'],true); bad(contract,file,`${file} missing field`,[Object.keys(JSON.parse(requireText(file)))[0]!],undefined,true);}
+for (const [contract,file] of valid) {
+  bad(contract,file,`${file} unknown field`,['unexpected'],true);
+  bad(contract,file,`${file} missing field`,[Object.keys(JSON.parse(requireText(file)))[0]!],undefined,true);
+  if (contract === 'MotionChunk') {
+    bad(contract,file,'motion-chunk timestamp duplicate',['frames',1,'tMs'],0);
+    bad(contract,file,'motion-chunk timestamp decreasing',['frames',2,'tMs'],20);
+  }
+}
 function requireText(file:string){return readFileSync(`${dir}/${file}.json`, 'utf8');}
 bad('Recording','recording','unknown recording version',['schemaVersion'],2);
 bad('Recording','recording','missing named joint',['frames',0,'hands','right','joints','wrist'],undefined,true);
