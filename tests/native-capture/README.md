@@ -24,3 +24,13 @@ provider code excluded: all consumed hand API types are real SDK source, no
 stubs. This checks C# API compatibility only, not the full Unity asmdef/import,
 OpenXR provider, shader, prefab, license or IL2CPP pipeline. Third-party binaries
 and downloaded source are not committed.
+
+`node tests/native-capture/run-unity.mjs` and the same command with `--play-mode`
+run actual Unity tests in generated isolated projects under ignored artifacts.
+The runner copies and SHA256-records the production Contracts/Motion/Record/XR
+sources and tests. It uses the real XR Hands package and editor; no SDK or pose
+success stubs are substituted. The lifecycle test explicitly injects a synthetic
+hand source. This avoids importing unrelated Meta sample media while exercising
+source behavior. Full project import, shader/prefab validation, platform rig and
+Android/IL2CPP remain separate gates. The runner records a nonempty passing XML
+result or fails; source hashes accompany each result.

@@ -8,7 +8,7 @@ export async function image(width = 16, height = 16): Promise<VisionImage> {
   return { mimeType: 'image/png', dataBase64: data.toString('base64'), sha256: createHash('sha256').update(data).digest('hex'), width, height };
 }
 export function assessment(verdict: CoachAssessment['verdict'] = 'visible-match'): CoachAssessment {
-  return { verdict, observedEvidence: verdict === 'uncertain' ? [] : ['The visible block edges align with the reviewed reference.'],
+  return { verdict, observedEvidence: verdict === 'uncertain' ? [] : [verdict === 'adjustment-needed' ? 'The visible block is offset from the reviewed reference.' : 'The visible block edges align with the reviewed reference.'],
     limitation: 'This snapshot cannot establish hidden attachment or tightness.',
     feedback: verdict === 'uncertain' ? 'The connection is obscured; show another view.' : verdict === 'adjustment-needed' ? 'The visible block is offset from the reference; compare its placement.' : 'The placement appears aligned in this snapshot.',
     suggestedAction: verdict === 'uncertain' ? 'show-another-view' : 'none' };
