@@ -5,7 +5,8 @@ No runtime reflection, source generation, external serializer, or Unity dependen
 import json, sys
 from pathlib import Path
 schemas = json.load(open(sys.argv[1]))['schemas']
-root = Path('apps/quest/Assets/Trail/Contracts')
+root = Path(sys.argv[2] if len(sys.argv) > 2 else 'apps/quest/Assets/Trail/Contracts')
+root.mkdir(parents=True, exist_ok=True)
 # Give stable public names to inline domain objects.
 aliases = {'WorkspaceDefinition.calibrationMarksM':'CalibrationMarks', 'MotionFrame.hands':'HandSamples', 'Recording.markers.item':'StepMarker', 'Recording.audio':'AudioAsset', 'RecordingMetadata.markers.item':'StepMarker', 'RecordingMetadata.audio':'AudioAsset', 'GuideSnapshot.nextGateByHand':'NextGateByHand', 'GuideSnapshot.tracking':'HandTracking'}
 models = {}

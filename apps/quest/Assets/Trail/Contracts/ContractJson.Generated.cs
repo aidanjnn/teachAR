@@ -786,79 +786,6 @@ namespace Trail.Contracts
             map["visibleOutcome"] = (object)value.VisibleOutcome;
             return map;
         }
-        public static TutorialDraftEdit ParseTutorialDraftEdit(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialDraftEdit", raw); return ReadTutorialDraftEdit(raw); }
-        public static string SerializeTutorialDraftEdit(TutorialDraftEdit value) { var json = StrictJson.Stringify(WriteTutorialDraftEdit(value)); ParseTutorialDraftEdit(json); return json; }
-        private static TutorialDraftEdit ReadTutorialDraftEdit(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new TutorialDraftEdit();
-            if (map.ContainsKey("baseRevision")) result.BaseRevision = (int)(double)map["baseRevision"];
-            if (map.ContainsKey("steps")) result.Steps = ((List<object>)map["steps"]).Select(item => ReadTutorialDraftStep(item)).ToArray();
-            ContractValidation.Validate(result);
-            return result;
-        }
-        private static object WriteTutorialDraftEdit(TutorialDraftEdit value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["baseRevision"] = (object)value.BaseRevision;
-            map["steps"] = (value.Steps == null ? null : value.Steps.Select(item => WriteTutorialDraftStep(item)).ToList());
-            return map;
-        }
-        public static TutorialDraftStep ParseTutorialDraftStep(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialDraftStep", raw); return ReadTutorialDraftStep(raw); }
-        public static string SerializeTutorialDraftStep(TutorialDraftStep value) { var json = StrictJson.Stringify(WriteTutorialDraftStep(value)); ParseTutorialDraftStep(json); return json; }
-        private static TutorialDraftStep ReadTutorialDraftStep(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new TutorialDraftStep();
-            if (map.ContainsKey("id")) result.Id = (string)map["id"];
-            if (map.ContainsKey("startFrame")) result.StartFrame = (int)(double)map["startFrame"];
-            if (map.ContainsKey("endFrameExclusive")) result.EndFrameExclusive = (int)(double)map["endFrameExclusive"];
-            if (map.ContainsKey("checkpointFrame")) result.CheckpointFrame = (int)(double)map["checkpointFrame"];
-            if (map.ContainsKey("activeHands")) result.ActiveHands = ((List<object>)map["activeHands"]).Select(item => (string)item).ToArray();
-            if (map.ContainsKey("completionMode")) result.CompletionMode = (string)map["completionMode"];
-            if (map.ContainsKey("title")) result.Title = (string)map["title"];
-            if (map.ContainsKey("instruction")) result.Instruction = (string)map["instruction"];
-            ContractValidation.Validate(result);
-            return result;
-        }
-        private static object WriteTutorialDraftStep(TutorialDraftStep value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["id"] = (object)value.Id;
-            map["startFrame"] = (object)value.StartFrame;
-            map["endFrameExclusive"] = (object)value.EndFrameExclusive;
-            map["checkpointFrame"] = (object)value.CheckpointFrame;
-            map["activeHands"] = (value.ActiveHands == null ? null : value.ActiveHands.Select(item => (object)item).ToList());
-            map["completionMode"] = (object)value.CompletionMode;
-            map["title"] = (object)value.Title;
-            map["instruction"] = (object)value.Instruction;
-            return map;
-        }
-        public static TutorialProvenance ParseTutorialProvenance(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialProvenance", raw); return ReadTutorialProvenance(raw); }
-        public static string SerializeTutorialProvenance(TutorialProvenance value) { var json = StrictJson.Stringify(WriteTutorialProvenance(value)); ParseTutorialProvenance(json); return json; }
-        private static TutorialProvenance ReadTutorialProvenance(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new TutorialProvenance();
-            if (map.ContainsKey("segmentation")) result.Segmentation = (string)map["segmentation"];
-            if (map.ContainsKey("labels")) result.Labels = (string)map["labels"];
-            if (map.ContainsKey("model")) result.Model = (map["model"] == null ? (string)null : (string)map["model"]);
-            if (map.ContainsKey("promptVersion")) result.PromptVersion = (string)map["promptVersion"];
-            ContractValidation.Validate(result);
-            return result;
-        }
-        private static object WriteTutorialProvenance(TutorialProvenance value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["segmentation"] = (object)value.Segmentation;
-            map["labels"] = (object)value.Labels;
-            map["model"] = (value.Model == null ? null : (object)value.Model);
-            map["promptVersion"] = (object)value.PromptVersion;
-            return map;
-        }
         public static Tutorial ParseTutorial(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("Tutorial", raw); return ReadTutorial(raw); }
         public static string SerializeTutorial(Tutorial value) { var json = StrictJson.Stringify(WriteTutorial(value)); ParseTutorial(json); return json; }
         private static Tutorial ReadTutorial(object value)
@@ -927,6 +854,79 @@ namespace Trail.Contracts
             map["startDwellMs"] = (object)value.StartDwellMs;
             map["completionMode"] = (object)value.CompletionMode;
             map["narrationSpanIds"] = (value.NarrationSpanIds == null ? null : value.NarrationSpanIds.Select(item => (object)item).ToList());
+            return map;
+        }
+        public static TutorialProvenance ParseTutorialProvenance(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialProvenance", raw); return ReadTutorialProvenance(raw); }
+        public static string SerializeTutorialProvenance(TutorialProvenance value) { var json = StrictJson.Stringify(WriteTutorialProvenance(value)); ParseTutorialProvenance(json); return json; }
+        private static TutorialProvenance ReadTutorialProvenance(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TutorialProvenance();
+            if (map.ContainsKey("segmentation")) result.Segmentation = (string)map["segmentation"];
+            if (map.ContainsKey("labels")) result.Labels = (string)map["labels"];
+            if (map.ContainsKey("model")) result.Model = (map["model"] == null ? (string)null : (string)map["model"]);
+            if (map.ContainsKey("promptVersion")) result.PromptVersion = (string)map["promptVersion"];
+            ContractValidation.Validate(result);
+            return result;
+        }
+        private static object WriteTutorialProvenance(TutorialProvenance value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["segmentation"] = (object)value.Segmentation;
+            map["labels"] = (object)value.Labels;
+            map["model"] = (value.Model == null ? null : (object)value.Model);
+            map["promptVersion"] = (object)value.PromptVersion;
+            return map;
+        }
+        public static TutorialDraftEdit ParseTutorialDraftEdit(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialDraftEdit", raw); return ReadTutorialDraftEdit(raw); }
+        public static string SerializeTutorialDraftEdit(TutorialDraftEdit value) { var json = StrictJson.Stringify(WriteTutorialDraftEdit(value)); ParseTutorialDraftEdit(json); return json; }
+        private static TutorialDraftEdit ReadTutorialDraftEdit(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TutorialDraftEdit();
+            if (map.ContainsKey("baseRevision")) result.BaseRevision = (int)(double)map["baseRevision"];
+            if (map.ContainsKey("steps")) result.Steps = ((List<object>)map["steps"]).Select(item => ReadTutorialDraftStep(item)).ToArray();
+            ContractValidation.Validate(result);
+            return result;
+        }
+        private static object WriteTutorialDraftEdit(TutorialDraftEdit value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["baseRevision"] = (object)value.BaseRevision;
+            map["steps"] = (value.Steps == null ? null : value.Steps.Select(item => WriteTutorialDraftStep(item)).ToList());
+            return map;
+        }
+        public static TutorialDraftStep ParseTutorialDraftStep(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TutorialDraftStep", raw); return ReadTutorialDraftStep(raw); }
+        public static string SerializeTutorialDraftStep(TutorialDraftStep value) { var json = StrictJson.Stringify(WriteTutorialDraftStep(value)); ParseTutorialDraftStep(json); return json; }
+        private static TutorialDraftStep ReadTutorialDraftStep(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TutorialDraftStep();
+            if (map.ContainsKey("id")) result.Id = (string)map["id"];
+            if (map.ContainsKey("startFrame")) result.StartFrame = (int)(double)map["startFrame"];
+            if (map.ContainsKey("endFrameExclusive")) result.EndFrameExclusive = (int)(double)map["endFrameExclusive"];
+            if (map.ContainsKey("checkpointFrame")) result.CheckpointFrame = (int)(double)map["checkpointFrame"];
+            if (map.ContainsKey("activeHands")) result.ActiveHands = ((List<object>)map["activeHands"]).Select(item => (string)item).ToArray();
+            if (map.ContainsKey("completionMode")) result.CompletionMode = (string)map["completionMode"];
+            if (map.ContainsKey("title")) result.Title = (string)map["title"];
+            if (map.ContainsKey("instruction")) result.Instruction = (string)map["instruction"];
+            ContractValidation.Validate(result);
+            return result;
+        }
+        private static object WriteTutorialDraftStep(TutorialDraftStep value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["id"] = (object)value.Id;
+            map["startFrame"] = (object)value.StartFrame;
+            map["endFrameExclusive"] = (object)value.EndFrameExclusive;
+            map["checkpointFrame"] = (object)value.CheckpointFrame;
+            map["activeHands"] = (value.ActiveHands == null ? null : value.ActiveHands.Select(item => (object)item).ToList());
+            map["completionMode"] = (object)value.CompletionMode;
+            map["title"] = (object)value.Title;
+            map["instruction"] = (object)value.Instruction;
             return map;
         }
     }
