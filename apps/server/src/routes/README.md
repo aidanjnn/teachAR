@@ -1,3 +1,6 @@
 # Routes
 
-Register future route plugins from createApp in ../app.ts. Only GET /api/health currently exists. Pairing, Origin enforcement, bounded uploads, jobs, tutorials, and coach endpoints remain planned.
+`createApp` in `../app.ts` registers `GET /api/health` and the voice plugin in
+`voice.ts` (`POST /api/voice/transcriptions`, `POST /api/voice/labels`,
+`POST /api/coach`, `POST /api/live/sessions`). Pairing, Origin enforcement,
+recording uploads, jobs, and tutorials remain planned.
