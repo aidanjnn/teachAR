@@ -4,7 +4,8 @@ import {
 import { initialCoachState, reduceCoach, type CoachEffect, type CoachEvent, type CoachState } from './coach-state.js';
 import { createWebRtcLiveTransport, type LiveClientEvent, type LiveServerEvent, type LiveTransport } from './live-transport.js';
 
-export interface TranscriptEntry { role: 'learner' | 'coach'; delta: string; stepRevision: number }
+/** `stale` marks coach output produced for a step or attempt the learner has already left. */
+export interface TranscriptEntry { role: 'learner' | 'coach'; delta: string; stepRevision: number; stale: boolean }
 export interface LiveError { code: string; message: string }
 export interface CoachOptions {
   context: CoachContext;
@@ -60,6 +61,11 @@ export function createCoach(options: CoachOptions): CoachApi {
   let listenTimer: ReturnType<typeof setTimeout> | null = null;
   let startTimer: ReturnType<typeof setTimeout> | null = null;
   let startedResolve: (() => void) | null = null;
+  let startedReject: ((error: Error) => void) | null = null;
+  /** Closed after a step/attempt change until the learner speaks again; playback is muted and captions are stale meanwhile. */
+  let outputGateClosed = false;
+  /** Revision the current learner turn was asked under; coach output is stamped with it, not with the latest state. */
+  let turnRevision = state.stepRevision;
   let eventCounter = 0;
   const stateHandlers = new Set<(state: CoachState) => void>();
   const transcriptHandlers = new Set<(entry: TranscriptEntry) => void>();
@@ -79,10 +85,14 @@ export function createCoach(options: CoachOptions): CoachApi {
     }
   };
   const stopStream = () => { stream?.getTracks().forEach(track => track.stop()); stream = null; };
+  const setPlaybackMuted = (muted: boolean) => { if (options.audioSink) options.audioSink.muted = muted; };
   function releaseLive() {
     clearListenTimer();
     if (startTimer) { clearTimeout(startTimer); startTimer = null; }
+    // Settle a still-pending connect() so callers never hang when the session ends before session.started.
+    startedReject?.(new Error('Live session ended before it started'));
     startedResolve = null;
+    startedReject = null;
     const active = transport;
     transport = null;
     active?.close();
@@ -95,6 +105,7 @@ export function createCoach(options: CoachOptions): CoachApi {
       case 'unmute': setMicEnabled(true); send({ type: 'session.input_audio.unmute', event_id: eventId('unmute') }); armListenTimer(); break;
       case 'send-step-context': send({ type: 'session.thinking.append', event_id: eventId('ctx'), delegation_id: null, content: describeStepChange(context) }); break;
       case 'release-live': releaseLive(); break;
+      case 'invalidate-live-output': outputGateClosed = true; setPlaybackMuted(true); break;
       case 'emit-answer': answerHandlers.forEach(handler => handler(effect.answer)); break;
       case 'drop-answer': break;
     }
@@ -114,13 +125,17 @@ export function createCoach(options: CoachOptions): CoachApi {
         if (startTimer) { clearTimeout(startTimer); startTimer = null; }
         startedResolve?.();
         startedResolve = null;
+        startedReject = null;
         break;
       case 'session.input_transcript.delta':
         armListenTimer();
-        transcriptHandlers.forEach(handler => handler({ role: 'learner', delta: event.delta, stepRevision: state.stepRevision }));
+        // A new learner turn reopens the gate and fixes the revision its answer belongs to.
+        turnRevision = state.stepRevision;
+        if (outputGateClosed) { outputGateClosed = false; setPlaybackMuted(false); }
+        transcriptHandlers.forEach(handler => handler({ role: 'learner', delta: event.delta, stepRevision: turnRevision, stale: false }));
         break;
       case 'session.output_transcript.delta':
-        transcriptHandlers.forEach(handler => handler({ role: 'coach', delta: event.delta, stepRevision: state.stepRevision }));
+        transcriptHandlers.forEach(handler => handler({ role: 'coach', delta: event.delta, stepRevision: turnRevision, stale: outputGateClosed }));
         break;
       case 'session.closed':
         dispatch({ type: 'live-closed' });
@@ -149,14 +164,19 @@ export function createCoach(options: CoachOptions): CoachApi {
       dispatch({ type: 'connect-started' });
       try {
         const acquired = await getUserMedia({ audio: true });
+        // Silence the microphone before it ever reaches the peer connection; only Ask by voice enables it.
+        acquired.getAudioTracks().forEach(track => { track.enabled = false; });
         if (disposed) { acquired.getTracks().forEach(track => track.stop()); return state.mode; }
         stream = acquired;
         const active = transportFactory();
         transport = active;
         const started = new Promise<void>((resolve, reject) => {
           startedResolve = resolve;
+          startedReject = reject;
           startTimer = setTimeout(() => reject(new Error('Live session did not start in time')), liveStartTimeoutMs);
         });
+        outputGateClosed = false;
+        turnRevision = state.stepRevision;
         void started.catch(() => undefined);
         await active.connect({
           localStream: acquired,
@@ -182,7 +202,9 @@ export function createCoach(options: CoachOptions): CoachApi {
         dispatch({ type: 'live-ready' });
       } catch {
         if (disposed) { releaseLive(); return state.mode; }
-        dispatch({ type: 'live-failed' });
+        // If the session already closed while we waited, live-closed has run; do not report a second failure.
+        // (Cast: dispatch() mutates `state` inside a closure, which TypeScript's narrowing cannot see.)
+        if ((state as CoachState).mode === 'connecting') dispatch({ type: 'live-failed' });
       }
       return state.mode;
     },

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NarrationError, createNarrationRecorder, normalizeMimeType, selectMimeType } from '../src/record/audio.js';
 
 describe('selectMimeType', () => {
@@ -62,5 +62,58 @@ describe('createNarrationRecorder failure handling', () => {
     const result = await recorder.stop();
     expect(result.capture.durationMs).toBeGreaterThan(0);
     expect(result.blob.size).toBe(1);
+  });
+});
+
+describe('createNarrationRecorder limits', () => {
+  const mic = () => ({ getTracks: () => [{ stop: () => undefined }], getAudioTracks: () => [] }) as unknown as MediaStream;
+  function fakeRecorder(chunkBytes: number) {
+    return {
+      state: 'inactive' as RecordingState, mimeType: 'audio/webm',
+      ondataavailable: null as ((event: BlobEvent) => void) | null, onstart: null as (() => void) | null,
+      onstop: null as (() => void) | null, onerror: null as (() => void) | null,
+      start() { this.state = 'recording'; this.onstart?.(); },
+      stop() { this.state = 'inactive'; this.onstop?.(); },
+      emit() { this.ondataavailable?.({ data: new Blob([new Uint8Array(chunkBytes)]) } as BlobEvent); },
+    };
+  }
+  it('stops itself at the duration limit and reports through onAutoStop', async () => {
+    vi.useFakeTimers();
+    try {
+      const fake = fakeRecorder(10);
+      let clock = 0;
+      const results: unknown[] = [];
+      const recorder = createNarrationRecorder({
+        epochMs: 0, now: () => clock, isTypeSupported: () => true, getUserMedia: async () => mic(),
+        createRecorder: () => fake as unknown as MediaRecorder, maxDurationMs: 2_000, onAutoStop: result => { results.push(result); },
+      });
+      await recorder.start();
+      fake.emit();
+      clock = 2_000;
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(recorder.state).toBe('stopped');
+      expect(results).toHaveLength(1);
+      const result = await recorder.stop();
+      expect(result.limitReached).toBe('duration');
+      expect(result.capture.durationMs).toBe(2_000);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('stops itself before the byte limit is exceeded and keeps only the data that fits', async () => {
+    const fake = fakeRecorder(600);
+    let clock = 0;
+    const results: unknown[] = [];
+    const recorder = createNarrationRecorder({
+      epochMs: 0, now: () => (clock += 100), isTypeSupported: () => true, getUserMedia: async () => mic(),
+      createRecorder: () => fake as unknown as MediaRecorder, maxBytes: 1_000, onAutoStop: result => { results.push(result); },
+    });
+    await recorder.start();
+    fake.emit();
+    fake.emit();
+    const result = await recorder.stop();
+    expect(result.limitReached).toBe('size');
+    expect(result.blob.size).toBe(600);
+    expect(results).toHaveLength(1);
   });
 });

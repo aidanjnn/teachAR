@@ -139,6 +139,61 @@ describe('coach microphone lifecycle', () => {
   });
 });
 
+describe('coach startup and output gating', () => {
+  it('hands the transport a silenced microphone and keeps it silent until Ask by voice', async () => {
+    const fake = fakeTransport();
+    const { stream: mic, track } = trackedStream();
+    let enabledAtConnect: boolean | null = null;
+    const observing: LiveTransport = {
+      ...fake.transport,
+      connect: async options => { enabledAtConnect = options.localStream.getAudioTracks()[0]?.enabled ?? null; await fake.transport.connect(options); },
+    };
+    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => mic, transportFactory: () => observing });
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(enabledAtConnect).toBe(false);
+    fake.emit(started);
+    await connecting;
+    expect(track.enabled).toBe(false);
+    coach.ask();
+    expect(track.enabled).toBe(true);
+  });
+  it('mutes playback and marks captions stale after a step change until the learner speaks again', async () => {
+    const fake = fakeTransport();
+    const sink = { muted: false, srcObject: null as MediaStream | null, play: async () => undefined } as unknown as HTMLAudioElement;
+    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake.transport, audioSink: sink });
+    const seen: string[] = [];
+    coach.onTranscript(entry => seen.push(`${entry.role}:${entry.stepRevision}:${entry.stale ? 'stale' : 'live'}:${entry.delta}`));
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    fake.emit({ type: 'session.input_transcript.delta', event_id: 'i1', delta: 'what now', start_ms: 0, end_ms: 100 });
+    coach.setStep('s2', 1);
+    expect(sink.muted).toBe(true);
+    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'Slide base.', start_ms: 100, end_ms: 200 });
+    fake.emit({ type: 'session.input_transcript.delta', event_id: 'i2', delta: 'and now', start_ms: 300, end_ms: 400 });
+    expect(sink.muted).toBe(false);
+    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o2', delta: 'Drop it.', start_ms: 400, end_ms: 500 });
+    expect(seen).toEqual(['learner:0:live:what now', 'coach:0:stale:Slide base.', 'learner:1:live:and now', 'coach:1:live:Drop it.']);
+  });
+  it('settles connect() when the session closes or is disposed before session.started', async () => {
+    const fake = fakeTransport();
+    const closing: LiveTransport = { ...fake.transport, connect: async options => { await fake.transport.connect(options); options.onClosed(); } };
+    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => closing });
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await connecting).toBe('text');
+    expect(coach.state.liveClosed).toBe(true);
+    const fake2 = fakeTransport();
+    const coach2 = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake2.transport });
+    const connecting2 = coach2.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    coach2.dispose();
+    await expect(connecting2).resolves.toBeDefined();
+  });
+});
+
 describe('coach text path', () => {
   it('returns the server answer for the current step and drops one that arrives after a step change', async () => {
     const gate = { release: null as (() => void) | null };

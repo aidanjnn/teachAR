@@ -39,6 +39,17 @@ describe('label validation', () => {
   });
 });
 
+describe('label citations', () => {
+  it('rejects citations that belong to another segment even when the span exists', () => {
+    const swapped = { labels: [{ ...good.labels[0], narrationSpanIds: ['span-0001'] }, { ...good.labels[1], narrationSpanIds: ['span-0002'] }, good.labels[2]] };
+    const result = validateLabelOutput(request, swapped as Parameters<typeof validateLabelOutput>[1]);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.failure.code).toBe('unknown_span');
+    expect(result.failure.message).toContain('outside its own segment');
+  });
+});
+
 describe('fallback labels', () => {
   it('builds one reviewed label per segment from overlapping narration', () => {
     const result = fallbackLabels(request, { code: 'timeout', message: 'Label request timed out' });

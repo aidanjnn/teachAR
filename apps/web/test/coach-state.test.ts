@@ -39,11 +39,11 @@ describe('coach modes', () => {
   });
   it('pushes step context while live and stops listening on a step change', () => {
     const live = run(start, { type: 'connect-started' }, { type: 'live-ready' }).state;
-    expect(reduceCoach(live, { type: 'step-changed', stepId: 's2', stepRevision: 1 }).effects).toEqual([{ type: 'send-step-context' }]);
+    expect(reduceCoach(live, { type: 'step-changed', stepId: 's2', stepRevision: 1 }).effects).toEqual([{ type: 'invalidate-live-output' }, { type: 'send-step-context' }]);
     const listening = reduceCoach(live, { type: 'listen-toggled' }).state;
     const changed = reduceCoach(listening, { type: 'step-changed', stepId: 's2', stepRevision: 1 });
     expect(changed.state).toMatchObject({ mode: 'live', stepId: 's2', stepRevision: 1, pendingRequestId: null });
-    expect(changed.effects).toEqual([{ type: 'mute' }, { type: 'send-step-context' }]);
+    expect(changed.effects).toEqual([{ type: 'mute' }, { type: 'invalidate-live-output' }, { type: 'send-step-context' }]);
     expect(reduceCoach({ ...start, mode: 'text' }, { type: 'step-changed', stepId: 's2', stepRevision: 1 }).effects).toEqual([]);
   });
 });
@@ -58,7 +58,7 @@ describe('live lifecycle and context resync', () => {
     expect(during.effects).toEqual([]);
     expect(during.state.contextDirty).toBe(true);
     const ready = reduceCoach(during.state, { type: 'live-ready' });
-    expect(ready.effects).toEqual([{ type: 'mute' }, { type: 'send-step-context' }]);
+    expect(ready.effects).toEqual([{ type: 'mute' }, { type: 'invalidate-live-output' }, { type: 'send-step-context' }]);
     expect(ready.state).toMatchObject({ mode: 'live', stepId: 's2', contextDirty: false });
   });
   it('treats a new attempt like a step change and drops answers from the old attempt or tutorial revision', () => {
@@ -70,7 +70,7 @@ describe('live lifecycle and context resync', () => {
     expect(reduceCoach(askedAgain, { type: 'answer-received', answer: answer({ requestId: 'req-2', tutorialRevision: 1 }) }).effects).toEqual([{ type: 'drop-answer', reason: 'stale-tutorial' }]);
     expect(reduceCoach(askedAgain, { type: 'answer-received', answer: answer({ requestId: 'req-2', attemptId: 'a2' }) }).effects[0]?.type).toBe('emit-answer');
     const live = run(start, { type: 'connect-started' }, { type: 'live-ready' }).state;
-    expect(reduceCoach(live, { type: 'attempt-changed', attemptId: 'a3' }).effects).toEqual([{ type: 'send-step-context' }]);
+    expect(reduceCoach(live, { type: 'attempt-changed', attemptId: 'a3' }).effects).toEqual([{ type: 'invalidate-live-output' }, { type: 'send-step-context' }]);
   });
 });
 

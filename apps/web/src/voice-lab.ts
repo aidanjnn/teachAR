@@ -134,11 +134,30 @@ function showTranscript(result: TranscriptResult | null) {
   element<HTMLButtonElement>('#label').disabled = !result;
 }
 
+function acceptRecording(result: { blob: Blob; capture: NarrationCapture; limitReached: 'duration' | 'size' | null }) {
+  recording = result;
+  showCapture(result.capture);
+  if (playback.src.startsWith('blob:')) URL.revokeObjectURL(playback.src);
+  playback.src = URL.createObjectURL(result.blob);
+  playback.hidden = false;
+  playButton.disabled = false;
+  transcribeButton.disabled = false;
+  stopButton.disabled = true;
+  recordButton.disabled = false;
+  const seconds = (result.capture.durationMs / 1000).toFixed(2);
+  setStatus(narrationStatus, result.limitReached ? `Stopped at the ${result.limitReached === 'duration' ? '120 s' : '20 MiB'} limit after ${seconds} s` : `Recorded ${seconds} s`, result.limitReached ? 'warn' : 'ok');
+}
 recordButton.addEventListener('click', async () => {
   recordButton.disabled = true;
   recording = null;
   showCapture(null);
-  recorder = createNarrationRecorder({ epochMs: performance.now() });
+  recorder = createNarrationRecorder({
+    epochMs: performance.now(),
+    onAutoStop: result => {
+      if (result instanceof NarrationError) { setStatus(narrationStatus, result.message, 'warn'); recordButton.disabled = false; stopButton.disabled = true; return; }
+      acceptRecording(result);
+    },
+  });
   try {
     await recorder.start();
     stopButton.disabled = false;
@@ -152,17 +171,9 @@ stopButton.addEventListener('click', async () => {
   if (!recorder) return;
   stopButton.disabled = true;
   try {
-    recording = await recorder.stop();
-    showCapture(recording.capture);
-    if (playback.src.startsWith('blob:')) URL.revokeObjectURL(playback.src);
-    playback.src = URL.createObjectURL(recording.blob);
-    playback.hidden = false;
-    playButton.disabled = false;
-    transcribeButton.disabled = false;
-    setStatus(narrationStatus, `Recorded ${(recording.capture.durationMs / 1000).toFixed(2)} s`, 'ok');
+    acceptRecording(await recorder.stop());
   } catch (error) {
     setStatus(narrationStatus, error instanceof NarrationError ? error.message : 'Recording failed.', 'warn');
-  } finally {
     recordButton.disabled = false;
   }
 });
@@ -291,7 +302,10 @@ element('#coach-connect').addEventListener('click', async () => {
   stepRevision = 0;
   coach = createCoach({ context: buildContext(), audioSink: element<HTMLAudioElement>('#coach-audio') });
   coach.onState(state => renderMode(state.mode, state.liveClosed ? 'Live session ended; text answers continue.' : ''));
-  coach.onTranscript(entry => appendLog(entry.role, entry.delta));
+  coach.onTranscript(entry => {
+    if (entry.stale) { element('#coach-note').textContent = 'Step changed; the previous spoken answer was cut off. Ask again.'; return; }
+    appendLog(entry.role, entry.delta);
+  });
   coach.onLiveError(error => { element('#coach-note').textContent = `Live session error: ${error.code}`; });
   coach.onAnswer(answer => {
     element('#coach-answer').textContent = answer.answer;

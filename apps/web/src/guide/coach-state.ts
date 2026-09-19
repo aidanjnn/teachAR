@@ -36,6 +36,8 @@ export type CoachEffect =
   | { type: 'send-step-context' }
   /** Stop microphone tracks and close the transport; emitted whenever a live session ends. */
   | { type: 'release-live' }
+  /** Old spoken output no longer applies: mute playback and mark captions stale until the learner speaks again. */
+  | { type: 'invalidate-live-output' }
   | { type: 'emit-answer'; answer: CoachAnswer }
   | { type: 'drop-answer'; reason: 'stale-run' | 'stale-tutorial' | 'stale-attempt' | 'stale-step' | 'unknown-request' | 'duplicate' };
 
@@ -55,8 +57,8 @@ export function initialCoachState(input: {
 /** Step and attempt changes share one shape: in-flight answers become stale and a live session needs fresh context. */
 function contextChanged(state: CoachState, next: CoachState): { state: CoachState; effects: CoachEffect[] } {
   const cleared: CoachState = { ...next, pendingRequestId: null };
-  if (state.mode === 'listening') return { state: { ...cleared, mode: 'live' }, effects: [{ type: 'mute' }, { type: 'send-step-context' }] };
-  if (state.mode === 'live') return { state: cleared, effects: [{ type: 'send-step-context' }] };
+  if (state.mode === 'listening') return { state: { ...cleared, mode: 'live' }, effects: [{ type: 'mute' }, { type: 'invalidate-live-output' }, { type: 'send-step-context' }] };
+  if (state.mode === 'live') return { state: cleared, effects: [{ type: 'invalidate-live-output' }, { type: 'send-step-context' }] };
   if (state.mode === 'connecting') return { state: { ...cleared, contextDirty: true }, effects: none };
   return { state: cleared, effects: none };
 }
@@ -69,7 +71,9 @@ export function reduceCoach(state: CoachState, event: CoachEvent): { state: Coac
     case 'live-ready': {
       // A late session.started after the channel already closed must not revive a dead session.
       if (state.mode !== 'connecting') return { state, effects: none };
-      const effects: CoachEffect[] = state.contextDirty ? [{ type: 'mute' }, { type: 'send-step-context' }] : [{ type: 'mute' }];
+      const effects: CoachEffect[] = state.contextDirty
+        ? [{ type: 'mute' }, { type: 'invalidate-live-output' }, { type: 'send-step-context' }]
+        : [{ type: 'mute' }];
       return { state: { ...state, mode: 'live', liveClosed: false, contextDirty: false }, effects };
     }
     case 'live-failed':

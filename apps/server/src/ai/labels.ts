@@ -55,7 +55,8 @@ export function validateLabelOutput(request: LabelRequest, output: LabelModelOut
   if (output.labels.length !== segmentIds.length) {
     return fail('wrong_count', `Expected ${segmentIds.length} labels, received ${output.labels.length}`);
   }
-  const spanIds = new Set(request.transcript.spans.map(span => span.id));
+  // A label may only cite narration that overlaps its own segment; swapped citations are a semantic failure.
+  const assigned = assignSpansToSegments(request.transcript.spans, request.segments);
   const byId = new Map<string, SegmentLabel>();
   for (const label of output.labels) {
     if (!segmentIds.includes(label.stepId)) return fail('unknown_step', 'A label referenced a segment that was not requested');
@@ -67,7 +68,8 @@ export function validateLabelOutput(request: LabelRequest, output: LabelModelOut
       return fail('instruction_length', `Instruction for ${label.stepId} must be 1–${MAX_INSTRUCTION_CHARS} characters`);
     }
     const narrationSpanIds = [...new Set(label.narrationSpanIds)].slice(0, 32);
-    if (narrationSpanIds.some(id => !spanIds.has(id))) return fail('unknown_span', `Label for ${label.stepId} cited an unknown narration span`);
+    const allowed = new Set(assigned.get(label.stepId) ?? []);
+    if (narrationSpanIds.some(id => !allowed.has(id))) return fail('unknown_span', `Label for ${label.stepId} cited narration outside its own segment`);
     byId.set(label.stepId, { stepId: label.stepId, title, instruction, narrationSpanIds, needsReview: label.needsReview });
   }
   const labels: SegmentLabel[] = [];
