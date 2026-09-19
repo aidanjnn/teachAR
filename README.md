@@ -10,7 +10,9 @@ checkpoints aligned to their workspace.
 
 **Current status:** runnable local application scaffold (the software portion of
 TRAIL-02). The workspace includes a synthetic Three.js hand replay, recording
-schemas, rigid transforms, a Fastify health route, unit/browser checks, and CI.
+schemas, rigid transforms, a Fastify health route, voice routes (transcription, segment
+labels, text coach, GPT-Live session broker) with a mock provider, a Voice Lab
+page, unit/browser checks, and CI.
 Recording, calibration, learner progression, persistence, live AI, pairing, and
 headset validation remain planned. The experience below describes the target
 product; the current screen is a diagnostic fixture.
@@ -141,6 +143,7 @@ pnpm --filter @trail/server dev
 | `pnpm test:e2e` | Test the **built** application on port 3101; run `pnpm build` or `pnpm check` first |
 | `pnpm build` | Build shared ESM/declarations, web assets, and server |
 | `pnpm start` | Serve built assets and API together on `http://localhost:3001` |
+| `http://localhost:5173/voice-lab.html` | Record narration, generate labels, talk to the coach (mock or OpenAI) |
 
 Install the browser once before desktop end-to-end tests:
 
@@ -154,6 +157,16 @@ CI installs Chromium with its Linux dependencies, runs the same checks, and
 retains failure traces. No secrets or headset are needed. See
 [scaffold notes](docs/scaffold.md) for module entry points, scope, and evidence;
 [contracts](docs/contracts.md) describes the implemented subset and version policy.
+
+### Voice and AI
+
+Mock mode works with no credentials: transcription returns the synthetic fixture,
+labels use the deterministic fallback, and the coach answers with the stored step
+text. To use OpenAI, set `AI_PROVIDER=openai` and `OPENAI_API_KEY=sk-...` in the
+root `.env`, restart `pnpm dev`, and open the Voice Lab. Keys never leave the
+server: the browser exchanges an SDP offer through `POST /api/coach/session`, and the
+server creates the GPT-Live session. Live mode is verified manually; CI covers mock
+and text paths. Answers are grounded in the tutorial text and cannot advance a step.
 
 ### Quest connection
 
