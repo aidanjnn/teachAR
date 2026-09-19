@@ -9,6 +9,11 @@ const assert=require('node:assert/strict');
   let frame=10, automatic=false, latest=null, calls=0, disconnected=false;
   const posts=[];
   await page.addInitScript(()=>{
+    // Capture speech as test evidence without using the host's audio output.
+    window.spoken=[];
+    Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{
+      cancel(){},speak(utterance){window.spoken.push(utterance.text);}
+    }});
     window.drawn=[];
     const draw=CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.fillText=function(text,...args){window.drawn.push(text);window.drawn=window.drawn.slice(-150);return draw.call(this,text,...args);};
@@ -42,6 +47,7 @@ const assert=require('node:assert/strict');
   await page.locator('#hud-preview').screenshot({path:'/tmp/trail-ar-wrong.png'});
   latest=observation('pass',['goose','fox','square']);await text('Test sequence observed');
   await page.waitForTimeout(1200);assert.equal(automatic,false,'completion pauses paid checks');
+  assert(await page.evaluate(()=>window.spoken.some(text=>text.includes('Test sequence observed'))),'completion cue is emitted through the silent speech stub');
   await page.locator('#hud-preview').screenshot({path:'/tmp/trail-ar-restored.png'});
   assert.equal(calls,0,'status polling must not create provider requests');
   await page.getByRole('button',{name:'Enter AR',exact:false}).click();await text('Could not start AR');
