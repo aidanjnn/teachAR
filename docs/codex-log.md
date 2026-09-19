@@ -497,3 +497,5 @@ The merged worktree passed `pnpm check` (160 tests), `pnpm validate:fixtures`,
 Unity validation is running separately; this entry is not new Android, live
 provider, headset or physical-transfer evidence. PR #6 is concurrently validating
 its newer main catch-up, which will be checked before the final stack report.
+
+Stack guide verification for source `31903fa`: Unity 6000.3.24f1 passed 13/13 EditMode and 6/6 PlayMode tests in `artifacts/quest/test-56878b9c-4990-41cf-86ff-5bf612621b58` and `artifacts/quest/test-play-db5ba2f7-8e3f-494c-8d01-861f2d472c8d`. The first Chromium run failed the health-request timeout while native imports/builds were active; an unchanged isolated rerun passed 3/3. No timeout/assertion was weakened. Engine-generated settings were archived under ignored artifacts. Android validation of the updated base remains in progress in the capture task; no headset or live-provider claim.
