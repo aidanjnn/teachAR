@@ -50,6 +50,7 @@ All paths below are under [experiments/quest-browser](../experiments/quest-brows
 | Start wait, ordered palm gates with observed directional motion, stale/lost tracking | `public/tutorial-follow.mjs`, `motion-core.mjs` | `tests/tutorial-follow.test.mjs`, `motion-core.test.mjs`, `tests/browser-trail-flow.cjs`; native port remains unverified |
 | Holograms, workspace placement and UI | `public/tutorial-guide.mjs`, `tutorial-ui.mjs` | `tests/browser-tutorial.cjs`, `browser-trail-flow.cjs`; still requires visual/device acceptance |
 | Review / trim / save / reload | `public/tutorial-review.mjs`, `tutorial-store.mjs` | `tests/browser-review.cjs`, `browser-tutorial.cjs` |
+| Accepted segment finalization and navigation recovery | `public/tutorial-guide.mjs`, `tutorial-review.mjs` | `tests/browser-fluid-recovery.cjs`: 14 synthetic recovery cases passed during PR #29 review; native lifecycle port remains unimplemented/unverified |
 | Fresh photo / advisory state | `public/camera-snapshot.mjs`, `tutorial-assist.mjs` | `tests/camera-snapshot.test.mjs`, `tutorial-assist.test.mjs`, `browser-camera-snapshot.cjs`, `browser-assistance.cjs` |
 
 ## Explicitly unresolved after merge
