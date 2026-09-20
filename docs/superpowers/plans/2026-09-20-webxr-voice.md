@@ -94,10 +94,10 @@
 - `export function createTutorCoach({ fetchImpl, coachFactory, storage, audioSink, tell })` -> `{ state, start(tutorial, step, epoch), onStep(step, epoch), onAttempt(), ask(), askText(q), stop(), pair(code), onCaption(handler), onState(handler) }`.
 - Guide mapping key `trail-coach-guides` in `storage` (localStorage-like): `{ [tutorialId]: { revision, id, guideRevision } }`.
 
-- [ ] **Step 1: Failing tests** with an injected `coachFactory` that records calls and an injected fetch that answers `/api/session` and `/api/coach-guides`: `start` publishes when no mapping exists and reuses the mapping when the revision matches; republishes when the tutorial revision changed; `onStep` calls `setStep(step.id, epoch)`; `onAttempt` calls `setAttempt` with a new id; `stop` disposes; an unpaired session returns `state.reason === 'unpaired'` without creating a coach; a 403 on publish falls back to a coach built from client steps with `state.grounded === false`.
-- [ ] **Step 2: Implement** with dynamic `import('/vendor/trail-coach.js')` as the default `coachFactory` source, `crypto.randomUUID()` ids.
-- [ ] **Step 3: `node --test experiments/quest-browser/tests/tutorial-coach.test.mjs` green.**
-- [ ] **Step 4: Commit:** `feat(web): add a coach adapter for the browser tutor`.
+- [x] **Step 1: Failing tests** with an injected `coachFactory` that records calls and an injected fetch that answers `/api/session` and `/api/coach-guides`: `start` publishes when no mapping exists and reuses the mapping when the revision matches; republishes when the tutorial revision changed; `onStep` calls `setStep(step.id, epoch)`; `onAttempt` calls `setAttempt` with a new id; `stop` disposes; an unpaired session returns `state.reason === 'unpaired'` without creating a coach; a 403 on publish falls back to a coach built from client steps with `state.grounded === false`.
+- [x] **Step 2: Implement** with dynamic `import('/vendor/trail-coach.js')` as the default `coachFactory` source, `crypto.randomUUID()` ids.
+- [x] **Step 3: `node --test experiments/quest-browser/tests/tutorial-coach.test.mjs` green.**
+- [x] **Step 4: Commit:** `feat(web): add a coach adapter for the browser tutor`.
 
 ### Task 6: Wire the coach into the tutor UI and follow loop
 
