@@ -26,38 +26,10 @@ test-results/
 .claude/settings.local.json
 .DS_Store
 
-# Unity caches, local settings and build outputs; retain Assets .meta and UPM locks
-/apps/quest/[Ll]ibrary/
-/apps/quest/[Tt]emp/
-/apps/quest/[Oo]bj/
-/apps/quest/[Ll]ogs/
-/apps/quest/[Uu]ser[Ss]ettings/
-/apps/quest/[Bb]uild/
-/apps/quest/[Bb]uilds/
-/apps/quest/MemoryCaptures/
-/apps/quest/Recordings/
-/apps/quest/.vs/
-/apps/quest/.utmp/
-/apps/quest/*.csproj
-/apps/quest/*.sln
-/apps/quest/*.slnx
-/apps/quest/*.user
+# Local artifacts and Python caches
 /artifacts/
-*.keystore
-*.jks
-
-# Portable native diagnostic outputs
-/tests/native-network/bin/
-/tests/native-network/obj/
-
-# Meta editor-generated local AgentBridge settings may contain a machine credential.
-/apps/quest/Assets/Resources/DevAgentSettings.asset
-/apps/quest/Assets/Resources/DevAgentSettings.asset.meta
-/apps/quest/Assets/Resources/OVRPlatformToolSettings.asset
-/apps/quest/Assets/Resources/OVRPlatformToolSettings.asset.meta
-
-# Python native-CI verifier test caches
 __pycache__/
+*.pyc
 
 # Retired local GitHub runner; configuration can contain credentials.
 /actions-runner/

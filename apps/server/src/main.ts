@@ -11,7 +11,7 @@ const development = process.argv.includes('--dev');
 const webRoot = resolve(repositoryRoot, 'apps/web/dist');
 if (!development) {
   await access(resolve(webRoot, 'index.html')).catch(() => {
-    throw new Error('Web build missing. Run pnpm build before pnpm start.');
+    throw new Error('Web build missing. Run pnpm build before pnpm start:server.');
   });
 }
 const origins = config.pairing.allowedOrigins.length ? config.pairing.allowedOrigins : config.pairing.allowUsbLoopback ? [`http://127.0.0.1:${config.port}`] : [];

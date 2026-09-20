@@ -1,9 +1,8 @@
 import { z } from 'zod';
 import * as contracts from '../src/index.js';
-// Keep this explicit: every native/shared transport addition needs generated C#,
-// shared valid/invalid fixtures, and compatibility notes. Authoring envelopes are
-// covered by the same corpus; generated DTOs do not imply native UI consumers.
-export const NATIVE_SCHEMA_NAMES = [
+// Explicit shared API schema exports, including legacy capture import compatibility.
+// New transports require valid/invalid fixtures and compatibility notes.
+export const CONTRACT_SCHEMA_NAMES = [
   'JointName', 'Side', 'Vec3', 'Quat', 'Pose', 'HandSample', 'MotionFrame', 'WorkspaceDefinition', 'Recording',
   'MotionGate', 'HandTarget', 'TutorialStep', 'TutorialProvenance', 'Tutorial', 'TutorialDraftStep', 'TutorialDraftEdit', 'CompletionMode',
   'GuideContextRef', 'GuideSnapshot', 'GuideEvent', 'CalibrationV2', 'ClockMapping', 'NativeCaptureSidecar',
@@ -13,7 +12,7 @@ export const NATIVE_SCHEMA_NAMES = [
 ] as const;
 export function buildContractSchemas() {
   const registry = z.registry<{id: string}>();
-  for (const name of [...NATIVE_SCHEMA_NAMES].sort()) {
+  for (const name of [...CONTRACT_SCHEMA_NAMES].sort()) {
     const schema = contracts[`${name}Schema`];
     registry.add(schema, {id: name});
   }

@@ -1,6 +1,6 @@
 # Watch, prepare, practise: browser movement loop
 
-This change builds on the UI/UX base in PR #23. The active headset runtime remains `experiments/quest-browser` (Quest Browser/WebXR). The original strict follower remains the default for legacy consumers; the contextual tutor opts into the new relaxed practice loop. No recording schema migration or Unity change is required.
+This change builds on the UI/UX base in PR #23. The active headset runtime remains `apps/webxr` (Quest Browser/WebXR). The original strict follower remains the default for legacy consumers; the contextual tutor opts into the new relaxed practice loop. No recording schema migration or Unity change is required.
 
 ## User flow
 

@@ -21,4 +21,4 @@ HF_HUB_DISABLE_IMPLICIT_TOKEN=1 .venv/bin/hf download IDEA-Research/grounding-di
   --include '*.json' '*.txt' '*.safetensors' --local-dir models/grounding-dino-tiny
 ```
 
-The first test on one saved Quest image found the three plushies at 4.09/2.59 seconds per forward pass. The negative prompt test produced false screwdriver/shirt detections at the default threshold. These runs establish feasibility and failure modes, not accuracy. Do not enable automatic correction based on this experiment. See `../quest-browser/META-VISION-RESEARCH.md` for the proposed held-out test set and native projection requirements.
+The first test on one saved Quest image found the three plushies at 4.09/2.59 seconds per forward pass. The negative prompt test produced false screwdriver/shirt detections at the default threshold. These runs establish feasibility and failure modes, not accuracy. Do not enable automatic correction based on this experiment. See [historical vision research](../../apps/webxr/META-VISION-RESEARCH.md) for the proposed held-out test set and projection limits.

@@ -9,7 +9,7 @@ older runs for the same PR.
 | Job | What it verifies |
 | --- | --- |
 | Typecheck, tests, build and fixtures | Frozen-lockfile install, `pnpm check`, then `pnpm validate:fixtures` |
-| Desktop browser tests | Fresh build and Chromium Playwright scenarios against the built server, using synthetic fixtures and mock providers |
+| Desktop and WebXR browser tests | Built-server Playwright scenarios plus the WebXR Node/Python/synthetic Chromium suite |
 | Workflow validation | All GitHub Actions workflow files with actionlint 1.7.12, including shell checks when ShellCheck is available on the runner |
 | `check` | All three jobs succeeded; failures, cancellations and skipped jobs cannot produce a passing result |
 
@@ -35,43 +35,27 @@ pnpm check
 pnpm validate:fixtures
 pnpm exec playwright install chromium
 pnpm test:e2e --reporter=list,html
+pnpm setup:webxr
+pnpm test:webxr
 # With actionlint 1.7.12 installed:
 actionlint
 ```
 
-## Native validation runs locally
+## WebXR foundation
 
-Unity EditMode/PlayMode, Android ARM64/IL2CPP and standalone C# native workflows
-have been removed at the repository owner's request. The former self-hosted
-runner is retired. Do not register a developer workstation as a runner for this
-public repository: pull-request code can compromise its persistent environment.
-See [GitHub's runner security guidance](https://docs.github.com/en/actions/reference/security/secure-use).
+The browser job prepares the WebXR Python environment and verified Three.js assets
+with `pnpm setup:webxr`, then runs `pnpm test:webxr`. This covers Node/Python tests
+and ten synthetic Chromium workflows on an owned temporary server. Provider
+credentials are disabled and runtime data is temporary. No live tutor is reused.
 
-`UNITY_EMAIL`, `UNITY_PASSWORD`, `UNITY_LICENSE`, `UNITY_SERIAL` and
-`TRAIL_UNITY_RUNNER_LABELS` are no longer used by CI. The remaining `pnpm check`
-includes static native scaffold checks; those inspect files and cannot prove
-Unity compilation, test execution or a successful APK build.
+The quality job builds WebXR assets alongside shared packages and the desktop/API.
+Unity/C# editor, APK, native harness and static GUID gates have been removed with
+the retired runtime. No Unity account, license, SDK or self-hosted runner is used.
 
-Native scripts, test sources, standalone C# harnesses and result verifiers remain
-available for local validation. On an activated local editor with the pinned
-version and Android SDK/NDK/JDK installed:
-
-```sh
-pnpm quest:test
-pnpm quest:test:play
-pnpm quest:build
-python3 -m unittest discover -s tests/native-ci -v
-# Pass each printed artifact directory to the corresponding verifier:
-python3 scripts/verify-native-ci.py tests artifacts/quest/test-<run-id>
-python3 scripts/verify-native-ci.py tests artifacts/quest/test-play-<run-id>
-python3 scripts/verify-native-ci.py build artifacts/quest/build-<run-id>
-```
-
-Record native results separately for the revision tested. A green hosted check
-now establishes web/server, static and desktop fixture evidence only. It does
-not establish native readiness, live-provider behavior, headset tracking,
-physical calibration or human acceptance. Native changes still need the local
-validation described in [the validation routes](../.agents/references/validation.md).
+Green hosted checks establish software and synthetic browser behavior only.
+Actual Quest hands, concurrent camera/mic/XR, provider response and physical
+transfer need [device evidence](device-check.md). Current local results do not
+imply that hosted CI has run for an unpublished branch.
 
 ## Merge enforcement
 
