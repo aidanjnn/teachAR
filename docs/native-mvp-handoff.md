@@ -8,6 +8,17 @@ for the root-deactivation fix, build-cache recovery and exact tested APKs.
 Point-and-pinch menu input is implemented; actual wearer confirmation is pending.
 The remaining capture, calibration, progression and voice gaps below still apply.
 
+## Menu smoke-test follow-up
+
+The menu smoke-test follow-up adds head-relative placement, wide-label
+direct touch with hold/release feedback, and a Move panel pinch-and-drag handle.
+The wearer confirmed Create opens on the first repair APK. The subsequent
+move-handle build needed an additional worn/tracked startup-placement repair.
+That build is now installed and a headset screenshot confirms its menu and move
+handle are visible; the wearer confirmed physical panel movement. [Validation](validation.md#2026-09-19--live-cast-smoke-test-and-menutouch-repair)
+records exact APK hashes and the 57 EditMode / 17 PlayMode checks. These fixes are included in PR #19. This does not close the
+remaining capture/calibration/follow acceptance gaps.
+
 ## How to reproduce the current state
 
 Toolchain on the machine this was done on (all installed during that session):

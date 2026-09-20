@@ -295,6 +295,28 @@ internal static class Program
         Check(changed.ConfirmedIndex < 0, "disabling an armed control cannot confirm it");
     }
 
+    private static void WideRotatedTouch()
+    {
+        var center = new Vector3(2, 1, -3);
+        var right = Vector3.Normalize(new Vector3(1, 0, 1));
+        var buttons = new[] { new ShellButton("wide", center, true, .2f, right),
+            new ShellButton("neighbor", center + Vector3.UnitY * .06f, true, .2f, right) };
+        var tip = center + right * .17f;
+        var s = ShellInteraction.Create();
+        for (var i = 0; i <= 12; i++) s = ShellInteraction.Observe(s, buttons,
+            new ShellTouchSample(i * 50, i, 0, "wide", tip, null), i * 50);
+        Check(s.Touch == ShellTouch.Armed && s.TouchingIndex == 0, "touch near rotated label edge earns dwell");
+        s = ShellInteraction.Observe(s, buttons,
+            new ShellTouchSample(650, 13, 0, "wide", tip + Vector3.UnitY * .2f, null), 650);
+        Check(s.ConfirmedIndex == 0, "withdraw from rotated label edge selects exactly that label");
+        s = ShellInteraction.Observe(ShellInteraction.Create(), buttons,
+            new ShellTouchSample(0, 0, 0, "wide", tip + Vector3.UnitY * .03f, null), 0);
+        Check(s.TouchingIndex == -1, "row gaps remain untouchable");
+        s = ShellInteraction.Observe(ShellInteraction.Create(), buttons,
+            new ShellTouchSample(0, 0, 0, "wide", center + right * .24f, null), 0);
+        Check(s.TouchingIndex == -1, "touch beyond label edge is rejected");
+    }
+
     private static bool IsNavigation(ShellCommand command) =>
         command == ShellCommand.OpenCreate || command == ShellCommand.OpenFollow ||
         command == ShellCommand.OpenLibrary || command == ShellCommand.OpenSettings || command == ShellCommand.Back;
@@ -303,6 +325,7 @@ internal static class Program
     {
         Interaction();
         TrackingLossNeverConfirms();
+        WideRotatedTouch();
         GuideConfirmationRegression.Run(Check);
         Routing();
         Console.WriteLine("PASS: " + checks + " real C# shell checks (actual ShellInteraction/ShellModel sources).");

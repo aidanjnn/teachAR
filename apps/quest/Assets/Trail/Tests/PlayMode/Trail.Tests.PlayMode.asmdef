@@ -4,6 +4,8 @@
   "references": [
     "Trail.Runtime",
     "Trail.Shell",
+    "Trail.Motion",
+    "Trail.Contracts",
     "UnityEngine.UI"
   ],
   "optionalUnityReferences": [

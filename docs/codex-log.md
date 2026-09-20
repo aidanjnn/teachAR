@@ -1092,3 +1092,56 @@ The user heard “Test sequence observed” from the local regression browser: t
   PR #19 with an updated description. The combined APK has not been installed;
   real hand-pinch navigation, physical transfer and live voice remain unverified.
   This is PR publication, not a merge or full-demo acceptance.
+
+
+### 2026-09-19 — Mirrored-headset menu placement and direct-touch repair
+
+- Continued PR #19 from `f0c9797` on `codex/menu-touch-smoke`. The user reported
+  that the menu was angled, distant and could not be touched. Computer-use
+  screenshots of iPhone Mirroring confirmed the running Trail menu and room
+  passthrough; a later view showed the menu far to the side and oblique.
+  ADB identified Quest 3S / Android 14 and the installed pre-integration pinch
+  APK hash `7724f9d65271a77a78b8768ad4f5738b04893e5f4dc9907aa9a24f9528b4c8a8`.
+- Replaced fixed room placement with placement 0.5 m in front of the tracked
+  head, with the panel origin 0.2 m below eye height. It remains world-stationary
+  during interaction; returning from focus/pause places it in front again.
+  This moves only the menu, never workspace registration or recorded motion.
+- Found direct touch was canceled whenever a ray aimed at any menu entry.
+  Near touch now takes priority, spans the visible label width in its rotated
+  world space, and shows cyan holding / green armed / pull-back guidance.
+  Existing 600 ms hold, 2.5 cm depth/row tolerance, fresh tracked withdrawal,
+  tracking-loss cancellation and one-action-per-frame protections remain.
+- Automated checks on the uncommitted source: 214 C# shell checks, 15/15 Unity
+  PlayMode tests (including edge-touch with an aim ray and head-relative menu
+  placement), 57/57 EditMode tests, and 166 static asset GUIDs passed. Physical
+  acceptance of the replacement build is recorded separately in validation.md.
+
+- First fixed Development APK built and installed after user-authorized reinstall
+  for a debug-signature mismatch. Verified saved-data hashes; regenerated only
+  the restored Unity runtime cache to correct its shell-owned directory.
+  The live cast and wearer confirmed Create opens. Exact build and device
+  observations are in validation.md.
+- Follow-up observations: close placement exposed oversized inline disabled
+  explanations, so wrapped notices and separated small reason labels. The user
+  explicitly requested moving the panel forward/back like other apps; added a
+  Move panel pinch-and-drag handle with exclusive hand ownership and release /
+  tracking-loss cancellation. Only menu placement changes; capture and workspace
+  registration remain untouched.
+
+- The move-handle APK installed in place, but the wearer saw only the room.
+  Direct headset screenshots located part of the menu outside the current view.
+  Added worn/tracked readiness and a 0.5 s startup settling window before showing
+  and placing the menu. Updated the composition regression for delayed panel
+  visibility while preserving its root/camera lifetime assertions; all 17
+  PlayMode tests pass. New native build and wearer confirmation follow.
+
+- Installed the settled-placement build and visually verified the front-facing
+  menu and Move panel handle. The wearer confirmed “yes it moves now.” Final
+  checks: 57 EditMode, 17 PlayMode, 214 shell checks, Android build and 166 static
+  GUIDs passed; captured Unity/AndroidRuntime error query was empty. Physical
+  recording/playback acceptance remains outstanding. Changes remain local.
+
+- User requested publication to PR #19’s `codex/native-mvp-integration` branch
+  and stopping further iteration for now. Prepared the tested menu repairs,
+  regression coverage and hardware evidence as one commit; no new build or
+  full recording/playback acceptance is claimed.

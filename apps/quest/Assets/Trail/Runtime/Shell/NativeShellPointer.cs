@@ -16,8 +16,16 @@ namespace Trail.Runtime.Shell
         private Action<int> select;
         private bool paused, focused = true;
         private int generation;
+        private int draggingHand = -1;
+        private float grabDistance;
+        private Vector3 grabOffset;
+        public TextMesh MoveHandle { get; set; }
+        public Transform Head { get; set; }
+        public bool IsDragging => draggingHand >= 0;
+        public bool HasBeenMoved { get; private set; }
         public IShellPointerSource Source { get; set; }
         public bool IsAimingAtMenu { get; private set; }
+        public bool DirectTouchActive { get; set; }
 
         public void Initialize(Transform trackingSpace, TextMesh[] buttons, Func<int, bool> enabled, Action<int> selected)
         {
@@ -45,8 +53,10 @@ namespace Trail.Runtime.Shell
         private void LateUpdate()
         {
             if (labels == null || Source == null) return;
-            if (paused || !focused) { Cancel(); return; }
+            if (paused || !focused || DirectTouchActive) { Cancel(); return; }
             IsAimingAtMenu = false;
+            if (MoveHandle != null) MoveHandle.color = Color.white;
+            if (IsDragging) { MovePanel(); return; }
             var revision = generation;
             for (var hand = 0; hand < 2; hand++)
             {
@@ -56,24 +66,63 @@ namespace Trail.Runtime.Shell
                 rays[hand].enabled = valid; cursors[hand].gameObject.SetActive(false);
                 if (!valid) continue;
                 var hit = HitTest(frame.Ray, out var point);
-                var color = hit >= 0 ? (frame.Pinching ? Color.green : Color.cyan) : new Color(.8f, .9f, 1f, .45f);
+                var movePoint = Vector3.zero;
+                var moveHit = MoveHandle != null && TryHit(MoveHandle, frame.Ray, MaximumDistance, out movePoint);
+                if (moveHit) point = movePoint;
+                var color = hit >= 0 || moveHit ? (frame.Pinching ? Color.green : Color.cyan) : new Color(.8f, .9f, 1f, .45f);
                 materials[hand].SetColor("_Color", color);
                 rays[hand].SetPosition(0, frame.Ray.origin);
-                rays[hand].SetPosition(1, hit >= 0 ? point : frame.Ray.GetPoint(1.2f));
-                if (hit < 0) continue;
+                rays[hand].SetPosition(1, hit >= 0 || moveHit ? point : frame.Ray.GetPoint(1.2f));
+                if (hit < 0 && !moveHit) continue;
                 IsAimingAtMenu = true;
-                labels[hit].color = color;
+                if (moveHit) MoveHandle.color = color;
+                else labels[hit].color = color;
                 cursors[hand].gameObject.SetActive(true);
                 cursors[hand].position = point - frame.Ray.direction * .004f;
                 if (pressed)
                 {
                     // One action per frame. A route change cancels both hands, so a
                     // held second pinch cannot hit a new button occupying the same slot.
+                    if (moveHit)
+                    {
+                        draggingHand = hand;
+                        grabDistance = Vector3.Distance(frame.Ray.origin, point);
+                        grabOffset = transform.position - point;
+                        HasBeenMoved = true;
+                        for (var other = 0; other < 2; other++)
+                            if (other != hand) { rays[other].enabled = false; cursors[other].gameObject.SetActive(false); }
+                        return;
+                    }
                     select(hit);
                     if (revision == generation) Cancel();
                     return;
                 }
             }
+        }
+
+        private void MovePanel()
+        {
+            var frame = Source.Read(draggingHand == 0);
+            if (!frame.Valid || !frame.Pinching || !Finite(frame.Ray.origin) || !Finite(frame.Ray.direction) ||
+                frame.Ray.direction.sqrMagnitude < .5f)
+            { Cancel(); return; }
+            var target = frame.Ray.GetPoint(grabDistance);
+            var position = target + grabOffset;
+            // Keep the window outside the near clipping plane and within comfortable
+            // interaction range. Depth follows the hand's translation, not only its aim.
+            if (Head != null)
+            {
+                var offset = position - Head.position;
+                if (offset.sqrMagnitude < .0001f) { Cancel(); return; }
+                position = Head.position + offset.normalized * Mathf.Clamp(offset.magnitude, .30f, 1.5f);
+            }
+            transform.position = position;
+            target = position - grabOffset;
+            IsAimingAtMenu = true;
+            MoveHandle.color = Color.green;
+            rays[draggingHand].SetPosition(0, frame.Ray.origin);
+            rays[draggingHand].SetPosition(1, target);
+            cursors[draggingHand].position = target;
         }
 
         private int HitTest(Ray ray, out Vector3 point)
@@ -82,23 +131,29 @@ namespace Trail.Runtime.Shell
             for (var i = 0; i < labels.Length; i++)
             {
                 var label = labels[i];
-                if (label == null || !label.gameObject.activeInHierarchy || !enabledEntry(i)) continue;
-                var plane = new Plane(label.transform.forward, label.transform.position);
-                if (!plane.Raycast(ray, out var distance) || distance < .03f || distance > closest) continue;
-                var candidate = ray.GetPoint(distance);
-                var local = label.transform.InverseTransformPoint(candidate);
-                var bounds = label.GetComponent<MeshRenderer>().localBounds;
-                // Hit the whole visible label with padding; retain a gap between rows.
-                var halfWidth = Mathf.Max(.14f, bounds.extents.x + .02f);
-                if (Mathf.Abs(local.x - bounds.center.x) > halfWidth || Mathf.Abs(local.y) > .025f) continue;
-                selected = i; closest = distance; point = candidate;
+                if (label == null || !enabledEntry(i) || !TryHit(label, ray, closest, out var candidate)) continue;
+                selected = i; closest = Vector3.Distance(ray.origin, candidate); point = candidate;
             }
             return selected;
+        }
+
+        private static bool TryHit(TextMesh label, Ray ray, float maximum, out Vector3 point)
+        {
+            point = default;
+            if (!label.gameObject.activeInHierarchy) return false;
+            var plane = new Plane(label.transform.forward, label.transform.position);
+            if (!plane.Raycast(ray, out var distance) || distance < .03f || distance > maximum) return false;
+            var candidate = ray.GetPoint(distance);
+            var local = label.transform.InverseTransformPoint(candidate);
+            var bounds = label.GetComponent<MeshRenderer>().localBounds;
+            var halfWidth = Mathf.Max(.14f, bounds.extents.x + .02f);
+            if (Mathf.Abs(local.x - bounds.center.x) > halfWidth || Mathf.Abs(local.y) > .025f) return false;
+            point = candidate; return true;
         }
         private static bool Finite(Vector3 value) => !float.IsNaN(value.sqrMagnitude) && !float.IsInfinity(value.sqrMagnitude);
         public void Cancel()
         {
-            generation++; IsAimingAtMenu = false;
+            generation++; IsAimingAtMenu = false; draggingHand = -1;
             for (var i = 0; i < presses.Length; i++)
             {
                 presses[i].Cancel();

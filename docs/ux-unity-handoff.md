@@ -78,3 +78,24 @@ validation results are recorded in [the activity log](codex-log.md).
 ## Merge and implementation protocol
 
 Merge the reference folder and this checklist without replacing `apps/quest` or native contracts. Assign the next native PR to a bounded set of IDs above, include the relevant tests, and update this document with concrete evidence. Resolve new conflicts against current main; the source assessment is a snapshot, not an instruction to overwrite newer work. Keep local native validation explicit because hosted native CI has been removed. Do not mark the original plan's physical acceptance gates complete merely because code exists or the browser tests pass.
+
+
+## Mirrored-device menu iteration (2026-09-19)
+
+The wearer reported distant/angled controls and failed touch on the installed
+pinch-input build. The shell now places its menu from the tracked head pose,
+keeps it still during interaction, and gives near touch priority over ray input.
+Touch spans each label's width, retaining tracked hold/withdraw semantics and
+adding cyan/green guidance. The new PlayMode regressions exercise head-relative
+placement and touching a label edge while the aim ray hits the same menu.
+These repairs do not complete U1/N0: replacement-APK wearer confirmation and the
+remaining capture/calibration/follow flows still require device evidence.
+
+The first repair APK received wearer confirmation that Create opens, independently
+visible in the cast; Settings and diagnostic visibility were also observed.
+The next UI iteration wraps notices, separates disabled reasons from button
+labels, and adds a Move panel handle. Point and pinch-hold to drag the menu in
+three dimensions; release leaves it placed. Only the grabbing hand owns the
+move, and tracking/focus loss ends it without selecting an action. A manually
+placed menu stays put through focus changes. None of this moves the calibrated
+workspace or completes capture/follow acceptance.

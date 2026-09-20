@@ -200,3 +200,147 @@ attributed to their exact pre-integration source patches above. Actual wearer
 confirmation of point-and-pinch navigation is still pending. No new live-provider
 or physical-transfer evidence is claimed. Earlier prototype, .NET and mutation
 results retain their own recorded revisions; they were not rerun in this delivery.
+
+
+## 2026-09-19 — Live cast smoke test and menu/touch repair
+
+**Observed before the change:** Quest 3S, Android 14, package `com.trail.guide`
+0.1.0 (versionCode 1), installed at 22:32:54 local device time. ADB SHA-256 of
+its installed APK was
+`7724f9d65271a77a78b8768ad4f5738b04893e5f4dc9907aa9a24f9528b4c8a8`, matching the
+previously documented pinch build. Live iPhone Mirroring screenshots showed
+passthrough, the Trail Home menu, the unpaired notice and calibration warning.
+The wearer reported the menu was distant/angled and could not be touched. A
+later cast frame showed the menu oblique and far to the left. No successful
+selection, recording or guide run was observed on that build in this session.
+Private cast screenshots remain outside Git.
+
+**Repair source:** uncommitted changes on `codex/menu-touch-smoke`, based on
+`f0c9797`. The shell places its panel 0.5 m in front of the first tracked head
+pose, 0.2 m below eye level, with yaw facing the wearer; it stays stationary until
+focus/pause recovery. Near touch now takes priority over ray selection and uses
+the label width rather than only its center point. Cyan/green holding feedback
+and pull-back instructions expose the existing 600 ms hold/withdraw gesture.
+This does not change motion coordinates, workspace calibration, hand validity,
+recording or guide progression.
+
+Automated checks on that source:
+
+- `dotnet run --project tests/native-shell/Shell.csproj`: **214** checks passed,
+  including rotated label-edge touch, row gaps and out-of-bounds rejection.
+- Unity **15/15 PlayMode**, including direct touch while a pointer aims at the
+  menu, plus head-relative placement, stationary interaction and focus recovery:
+  `artifacts/quest/test-play-c1a9e372-3b3e-4572-85c3-2253e3ce2e27/results.xml`.
+- Unity **57/57 EditMode**:
+  `artifacts/quest/test-da17590c-383e-4f65-937d-498dd3c49d88/results.xml`.
+- `pnpm check:quest-scaffold`: **166** GUIDs passed.
+- Editor: **6000.3.24f1**; native package versions unchanged from PR #19.
+
+The tests use synthetic input and do not establish real hand-touch success.
+
+Android ARM64/IL2CPP Development build passed, including scene/data-layout guards:
+`artifacts/quest/build-7e175561-6f01-4590-823e-351a1fab42d6/Trail.apk`,
+114,631,272 bytes; SHA-256
+`c7d49db19f4f4433e6c1d4096cf5f891a1fdebf060e43875256368f47e8d751e`.
+The exact source diff is retained locally at
+`artifacts/menu-touch-smoke/source.patch`. Generated Unity settings changes were
+inspected and restored; the development build applied the existing setup script.
+
+The initial in-place install was rejected with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+The installed APK and this Mac's debug keystore have different certificate
+fingerprints. No uninstall was performed during diagnosis. Private backups of
+internal files/preferences and external application files were verified by
+reading each archive and hashing its contents (1 internal file and 9 external
+files); the original installed APK is retained for rollback. Reinstall and
+restoration were submitted for user confirmation. The fixed APK is not yet
+validated on the headset.
+
+
+**First repaired build on device:** the user authorized reinstall/restore.
+Internal and external file contents matched their pre-uninstall SHA-256
+manifests after restoration. The first launch stalled because the restored
+`il2cpp` runtime-cache directory was shell-owned. Removed only that generated
+cache so Unity could recreate it; the tutorial cache and preferences were kept.
+The relaunch at 23:12:07 reached active root/rig/camera at **23:12:16.655**.
+Live cast showed passthrough and the new near, front-facing menu. The wearer
+then reported Create opens, and a cast screenshot independently showed the
+Create route. This is device confirmation of the repaired navigation, not a
+recording, calibration or tutorial-follow pass.
+
+The nearer view exposed long notices and disabled reasons extending beyond the
+view. A subsequent iteration wraps notices and renders disabled reasons beneath
+their labels. The wearer also requested free panel movement toward/away like a
+normal app; the next iteration adds a pinch-and-drag Move panel handle. Those
+follow-up source changes are not included in the first repaired APK above.
+
+
+**Move-panel iteration checks:** 16/16 PlayMode tests passed in
+`artifacts/quest/test-play-af38dda0-dc69-4533-bba9-88d1c3f3c534/results.xml`;
+57/57 EditMode passed in
+`artifacts/quest/test-b49e190f-afe8-44c9-98ef-f5cef9ae84ef/results.xml`.
+The new drag regression uses either hand in a rotated tracking space, verifies
+forward/back and sideways translation, release persistence, and cancellation
+without resuming a held pinch after tracking loss. Existing pointer focus,
+held-pinch, simultaneous-hand and direct-touch regressions also pass. The exact
+source diff is retained at `artifacts/menu-touch-smoke/move-panel-source.patch`.
+Static native scaffold checks passed (169 GUIDs while Unity build-generated assets
+were present). The unchanged pure-shell
+inputs retain their prior 214-check result.
+
+
+**Move-panel APK:** Android ARM64/IL2CPP Development build succeeded:
+`artifacts/quest/build-f3d703a4-2910-449b-bf2d-b4451791edc0/Trail.apk`,
+114,628,906 bytes; SHA-256
+`a29d9748ab3a588d39a14dd47d1c248089dbad99fba6bbc147d4b1e2c6e657eb`.
+An in-place update succeeded and the installed APK hash matched. Startup logged
+active root/rig/camera at **23:21:38.557** with no captured `E Unity` entries.
+Generated settings changes were inspected and restored after the build.
+
+iPhone Mirroring subsequently reported the phone was in use. A direct ADB
+screenshot showed the Quest system's “Finding position in room” dialog, so
+physical dragging confirmation is pending tracking recovery and wearer input.
+Do not count the synthetic drag tests as device acceptance. The earlier wearer
+confirmation that Create opens belongs to the preceding repair APK, not this
+new hash. Calibration, fresh recording, library playback and complete learner
+flows remain unverified in this smoke-test session.
+
+
+**Placement recovery finding:** the wearer reported seeing only room/system UI
+rather than the new move handle. A direct headset screenshot after relaunch
+showed a clipped, oblique fragment of the panel at the far-right edge. The build
+contained the move-handle strings and the installed hash was verified; this was
+not an old-APK installation. Initial placement could run on a pose sampled
+before the headset was worn or its eye anchors/reference space had settled.
+
+The next repair keeps the panel hidden until the head is tracked and, where
+reported, worn, and waits 0.5 s across multiple ready frames before taking the
+current head pose. The first test run correctly flagged the previous composition
+test's immediate-visibility assumption; it now checks that the root and camera
+remain active while the panel waits, and that the panel appears after placement.
+The full **17/17 PlayMode** suite passed:
+`artifacts/quest/test-play-bd74fb51-97c2-48ff-a520-712eec3c3d52/results.xml`.
+Exact source: `artifacts/menu-touch-smoke/settled-placement-source.patch`.
+Physical movement remains unconfirmed; another build/install follows.
+
+
+**Settled-placement APK:** 57/57 EditMode passed in
+`artifacts/quest/test-6972c62d-be07-4eca-8735-3d2e431c0c4b/results.xml`.
+The Android ARM64/IL2CPP Development build passed and installed in place:
+`artifacts/quest/build-9e1efdc0-b04c-4a3a-b09c-11c93dba0cc2/Trail.apk`,
+114,634,526 bytes; SHA-256
+`f90bed6494159b0a278ebef447e73bfabc9b1c98597c69dc0740bc6f8ecc301f`.
+Startup logged active root/rig/camera at **23:31:43.306**. A direct headset
+screenshot then showed the front-facing Trail Home menu, wrapped local-mode
+notice and the **Move panel / Pinch and hold to drag** handle clearly visible
+above the title. No `E Unity` entries appeared in the captured startup log.
+This verifies display of the updated UI. Wearer confirmation of physical
+forward/back dragging is still pending.
+
+
+**Wearer acceptance:** after the settled-placement APK above was installed, the
+wearer answered the forward/back drag check with “yes it moves now.” Physical
+panel movement is confirmed on Quest 3S. Release persistence and tracking-loss
+behavior have automated coverage but were not separately described by the wearer.
+A subsequent captured Unity/AndroidRuntime error-log query returned no entries.
+Full calibration, recording, playback and learner completion remain unverified
+in this smoke-test session.

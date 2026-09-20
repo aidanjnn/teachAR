@@ -124,10 +124,14 @@ namespace Trail.Tests
                 Assert.IsTrue(root.activeSelf, "Hiding diagnostics must not deactivate the application root");
                 Assert.IsTrue(camera.isActiveAndEnabled, "Activating the rig must leave its camera active in the hierarchy");
                 Assert.IsTrue(shell.isActiveAndEnabled);
-                Assert.IsTrue(shellPanel.activeInHierarchy);
+                Assert.IsFalse(shellPanel.activeInHierarchy, "The shell waits for the first settled head pose");
                 Assert.IsFalse(canvas.activeSelf, "Only the pairing canvas should start hidden");
                 Assert.AreEqual(0, invalidations, "Hiding a panel must not invalidate the shared connection");
                 yield return null;
+                yield return new WaitForSecondsRealtime(.6f);
+                Assert.IsTrue(root.activeInHierarchy);
+                Assert.IsTrue(camera.isActiveAndEnabled);
+                Assert.IsTrue(shellPanel.activeInHierarchy, "The shell must appear after head-pose initialization");
                 Assert.AreEqual("Trail", shellPanel.transform.Find("Shell title").GetComponent<TextMesh>().text,
                     "The visible shell must continue updating after composition");
 

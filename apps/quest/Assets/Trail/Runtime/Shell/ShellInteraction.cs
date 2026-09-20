@@ -14,11 +14,17 @@ namespace Trail.Runtime.Shell
         public string Id { get; }
         public Vector3 PositionM { get; }
         public bool Enabled { get; }
-        public ShellButton(string id, Vector3 positionM, bool enabled)
+        public float HalfWidthM { get; }
+        public Vector3 RightDirection { get; }
+        public ShellButton(string id, Vector3 positionM, bool enabled, float halfWidthM = 0, Vector3? rightDirection = null)
         {
             if (string.IsNullOrWhiteSpace(id) || id.Length > 64) throw new ArgumentException("Button ID required.");
             if (!Finite(positionM.X) || !Finite(positionM.Y) || !Finite(positionM.Z)) throw new ArgumentException("Button position must be finite.");
+            var right = rightDirection ?? Vector3.UnitX;
+            if (!Finite(halfWidthM) || halfWidthM < 0 || !Finite(right.LengthSquared()) || right.LengthSquared() < .0001f)
+                throw new ArgumentException("Button width and direction must be valid.");
             Id = id; PositionM = positionM; Enabled = enabled;
+            HalfWidthM = halfWidthM; RightDirection = Vector3.Normalize(right);
         }
         internal static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
     }
@@ -57,7 +63,7 @@ namespace Trail.Runtime.Shell
 
     public static class ShellInteraction
     {
-        // A tip within 2.5 cm of a label counts as touching it; labels are laid out further
+        // A tip within 2.5 cm of the label width counts as touching it; rows are laid out further
         // apart than that so one tip can never satisfy two. Tuned values need a real headset.
         public const double HitRadiusM = .025, ArmMs = 600, StallMs = 100;
 
@@ -143,7 +149,9 @@ namespace Trail.Runtime.Shell
                     var tip = side == 0 ? left : right;
                     if (!Valid(tip)) continue;
                     var point = tip.Value;
-                    var distance = Vector3.Distance(point, button.PositionM);
+                    var along = Vector3.Dot(point - button.PositionM, button.RightDirection);
+                    along = Math.Max(-button.HalfWidthM, Math.Min(button.HalfWidthM, along));
+                    var distance = Vector3.Distance(point, button.PositionM + button.RightDirection * along);
                     if (distance <= bestDistance) { bestDistance = distance; best = i; hand = side; }
                 }
             }
