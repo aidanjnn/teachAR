@@ -56,8 +56,8 @@ const assert=require('node:assert/strict');
       data.right=hand([.38,1,-.6]);t=g.pending.until-360;for(let i=0;i<20;i++)tick(20);
       if(g.tutorial.steps[0].cues?.length!==1)fail('Expert fold line not saved');
       tick();if(!g.foldLine.visible)fail('Fold line not rendered in workspace');
-      g.action('primary');g.action('primary');await g.saveQueue;
-      g.action('cue');await g.saveQueue;if(!g.tutorial.completion)fail('Could not finish reviewed tutorial');
+      g.tutorial.steps.forEach(s=>s.guide_hands='both');g.action('primary');g.action('primary');await g.saveQueue;
+      g.action('cue');await g.saveTask;await g.saveQueue;if(!g.tutorial.completion)fail('Could not finish reviewed tutorial');
       // A late camera operation must not mutate the tutorial after resetting its spatial frame.
       g.action('verify');t=g.pending.until;tick();const prior=g.tutorial.steps[1].reference;
       g.action('clear');photoResolve({image:photoCanvas.toDataURL('image/jpeg'),captured_at:new Date().toISOString()});await Promise.resolve();

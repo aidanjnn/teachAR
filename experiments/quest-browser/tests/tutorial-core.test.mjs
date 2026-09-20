@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {prepareStep, TutorialPlayer} from '../public/tutorial-core.mjs';
+import {TutorialFollower,requiredHands} from '../public/tutorial-follow.mjs';
 const hand = x => Array.from({length:25},()=>({p:[x,0,0],q:[0,0,0,1]}));
 const frames = () => Array.from({length:40},(_,i)=>({t:i*40,left:hand(Math.sin(i/39*Math.PI)*.2),right:hand(.3)}));
 
@@ -35,7 +36,7 @@ test('pause, repeat and previous preserve explicit learner control',()=>{
 });
 
 import {newTutorial,validateTutorial,parseTutorialJSON,trimStep,learningReadiness,SCHEMA,finishTutorial} from '../public/tutorial-core.mjs';
-const tutorial=()=>({...newTutorial(),setup:'Lay the cloth flat between the same two table marks.',calibration_span_m:.4,steps:[prepareStep(frames(),'Fold inward')]});
+const tutorial=()=>({...newTutorial(),setup:'Lay the cloth flat between the same two table marks.',calibration_span_m:.4,steps:[{...prepareStep(frames(),'Fold inward'),guide_hands:'both'}]});
 test('imports recompute derived quality/duration and discard verification claims',()=>{
   const input=tutorial();input.steps[0].duration_ms=1;input.steps[0].quality={left_tracked_fraction:100};input.steps[0].verification={status:'pass',kind:'AI'};
   const output=validateTutorial(input);assert.equal(output.steps[0].duration_ms,1560);assert.equal(output.steps[0].quality.left_tracked_fraction,1);assert.equal(output.steps[0].verification.status,'unverified');
@@ -112,4 +113,49 @@ test('step titles are optional, bounded and survive import and trim',()=>{
   const trimmed=trimStep(parsed.steps[0],0,parsed.steps[0].duration_ms);assert.equal(trimmed.title,'Seat the cap');
   const long=tutorial();long.steps[0].title='x'.repeat(61);assert.throws(()=>validateTutorial(long),/Step title/);
   const wrong=tutorial();wrong.steps[0].title=7;assert.throws(()=>validateTutorial(wrong),/Step title/);
+});
+
+test('poor tracking cannot silently replace the moving hand with the resting hand',()=>{
+  const motion=frames();motion.slice(10,20).forEach(f=>f.left=null);
+  const data=tutorial();data.steps=[prepareStep(motion,'Move the part with the left hand.')];data.steps[0].reviewed=true;
+  assert.equal(data.steps[0].quality.left_tracked_fraction,.75);
+  assert.equal(data.steps[0].quality.right_tracked_fraction,1);
+  assert.throws(()=>finishTutorial(data),/Choose required hands/);
+  const follower=new TutorialFollower(data.steps[0]);
+  for(let t=0;t<5000;t+=40)follower.update({left:null,right:hand(.3)},t);
+  assert.deepEqual(requiredHands(data.steps[0]),[]);assert.equal(follower.done,false);
+  data.steps[0].guide_hands='left';
+  assert.throws(()=>finishTutorial(data),/Required left hand is missing/);
+  assert.deepEqual(requiredHands(data.steps[0]),['left']);
+});
+
+test('a single missing palm sample prevents finishing despite near-perfect coverage',()=>{
+  const data=tutorial();data.steps[0].frames[10].left=null;data.steps[0].reviewed=true;
+  assert.throws(()=>finishTutorial(data),/Step 1: Required left hand is missing at 0.40 s/);
+  const partial=tutorial();partial.steps[0].frames[10].left[21]=null;partial.steps[0].reviewed=true;
+  assert.throws(()=>finishTutorial(partial),/Required left hand is missing/);
+  const gap=tutorial();gap.steps[0].frames.slice(10).forEach(f=>f.t+=240);gap.steps[0].reviewed=true;
+  assert.throws(()=>finishTutorial(gap),/Recording timing gap/);
+});
+
+test('one-hand lessons can be explicitly reviewed without requiring the unused hand',()=>{
+  const data=tutorial();data.steps[0].frames.forEach(f=>f.right=null);
+  data.steps[0].guide_hands='left';data.steps[0].reviewed=true;
+  const finished=finishTutorial(data);assert.equal(learningReadiness(finished).ready,true);
+  const follower=new TutorialFollower(finished.steps[0]);let t=0;
+  while(!follower.done&&t<10000){follower.update({left:follower.target.left,right:null},t);t+=40;}
+  assert.equal(follower.done,true);
+});
+
+test('old automatic-hand completions migrate to reviewable drafts without losing motion',()=>{
+  const finished=finishTutorial({...tutorial(),steps:tutorial().steps.map(s=>({...s,reviewed:true}))});
+  for(const selection of [undefined,'recorded']){
+    const old=structuredClone(finished);old.steps[0].guide_hands=selection;
+    const restored=validateTutorial(JSON.parse(JSON.stringify(old)));
+    assert.equal(restored.completion,null);assert.equal(restored.steps[0].reviewed,false);
+    assert.deepEqual(restored.steps[0].frames,old.steps[0].frames);
+    assert.match(learningReadiness(restored).message,/Choose required hands/);
+  }
+  const damaged=structuredClone(finished);damaged.steps[0].frames[10].left=null;
+  assert.equal(validateTutorial(damaged).completion,null);
 });

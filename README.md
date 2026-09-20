@@ -3,23 +3,29 @@
 **Record a physical task once. Follow the expert's movements in your own workspace, at your own pace.**
 
 Trail is a mixed-reality physical-skill tutor being built for **Meta Quest 3S**
-with **Quest Browser / WebXR as the immediate demo runtime**, alongside the existing Unity + Meta XR implementation. An expert demonstrates and narrates a short task; a
-learner follows translucent ghost-hand guidance and talks to a GPT Live coach
-that receives visual evidence from a dedicated interpretation backend.
+using **Quest Browser, WebXR and Three.js**. An expert demonstrates a short task;
+a learner follows translucent ghost hands and movement checkpoints in their own
+workspace. Spoken guidance and camera-grounded coaching extend that local loop.
+
+**WebXR is the product direction**, replacing Unity as the active demo runtime
+in [PR #17](https://github.com/aidanjnn/trail/pull/17). This makes the demo runnable
+directly in Quest Browser and removes the Unity editor/APK build loop from its
+delivery path. Existing native source remains available as reference; the main
+API, dedicated vision backend and deterministic guidance principles carry forward.
 
 The first complete version must transfer a demonstration to a **different room
 and table, using the same objects and starting layout**. Simple bottle and large
 LEGO-style assemblies exercise the same engine with fresh recordings, rather
 than task-specific code or cached answers.
 
-[Implementation plan](docs/plan.md) · [Four-person task split](docs/team-plan.md) ·
-[Scaffold status](docs/scaffold.md) · [Pending device checks](docs/device-check.md)
+[Web delivery plan][web-delivery] · [Implementation plan](docs/plan.md) ·
+[Four-person task split](docs/team-plan.md) · [Scaffold history](docs/scaffold.md)
 
 **New machine:** [Install dependencies](#install-dependencies-on-a-new-machine) →
-[Run the desktop](#run-the-desktop-and-backend-scaffold) →
-[Install Unity and build Android](#prepare-the-quest-app).
+[Run the Quest Browser tutor](#prepare-the-quest-browser-tutor) →
+[Run the desktop and backend](#run-the-desktop-and-backend-scaffold).
 
-## Run the browser tutor now
+## Current status
 
 Start with [the Quest Browser instructions](experiments/quest-browser/README.md).
 The main API also serves the tutor at `/tutorial` on its own port, so the headset gets one
@@ -34,138 +40,157 @@ and [the clean UI reference](docs/design/trail-ui/README.md) for the proposed pr
 The reference is not yet wired into the live tutor. The older [Unity handoff](docs/ux-unity-handoff.md)
 remains available for future native work. Private recordings and keys are excluded.
 
-## Existing native/backend status (separate from browser demo)
-
-The native platform, capture, motion progression, inspection transport and durable
-authoring/storage implementations are merged. The complete headset experience is
-still being integrated and validated. Source availability is not device acceptance.
 
 | Component | Available in source | Still required |
 | --- | --- | --- |
-| Quest app | Unity/Meta/OpenXR setup, pairing, hand capture, registration, ghost presentation, local guide reducer, MRUK inspection and verified preload | Unified Create/Follow UX, one-time save zone, paired ghost presentation, native voice and end-to-end device validation |
-| Desktop | Replay diagnostics, authoring review, storage/spectator tools and Voice Lab | Integration polish and live-provider acceptance |
-| Main API | Scoped pairing, durable recording/tutorial publication, inspection coordination and voice routes | Complete paired composition and live-provider acceptance |
-| Vision backend | Authenticated inspection jobs, input validation, bounded provider adapter and cancellation | Fresh-headset/live-model acceptance and measured reliability; not continuous object tracking |
-| Shared packages | Versioned strict recording/tutorial/inspection schemas, native parity fixtures and rigid transforms | Explicit versioning for new save-zone metadata; physical calibration/transfer acceptance |
+| Quest Browser tutor (PR #17) | Create/Follow, tracked-hand recording with pause/resume, a save position, review/trim/approval, IndexedDB library/import/export, rigid placement, articulated ghosts and ordered learner-paced checkpoints | Apply the clean UI reference; repeat headset recovery and transfer acceptance |
+| Local media and assistance (PR #17) | Optional narration/reference photos, palm zones and a separate bounded camera-checking experiment | Concurrent mic/camera/immersive hands validation; general tutorial coaching integration |
+| Desktop | Replay diagnostics, authoring/review, storage/spectator tools and Voice Lab | Verify concurrent headset voice and finish the presentation |
+| Main API | Scoped pairing, durable recording/tutorial publication, inspection coordination and voice routes | Fresh visual coaching and live headset acceptance |
+| Vision backend | Authenticated inspection jobs, image validation, bounded provider adapter and cancellation | Fresh-headset/live-model acceptance and measured reliability |
+| Shared packages | Strict recording/tutorial/inspection schemas, parity fixtures, rigid transforms and authoring logic | Explicit browser-format conversion and physical transfer acceptance |
 
-Health means reachability, not provider or headset readiness. See the
-[current Unity handoff](docs/ux-unity-handoff.md), [native setup evidence](docs/native-setup.md)
-and [historical scaffold scope](docs/scaffold.md). Hosted checks no longer run Unity;
-record local native validation separately.
+No API key is needed for the browser's hand recording or ghost guidance. The
+paired API now connects the tutor to the voice coach and narration drafts; fresh
+visual coaching and concurrent headset acceptance remain integration targets. The [clean UI reference][ui-reference] is a simulated design,
+not the current headset interface. See [web delivery status][web-delivery] for
+the feature inventory and remaining work.
+
+Health means reachability, not provider or headset readiness. The vision service
+defaults to an unavailable mock provider; its implemented inspection route does
+not establish live image interpretation. Historical Unity setup and validation
+remain in [native setup evidence](docs/native-setup.md).
 
 ## Intended experience
 
-1. **Record:** the expert calibrates a marked mat, performs the task and narrates.
-   Trail records hand motion, audio and reference images on coordinated timelines.
-2. **Review:** Trail proposes movement boundaries and labels. The expert reviews
-   the steps, motion gates, starting layout and visible outcomes before saving.
-3. **Transfer:** the learner places the same mat and parts in their own room,
-   restores the starting layout and independently calibrates. Three marks define
-   the workspace; a fourth checks alignment. The tutorial is preloaded locally.
-4. **Follow:** an articulated translucent ghost demonstrates the movement.
-   Guidance follows the learner's pace; ordered motion gates and a valid hold
-   determine when a movement checkpoint is reached.
-5. **Ask:** after starting conversation, the learner can ask hands-free,
-   “Am I doing this right?” A fresh headset image is assessed against the reviewed
-   step, and GPT Live speaks the findings or asks for a clearer view.
+1. **Record:** the expert enters AR in Quest Browser, places the workspace and
+   sets one save position for the tutorial. Record tracked hands, pause/resume
+   between actions, and optionally attach narration and reference photos.
+2. **Review:** replay the captured movements, inspect trimmed ends, edit
+   instructions and approve each step. Save the tutorial to the browser's local
+   library; export/import supports deliberate backup and transfer.
+3. **Transfer:** the learner restores the same objects and starting layout,
+   places the tutorial using an origin and heading, and previews alignment at
+   its original scale. Load the reviewed tutorial before following it.
+4. **Follow:** articulated translucent ghosts demonstrate the movement. A start
+   gate, ordered movement targets and a valid checkpoint hold respond to the
+   learner's pace. Tracking loss pauses progress; Pause and Repeat stay local.
+5. **Ask:** the target coach lets the learner ask, “Am I doing this right?” A
+   fresh headset image is assessed against the reviewed step, then GPT Live
+   speaks the findings or asks for a clearer view. This backend-to-tutor flow
+   still needs integration and live headset validation.
 
 The [assembly storyboard](docs/mockups/translucent-assembly-2026-09-19/guidance-sequence.png)
-shows the intended visual direction. It is illustrative, not a headset screenshot
-or proof of tracking accuracy.
+and [browser UI reference][ui-reference] show the visual direction. They are
+illustrations, not evidence of tracking accuracy or completed UI integration.
 
 ### Transfer, scene understanding and object tracking
 
-Hand motion is stored relative to the mat, so the learner's independently measured
-mat pose places the recording on their table. Preserve physical scale, part sizes,
-starting positions/orientations and dominant hand within a tutorial. Different
-rooms, table heights, mat orientations, backgrounds and lighting are acceptance
-conditions to test; the recording is never scaled to hide alignment error.
+The browser prototype places recorded motion with a rigid origin/heading
+transform: translate and rotate, without stretching. Preserve physical scale,
+part sizes, starting positions/orientations and dominant hand within a tutorial.
+Different rooms, table heights, workspace orientations, backgrounds and lighting
+remain acceptance conditions to test.
 
-**TRAIL-19** adds a bounded MRUK scene-understanding milestone: evaluate the
-learner's current room/surfaces for workspace setup, handle missing or stale scene
-data and record whether scene assistance is usable. It supplements mat calibration.
-Cross-room transfer remains required even if scene assistance is unavailable.
+The earlier native three-mark fit and held-out fourth-mark check are reference
+work, not the browser's current placement workflow. Browser placement needs its
+own measured alignment evidence, and a reference-space reset or new XR session
+requires registration again.
 
-Object tracking is valuable for detecting moved parts and eventually adapting
-motion to rearranged layouts. That requires object identity, pose, uncertainty
-and source/destination relationships. Automatic retargeting of independently
-rearranged parts, universal markerless tracking and detailed object reconstruction
-are future work. A room mesh does not establish those capabilities. See
-[scene and object feasibility](docs/plan.md#scene-understanding-and-object-tracking-feasibility).
+WebXR passthrough display does not itself provide camera pixels, room meshes or
+object poses. Feature-detect the installed browser's capabilities and validate
+fresh camera access separately. Unity MRUK components cannot run in the browser;
+the WebXR tutor does not depend on porting them to begin local guidance.
+
+Object tracking may later help detect moved parts and adapt motion to rearranged
+layouts. Automatic retargeting, detailed reconstruction and reliable hidden-hand
+or object-contact assessment remain future work. See the
+[browser capability and transfer boundaries][web-delivery].
 
 ## Target architecture
 
 ```mermaid
-flowchart LR
-    Expert[Expert hands and narration] --> Capture[Unity capture and local cache]
-    Capture --> API[Main Fastify API]
-    API --> Author[Segmentation, labels and expert review]
-    Author --> Guide[Preloaded Unity guide]
-    Hands[Learner hand observations] --> Guide
-    Guide --> Ghost[Ghost motion and checkpoints]
+flowchart TB
+    Capture[WebXR hand capture and optional narration] --> Review[Replay, trim and expert approval]
+    Review --> Library[(IndexedDB tutorial library)]
+    Library --> Guide[Local WebXR placement and guide]
+    Hands[Fresh learner hand observations] --> Guide
+    Guide --> Ghost[Three.js ghosts and checkpoints]
+    Library <-. publish and preload adapter .-> API[Main Fastify API - pairing and storage]
+    API --> Author[Segmentation, transcription and labels]
+    Author -. proposed steps for review .-> Review
     Guide -. current step and attempt .-> API
-    Guide -. state snapshots .-> Desktop[Desktop spectator]
-    Audio[Quest microphone and speaker] <-->|WebRTC| Live[GPT Live]
+    API -. state snapshots .-> Desktop[Desktop review and spectator]
+    Audio[Browser microphone and speaker] <-. WebRTC audio .-> Live[GPT Live]
     Live <-->|trusted sideband| API
-    Camera[Fresh Quest camera snapshot] -->|paired upload| API
-    API -->|images, references and current context| Vision[Dedicated vision backend]
+    Camera[Fresh browser camera image and reviewed reference] -. paired upload .-> API
+    API -->|authenticated images and context| Vision[Dedicated Fastify vision backend]
+    Vision -->|validated findings and uncertainty| API
     Vision <-->|image analysis| Model[Image-capable Responses model]
-    Vision -->|structured evidence and uncertainty| API
 ```
 
-This diagram describes the target pipeline; current implementations are listed
-in the status table above.
+The local browser loop is implemented in PR #17. Dotted connections show the
+remaining browser/backend, spectator and coaching integration. Backend/provider
+paths retain the existing service architecture; their presence in source does
+not establish live-provider acceptance. The prototype's Python development
+server serves the tutor and separate camera experiments; it is distinct from
+the two Fastify services.
 
 | Layer | Selected stack and responsibility |
 | --- | --- |
-| Headset | Unity/C#, Unity OpenXR, Meta Core/Interaction and MRUK; tracking, passthrough, camera, spatial UI and a separate recorded ghost |
-| Motion runtime | Pure C# contracts/motion assemblies; deterministic local progression with runtime adapters handling I/O |
-| Desktop | TypeScript, Vite, plain HTML/CSS and Three.js; review, diagnostics and spectator presentation |
+| Headset | Quest Browser, WebXR and Three.js; hand input, passthrough session, spatial controls and recorded ghosts |
+| Motion runtime | Browser JavaScript modules; deterministic local progression, with XR/rendering/storage effects in adapters |
+| Desktop | TypeScript, Vite, HTML/CSS and Three.js; review, diagnostics, Voice Lab and spectator presentation |
 | Main backend | `apps/server`: TypeScript/Fastify; storage, pairing, tutorial processing, GPT Live sideband and inspection coordination |
-| Visual backend | `apps/vision`: separate TypeScript/Fastify process; image interpretation through an image-capable Responses model |
-| Contracts | Zod and versioned JSON fixtures; strict native DTO parsing and validation |
-| Persistence | Planned laptop files and Unity application-private cache; no cloud database required |
+| Visual backend | `apps/vision`: separate TypeScript/Fastify process; bounded image interpretation through an image-capable Responses model |
+| Contracts | Validated browser prototype format plus existing Zod/versioned JSON contracts; an explicit adapter is required between them |
+| Persistence | Browser-origin IndexedDB and explicit export/import today; Fastify file storage retained for service integration; no cloud database required |
 
-The two backend processes initially run on the demo laptop. Provider credentials
-stay in the backends; the headset connects to the main API and never receives
-provider keys or the internal vision-service token.
+**The headset browser owns progression.** AI supplies instructions and advisory
+findings; it cannot invent coordinates, change tolerances or advance a step.
+Rendering, audio, storage and network effects stay outside the pure motion logic.
+`trail.tutorial.prototype.v3` is not the native recording/tutorial wire format;
+do not silently pass it to existing backend routes as a native recording.
+
+The two backend processes run on the demo laptop. Provider credentials stay in
+the backends; clients never receive provider keys or the internal vision token.
+Local hand guidance runs without either AI provider. The browser library is
+specific to its device and origin and is not automatically synchronized.
 
 ### Visual coaching is required
 
-The planned flow is **Quest camera → main API → vision backend → validated
-findings → GPT Live → spoken headset feedback**. GPT Live supplies conversation;
-the vision backend supplies image interpretation. Audio/text-only conversation
-cannot satisfy the visual-coaching acceptance gate.
+The target flow remains **fresh headset camera image → main API → vision backend
+→ validated findings → GPT Live → spoken headset feedback**. Browser capture
+and approved tutorial context must be explicitly connected to those services.
+The earlier plushie image checker is a separate experiment, not generalized
+tutorial verification.
 
 Inspect correct-looking, visibly wrong, obscured and subsequently adjusted scenes.
 Fresh evidence must change the answer actually heard in the headset. Reject stale
 images and results from old questions, steps or attempts. A webcam is a disclosed
 development/reduced-demo source, not headset-camera acceptance.
 
-An admitted inspection locally pauses guidance and clears partial dwell; the
-learner explicitly chooses Resume or Repeat afterward. A favorable assessment
-never advances the guide. If vision is unavailable, the coach must disclose that
-it cannot inspect the scene. See the [visual backend design](docs/plan.md#gpt-live-conversation-and-fresh-visual-coaching).
+The integration must pause guidance and clear partial dwell for an admitted
+inspection; the learner chooses Resume or Repeat afterward. A favorable
+assessment never advances the guide. If vision is unavailable, the coach must
+disclose that it cannot inspect the scene. See the
+[vision service](apps/vision/README.md) and [browser integration plan][web-delivery].
 
 ## Install dependencies on a new machine
 
-The repository uses two package systems: **pnpm** installs the TypeScript
-workspace, and **Unity Package Manager (UPM)** installs the native SDKs. You need
-both for full development. Desktop/backend work only needs the first one.
+The browser path uses **pnpm** for the existing JavaScript/TypeScript workspace
+and **Python** for the prototype's local server. Unity, UPM and an APK build are
+not required to run the tutor.
 
 | Install | Version / source | Needed for |
 | --- | --- | --- |
 | Git | Your OS package manager or [Git downloads](https://git-scm.com/downloads) | Cloning the repository |
-| Node.js | [22.23.1 download](https://nodejs.org/en/download/archive/v22.23.1), matching [.node-version](.node-version); includes npm 10.9.8 | All pnpm commands |
+| Node.js | [22.23.1 download](https://nodejs.org/en/download/archive/v22.23.1), matching [.node-version](.node-version) | All pnpm commands and prototype asset preparation |
 | pnpm | **11.3.0**, matching `packageManager` in [package.json](package.json) | Web, server, vision and shared packages |
-| Chromium | Downloaded by the repository's Playwright version | Browser tests only |
-| Unity Hub + editor | Hub from [Unity](https://unity.com/download); editor **6000.3.24f1**, revision **4e7b9b5b6244** | Quest project only |
-| Android toolchain | Android Build Support **with SDK & NDK Tools and OpenJDK** through that editor's Hub modules | APK compilation only |
-
-The native installation/build was verified on Apple Silicon macOS with Hub
-3.21.3. Other host platforms have not been validated for this project; choose
-the editor for your host and configure `UNITY_EDITOR` as described below. A
-Quest headset is needed for device testing, not for compilation or EditMode tests.
+| Python | **3.12**, with `venv` and pip | Browser prototype server and Python checks |
+| Chromium | Downloaded by the repository's Playwright version | Synthetic browser tests |
+| Android SDK platform-tools | `adb` on PATH | USB connection to Quest Browser |
+| Quest Browser | Installed on the Quest 3S; record its actual version when testing | Real WebXR hand input and immersive sessions |
 
 ### Clone and install the workspace
 
@@ -181,14 +206,21 @@ pnpm --version                      # expected: 11.3.0
 pnpm install --frozen-lockfile
 ```
 
-If you already have pnpm 11.3.0, skip its global installation. npm is only used
-here to bootstrap pnpm; use pnpm at the repository root for project dependencies.
-The root install links all workspace packages, including `apps/server`,
-`apps/vision`, `apps/web`, contracts and motion. Do not separately run `npm install`
-inside each app or generate a `package-lock.json`. Keep [pnpm-lock.yaml](pnpm-lock.yaml)
-and the lifecycle-script policy in [pnpm-workspace.yaml](pnpm-workspace.yaml).
+If you already have pnpm 11.3.0, skip its global installation. Use pnpm at the
+repository root for project dependencies; do not generate per-app npm lockfiles.
+Keep [pnpm-lock.yaml](pnpm-lock.yaml) and the lifecycle-script policy in
+[pnpm-workspace.yaml](pnpm-workspace.yaml).
 
-Install the browser test binary and verify the workspace:
+Until PR #17 merges, its browser commands require that PR's code. In a clean
+clone, fetch the PR into a separate local branch, then refresh dependencies:
+
+```sh
+git fetch origin pull/17/head:pr-17-browser-tutor
+git switch pr-17-browser-tutor
+pnpm install --frozen-lockfile
+```
+
+Install the browser test binary and verify the existing workspace:
 
 ```sh
 pnpm exec playwright install chromium
@@ -198,10 +230,8 @@ pnpm test:e2e
 ```
 
 On Linux, use `pnpm exec playwright install --with-deps chromium` if system
-browser libraries are missing; this is the command used in CI. The checks above
-do not install or compile Unity. The default scaffold needs no API keys, database,
-Docker, Android Studio or globally installed TypeScript/Vite/Fastify packages.
-Unity's separate downloads are covered below.
+browser libraries are missing. These checks need no paid provider credentials
+or Unity installation. The prototype's additional checks are described below.
 
 ## Run the desktop and backend scaffold
 
@@ -211,16 +241,14 @@ After installing the workspace, run from the repository root:
 pnpm dev
 ```
 
-Open `http://127.0.0.1:5173`. The page shows a synthetic two-second hand recording
-with Play/Pause, Reset, scrubbing and a deliberate tracking gap.
-
-The launcher starts shared-package watchers and these services:
+Open `http://127.0.0.1:5173` for desktop replay/authoring diagnostics. **This does
+not start the headset tutor**, which runs separately at `/tutorial` on port 4321.
 
 | Process | Default address | Current role |
 | --- | --- | --- |
-| Desktop/Vite | `127.0.0.1:5173` | Fixture UI; proxies `/api` and the reserved `/ws` path to the main API |
-| Main API | `127.0.0.1:3001` | `/api/health`, `/api/dependencies/vision` and built static assets when using `pnpm start` |
-| Vision | `127.0.0.1:3002` | Authenticated `/internal/v1/health`, `/internal/v1/ready` and unimplemented inspection route |
+| Desktop/Vite | `127.0.0.1:5173` | Replay, authoring and Voice Lab; proxies `/api` and `/ws` to the main API |
+| Main API | `127.0.0.1:3001` | Pairing, tutorial/recording storage, voice, inspection coordination and relay |
+| Vision | `127.0.0.1:3002` | Authenticated health/readiness, bounded inspections and cancellation |
 
 Defaults require no provider credentials. The launcher generates an ephemeral
 internal service token if none is configured. Optional settings are documented
@@ -228,39 +256,26 @@ in [.env.example](.env.example); copy it to an ignored `.env` only if needed,
 preserving any existing file. Backend startup loads the root `.env`; existing
 process environment variables take precedence.
 
-Occupied ports cause a clear failure before services start. Existing processes
-are left untouched. To run an isolated stack:
-
-```sh
-PORT=3201 DEV_WEB_PORT=5273 VISION_PORT=3202 pnpm dev
-```
-
-If `.env` explicitly sets `VISION_SERVICE_URL`, update that override to match the
-chosen vision port. Use `pnpm dev:web` for desktop/main-API development without
-starting vision. For independent backend terminals and matching service tokens,
-follow the [vision service setup](apps/vision/README.md).
+Occupied ports cause a clear failure before services start. To run an isolated
+stack, use `PORT=3201 DEV_WEB_PORT=5273 VISION_PORT=3202 pnpm dev`. If `.env`
+explicitly sets `VISION_SERVICE_URL`, match it to the chosen vision port. For
+independent terminals and matching tokens, follow the
+[vision service setup](apps/vision/README.md).
 
 | Command | What it runs |
 | --- | --- |
-| `pnpm dev` | Desktop, main API, vision skeleton and shared watchers |
+| `pnpm dev` | Desktop, main API, vision service and shared watchers |
 | `pnpm dev:web` | Desktop, main API and shared watchers |
 | `pnpm build` | Shared packages, desktop and both backend builds |
-| `pnpm check` | Strict TypeScript, unit/API tests, builds and static Unity-file checks |
+| `pnpm check` | Strict TypeScript, unit/API tests, builds and retained static Unity-file checks |
 | `pnpm validate:fixtures` | Shared build and recording-fixture validation |
 | `pnpm test:e2e` | Chromium tests against the built desktop/main API on port 3101; build first |
 | `pnpm start` | Built main API and desktop assets; does not start vision |
 | `pnpm start:vision` | Built vision service; requires an internal service token |
-| `pnpm check:quest-scaffold` | Native file/GUID/assembly checks without Unity compilation |
-| `pnpm quest:setup` | Apply Android scaffold settings with an installed Unity editor |
-| `pnpm quest:test` | Run actual EditMode tests with an installed Unity editor |
-| `pnpm quest:test:play` | Run native PlayMode lifecycle/pairing tests in the editor |
-| `pnpm quest:build` | Build a release ARM64/IL2CPP platform APK |
-| `pnpm test:native-network` | Run the pure C# network-policy harness; requires .NET 8 SDK |
 
-For browser tests, install Chromium once with `pnpm exec playwright install chromium`,
-then run `pnpm check` and `pnpm test:e2e`. CI runs the hosted web/server gates;
-native checks run locally. Hosted checks do not establish native or physical
-readiness.
+The retained native source has separate [setup and test commands](apps/quest/README.md).
+Those are not prerequisites for WebXR development. Hosted web/server checks and
+synthetic browser tests do not establish physical transfer or live-provider readiness.
 
 ### Voice and AI diagnostics
 
@@ -275,228 +290,162 @@ a real key it goes live. Microphone, WebRTC and an immersive session together on
 not yet verified.
 
 
+Mock mode needs no credentials. OpenAI mode uses `AI_PROVIDER=openai` and a server-side
+`OPENAI_API_KEY` in the root `.env`; keys never belong in browser assets or tutorial exports.
+
 The browser Voice Lab at `http://127.0.0.1:5173/voice-lab.html` provides recorder,
 transcription, label and coach diagnostics.
 
-Mock mode works with no credentials: transcription returns the synthetic fixture,
-labels use the deterministic fallback, and the coach answers with the stored step
-text. To use OpenAI, set `AI_PROVIDER=openai` and `OPENAI_API_KEY=sk-...` in the
-root `.env`, restart `pnpm dev`, and open the Voice Lab. Keys never leave the
-server: the browser exchanges an SDP offer through `POST /api/live/sessions`, and the
-server creates the GPT-Live session. Live mode is verified manually; CI covers mock
-and text paths. Answers are grounded in the tutorial text and cannot advance a step.
-When pairing is configured (`PAIRING_ORIGINS` or `ALLOW_USB_LOOPBACK`), narration
-and label routes require an author token, the coach routes require a learner or
-author token on the current session, and the coach speaks only from the stored
-tutorial, rejecting unknown, stale, or draft tutorials for learners. Step changes
-reach the live model through the server's own channel: the client posts a step ID
-to `POST /api/live/sessions/:id/step` and the browser data channel can no longer
-append text. The Voice Lab then shows a pairing form: paste the author code from
-`data/<dir>/pairing.json` (or one minted in the authoring workbench) to record and
-label; its coach falls back to local text because the lab's steps are not a saved
-guide. Plain `pnpm dev` configures no pairing, stays open, trusts the client
-context, and must stay on loopback.
-There is no per-session cap yet, and each live session bills at least 15 seconds. The browser coach,
-recorder and Voice Lab are desktop diagnostics that validate the server protocol;
-the planned Unity client (TRAIL-16) reuses the same routes through a native WebRTC
-adapter, and native audio is verified only on the APK.
+The existing server creates live sessions through `POST /api/live/sessions` and
+owns the model's step context. In paired mode, it validates roles and stored
+tutorials; updates carry step/generation identity and reject stale context.
+The Voice Lab's unsaved steps fall back to local text on a paired server.
+Plain `pnpm dev` without pairing configuration must remain on loopback.
 
-See the [provider implementation notes](apps/server/src/ai/README.md).
+The tutor now publishes reviewed step text through a validated coach-guide adapter
+and follows the current step through its local coach hook. Fresh reference-image
+and visual-coaching integration remain pending. Simultaneous headset audio, camera
+and hand tracking still require device acceptance. See the
+[provider notes](apps/server/src/ai/README.md) and [web delivery plan][web-delivery].
 
-## Prepare the Quest app
+## Prepare the Quest Browser tutor
 
-The [Unity source project](apps/quest/README.md) is in `apps/quest`. The local
-**Unity 6000.3.24f1**, **Meta XR 205.0.0**, **OpenXR 1.18.0** and **WebRTC 3.0.0**
-package set has resolved and compiled, with a generated UPM lockfile and
-passing native tests. See [native setup evidence](docs/native-setup.md) for the
-Android build result and exact installed toolchain.
+For the paired voice coach, use the main API at `http://localhost:3001/tutorial`
+as described above; the Python launcher below serves the separate camera lab and
+local hand-guidance prototype.
 
-### Install the editor and Android modules
+Start with the [runnable prototype guide][browser-guide]. The source is included
+in this checkout under `experiments/quest-browser`; a clone of `main` needs the
+PR #17 checkout described above until the PR merges.
 
-1. Install [Unity Hub](https://unity.com/download), sign in with **your own Unity
-   account**, review its terms and activate a license appropriate for your use.
-   The recorded local setup used Unity Personal. License activation and account
-   sign-in are per developer; they are not copied from this repository.
-2. Open the [6000.3.24f1 release page](https://unity.com/releases/editor/whats-new/6000.3.24f1)
-   and use its Hub installation link if that exact version is absent from Hub's
-   normal list. Match [ProjectVersion.txt](apps/quest/ProjectSettings/ProjectVersion.txt).
-   On Apple Silicon, select the ARM64 editor.
-3. Select **Android Build Support**, including **Android SDK & NDK Tools** and
-   **OpenJDK**. For an existing editor, use its **Add modules** action in Hub.
-   Let all modules finish downloading before opening the project. Use the
-   editor-bundled tools in Unity's External Tools preferences; a separate Java
-   or Android Studio installation is unnecessary for this setup. See Unity's
-   [Android environment setup](https://docs.unity3d.com/6000.3/Documentation/Manual/android-sdksetup.html).
-4. In Hub, add the existing **`apps/quest` directory** from your clone, then open
-   it with the pinned editor. Do not create a new template project. Allow the
-   first package download, asset import and C# compilation to finish.
-5. If prompted about input, use **Project Settings → Player → Other Settings →
-   Active Input Handling → Input System Package (New)** and restart. Open
-   `Assets/Trail/Scenes/Trail.unity`; a default Untitled scene is not Trail.
+### Start the local tutor
 
-Unity reads [manifest.json](apps/quest/Packages/manifest.json) and
-[packages-lock.json](apps/quest/Packages/packages-lock.json) to resolve the SDKs.
-The Meta scoped registry is already configured; no manual `.unitypackage`
-downloads or separate npm installs of Meta packages are needed.
-
-| Unity package group | Resolved version |
-| --- | --- |
-| Meta XR Core, Interaction, OVR integration and MRUK | 205.0.0 |
-| Unity OpenXR / XR Management / XR Hands | 1.18.0 / 4.5.4 / 1.7.2 |
-| URP / uGUI / TextMeshPro | 17.3.0 / 2.0.0 / 5.0.0 |
-| WebRTC / Test Framework | 3.0.0 / 1.6.0 |
-
-The lockfile includes transitive/editor packages and required built-in modules.
-Keep both Unity package files, `ProjectSettings` and asset `.meta` files in Git.
-Keep generated `Library`, build artifacts, local licenses and debugger credentials
-out of Git. Each machine downloads its own package cache. First installation
-requires Internet access and space for the editor, Android modules, package
-cache and IL2CPP build intermediates.
-
-### Compile, test and build the APK
-
-**Close this project's editor before running batch commands.** From the repository
-root, after the pnpm installation above:
+From the repository root after installing dependencies:
 
 ```sh
-pnpm quest:setup
-pnpm quest:test
-pnpm quest:test:play
-pnpm quest:build
+cd experiments/quest-browser
+sh start.sh
 ```
 
-The wrappers automatically find the default macOS Hub editor. For another
-installation, set `UNITY_EDITOR` to the **executable**, not the project directory
-or `.app` bundle, before running those commands. Examples:
+The first start creates a Python virtual environment, installs `requirements.txt`
+and prepares the exact locked Three.js assets with hash/license checks. Open
+`http://127.0.0.1:4321/tutorial` to inspect the library and review UI on desktop.
+Keep the server running; actual hand tracking and AR require the headset.
+
+### Connect Quest Browser over USB
+
+Enable Quest developer mode, connect USB, accept debugging on the headset and
+confirm that `adb devices -l` shows an authorized device. In another terminal,
+from the repository root:
 
 ```sh
-# macOS bash/zsh; adjust if you installed elsewhere
-export UNITY_EDITOR="/Applications/Unity/Hub/Editor/6000.3.24f1/Unity.app/Contents/MacOS/Unity"
+cd experiments/quest-browser
+sh launch-ar.sh tutorial
 ```
 
-```powershell
-# Windows PowerShell; adjust to the actual Hub editor location
-$env:UNITY_EDITOR = 'C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe'
-```
+The script configures `adb reverse tcp:4321 tcp:4321` and opens
+`http://localhost:4321/tutorial` in Quest Browser. Keep USB connected and the
+laptop awake. Choose **Create tutorial** or **Follow tutorial**, then use the
+page's AR entry control. Hand guidance requires neither a camera nor an API key.
+Close other camera-sender tabs before testing optional camera capture.
 
-On Linux, set the same environment variable to the installed editor's
-`Editor/Unity` executable. These non-macOS paths are configuration examples,
-not results of cross-platform native testing.
+The prototype is a loopback, single-user development server. Ordinary remote
+hosting requires HTTPS and a deliberate authenticated deployment path. Browser
+storage is origin-specific: changing device, host name or port does not carry
+the library with it. Use explicit export/import for backup or transfer.
 
-`quest:setup` imports/compiles the project and applies Android/OpenXR/URP
-settings. Test commands require passing, nonempty EditMode/PlayMode reports.
-`quest:build` builds a release **ARM64/IL2CPP platform APK**; the native connection
-requires HTTPS. For explicitly scoped USB-loopback development instead:
+### Run the browser regression suite
+
+After setup, from the repository root:
 
 ```sh
-# bash/zsh
-TRAIL_DEVELOPMENT_BUILD=1 pnpm quest:build
+pnpm exec playwright install chromium
+cd experiments/quest-browser
+sh test-all.sh
 ```
 
-In PowerShell, set `$env:TRAIL_DEVELOPMENT_BUILD = '1'` before the build and remove
-it afterward with `Remove-Item Env:TRAIL_DEVELOPMENT_BUILD` when returning to release builds.
-Each command prints its unique `artifacts/quest/<action>-<id>/` directory.
-It contains `unity.log`, `results.xml` for tests, or `Trail.apk` and `build.json`
-for builds. Build evidence must confirm the pinned editor, Android, ARM64 and
-IL2CPP. pnpm itself does not install the editor or UPM SDKs.
-
-There is no prebuilt APK committed to the repository. Building locally produces
-your APK; cloning does not download another developer's local build or signing
-credentials. A successful build verifies the toolchain, not a working headset demo.
-
-Optional pure C# diagnostics use [.NET SDK 8.0.425](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-(the verified .NET 8 SDK version).
-After installing it, run `pnpm test:native-network` and
-`pnpm --filter @trail/contracts test:native`. Unity itself supplies the compiler
-for its own editor tests and APK; the .NET SDK is only for these separate harnesses.
+This runs Node/Python checks and ten synthetic browser workflows on an isolated
+server with temporary data and disabled provider credentials. It does not reuse
+the live port 4321 server. PR #17 adds this suite to hosted CI alongside the
+workspace checks. See [the prototype guide][browser-guide] for runtime overrides.
 
 ### Setup troubleshooting
 
 | Symptom | Check |
 | --- | --- |
-| Wrong Node/pnpm version or engine error | Select `.node-version` and `package.json`'s `packageManager`; reopen the terminal after installation. |
-| Frozen pnpm install fails | Check out matching manifests and `pnpm-lock.yaml`; preserve the lock and inspect the error instead of regenerating it as a first step. |
-| Unity executable missing | Install the exact editor or set `UNITY_EDITOR` to its executable. |
-| License/terms prompt | Complete your own Hub/editor sign-in, terms review and license activation before batch checks. |
-| Project already open | Close its Unity editor before running `quest:*`; unrelated projects can stay open. |
-| Android SDK/NDK/JDK missing | Add all Android child modules in Hub and select the bundled tools in Unity External Tools. |
-| Package download/import error | Check Internet access to Unity and `https://npm.developer.oculus.com`, then inspect Unity Package Manager and the batch log. Retain the pinned manifest/lock. |
+| `experiments/quest-browser` is missing | PR #17 has not landed in this checkout; use its branch as described above. |
+| Wrong Node/pnpm version or frozen install fails | Match `.node-version`, `package.json` and the committed lockfile; inspect the error before regenerating dependencies. |
+| Python environment fails to initialize | Use Python 3.12 with `venv` and pip available, then rerun `sh start.sh`. |
+| Quest is absent or unauthorized in ADB | Enable developer mode, accept USB debugging and check the data cable. |
+| Tutor does not load in Quest Browser | Keep the laptop server running and USB connected; check port 4321 forwarding and the `/tutorial` URL. |
+| Desktop page has no live hands | Enter AR on the headset; desktop review and synthetic tests do not supply real tracking. |
+| Tutorials appear missing | Return to the original browser origin or import an explicit export; storage is not automatically synchronized. |
 | Browser tests cannot find Chromium | Run `pnpm exec playwright install chromium` (Linux may need `--with-deps`). |
-| Meta setup warnings or no headset content | The platform bootstrap requires device testing; SDK resolution/build success does not complete the remaining XR work below. |
-
-The scene runs `NativeBootstrap`, which creates one OpenXR/Meta rig and
-passthrough underlay after XR initialization. URP, Vulkan, the concrete XR Hands
-subsystem and required Meta features are configured by setup. Feature installers
-supply capture, guidance, scene and storage behavior; the platform alone does not
-prove those capabilities. See the [native project guide](apps/quest/README.md)
-and [device checklist](docs/device-check.md).
-
-The native API client and scoped pairing primitives are implemented; application
-route composition is delivered by the authoring/storage workstream. Follow
-[pairing setup](docs/pairing.md) before expecting a connected headset session.
-For an explicitly enabled loopback server and development APK, use
-`adb reverse tcp:3001 tcp:3001`; release builds and untethered use require HTTPS.
-Controllers support UI/recovery, but cannot substitute for bare-hand capture.
-The browser fixture does not launch or validate the Unity app.
 
 ## Repository and implementation order
 
 | Location | Role |
 | --- | --- |
-| `apps/quest/` | Native project, pure C# domain, feature-owned runtime modules and editor/test entry points |
-| `apps/web/` | Synthetic replay and planned review/spectator tools |
-| `apps/server/` | Main API and trusted coordination |
+| `experiments/quest-browser/` (PR #17) | Selected WebXR tutor: capture, review, local library, placement, ghosts and learner guidance |
+| `apps/web/` | Desktop replay, authoring/review, spectator tools and Voice Lab |
+| `apps/server/` | Main API, durable files, pairing and trusted coordination |
 | `apps/vision/` | Separate visual interpretation service |
-| `packages/contracts/` | Strict TypeScript wire schemas; recording v1 remains unchanged |
-| `packages/motion/` | Pure math and planned offline authoring/reference logic |
+| `packages/contracts/` | Strict TypeScript wire schemas and versioned fixtures; browser prototype conversion remains explicit |
+| `packages/motion/` | Pure math and offline authoring/reference logic |
+| `apps/quest/` | Retained Unity implementation and native tests; reference for behavior and contracts |
 | `fixtures/`, `tests/e2e/` | Synthetic contract/recording fixtures and desktop acceptance tests |
-| `docs/` | Plan, ownership, setup evidence and Codex activity log |
+| `docs/` | Plans, design reference, setup evidence and Codex activity log |
 
-Continue from the [dependency-ordered tickets](docs/plan.md#17-immediate-tickets-to-create).
-The scaffold is only part of TRAIL-18/20, not completion of those tickets.
+Follow [the web delivery plan][web-delivery] for the current sequence. The older
+[implementation tickets](docs/plan.md#17-immediate-tickets-to-create) and
+[four-person plan](docs/team-plan.md) retain useful contracts and ownership, but
+their Unity-specific runtime and build assumptions are superseded by this direction.
 
-1. Resolve/build the native project and freeze shared contracts and coordinate mapping.
-2. Prove real hand capture, independent calibration and recorded ghost replay.
-   In parallel, implement native GPT Live transport and the visual backend.
-3. Complete one local interactive step, then a fresh multi-step tutorial with
-   reviewed references and camera-grounded spoken feedback.
-4. Prove transfer to another room/table and evaluate bounded MRUK setup assistance.
-5. Repeat with the second task family, then run recovery, clarity and novice trials.
-
-The [four-person plan](docs/team-plan.md) assigns headset/spatial work to Person 1,
-motion/contracts to Person 2, voice/vision to Person 3, and platform/integration
-to Person 4. Integration owns shared manifests/locks and the main Unity scene;
-feature owners supply their own prefabs and tests.
+1. Bring the browser tutor onto `main` and preserve its local capture/review/guide loop.
+2. Apply the clean UI to real DOM/XR controls, with accurate save and tracking feedback.
+3. Connect one coherent voice/vision coach through validated browser/backend adapters.
+4. Measure fresh multi-step recording, reload, placement, slow following and recovery
+   on Quest; independently validate simultaneous voice, camera and hands.
+5. Prove transfer to another room/table, repeat with a second task family, then
+   run clarity and novice trials.
 
 ## Validation and boundaries
 
-Historical scaffold checks included **39 unit/API tests**, **3 Chromium tests**,
-builds, fixture validation and static Unity-file checks. The merged platform,
-contracts and voice workstreams add coverage; current integration results are
-recorded in [native setup evidence](docs/native-setup.md). Development smoke tests
-verified authenticated service communication and that stopping vision leaves
-the main API/desktop usable. These are recorded results, not a claim about every
-future revision; see [validation evidence](docs/scaffold.md#rescaffold-verification).
+At PR #17 snapshot `40514f5`, reported software checks passed: `pnpm check`
+(361 tests plus typechecks/builds/static native checks), fixture validation,
+seven desktop Chromium scenarios, and the prototype suite (56 Node tests,
+52 Python tests and nine synthetic browser workflows). These are recorded
+results for that revision, not a new validation run of this README change.
+The subsequent review fixes at `84d1c75` passed 60 Node tests, 52 Python tests
+and ten synthetic browser workflows, including required-hand readiness and
+durable-save failure/retry regressions; see the [activity log](docs/codex-log.md).
 
-Local Unity package resolution, C# compilation and the existing EditMode tests
-have passed; see [native setup evidence](docs/native-setup.md) for the APK result.
-Live providers and headset trials remain unverified. Record actual headset results in `docs/validation.md`
-when they exist, including revision, device/software, scenario and measurements.
+The [web delivery record][web-delivery] includes bounded user-reported recording,
+export/reload/replay and workspace relocation. It does not establish quantified
+alignment accuracy, novice success or concurrent voice/camera/XR reliability.
+PR #17 reports no new Quest or live-provider acceptance run. Keep actual device
+results separate, recording the revision, device/OS/browser versions, scenario,
+measurements and remaining issues.
 
-- **Each headset runtime owns its local progression.** AI can explain and assess visible evidence;
-  it cannot invent spatial coordinates or complete a movement step.
+- **The headset browser owns progression.** AI can explain and assess visible
+  evidence; it cannot invent spatial coordinates or complete a movement step.
 - **Movement is not assembly verification.** “Movement checkpoint reached” does
-  not prove grasp, thread engagement, tightness, attachment or a watertight seal.
+  not prove grasp, object contact, attachment, tightness or a watertight seal.
 - **Freshness matters.** Tracking loss, reference changes and stale observations
   must clear partial progress and invalidate affected guidance or inspection.
-- **Offline behavior needs evidence.** Continuing an already preloaded guide
-  without the backend is required; cold offline startup is a separate test.
-- **Generality needs fresh tasks.** Two task families exercise reuse, not support
-  for every physical object. Dangerous tasks and precision-tool use are excluded.
+- **Offline behavior needs evidence.** Continuing an already loaded guide without
+  AI/backend access is required; cold offline startup is a separate test.
+- **Generality needs fresh tasks.** Preserve the recorded object geometry/layout;
+  arbitrary retargeting, dangerous tasks and precision-tool use are excluded.
 - Keep keys, camera frames, raw narration and personal recordings out of Git and
-  logs. Real fixtures require explicit consent and review.
+  logs. Publishing source does not upload the private browser library.
 
-Read [AGENTS.md](AGENTS.md) before contributing. Use focused `codex/` branches,
-coordinate shared-schema changes and keep [the Codex log](docs/codex-log.md)
-current. Validation selection is documented in
+Read [AGENTS.md](AGENTS.md) before contributing, alongside the current
+[web delivery decision][web-delivery]. Use focused `codex/` branches, coordinate
+shared-schema changes and keep [the Codex log](docs/codex-log.md) current.
+Validation selection is documented in
 [the repository's validation guide](.agents/references/validation.md).
+
+[browser-guide]: experiments/quest-browser/README.md
+[web-delivery]: docs/web-delivery.md
+[ui-reference]: docs/design/trail-ui/README.md

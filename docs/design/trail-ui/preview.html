@@ -161,7 +161,7 @@
     case 'settings': html=title('Session','Keep your space clear.','Move the panel beside your work. Pairing and diagnostics stay here, outside the main flow.')+'<div class="actions">'+button('Return to tutorial',prior,true)+button('Home','home')+'</div>';break;
    }
    panel.innerHTML=html+'<div class="handle" aria-hidden="true"></div>';
-   
+
  }
  root.addEventListener('click',e=>{const appearance=e.target.closest('[data-appearance]');if(appearance){state.theme=appearance.dataset.appearance;render();remember();return;}const b=e.target.closest('[data-go]');if(!b)return;if(b.dataset.save)state.saveGesture=b.dataset.save==='yes';if(b.dataset.next)state.recordStep++;if(b.dataset.go==='create')state.recordStep=1;if(b.dataset.go==='settings')prior=state.screen==='record'?'record-paused':['guiding','waiting','checkpoint'].includes(state.screen)?'follow-paused':state.screen;state.screen=b.dataset.go;render();remember();});
  function restore(v){const s=v?.modelContent;if(!s||!palettes[s.theme])return;Object.keys(state).forEach(k=>{if(s[k]!==undefined)state[k]=s[k];});prior=v?.privateContent?.prior||'home';render();}

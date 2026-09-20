@@ -19,7 +19,7 @@ async function seedTutorial(page: import('@playwright/test').Page): Promise<stri
     tutorial.setup = 'Two blocks on the mat.'; tutorial.calibration_span_m = 0.4;
     tutorial.steps.push(core.prepareStep(frames(), 'Slide the base to the centre.', 'Slide the base'));
     tutorial.steps.push(core.prepareStep(frames(), 'Drop the support into the base.', ''));
-    tutorial.steps.forEach((step: { reviewed: boolean }) => { step.reviewed = true; });
+    tutorial.steps.forEach((step: { reviewed: boolean; guide_hands: string }) => { step.guide_hands = 'both'; step.reviewed = true; });
     const finished = core.finishTutorial(tutorial);
     const existing = await store.loadTutorial().catch(() => null);
     await store.saveTutorial(finished, existing ? store.draftVersion(existing) : undefined);

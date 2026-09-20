@@ -1,10 +1,11 @@
 // Portable, bounded tutorial data. No XR, rendering, provider or storage dependency.
 import {JOINTS, tracked} from './motion-core.mjs';
 import {validateNarration,trimNarration} from './narration-core.mjs';
+import {guidanceReadiness,MAX_SAMPLE_GAP_MS} from './tutorial-follow.mjs';
+export {MAX_SAMPLE_GAP_MS} from './tutorial-follow.mjs';
 export const MAX_FRAMES=5400, MAX_STEPS=12, MAX_TOTAL_FRAMES=12000;
 export const MAX_FILE_BYTES=48*1024*1024, MAX_PHOTO_CHARS=700000;
 export const SCHEMA='trail.tutorial.prototype.v3';
-export const MAX_SAMPLE_GAP_MS=200;
 const uid=()=>globalThis.crypto.randomUUID();
 const finite=(v,min,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max;
 const record=v=>v&&typeof v==='object'&&!Array.isArray(v);
@@ -108,7 +109,7 @@ export function validateTutorial(input){
     // Derived duration/quality and verification claims are never trusted on import.
     if(s.guide_hands!==undefined&&!['recorded','left','right','both'].includes(s.guide_hands))throw Error('Invalid guiding hands.');
     step.guide_hands=s.guide_hands||'recorded';
-    step.reference=validateReference(s.reference);step.cues=validateCues(s.cues);step.reviewed=s.reviewed===true&&input.schema!=='trail.tutorial.prototype.v1';
+    step.reference=validateReference(s.reference);step.cues=validateCues(s.cues);step.reviewed=s.reviewed===true&&input.schema!=='trail.tutorial.prototype.v1'&&step.guide_hands!=='recorded';
     step.narration=validateNarration(s.narration,step.duration_ms);step.narration_issue=s.narration_issue?boundedText(s.narration_issue,240,'Narration issue'):null;
     return step;
   });
@@ -136,6 +137,10 @@ export function authoringReadiness(tutorial){
   if(!tutorial.setup?.trim())return {ready:false,message:'Describe the starting layout before finishing this tutorial.'};
   const invalid=tutorial.steps.findIndex(s=>!s.instruction.trim()||s.narration_issue);
   if(invalid>=0)return {ready:false,message:`Repair the instruction or narration for step ${invalid+1}.`};
+  for(const [i,step] of tutorial.steps.entries()){
+    const guidance=guidanceReadiness(step);
+    if(!guidance.ready)return {ready:false,message:`Step ${i+1}: ${guidance.message}`};
+  }
   const index=tutorial.steps.findIndex(s=>!s.reviewed);
   return index>=0?{ready:false,message:`Review step ${index+1} before finishing.`}:{ready:true,message:'All steps reviewed. Finish tutorial to make it ready for learning.'};
 }

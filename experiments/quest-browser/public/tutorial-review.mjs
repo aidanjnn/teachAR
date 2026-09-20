@@ -1,3 +1,4 @@
+import {guidanceReadiness} from '/tutorial-follow.mjs';
 import * as THREE from '/vendor/three.module.js';
 import {HandGuide} from '/hand-guide.mjs';
 import {newTutorial,prepareStep,parseTutorialJSON,validateTutorial,trimStep,TutorialPlayer,MAX_FILE_BYTES,learningReadiness,authoringReadiness,finishTutorial} from '/tutorial-core.mjs';
@@ -106,6 +107,7 @@ export function mountReview(guide,{isActive,tell}){
     const next=structuredClone(guide.tutorial),step=next.steps[selected];if(!step)return;
     step.guide_hands=$('guide-hands').value;step.title=$('step-title').value;step.instruction=$('step-instruction').value;step.reviewed=$('reviewed').checked;
     if(step.narration_issue&&step.reviewed)throw Error('Re-record or remove failed narration before approving this step.');
+    const guidance=guidanceReadiness(step);if(step.reviewed&&!guidance.ready)throw Error(guidance.message);
     next.title=$('tutorial-title').value||'Tabletop practice';next.revision++;
     await replace(validateTutorial(next));status('Instruction and expert review saved. Physical correctness remains unverified.');
   });

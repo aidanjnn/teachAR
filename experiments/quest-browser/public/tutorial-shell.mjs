@@ -16,7 +16,7 @@ export function mountTutorialShell(guide,{isActive,tell}){
   const mine=++generation;try{
    const items=await listTutorials();if(mine!==generation)return;
    const host=$('tutorial-library');host.replaceChildren();
-   for(const t of items.filter(t=>t.steps.length)){
+   for(const t of items.filter(t=>t.steps.length).map(validateTutorial)){
     const row=document.createElement('div');row.className='library-item';row.setAttribute('role','listitem');
     const info=document.createElement('div'),title=document.createElement('strong'),meta=document.createElement('p'),button=document.createElement('button');
     title.textContent=t.title;meta.textContent=`${t.steps.length} recordings · ${t.completion?'Ready to follow':'Draft — needs review'}`;
