@@ -1,7 +1,0 @@
-{
-  "name": "Trail.Tests.Scene", "rootNamespace": "Trail.Tests.Scene",
-  "references": ["Trail.Scene", "Trail.Contracts"], "includePlatforms": ["Editor"],
-  "excludePlatforms": [], "allowUnsafeCode": false, "overrideReferences": false,
-  "precompiledReferences": [], "autoReferenced": true, "defineConstraints": [],
-  "versionDefines": [], "noEngineReferences": true, "optionalUnityReferences": ["TestAssemblies"]
-}

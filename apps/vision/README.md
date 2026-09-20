@@ -9,7 +9,7 @@ reviewed reference, nonce and observation-age authority. It never advances the g
 Build with `pnpm build`. Set the same random, >=32-character base64url
 `VISION_SERVICE_TOKEN` in both processes. Main server uses
 `VISION_SERVICE_URL=http://127.0.0.1:3002`. Run `pnpm start:vision` and the main
-server independently, or `pnpm dev` for the existing supervised launcher.
+server independently, or `pnpm dev:desktop` for the existing supervised launcher.
 
 Default `VISION_PROVIDER=mock` returns **unavailable**, never a synthetic success.
 For explicitly enabled real requests configure `VISION_PROVIDER=openai`,
@@ -49,36 +49,15 @@ billed probe or establish provider health.
   Learner images are ephemeral bounded memory; JS strings are garbage collected,
   not securely erasable. `store:false` is an API setting, not a retention promise.
 
-## Native diagnostic flow and integration
+## Browser integration boundary
 
-Merge dependencies described in `docs/visual-inspection.md`. Platform feature order
-30 installs the source-only MRUK camera and world-space Enable camera / Check / Cancel
-controls. Enable camera is explicit after lifecycle changes. Check pauses through the
-real GuideSession, sends the canonical paused snapshot to `POST /api/guide-events`,
-waits for acknowledgment, requests a nonce and captures the next actual source frame.
-The copied frame excludes rendered ghosts. A result is advisory text and preserves
-Resume/Repeat as local learner actions. Focus loss, repeat, step/session changes or
-recalibration invalidate results. Camera and backend status are separate.
+The service is retained for the planned paired WebXR coach adapter. The tutor's
+local camera lab is separate and does not call these routes. Read
+[the inspection protocol](../../docs/visual-inspection.md) for lease, nonce,
+freshness, approved-reference and stale-context requirements. A future browser
+adapter must preserve these policies and map browser v3 context explicitly.
 
-The voice teammate can subscribe to `SceneInspectionController.FindingsAccepted`;
-recheck `IsCurrent(context)` immediately before delivery and cancel stale playback
-using the voice transport's own generation policy. This PR adds no audio, microphone,
-Live session, narration or transport implementation.
-
-## Evidence and reproduction
-
-`pnpm exec vitest run apps/vision/test apps/server/test/inspection.test.ts` runs fake
-provider and fully decoded synthetic-image cases. `two-process.test.ts` launches two
-actual Node processes on free loopback ports and uses real pairing/auth. It tests
-visible-match/adjustment-needed/uncertain, cancellation, kill/restart and recovery;
-fixtures do not recognize objects and are never presented as model accuracy.
-
-`dotnet run --project apps/quest/Tests/SceneHarness/SceneHarness.csproj` compiles
-actual C# freshness and transport code. Unity MRUK readback, permission, sensor/queue
-alignment and physical camera-to-feedback remain device validation requirements.
-
-API sources: [Responses image inputs](https://developers.openai.com/api/docs/guides/images-vision),
-[structured output](https://developers.openai.com/api/docs/guides/structured-outputs),
-[MRUK camera integration](https://developers.meta.com/horizon/documentation/unity/unity-pca-documentation/).
-Implementation inspected the official MRUK 205 package source (`IsUpdatedThisFrame`,
-`Timestamp`, `GetTexture`) to preserve frame identity across GPU readback.
+`pnpm check` runs API and two-process mock tests. Real image interpretation,
+sensor freshness and simultaneous camera/mic/XR require separate live provider
+and Quest evidence. No retired device-camera implementation is available in
+this foundation.

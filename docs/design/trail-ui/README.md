@@ -24,6 +24,6 @@ The design uses [Ali's design guidance](https://github.com/neanicc/alis-design).
 
 ## Implementation boundary
 
-See [the web delivery plan](../../web-delivery.md) for the feature inventory, source map, implementation order and acceptance test. Use the existing browser view model and state machine; do not bolt on another workflow controller. Unity/Meta prefabs are not web assets. Recreate the design through Three.js world-space rendering and existing hand/controller hit tests, with matching DOM controls outside AR.
+See [the web delivery plan](../../web-delivery.md) for the feature inventory, source map, implementation order and acceptance test. Use the existing browser view model and state machine; do not bolt on another workflow controller. Recreate the design through Three.js world-space rendering and existing hand/controller hit tests, with matching DOM controls outside AR.
 
-The complete clean UI, compact immersive dock, event feedback and improved in-headset editing are **next work**, not implemented by this reference. Existing functional controls remain in the runnable tutor.
+The runnable tutor now implements this direction through real recording/review/follow actions, a compact immersive dock, durable-save feedback and in-headset trim controls. This preview remains simulated. See [UI base implementation and acceptance](../../web-ui-base.md) for the exact scope and remaining headset checks.

@@ -1,0 +1,60 @@
+/* The tutor's visual system is isolated from the earlier camera/path experiments. */
+:root{--trail-ground:#1b1d19;--trail-surface:#242522;--trail-raised:#2d3029;--trail-ink:#e5e6dc;--trail-muted:#b6b8ad;--trail-line:#56584f;--trail-action:#d7d8cc;--trail-actionInk:#20231f;--trail-success:#a5dbb5;--trail-warning:#e4bd7c;color-scheme:dark}
+:root[data-theme=light]{color-scheme:light}
+body.tutorial-page{background:var(--trail-ground);color:var(--trail-ink);font:400 16px/1.55 system-ui,-apple-system,sans-serif}
+.tutorial-page main{max-width:1040px;padding:32px 36px 48px}
+.tutorial-page h1,.tutorial-page h2,.tutorial-page strong{font-weight:500}
+.tutorial-page h1{font-size:clamp(36px,5vw,54px);letter-spacing:-.035em;line-height:1.1;max-width:18ch}
+.tutorial-page h2{font-size:28px;letter-spacing:-.025em}.tutorial-page h3{font-size:20px;font-weight:500}
+.tutorial-page p{max-width:65ch}.tutorial-page .quiet,.tutorial-page .muted,.tutorial-page small{color:var(--trail-muted)}
+.tutorial-page .eyebrow{font-size:14px;letter-spacing:0;font-weight:400;color:var(--trail-muted);text-transform:none}
+.tutorial-page a{color:var(--trail-ink);text-underline-offset:4px}.tutorial-page .trail-logo{font-size:22px;font-weight:500;letter-spacing:.23em;text-decoration:none}
+.trail-header{gap:16px;padding:8px 0 28px;border-bottom:1px solid var(--trail-line);color:var(--trail-muted);margin:0 0 24px}
+.tutorial-page #shell-save{font-size:13px;color:var(--trail-muted);max-width:36ch;overflow-wrap:anywhere}
+.tutorial-page button,.tutorial-page .button{font:500 16px/1.3 system-ui;color:var(--trail-ink);background:var(--trail-raised);border:1px solid var(--trail-line);border-radius:999px;min-height:48px;padding:12px 22px;transition:background 150ms ease-out,transform 140ms ease-out;max-width:100%;overflow-wrap:anywhere}
+.tutorial-page button:active:not(:disabled){transform:scale(.97)}
+.tutorial-page button:disabled{opacity:.45;cursor:not-allowed}
+.tutorial-page :focus-visible{outline:3px solid var(--trail-warning);outline-offset:4px}
+@media(hover:hover) and (pointer:fine){.tutorial-page button:hover:not(:disabled){background:color-mix(in oklab,var(--trail-ink) 10%,var(--trail-surface))}.tutorial-page .primary:hover:not(:disabled),.tutorial-page #enter:hover:not(:disabled){background:color-mix(in oklab,var(--trail-action) 85%,var(--trail-surface))}}
+.tutorial-page .primary,.tutorial-page #enter,.tutorial-page #ready-create,.tutorial-page #finish-tutorial{background:var(--trail-action);color:var(--trail-actionInk);border-color:transparent;font-weight:500}
+.tutorial-page .trail-nav button{background:transparent;border-color:transparent;font-size:15px;min-height:44px}
+.tutorial-page .trail-nav button[aria-current=page]{background:var(--trail-raised);color:var(--trail-ink);border-color:var(--trail-line)}
+.tutorial-page #notice{padding:12px 16px;background:var(--trail-surface);font-size:14px;color:var(--trail-muted);border-radius:12px;min-height:0}
+.tutorial-page .trail-home{padding:30px 0 22px}.trail-home>p{color:var(--trail-muted);font-size:18px}
+.tutorial-page .trail-choices{gap:18px;margin:30px 0 20px}
+.tutorial-page .trail-choices button{background:var(--trail-surface);border:1px solid var(--trail-line);color:var(--trail-ink);border-radius:26px;min-height:238px;padding:26px;gap:14px}
+.tutorial-page .trail-choices strong{font-size:25px;line-height:1.2}.tutorial-page .trail-choices span:not(.choice-mark){font-size:16px;color:var(--trail-muted)}
+.tutorial-page .choice-mark{display:grid;place-items:center;width:52px;height:52px;border:1px solid var(--trail-line);border-radius:14px;color:var(--trail-ink);margin-bottom:12px}
+.choice-mark svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round}
+.tutorial-page #continue-draft,.tutorial-page #download-tutorial,.tutorial-page #export-motion,.tutorial-page #download-diagnostics{color:var(--trail-ink);background:transparent;border-color:var(--trail-line);font-size:15px}
+.tutorial-page .panel,.tutorial-page .assist-options{background:var(--trail-surface);border:1px solid var(--trail-line);border-radius:26px;padding:28px;margin:24px 0}
+.tutorial-page .launch-panel{border-color:var(--trail-line);margin:16px 0;padding:26px 0;gap:28px}
+.tutorial-page .launch-panel h2{font-size:23px}.tutorial-page .launch-panel p{color:var(--trail-muted)}
+.tutorial-page .launch-panel #enter{min-width:230px;max-width:330px;font-size:18px;width:auto;padding:18px 24px;border-radius:999px}
+.tutorial-page #tutorial-title,.tutorial-page #tutorial-setup,.tutorial-page #tutorial-instructions,.tutorial-page #step-instruction,.tutorial-page #trim-start,.tutorial-page #trim-end{background:var(--trail-ground);color:var(--trail-ink);border:1px solid var(--trail-line);border-radius:12px;font:inherit;padding:14px;max-width:100%}
+.tutorial-page textarea{resize:vertical}.tutorial-page label{display:inline-block;max-width:100%;margin:8px 0}
+.tutorial-page input[type=checkbox]{appearance:none;display:inline-grid;place-content:center;width:20px;height:20px;background:var(--trail-surface);border:1px solid var(--trail-line);border-radius:5px;vertical-align:middle;margin:0 8px 0 0}
+.tutorial-page input[type=checkbox]:checked{background:var(--trail-action);border-color:var(--trail-action)}
+.tutorial-page input[type=checkbox]:checked::before{content:'✓';color:var(--trail-actionInk);font-size:15px;line-height:1}
+.tutorial-page input[type=range]{accent-color:var(--trail-action);min-height:32px}
+.tutorial-page input[type=file]{max-width:100%;font:inherit}.tutorial-page input[type=file]::file-selector-button{background:var(--trail-raised);color:var(--trail-ink);border:1px solid var(--trail-line);border-radius:16px;padding:10px 14px}
+.tutorial-page summary{font-size:17px;min-height:44px;cursor:pointer;padding:6px 0}.tutorial-page details p{font-size:16px;color:var(--trail-muted)}
+.tutorial-page .library-item{border-color:var(--trail-line);gap:20px}.tutorial-page .library-item strong{font-size:23px;overflow-wrap:anywhere}.tutorial-page .library-item p{color:var(--trail-muted)}
+.tutorial-page #step-list button{font-size:15px}.tutorial-page #step-list button[aria-pressed=true]{background:var(--trail-action);color:var(--trail-actionInk)}
+.tutorial-page .save-banner{background:var(--trail-raised);border-color:var(--trail-success);color:var(--trail-ink)}
+.tutorial-page #motion-preview{width:100%;height:auto;max-width:100%;border-radius:18px;cursor:default}.tutorial-page #hud-preview{background:var(--trail-ground)}
+.tutorial-page #stop{font-size:14px;margin:16px 0;color:var(--trail-muted);background:transparent}
+.preferences-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:14px 0 24px}.preferences-bar p{margin:0;color:var(--trail-muted);font-size:14px}
+.trail-select{display:inline-block;position:relative;max-width:100%;vertical-align:middle;margin:4px 8px}
+.tutorial-page .select-source{position:absolute;width:1px;height:1px;opacity:0;min-height:0;padding:0;pointer-events:none}
+.tutorial-page .select-trigger{border-radius:12px;text-align:left;min-width:140px;width:100%}
+.select-list{position:absolute;z-index:30;top:calc(100% + 4px);left:0;min-width:100%;width:max-content;max-width:min(300px,80vw);max-height:260px;overflow:auto;background:var(--trail-surface);color:var(--trail-ink);padding:4px;border:1px solid var(--trail-line);border-radius:12px;box-shadow:0 12px 30px color-mix(in oklab,var(--trail-ground) 65%,transparent)}
+.select-list [role=option]{padding:10px 12px;border-radius:8px;cursor:pointer}.select-list [data-highlight=true]{background:var(--trail-raised)}.select-list [aria-disabled=true]{opacity:.4}
+#feedback-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:50;background:var(--trail-surface);border:1px solid var(--trail-success);color:var(--trail-ink);padding:12px 20px;border-radius:16px;max-width:calc(100vw - 32px);pointer-events:none;box-shadow:0 8px 24px color-mix(in oklab,var(--trail-ground) 60%,transparent)}
+#feedback-toast[data-kind=error]{border-color:var(--trail-warning)}
+@media(max-width:650px){.tutorial-page main{padding:20px}.tutorial-page .trail-choices{grid-template-columns:1fr}.tutorial-page .trail-choices button{min-height:190px}.tutorial-page .launch-panel{display:block}.tutorial-page .launch-panel #enter{max-width:none;width:100%;min-width:0}.tutorial-page .panel{padding:20px}.trail-header{gap:10px}.tutorial-page #shell-save{margin:0;width:100%}.tutorial-page .library-item{display:block}.tutorial-page .library-item button{width:100%}.trail-select{max-width:100%;margin-left:0}.select-list{max-width:calc(100vw - 80px)}}
+@media(prefers-reduced-motion:reduce){.tutorial-page *{transition:none!important;scroll-behavior:auto!important}.tutorial-page button:active:not(:disabled){transform:none}}
+@media(prefers-contrast:more){.tutorial-page button,.tutorial-page input,.tutorial-page textarea,.tutorial-page .panel{border-width:2px}.tutorial-page #notice{color:var(--trail-ink)}}
+.tutorial-page [data-screen=create]>label{display:block;width:100%;margin:20px 0}
+.tutorial-page [data-screen=create]>label input:not([type=checkbox]),.tutorial-page [data-screen=create]>label textarea{width:100%;max-width:none;margin-top:8px}
+.tutorial-page [data-screen=create] .setup-choice{display:flex;align-items:center;gap:8px}.tutorial-page .setup-choice input{flex-shrink:0}

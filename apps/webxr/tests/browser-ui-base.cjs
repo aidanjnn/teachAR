@@ -1,0 +1,40 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'@playwright/test');
+const assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({headless:true,channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,args:['--enable-unsafe-swiftshader','--mute-audio']});try{
+ const page=await browser.newPage({viewport:{width:1280,height:1000}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));await page.route('**/api/**',r=>r.fulfill({contentType:'application/json',body:'{}'}));
+ await page.goto(`${process.env.TRAIL_TEST_ORIGIN}/tutorial`);
+ await page.locator('#create-tutorial').waitFor();
+ await page.locator('#device-settings').evaluate(e=>e.open=true);
+ await page.locator('#appearance-toggle').click();assert.equal(await page.locator('html').getAttribute('data-theme'),'light');
+ await page.locator('#event-sounds').click();assert.equal(await page.locator('#event-sounds').getAttribute('aria-pressed'),'false');
+ await page.reload();await page.locator('#device-settings').evaluate(e=>e.open=true);
+ await page.waitForFunction(()=>document.documentElement.dataset.theme==='light');assert.equal(await page.locator('#event-sounds').getAttribute('aria-pressed'),'false');
+ await page.locator('#appearance-toggle').click();
+ await page.locator('#developer-tools').evaluate(e=>e.open=true);await page.locator('#load-synthetic').click();
+ await page.locator('#step-editor').waitFor();
+ const speed=page.getByRole('combobox',{name:'Speed',exact:true});await speed.click();await page.getByRole('option',{name:'0.5×',exact:true}).click();assert.equal(await page.locator('#preview-speed').inputValue(),'0.5');
+ await speed.focus();await speed.press('ArrowDown');await speed.press('ArrowDown');await speed.press('Enter');assert.equal(await page.locator('#preview-speed').inputValue(),'0.75');
+ const result=await page.evaluate(async()=>{
+  const THREE=await import('/vendor/three.module.js'),{TutorialGuide,tutorialButton}=await import('/tutorial-guide.mjs'),{syntheticTutorial}=await import('/tutorial-review.mjs');
+  const fail=m=>{throw Error(m);};const events=[];let release;
+  const g=new TutorialGuide({speak:()=>{},exit:()=>{},onFeedback:e=>events.push(e),writeTutorial:()=>new Promise(resolve=>release=resolve)});g.attach(new THREE.Scene());g.tutorial=syntheticTutorial();g.tutorial.steps.forEach(s=>s.reviewed=true);g.ux=true;g.activeSession=true;g.mode='author';
+  const task=g.finishAuthoring();while(!release)await new Promise(r=>setTimeout(r,0));if(g.mode!=='saving'||events.length)fail('Completion announced before storage');release();await task;if(g.mode!=='saved'||events.at(-1)?.kind!=='saved')fail('Durable success missing');
+  const bad=new TutorialGuide({speak:()=>{},exit:()=>{},onFeedback:e=>events.push(e),writeTutorial:()=>Promise.reject(Error('Disk full'))});bad.attach(new THREE.Scene());bad.tutorial=syntheticTutorial();bad.tutorial.steps.forEach(s=>s.reviewed=true);bad.ux=true;bad.activeSession=true;bad.mode='author';
+  const before=events.length;await bad.finishAuthoring();if(bad.mode==='saved'||bad.tutorial.completion||events.slice(before).some(e=>e.kind==='saved'))fail('Failed storage reported success');
+  let lateRelease;const late=new TutorialGuide({speak:()=>{},exit:()=>{},onFeedback:e=>events.push(e),writeTutorial:()=>new Promise(r=>lateRelease=r)});late.tutorial=syntheticTutorial();late.tutorial.steps.forEach(s=>s.reviewed=true);late.ux=true;late.mode='author';const pending=late.finishAuthoring();while(!lateRelease)await new Promise(r=>setTimeout(r,0));late.reset();const count=events.length;lateRelease();await pending;if(late.mode==='saved'||events.length!==count)fail('Old session save changed new session UI');
+  g.writeTutorial=async()=>{};g.mode='author';g.start=[0,0,0];g.end=[.5,0,0];g.setWorkspace();g.mode='author';g.action('hand');const step=g.player.step;step.reference={image:'placeholder'};step.reviewed=true;
+  g.action('review-options');g.action('trim-open');g.action('trim-end-less');g.action('trim-apply');if(g.mode!=='review-step'||g.player.step.reviewed||g.player.step.reference)fail('Trim did not require re-review/invalidate end photo');
+  g.action('keep-add');if(g.mode!=='author'||!g.tutorial.steps[0].reviewed)fail('Keep/add did not return to recording');
+  g.mode='capture';g.recordElapsed=1200;g.action('settings');if(g.mode!=='settings'||g.settingsReturn!=='capture-paused')fail('Settings left recording running');g.action('settings-back');if(g.mode!=='capture-paused')fail('Settings silently resumed recording');
+  g.action('exit');if(g.mode!=='confirm-exit')fail('Exit discarded take without choice');g.action('keep-take');if(g.mode!=='capture-paused')fail('Exit cancel lost take');
+  const c=document.createElement('canvas');c.width=1080;c.height=560;const ctx=c.getContext('2d');g.mode='home';g.draw(ctx,performance.now(),'');window.uiHome=c.toDataURL();
+  for(const b of g.uiButtons){if(tutorialButton((b.x+b.w/2)/1080,1-(b.y+b.h/2)/560,g.uiButtons)!==b.id)fail('Hit target differs from visible control');}
+  g.mode='learn';g.player={index:0,step:{instruction:'Follow the demonstrated movement'},paused:true};g.followEngine={state:'waiting',started:false,index:0,gates:[{},{}],radius:.12};g.draw(ctx,performance.now(),'');window.uiFollow=c.toDataURL();if(tutorialButton(.9,.6,g.uiButtons)!==null)fail('Transparent canvas area captured input');
+  await g.saveQueue;return {durableSave:true,failedSave:true,staleSave:true,inHeadsetTrim:true,settingsPause:true,exitRecovery:true};
+ });
+ for(const [key,file]of [['uiHome','/tmp/trail-ui-home-canvas.png'],['uiFollow','/tmp/trail-ui-follow-canvas.png']])require('node:fs').writeFileSync(file,Buffer.from((await page.evaluate(k=>window[k],key)).split(',')[1],'base64'));
+ await page.locator('[data-route=home]').click();await page.locator('#developer-tools').evaluate(e=>e.open=false);await page.locator('#device-settings').evaluate(e=>e.open=false);
+ await page.screenshot({path:'/tmp/trail-ui-desktop.png',fullPage:true});await page.setViewportSize({width:375,height:900});await page.screenshot({path:'/tmp/trail-ui-mobile.png',fullPage:true});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ assert.deepEqual(errors,[]);console.log('PASS connected UI/UX base',result);
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1);});

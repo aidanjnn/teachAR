@@ -1,0 +1,68 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'@playwright/test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+(async()=>{
+  const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader','--mute-audio']});
+  try{
+    const context=await browser.newContext({viewport:{width:1280,height:1000},acceptDownloads:true});
+    const errors=[];
+    await context.route('**/api/**',async route=>{
+      assert.equal(route.request().method(),'GET','Review must not upload images or use paid APIs');
+      await route.fulfill({contentType:'application/json',body:JSON.stringify({enabled:false,calls:0,automatic:{enabled:false},capture:{source:'quest'}})});
+    });
+    const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+    await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);
+    await page.locator('#developer-tools').evaluate(e=>e.open=true);
+    await page.getByRole('button',{name:'Load synthetic test',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector('#step-list').children.length===2);
+    assert.match(await page.locator('#tutorial-provenance').innerText(),/SYNTHETIC/);
+    assert.match(await page.locator('#tutorial-readiness').innerText(),/Review step 1/);
+    await page.locator('#step-instruction').fill('Fold inward <script>window.bad = true</script>');
+    await page.locator('#reviewed').check();await page.locator('#save-step-edits').click();
+    await page.waitForFunction(()=>document.querySelector('#tutorial-readiness').textContent.includes('step 2'));
+    assert.equal(await page.evaluate(()=>window.bad),undefined);
+    await page.locator('#step-list button').nth(1).click();await page.locator('#reviewed').check();await page.locator('#save-step-edits').click();
+    await page.waitForFunction(()=>document.querySelector('#tutorial-readiness').textContent.includes('Finish tutorial'));
+    await page.locator('#step-instruction').fill('Revised demonstration instruction');
+    assert.equal(await page.locator('#reviewed').isChecked(),false,'Instruction edit must clear implicit prior review');
+    await page.locator('#reviewed').check();await page.locator('#save-step-edits').click();
+    await page.waitForFunction(()=>document.querySelector('#review-status').textContent.includes('Instruction and expert review saved'));
+    await page.locator('#preview-speed').selectOption('0.5');
+    await page.locator('#finish-tutorial').click();await page.waitForFunction(()=>document.querySelector('#authoring-status').textContent.startsWith('FINISHED'));
+    const other=await context.newPage();other.on('pageerror',e=>errors.push(e.message));await other.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await other.locator('[data-route=review]').click();
+    await other.waitForFunction(()=>document.querySelector('#step-list').children.length===2);
+    await page.locator('#trim-start').fill('0.2');await page.locator('#trim-end').fill('2.6');await page.locator('#trim-step').click();
+    await page.waitForFunction(()=>document.querySelector('#review-status').textContent.includes('Trim saved'));
+    assert.match(await page.locator('#tutorial-readiness').innerText(),/Review step 2/);
+    assert.match(await page.locator('#authoring-status').innerText(),/^DRAFT/);
+    // Stale second tab cannot replace first tab's trim.
+    await other.locator('#step-instruction').fill('Stale overwrite');await other.locator('#save-step-edits').click();
+    await other.waitForFunction(()=>document.querySelector('#review-status').textContent.includes('Another tab'));
+    await other.close();
+    const downloadPromise=page.waitForEvent('download');await page.locator('#download-tutorial').click();
+    const download=await downloadPromise;const data=JSON.parse(fs.readFileSync(await download.path(),'utf8'));
+    assert.equal(data.steps.length,2);assert.equal(data.steps[1].reviewed,false);assert.equal(data.source,'synthetic-fixture');
+    const diagnosticsPromise=page.waitForEvent('download');await page.locator('#download-diagnostics').click();
+    const diagnosticDownload=await diagnosticsPromise,diagnostics=JSON.parse(fs.readFileSync(await diagnosticDownload.path(),'utf8'));
+    assert.equal(diagnostics.schema,'trail.tutorial.diagnostics.v1');assert.equal(diagnostics.steps.length,2);
+    assert.equal(JSON.stringify(diagnostics).includes('"frames"'),false);
+    const previousTitle=await page.locator('#tutorial-title').inputValue();
+    await page.locator('#import-tutorial').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{"schema":"bad"}')});
+    await page.waitForFunction(()=>document.querySelector('#review-status').textContent.includes('Unsupported'));
+    assert.equal(await page.locator('#tutorial-title').inputValue(),previousTitle);
+    await page.locator('#new-tutorial').click();await page.waitForFunction(()=>document.querySelector('#step-list').children.length===0);
+    await page.locator('#import-tutorial').setInputFiles({name:'export.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
+    await page.waitForFunction(()=>document.querySelector('#step-list').children.length===2);
+    await page.reload();await page.locator('[data-route=review]').click();await page.locator('#developer-tools').evaluate(e=>e.open=true);await page.waitForFunction(()=>document.querySelector('#step-list').children.length===2);
+    await page.locator('#step-list button').nth(1).click();
+    await page.locator('#preview-replay').click();await page.locator('#scrub').fill('1000');
+    await page.locator('#motion-preview').screenshot({path:'/tmp/trail-review-ghosts.png'});
+    await page.locator('#step-editor').screenshot({path:'/tmp/trail-review-editor.png'});
+    const prior=await page.locator('#step-list button').nth(1).innerText();
+    await page.locator('#move-step-up').click();await page.waitForFunction(()=>document.querySelector('#review-status').textContent.includes('order changed'));
+    assert.equal((await page.locator('#step-list button').nth(0).innerText()).includes(prior.split(' · ')[0].slice(3)),true);
+    assert.equal(await page.locator('#reviewed').isChecked(),false);
+    await page.locator('#delete-step').click();await page.waitForFunction(()=>document.querySelector('#step-list').children.length===1);
+    assert.deepEqual(errors,[]);console.log('PASS review UI: fixture, edit, review gate, trim, concurrent-tab conflict, download/import, malformed input, persistence, delete; no paid calls.');
+  }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1);});

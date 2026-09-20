@@ -1,3 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup><Compile Include="../../apps/quest/Assets/Trail/Contracts/*.cs" /></ItemGroup>
-</Project>

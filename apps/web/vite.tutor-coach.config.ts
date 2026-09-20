@@ -12,7 +12,7 @@ export default defineConfig({
       formats: ['es'],
       fileName: () => 'trail-coach.js',
     },
-    outDir: fileURLToPath(new URL('../../experiments/quest-browser/public/vendor', import.meta.url)),
+    outDir: fileURLToPath(new URL('../../apps/webxr/public/vendor', import.meta.url)),
     emptyOutDir: false,
     sourcemap: false,
     minify: false,
