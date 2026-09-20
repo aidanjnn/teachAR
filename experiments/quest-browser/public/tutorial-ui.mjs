@@ -33,15 +33,23 @@ export function tutorialView(g){
   const state=g.followEngine?.state;
   v.title=g.watchOnly?'Watch the demonstration':g.gatePaused?'Paused — take your time':({waiting:g.followEngine?.started?'Waiting for you':'Bring your hands to the start',following:'Follow the next movement',tracking:'Show your hands again','reference-gap':'Recording has tracking gaps',checkpoint:'Movement checkpoint reached'})[state]||'Bring your hands to the start';
   v.detail=g.watchOnly?'Demonstration only. Return to guided practice when ready.':state==='checkpoint'?'Position reached. Check the physical result yourself.':state==='reference-gap'?'Choose Watch again, or re-record with the required hands visible.':state==='tracking'?'Progress is held. Missing tracking is not a movement error.':'The ghost waits for your position. It does not grade objects or grip.';
-  if(g.watchOnly)b('try-follow','Ready to try');else if(g.followEngine?.done)b('primary','Result looks right · next');
+  if(g.watchOnly)b('try-follow','Ready to try');else if(g.followEngine?.done&&!g.practice)b('primary','Result looks right · next');
   b('replay',g.watchOnly?(g.player.paused?'Resume replay':'Pause replay'):(g.gatePaused?'Resume':'Pause'));b('restart-follow','Repeat');b('learn-options','Menu');break;}
  case 'learn-options':v.tag='FOLLOW · OPTIONS';v.title='Practice controls';v.text='Your place is held. Return when ready.';b('watch-demo','Watch demonstration');b('restart-follow','Restart movement');b('hand','Previous recording');b('removeCue',`Palm zones ${g.alignmentEnabled?'ON':'OFF'}`);b('move-tutorial','Reposition tutorial');b('learn-back','Back to practice');b('home','Back home');break;
  case 'finished':v.tag='FOLLOW · COMPLETE';v.title='Tutorial completed';v.text='You reached the movement checkpoints and confirmed the results. Physical correctness was not automatically verified.';b('start-follow','Practise again');b('home','Back home');break;
  }
  if(g.pending?.kind==='save-position'&&performance.now()>=g.pending.until){v.title='Hold both hands still';v.text=g.note;v.buttons=[{id:'set-save-position',label:'Restart countdown'}];if(g.tutorial.save_position)v.buttons.push({id:'cancel-save-position',label:'Keep current position'});else v.buttons.push({id:'home',label:'Back home'});}
  else if(g.pending){v.title=`${Math.max(0,Math.ceil((g.pending.until-performance.now())/1000))} seconds`;v.text=g.note;v.buttons=[];}
+ if(g.mode==='learn'&&g.practice&&!g.watchOnly&&!g.gatePaused){
+  const phase=g.practice.phase;
+  if(phase==='preview'){v.title='Watch first';v.detail='Watch the full movement. Then try it at your own pace.';}
+  if(phase==='ready'){v.title=g.followEngine.state==='reference-gap'?'Recording has tracking gaps':g.followEngine.state==='tracking'?'Show your hands again':'Your turn';v.detail='Bring your palms near the starting regions. Exact finger matching is not needed.';}
+  if(phase==='practice'){v.title=g.followEngine.state==='tracking'?'Show your hands again':g.followEngine.state==='reference-gap'?'Recording has tracking gaps':'Move at your own pace';v.detail='Follow the direction and broad checkpoints. You do not need to copy every motion.';}
+  if(phase==='transition'){v.title=g.player.index+1<g.tutorial.steps.length?'Movement reached · next step':'Last movement reached';v.detail='No button needed. Physical result has not been checked.';}
+ }
+ if(g.mode==='finished'&&g.movementOnly){v.title='Movements finished';v.text='You followed the movement checkpoints. Check the physical result yourself; it has not been verified.';}
  if(g.problem){v.detail=g.problem;v.tone='warning';}
- if(g.mode==='learn'){const state=g.followEngine?.state;v.tone=state==='checkpoint'?'success':state==='tracking'||state==='reference-gap'||state==='waiting'&&g.followEngine?.started?'warning':null;v.progress=g.followEngine?g.followEngine.index/Math.max(1,g.followEngine.gates.length-1):null;if(state==='waiting'&&g.followEngine?.started&&!g.gatePaused)v.title='A little closer';}
+ if(g.mode==='learn'){const state=g.followEngine?.state;v.tone=state==='checkpoint'?'success':state==='tracking'||state==='reference-gap'||state==='waiting'&&g.followEngine?.started?'warning':null;v.progress=g.followEngine?g.followEngine.index/Math.max(1,g.followEngine.gates.length-1):null;if(state==='waiting'&&g.followEngine?.started&&!g.gatePaused)v.title='Continue toward the ghost';}
  if(g.pending)v.compact=false;
  return v;
 }

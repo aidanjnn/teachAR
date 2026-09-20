@@ -3,7 +3,7 @@ import {HandGuide} from '/hand-guide.mjs';
 import {tracked, distance, toLocal} from '/motion-core.mjs';
 import {newTutorial, prepareStep, TutorialPlayer, MAX_FRAMES, MAX_STEPS, MAX_TOTAL_FRAMES, MAX_FILE_BYTES, validateTutorial, validateReference, learningReadiness, validateCues,finishTutorial,trimStep} from '/tutorial-core.mjs';
 import {PalmAlignment,CaptureEndpoint,SavePositionCapture} from '/tutorial-assist.mjs';
-import {TutorialFollower} from '/tutorial-follow.mjs';
+import {TutorialPractice} from '/tutorial-follow.mjs';
 import {drawTutorialUI} from '/tutorial-ui.mjs';
 import {preferences,applyAppearance,THEMES} from '/tutorial-design.mjs';
 import {TutorialFeedback} from '/tutorial-feedback.mjs';
@@ -112,7 +112,7 @@ export class TutorialGuide extends HandGuide {
     this.saveHomeWorld=null;this.saveReturn=null;this.savePositionCapture?.reset();
     this.takeNarrationIssue=null;this.alignment?.reset();this.endpoint?.reset();this.alignmentResult=null;this.hideAssistance();
     super.reset();
-    this.feedback?.clear();this.feedbackState=null;this.followEngine=null;this.watchOnly=false;this.gatePaused=false;this.wasHidden=false;
+    this.feedback?.clear();this.feedbackState=null;this.practice=null;this.followEngine=null;this.watchOnly=false;this.gatePaused=false;this.wasHidden=false;
     this.epoch = (this.epoch || 0) + 1; this.player = null; this.replaceIndex=null;this.photoTarget=null;this.photoEpoch=(this.photoEpoch||0)+1;
     if (this.leftGhost) this.leftGhost.ghost.visible = false;
     if (this.photoPanel) this.photoPanel.visible = false;
@@ -164,7 +164,7 @@ export class TutorialGuide extends HandGuide {
     if(id==='settings'){
       if(this.pending)return true;
       if(this.mode==='capture'){this.mode='capture-paused';this.narrator?.pause();this.endpoint.interrupt();}
-      this.settingsReturn=this.mode;this.gatePaused=true;this.followEngine?.pause();if(this.player)this.player.paused=true;this.audioPlayer?.stop();this.mode='settings';return true;
+      this.settingsReturn=this.mode;this.gatePaused=true;this.followEngine?.pause();this.practice?.pause();if(this.player)this.player.paused=true;this.audioPlayer?.stop();this.mode='settings';return true;
     }
     if(id==='settings-back'){this.mode=this.settingsReturn||'home';return true;}
     if(id==='theme'||id==='sound'){
@@ -246,23 +246,24 @@ export class TutorialGuide extends HandGuide {
     if(id==='keep-take'){this.mode='capture-paused';return true;}
     if(id==='discard-take'){this.mode='capture-paused';this.action('hand');return true;}
     if(id==='start-follow'){this.intent='follow';this.startLearning();return true;}
-    if(id==='learn-options'){this.gatePaused=true;this.followEngine?.pause();this.audioPlayer?.stop();this.mode='learn-options';return true;}
+    if(id==='learn-options'){this.gatePaused=true;this.followEngine?.pause();this.practice?.pause();this.audioPlayer?.stop();this.mode='learn-options';return true;}
     if(id==='watch-demo'&&this.mode==='learn-options'){this.mode='learn';this.watchOnly=true;this.player.replay();return true;}
-    if(id==='learn-back'){this.mode='learn';this.gatePaused=false;this.followEngine?.pause();return true;}
+    if(id==='learn-back'){this.mode='learn';this.gatePaused=false;this.followEngine?.pause();this.practice?.pause();return true;}
     if(id==='restart-follow'){this.mode='learn';this.watchOnly=false;this.gatePaused=false;this.showStep();return true;}
     if(this.mode==='learn-options'&&['hand','removeCue'].includes(id)){this.mode='learn';return false;}
     if(this.mode==='learn'){
       if(id==='watch-demo'){this.watchOnly=true;this.player.replay();this.audioPlayer?.stop();return true;}
-      if(id==='try-follow'){this.watchOnly=false;this.gatePaused=false;this.showStep();return true;}
-      if(id==='replay'&&!this.watchOnly){this.gatePaused=!this.gatePaused;this.followEngine?.pause();return true;}
+      if(id==='try-follow'){this.watchOnly=false;this.gatePaused=false;this.showStep();this.practice.ready();this.player.paused=true;return true;}
+      if(id==='replay'&&!this.watchOnly){this.gatePaused=!this.gatePaused;this.followEngine?.pause();this.practice?.pause();return true;}
       if(id==='primary'&&(!this.followEngine?.done||this.watchOnly)){this.problem='Reach the movement checkpoint before confirming. Watching a replay does not complete it.';return true;}
     }
     return false;
   }
 
   hide() {
-    this.hideAssistance();this.followEngine?.pause();this.alignment?.reset();this.endpoint?.interrupt();this.savePositionCapture?.reset();this.alignmentResult=null;
+    this.hideAssistance();this.followEngine?.pause();this.practice?.pause();this.alignment?.reset();this.endpoint?.interrupt();this.savePositionCapture?.reset();this.alignmentResult=null;
     if(this.wasHidden)return;
+    if(this.ux&&this.mode==='learn')this.gatePaused=true;
     this.log('tutorial_interrupted',{mode:this.mode,step_id:this.player?.step?.id||null});
     this.epoch++;this.photoEpoch=(this.photoEpoch||0)+1;this.photoTarget=null;this.currentHands=null;this.wasHidden=true;
     if (this.mode==='capture'){this.mode='capture-paused';this.narrator?.pause();}
@@ -387,8 +388,8 @@ export class TutorialGuide extends HandGuide {
     this.nextPathKey=null;
     this.alignment.reset();this.alignmentResult=null;
     const step=this.player.step;
-    if(this.ux&&this.mode==='learn'&&!preserve){this.followEngine=new TutorialFollower(step);this.player.time=0;this.player.paused=true;}
-    this.note=step.instruction || `Step ${this.player.index+1}`;if(!step.narration)this.speak(this.note);else globalThis.speechSynthesis?.cancel();
+    if(this.ux&&this.mode==='learn'&&!preserve){this.practice=new TutorialPractice(step);this.followEngine=this.practice.follower;this.player.time=0;this.player.paused=false;this.player.setRate(.75);this.movementOnly=false;}
+    this.note=step.instruction || `Step ${this.player.index+1}`;if(!step.narration)this.speak(this.ux&&this.mode==='learn'&&!preserve?`Watch step ${this.player.index+1}. ${this.note}`:this.note);else globalThis.speechSynthesis?.cancel();
     this.photoPanel.visible=false;
     const epoch=this.photoEpoch=(this.photoEpoch||0)+1;
     if(step.reference?.image) {
@@ -494,13 +495,23 @@ export class TutorialGuide extends HandGuide {
     let sample=null;
     if(this.mode==='capture-paused')sample=this.frames.at(-1);
     if(this.ux&&this.mode==='learn'&&!this.watchOnly){
-      if(!this.gatePaused)this.followEngine.update(this.currentHands,time);
+      if(this.practice?.phase==='preview'){
+        this.player.paused=!!this.gatePaused;sample=this.player.tick(dt);
+        if(!this.gatePaused){this.practice.update(this.currentHands,time,this.player.time>=this.player.step.duration_ms);if(this.practice.phase==='ready'){this.speak('Your turn. Bring your hands near the starting regions.');this.audioPlayer?.stop();}}
+      }else{
+        if(!this.gatePaused)this.practice?.update(this.currentHands,time);
+        sample=this.followEngine.target;this.player.time=sample?.t||0;this.player.paused=true;
+        if(this.practice?.advance){
+          this.log('movement_step_completed',{step_id:this.player.step.id,kind:'movement-only',physical_result:'unverified'});
+          if(this.player.index+1<this.tutorial.steps.length){this.player.index++;this.speak('Next step. Watch the demonstration.');this.showStep();sample=this.player.step.frames[0];}
+          else {this.mode='finished';this.movementOnly=true;this.note='Movements finished. Check the physical result.';this.speak(this.note);sample=null;}
+        }
+      }
       if(this.followEngine.done&&this.problem?.startsWith('Reach the movement checkpoint'))this.problem=null;
-      sample=this.followEngine.target;this.player.time=sample?.t||0;this.player.paused=true;
     }else if(['learn','review-step','review-options','trim'].includes(this.mode)&&this.player)sample=this.player.tick(dt);
     if(['placement','adjust-placement'].includes(this.mode))sample=this.tutorial.steps[0]?.frames[0];
     this.nextPath.visible=false;
-    if(this.ux&&this.mode==='learn'&&!this.watchOnly&&!this.gatePaused&&!this.pending&&this.followEngine&&!['tracking','reference-gap'].includes(this.followEngine.state)&&!this.followEngine?.done){
+    if(this.ux&&this.mode==='learn'&&!this.watchOnly&&!this.gatePaused&&!this.pending&&this.practice?.phase!=='preview'&&this.followEngine&&!['tracking','reference-gap'].includes(this.followEngine.state)&&!this.followEngine?.done){
       const follower=this.followEngine,next=follower.gates[follower.index+1],points=[];
       for(const side of follower.hands){const a=follower.target?.[side]?.[0]?.p,b=next?.[side]?.[0]?.p;if(a&&b)points.push(new THREE.Vector3(...a),new THREE.Vector3(...b));}
       const key=`${this.player.step.id}:${follower.index}`;
@@ -518,20 +529,20 @@ export class TutorialGuide extends HandGuide {
 
     const saveHome=this.tutorial.save_position?['left','right'].map(side=>this.tutorial.save_position[side]):this.endpoint.home;
     if(['author','capture','capture-paused','saved'].includes(this.mode)&&this.cleanSave&&saveHome){
-      ['left','right'].forEach((side,i)=>{const zone=this.zones[side];zone.visible=true;zone.position.fromArray(saveHome[i]);zone.scale.setScalar(2/3);zone.children[0].material.color.setHex(0xc4d8df);});
+      ['left','right'].forEach((side,i)=>{const zone=this.zones[side];zone.visible=true;zone.children.forEach(ring=>ring.visible=true);zone.position.fromArray(saveHome[i]);zone.scale.setScalar(2/3);zone.children[0].material.color.setHex(0xc4d8df);});
     }
-    if(this.mode==='learn'&&this.alignmentEnabled&&!this.pending){
+    if(this.mode==='learn'&&this.alignmentEnabled&&!this.pending&&this.practice?.phase!=='preview'){
       const guided=this.ux&&!this.watchOnly;
       this.alignment.radius=guided?this.followEngine.radius:.12;this.alignment.hysteresis=guided?0:.03;this.alignment.holdMs=guided?0:300;
       this.alignmentResult=this.alignment.update(this.currentHands,sample,time);
       for(const side of ['left','right']){
         const result=this.alignmentResult[side],color=result.state==='inside'?0x55ffaa:result.state==='unknown'?0xd4dde4:0xffca75;
         this.liveHands[side].drawHand(this.currentHands[side],color);
-        const zone=this.zones[side];zone.scale.setScalar(this.alignment.radius/.12);zone.visible=!!result.target;
+        const zone=this.zones[side];zone.scale.setScalar(this.alignment.radius/.12);zone.visible=!!result.target&&(!guided||!this.followEngine.started);zone.children.forEach((ring,i)=>ring.visible=i===0);
         if(zone.visible){zone.position.fromArray(result.target);zone.children[0].material.color.setHex(color);}
       }
     }else {this.alignment.reset();this.alignmentResult=null;}
-    this.audioPlayer?.sync(this.player,['learn','review-step'].includes(this.mode)&&!this.pending&&(!this.ux||this.mode!=='learn'||this.watchOnly));
+    this.audioPlayer?.sync(this.player,['learn','review-step'].includes(this.mode)&&!this.pending&&(!this.ux||this.mode!=='learn'||this.watchOnly||this.practice?.phase==='preview'));
     this.foldLine.visible=false;
     const cue=this.player?.step?.cues?.[0];
     if(cue&&['learn','review-step'].includes(this.mode)&&!this.pending){

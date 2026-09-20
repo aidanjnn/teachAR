@@ -180,11 +180,16 @@ export class HandGuide {
     this.dots.forEach(dot=>dot.scale.setScalar(live?.45:.72));
     this.dots[0].material.wireframe=live;
     this.dots[0].material.depthWrite=false;
-    this.boneMeshes.forEach(m=>{m.scale.x=m.scale.z=live?.65:1.65;});
+    this.boneMeshes.forEach(m=>{
+      m.geometry.dispose();m.geometry=new THREE.CylinderGeometry(.0036,.0044,1,12);
+      m.material=m.material.clone();m.material.opacity=live?.2:.48;m.material.depthWrite=false;
+      m.scale.x=m.scale.z=live?.65:1.65;
+    });
+    this.bones.material.transparent=true;this.bones.material.opacity=live?.65:.32;
     const geometry=new THREE.BufferGeometry();
     geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6*3),3));
     geometry.setIndex([0,1,2,0,2,3,0,3,4,0,4,5]);
-    this.palmMesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:0x8debd4,transparent:true,opacity:live?.4:.22,wireframe:live,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
+    this.palmMesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:0x8debd4,transparent:true,opacity:live?.22:.32,wireframe:live,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
     this.ghost.add(this.palmMesh);
     const edgeGeometry=new THREE.BufferGeometry();edgeGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(7*3),3));
     this.palmEdge=new THREE.Line(edgeGeometry,new THREE.LineBasicMaterial({color:0x8debd4,depthTest:false,transparent:true,opacity:.9}));this.ghost.add(this.palmEdge);
@@ -203,7 +208,7 @@ export class HandGuide {
     }
     this.ghost.visible=true;this.dots[0].material.color.setHex(color);this.bones.material.color.setHex(color);
     this.dots.forEach((dot,i)=>{dot.visible=!!joints[i];if(dot.visible)dot.position.fromArray(joints[i].p);});
-    this.boneMeshes.forEach((mesh,i)=>{const [a,b]=BONE_PAIRS[i];mesh.visible=!!joints[a]&&!!joints[b];if(!mesh.visible)return;const pa=new THREE.Vector3(...joints[a].p),pb=new THREE.Vector3(...joints[b].p),delta=pb.clone().sub(pa);mesh.position.copy(pa.add(pb).multiplyScalar(.5));mesh.scale.y=delta.length();mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());});
+    this.boneMeshes.forEach((mesh,i)=>{if(this.palmMesh)mesh.material.color.setHex(color);const [a,b]=BONE_PAIRS[i];mesh.visible=!!joints[a]&&!!joints[b];if(!mesh.visible)return;const pa=new THREE.Vector3(...joints[a].p),pb=new THREE.Vector3(...joints[b].p),delta=pb.clone().sub(pa);mesh.position.copy(pa.add(pb).multiplyScalar(.5));mesh.scale.y=delta.length();mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());});
     const positions=this.bones.geometry.attributes.position;let n=0;
     for(const [a,b] of BONE_PAIRS){if(!joints[a]||!joints[b])continue;positions.setXYZ(n++,...joints[a].p);positions.setXYZ(n++,...joints[b].p);}
     this.bones.geometry.setDrawRange(0,n);positions.needsUpdate=true;this.bones.geometry.computeBoundingSphere();

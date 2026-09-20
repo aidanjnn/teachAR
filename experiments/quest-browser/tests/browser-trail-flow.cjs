@@ -23,20 +23,23 @@ const assert=require('node:assert/strict');
   const world=toWorld(p,g.workspace);if(Math.abs(world[0]-(1+p[0]))>.0001)fail('Motion scaled by calibration spacing');
   g.action('adjust-placement');g.action('shift-left');g.action('rotate-placement');g.action('placement-back');
   if(JSON.stringify(g.tutorial.steps[0].frames)!==frames||g.space.scale.x!==1)fail('Placement mutated/scaled the recording');
-  g.action('placement-ready');if(g.mode!=='learn'||g.player.time!==0||!g.player.paused)fail('Follow started replaying immediately');
+  g.action('placement-ready');if(g.mode!=='learn'||g.player.time!==0||g.practice.phase!=='preview')fail('Follow did not begin with demonstration');
   const near=(frame,offset=0)=>Object.fromEntries(['left','right'].map(side=>[side,frame[side]?.map(j=>j?{...j,p:toWorld([j.p[0]+offset,j.p[1],j.p[2]],g.workspace)}:null)]));
   data=near(g.followEngine.target,1);for(let i=0;i<30;i++)tick();if(g.followEngine.started)fail('Far hands started guidance');
   g.action('primary');if(g.player.index!==0)fail('Unreached movement confirmed');
-  data=near(g.followEngine.target);for(let i=0;i<18;i++)tick();if(!g.followEngine.started)fail('Start hold failed');
+  while(g.practice.phase==='preview')tick();data=near(g.followEngine.target);for(let i=0;i<18;i++)tick();if(!g.followEngine.started)fail('Start hold failed');
   const gate=g.followEngine.index;data={};for(let i=0;i<20;i++)tick();if(g.followEngine.index!==gate||g.followEngine.state!=='tracking')fail('Missing hands advanced');
-  g.hide();session.visibilityState='visible';data=near(g.followEngine.target);tick();if(g.followEngine.index!==gate)fail('Visibility loss lost current gate');
+  g.hide();session.visibilityState='visible';data=near(g.followEngine.target);tick();if(g.followEngine.index!==gate)fail('Visibility loss lost current gate');g.action('replay');
   for(let i=0;i<500&&!g.followEngine.done;i++){data=near(g.followEngine.target);tick();}
   if(!g.followEngine.done||g.player.index!==0)fail('Checkpoint or progression authority failed');
   const hud=document.createElement('canvas');hud.width=1080;hud.height=560;g.draw(hud.getContext('2d'),t,'');window.trailNewHud=hud.toDataURL();
-  const button=g.uiButtons.find(b=>b.id==='primary');if(tutorialButton((button.x+5)/1080,1-(button.y+5)/560,g.uiButtons)!=='primary')fail('Visible button hit mapping differs');
-  g.action('primary');if(g.player.index!==1||g.followEngine.started)fail('Next recording did not wait at start');
+  if(g.uiButtons.some(b=>b.id==='primary'))fail('Checkpoint still requires a button');
+  for(let i=0;i<40&&g.player.index===0;i++)tick();
+  if(g.player.index!==1||g.practice.phase!=='preview'||g.player.confirmations.length)fail('Automatic next step must preview without claiming physical confirmation');
   g.action('watch-demo');tick();if(!g.watchOnly||g.player.time===0)fail('Watch mode did not replay');g.action('primary');if(g.player.index!==1)fail('Watching completed task');
   g.action('try-follow');if(g.watchOnly||g.followEngine.started)fail('Return to guided mode skipped start');
+  for(let i=0;i<600&&g.mode==='learn';i++){data=near(g.followEngine.target);tick();}
+  if(g.mode!=='finished'||!g.movementOnly||g.player.confirmations.length)fail('Final movement must finish hands-free without physical confirmation');
   g.endSession();
   // New contextual authoring, including pause and safe replacement discard.
   const a=new TutorialGuide({speak:()=>{},exit:()=>{}});a.attach(new THREE.Scene());a.persist=()=>Promise.resolve();a.begin('home');a.sample=()=>data[a.hand];

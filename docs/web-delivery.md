@@ -8,6 +8,8 @@ Start with [the runnable README](../experiments/quest-browser/README.md). `/tuto
 
 The functional tutor now incorporates the visual direction and connected workflow described in [the UI base](web-ui-base.md). The [interactive visual reference](design/trail-ui/README.md) remains a separate mock. Do not merge the native integration PRs just to obtain browser features.
 
+The latest [practice-flow handoff](web-practice-flow.md) describes preview-first guidance and automatic movement-only transitions. It supersedes the earlier per-step confirmation interaction below.
+
 ## What exists versus what remains
 
 | Capability | Browser source today | Boundary / next work |

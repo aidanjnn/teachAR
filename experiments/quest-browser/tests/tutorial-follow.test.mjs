@@ -34,3 +34,27 @@ test('guided green zones use the same boundary as advancement, without sticky gr
  assert.equal(alignment.update({right:joint(.11)},step.frames[0],140).right.state,'outside');
  assert.equal(follower.update({right:joint(.11)},140),'waiting');
 });
+
+test('relaxed practice previews first and stationary hands cannot skip a movement',async()=>{
+ const {TutorialPractice}=await import('../public/tutorial-follow.mjs');const p=new TutorialPractice(step([0,.2,.4]));let t=0;
+ for(;t<1000;t+=40)p.update(hands(.4),t);assert.equal(p.follower.started,false);assert.equal(p.phase,'preview');
+ p.update(hands(0),t,true);assert.equal(p.phase,'ready');
+ for(;t<3000;t+=40)p.update(hands(0),t);assert(p.follower.started);assert.equal(p.follower.done,false);
+ for(const x of [.2,.4])for(let i=0;i<25;i++)p.update(hands(x),t+=40);
+ assert.equal(p.phase,'transition');assert.equal(p.advance,false);
+ // A lost hand and a pause cannot consume the transition timer.
+ p.update({},t+=40);p.pause();p.update(hands(.4),t+=5000);assert.equal(p.advance,false);
+ for(let i=0;i<35;i++)p.update(hands(.4),t+=40);assert.equal(p.advance,true);
+});
+test('relaxed movement accepts lateral variation without finger-pose matching',()=>{
+ const f=new TutorialFollower(step([0,.2,.4]),{relaxed:true});let t=0;
+ const offset=x=>Object.fromEntries(Object.entries(hands(x)).map(([side,joints])=>[side,joints.map(j=>({p:[j.p[0],.09,0]}))]));
+ for(const x of [0,.2,.4])for(let i=0;i<25;i++)f.update(offset(x),t+=40);
+ assert.equal(f.done,true);
+});
+
+test('overlapping start and end regions cannot complete a short action without movement',()=>{
+ const f=new TutorialFollower(step([0,.18]),{relaxed:true});
+ for(let t=0;t<5000;t+=40)f.update(hands(.17),t);
+ assert.equal(f.started,true);assert.equal(f.done,false);
+});
