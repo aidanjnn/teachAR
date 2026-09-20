@@ -1092,3 +1092,52 @@ The user heard “Test sequence observed” from the local regression browser: t
   PR #19 with an updated description. The combined APK has not been installed;
   real hand-pinch navigation, physical transfer and live voice remain unverified.
   This is PR publication, not a merge or full-demo acceptance.
+
+
+### 2026-09-19 — Fix the four actionable PR #19 staff-review findings
+
+- User requested all four fixes after the read-only staff review. Worked on
+  `codex/pr19-review-followups` from PR head `f0c9797` in an isolated checkout;
+  the original dirty checkout and other task branches remain intact.
+- The main shell now shows calibration mark instructions, stability and held-out
+  D results/errors; selected guide title, local availability and storage failures;
+  and reviewed step instructions, expert/learner provenance and explicit completion
+  evidence. Feedback wraps above fixed interaction targets, with diagnostics hidden.
+- Guide preload derives the expected learner source from the bound hand provider,
+  independently of expert recording provenance. The synthetic seed remains labelled
+  synthetic while native hands can follow it; the reducer still rejects observations
+  from the wrong source. Updated the seed instructions to explain that distinction.
+- Publishing availability now comes from storage's restored recording/pending upload,
+  independently of the capture replay buffer. Pairing and author-role gates remain.
+  Library merging reserves local rows before admitting remote-only rows at the
+  128-entry limit, while preserving reviewed server titles for matching revisions.
+- Automated evidence for this **uncommitted worktree**: C# shell harness **214**
+  assertions and presentation harness **36** assertions passed; real seed cache
+  store/reload passed; static scaffold check passed with **167 GUIDs**. Unity
+  **60/60 EditMode** and **17/17 PlayMode** passed. Regressions cover native learner
+  input against a synthetic expert (including wrong-source rejection), cold saved
+  and pending uploads, saturated library merging, and actual shell feedback/layout.
+  Unity result directories under `artifacts/quest/` are
+  `test-08445adc-89b8-40d0-964a-df5db1e7514b` and
+  `test-play-909770e5-f507-49e7-82cf-451bfccb8c83`.
+- `TRAIL_CLEAN_BUILD=1 pnpm quest:build` passed with Unity **6000.3.24f1**:
+  Android **ARM64 / IL2CPP**, release APK **58,807,648 bytes**. Report/APK directory:
+  `artifacts/quest/build-394fb70b-8428-4874-9054-ec7269aa4a7a`. APK SHA-256:
+  `41787873496bc1ab2df8ae3527ba5603f3cbcf771ac14de848e711211b686d3d`.
+  Inspected and restored Unity-generated whitespace/empty-value settings churn;
+  no dependency, lockfile, scene or serialized motion contract changed. Unchanged
+  web/server checks retain the prior PR-head evidence; they were not rerun here.
+- No headset or live-provider run was performed. Injected native-tagged observations
+  are synthetic test inputs, not physical-transfer evidence. This request authorizes
+  local fixes; no commit, push, PR publication or device installation was performed.
+
+### 2026-09-19 — Commit PR #19 review follow-ups locally
+
+- User requested a commit of the four fixes and their regression coverage.
+  Prepared one focused Conventional Commit on `codex/pr19-review-followups`.
+- Reused the preceding passing validation because implementation and test inputs
+  are unchanged: 60 EditMode tests, 17 PlayMode tests, 250 focused C# assertions,
+  seed cache store/reload, static scaffold checks, and the clean Android
+  ARM64/IL2CPP release build. Inspected staged scope and patch whitespace.
+- This is a local commit only. No push, PR publication, headset installation or
+  additional device/provider validation was requested or performed.

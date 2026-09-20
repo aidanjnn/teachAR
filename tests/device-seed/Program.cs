@@ -49,7 +49,7 @@ internal static class Program
             " frames, source " + reloaded.Recording.Source);
         Console.WriteLine("  recording sha256 " + reloaded.RecordingHash);
         Console.WriteLine("SYNTHETIC FIXTURE: not a human demonstration, teaches no physical task, and");
-        Console.WriteLine("the runtime preloads it as a synthetic diagnostic and says so in the headset.");
+        Console.WriteLine("the headset labels the expert synthetic; the bound provider supplies learner input.");
         return 0;
     }
 }

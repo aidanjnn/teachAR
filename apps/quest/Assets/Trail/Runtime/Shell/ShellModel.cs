@@ -34,6 +34,7 @@ namespace Trail.Runtime.Shell
         public bool SavePositionSet { get; }
         public bool IsRecording { get; }
         public bool HasLastTake { get; }
+        public bool HasUploadableCapture { get; }
         public bool GuideLoaded { get; }
         public bool GuideAwaitingExplicitStart { get; }
         public bool GuideActive { get; }
@@ -44,13 +45,14 @@ namespace Trail.Runtime.Shell
             bool handsTracked = false, bool savePositionSet = false, bool isRecording = false,
             bool hasLastTake = false, bool guideLoaded = false, bool guideAwaitingExplicitStart = false,
             bool guideActive = false, bool guidePaused = false, bool guideUserConfirmed = false,
-            bool libraryHasEntries = false)
+            bool libraryHasEntries = false, bool hasUploadableCapture = false)
         {
             Paired = paired; IsAuthor = isAuthor; Calibrated = calibrated; HandsTracked = handsTracked;
             SavePositionSet = savePositionSet; IsRecording = isRecording; HasLastTake = hasLastTake;
             GuideLoaded = guideLoaded; GuideAwaitingExplicitStart = guideAwaitingExplicitStart;
             GuideActive = guideActive; GuidePaused = guidePaused; GuideUserConfirmed = guideUserConfirmed;
             LibraryHasEntries = libraryHasEntries;
+            HasUploadableCapture = hasUploadableCapture;
         }
     }
 
@@ -216,7 +218,7 @@ namespace Trail.Runtime.Shell
                 case ShellCommand.StopRecording: return s.Route == ShellRoute.Create && c.IsRecording;
                 case ShellCommand.DiscardTake: return s.Route == ShellRoute.Create && c.HasLastTake && !c.IsRecording;
                 case ShellCommand.UploadLastCapture:
-                    return s.Route == ShellRoute.Create && c.HasLastTake && !c.IsRecording && c.Paired && c.IsAuthor;
+                    return s.Route == ShellRoute.Create && c.HasUploadableCapture && !c.IsRecording && c.Paired && c.IsAuthor;
 
                 case ShellCommand.NextGuide: return s.Route == ShellRoute.Library && c.LibraryHasEntries;
                 // A tutorial already on this device loads without a server.
@@ -240,6 +242,7 @@ namespace Trail.Runtime.Shell
             if (!c.Paired && (command == ShellCommand.RefreshLibrary || command == ShellCommand.UploadLastCapture))
                 return "Pair in Settings to reach the server.";
             if (!c.IsAuthor && command == ShellCommand.UploadLastCapture) return "Pair as author to publish.";
+            if (!c.HasUploadableCapture && command == ShellCommand.UploadLastCapture) return "No saved recording or interrupted upload.";
             if (!c.Calibrated && (command == ShellCommand.SetSavePosition || command == ShellCommand.ChangeSavePosition ||
                 command == ShellCommand.StartRecording || command == ShellCommand.Repeat))
                 return "Calibrate the workspace in Settings.";

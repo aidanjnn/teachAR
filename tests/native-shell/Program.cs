@@ -129,7 +129,7 @@ internal static class Program
     private static ShellConditions Author(bool savePositionSet = false, bool recording = false,
         bool hasTake = false, bool calibrated = true, bool handsTracked = true) =>
         new ShellConditions(paired: true, isAuthor: true, calibrated: calibrated, handsTracked: handsTracked,
-            savePositionSet: savePositionSet, isRecording: recording, hasLastTake: hasTake);
+            savePositionSet: savePositionSet, isRecording: recording, hasLastTake: hasTake, hasUploadableCapture: hasTake);
 
     private static bool Can(ShellState state, ShellCommand command, ShellConditions c) =>
         ShellModel.Describe(state, c).Entries.Any(e => e.Command == command && e.Enabled);
@@ -182,7 +182,7 @@ internal static class Program
         Check(Can(create, ShellCommand.UploadLastCapture, taken), "a finished take can be sent for review");
         // Publishing leaves the device, so it stays privileged even though local work does not.
         var offlineTake = new ShellConditions(paired: false, isAuthor: false, calibrated: true,
-            handsTracked: true, savePositionSet: true, hasLastTake: true);
+            handsTracked: true, savePositionSet: true, hasLastTake: true, hasUploadableCapture: true);
         Check(Can(create, ShellCommand.StartRecording, offlineTake), "recording works with no server");
         Check(!Can(create, ShellCommand.UploadLastCapture, offlineTake), "publishing still requires pairing");
         Check(ShellModel.Describe(create, offlineTake).Entries
@@ -195,6 +195,14 @@ internal static class Program
             "refreshing the shared library still requires pairing");
         Check(Can(create, ShellCommand.DiscardTake, taken), "a take can be discarded");
         Check(!Can(create, ShellCommand.UploadLastCapture, Author(savePositionSet: true)), "there is nothing to upload without a take");
+
+        var restored = new ShellConditions(paired: true, isAuthor: true, hasUploadableCapture: true);
+        Check(Can(create, ShellCommand.UploadLastCapture, restored), "storage recovery can upload with an empty capture buffer");
+        Check(!Can(create, ShellCommand.DiscardTake, restored), "a recovered upload is not a discardable current take");
+        Check(!Can(create, ShellCommand.UploadLastCapture, new ShellConditions(paired: true, hasUploadableCapture: true)),
+            "a restored upload still needs the author role");
+        Check(!Can(create, ShellCommand.UploadLastCapture, new ShellConditions(paired: true, isAuthor: true, hasLastTake: true)),
+            "a replay buffer is not proof of a saved author recording");
 
         // Follow: progression controls track the reducer's own phase, never the shell's wishes.
         var follow = ShellModel.Apply(home, ShellCommand.OpenFollow, learner);

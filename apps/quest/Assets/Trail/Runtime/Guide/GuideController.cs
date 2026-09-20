@@ -50,14 +50,16 @@ namespace Trail.Runtime.Guide
             if (subscribed == null) return;
             subscribed.WorkspaceObserved -= Observe; subscribed.CalibrationChanged -= Calibrated; subscribed.Invalidated -= Invalidated; subscribed = null;
         }
-        public void Preload(Tutorial readyTutorial, Recording sourceRecording, string verifiedRecordingHash, string pairedSessionId, bool syntheticDiagnostic = false)
+        public void Preload(Tutorial readyTutorial, Recording sourceRecording, string verifiedRecordingHash, string pairedSessionId)
         {
-            if (Capture == null || Ghost == null) throw new InvalidOperationException("Capture and ghost must be bound before preload.");
+            if (Capture == null || Capture.Source == null || Ghost == null) throw new InvalidOperationException("Capture, hand source and ghost must be bound before preload.");
             // Clone at the trust boundary: caller DTO mutations cannot change an in-progress guide.
             var loadedTutorial = ContractJson.ParseTutorial(ContractJson.SerializeTutorial(readyTutorial));
             var loadedRecording = ContractJson.ParseRecording(ContractJson.SerializeRecording(sourceRecording));
+            // The source gate describes the learner's bound input, not the expert recording.
+            // A synthetic expert may be followed with native hands without relabelling its provenance.
             var definition = GuideTutorialAdapter.Create(loadedTutorial, loadedRecording, verifiedRecordingHash,
-                syntheticDiagnostic ? GuideSource.SyntheticDiagnostic : GuideSource.NativeHands);
+                Capture.Source.SourceKind == "live" ? GuideSource.NativeHands : GuideSource.SyntheticDiagnostic);
             if (definition.Steps.Any(s => s.Targets.Any(t => t.Gesture != GuideGesture.Any)))
                 throw new NotSupportedException("Pinch/open matcher needs a device-validated gesture adapter. Review this tutorial with gesture any.");
             if (Session != null) Session.Transitioned -= OnTransition;

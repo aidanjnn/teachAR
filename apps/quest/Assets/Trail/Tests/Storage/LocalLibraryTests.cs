@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using NUnit.Framework;
 using Trail.Contracts;
@@ -190,6 +192,57 @@ namespace Trail.Tests.Storage
             Assert.Throws<ArgumentException>(() => new TutorialLibraryEntry(" ", 1, "x", 1, false));
             Assert.Throws<ArgumentException>(() => new TutorialLibraryEntry("id", -1, "x", 1, false));
         }
+
+        [Test]
+        public void FullRemoteLibraryReservesEveryLocalRevisionAndStillRefreshesSharedTitles()
+        {
+            var cache = new PrivateTutorialCache(root);
+            var shared = Store(cache, "Shared old title");
+            var deviceOnly = Store(cache, "Offline guide");
+            var remote = Enumerable.Range(0, TutorialLibrary.MaximumEntries)
+                .Select(i => new TutorialLibraryEntry(Guid.NewGuid().ToString("D"), 1, "Remote " + i, 1, false)).ToList();
+            // Even a shared row after the remote capacity and a null row must be considered.
+            remote.Add(null);
+            remote.Add(new TutorialLibraryEntry(shared.Id, shared.Revision, "Reviewed title", 3, false));
+            remote.Add(remote[0]);
+            var merged = TutorialLibrary.Merge(remote, cache.ListReady());
+            Assert.That(merged.Length, Is.EqualTo(TutorialLibrary.MaximumEntries));
+            Assert.That(merged.Count(e => e.StoredOnDevice), Is.EqualTo(2));
+            Assert.That(merged.Single(e => e.Id == deviceOnly.Id).StoredOnDevice, Is.True);
+            Assert.That(merged.Single(e => e.Id == shared.Id).Title, Is.EqualTo("Reviewed title"));
+            Assert.That(merged.Select(e => e.Id + "@" + e.Revision).Distinct().Count(), Is.EqualTo(merged.Length));
+            Assert.That(new PrivateTutorialCache(root).Load(deviceOnly.Id, deviceOnly.Revision).RecordingHash,
+                Is.EqualTo(recordingHash), "the retained offline row remains loadable without a server");
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ColdStorageRestoresUploadAvailabilityWithoutACaptureBuffer(bool pendingOnly)
+        {
+            var cache = new PrivateTutorialCache(root);
+            if (pendingOnly)
+            {
+                var recording = ContractJson.ParseRecording(Encoding.UTF8.GetString(recordingJson));
+                recording.Id = Guid.NewGuid().ToString("D"); // Resumable uploads already have a server identity.
+                var json = ContractJson.SerializeRecording(recording);
+                File.WriteAllText(Path.Combine(root, "trail-pending-upload.json"), JsonUtility.ToJson(new PendingFixture
+                    { id = recording.Id, json = json, hash = PrivateTutorialCache.Hash(Encoding.UTF8.GetBytes(json)) }));
+            }
+            else cache.SaveCapture(ContractJson.ParseRecording(Encoding.UTF8.GetString(recordingJson)));
+            var host = new GameObject("cold-storage-recovery");
+            try
+            {
+                var storage = host.AddComponent<NativeStorageFeature>();
+                Assert.That(storage.HasUploadableCapture, Is.False);
+                typeof(NativeStorageFeature).GetMethod("RestorePrivateStorage", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(storage, new object[] { root });
+                Assert.That(storage.Capture, Is.Null, "no current recording or replay buffer was installed");
+                Assert.That(storage.HasUploadableCapture, Is.True);
+                Assert.That(storage.Status, Does.Contain(pendingOnly ? "Interrupted upload restored" : "Saved recording restored"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(host); }
+        }
+        [Serializable] private sealed class PendingFixture { public string id, json, hash; }
 
         [Test]
         public void PublishingStillRequiresAPairedAuthor()

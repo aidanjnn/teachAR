@@ -11,7 +11,8 @@ adb push <staging-dir>/trail-cache \
 ```
 
 The seeded guide is built from `fixtures/contracts/`, whose recording carries
-`source: "synthetic-fixture"`. The runtime therefore preloads it as a synthetic
-diagnostic and labels it as such in the headset. **It is not a human demonstration and
+`source: "synthetic-fixture"`. The headset labels this expert motion as a synthetic
+diagnostic. The learner source is selected independently from the bound hand provider:
+native hands on Quest, synthetic input in Editor. **It is not a human demonstration and
 teaches no physical task.** Use it to exercise navigation, calibration, ghost rendering
 and learner progression, never as evidence that authoring or physical transfer works.

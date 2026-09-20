@@ -1,6 +1,6 @@
 {
   "name": "Trail.Tests.Storage",
-  "references": ["Trail.Contracts", "Trail.Storage"],
+  "references": ["Trail.Contracts", "Trail.Storage", "Trail.Runtime"],
   "includePlatforms": ["Editor"],
   "optionalUnityReferences": ["TestAssemblies"],
   "autoReferenced": true

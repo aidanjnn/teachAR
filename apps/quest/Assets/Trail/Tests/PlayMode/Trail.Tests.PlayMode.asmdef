@@ -4,7 +4,12 @@
   "references": [
     "Trail.Runtime",
     "Trail.Shell",
-    "UnityEngine.UI"
+    "UnityEngine.UI",
+    "Trail.Contracts",
+    "Trail.Motion",
+    "Trail.Guide",
+    "Trail.Storage",
+    "Trail.Presentation"
   ],
   "optionalUnityReferences": [
     "TestAssemblies"

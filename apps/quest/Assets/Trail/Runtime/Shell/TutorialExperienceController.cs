@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text;
 using Trail.Contracts;
 using Trail.Motion;
 using Trail.Runtime.Guide;
@@ -72,6 +73,9 @@ namespace Trail.Runtime.Shell
             panel.transform.localPosition = new Vector3(.40f, 1.15f, .55f);
             title = Label(panel.transform, "Shell title", new Vector3(0, .18f, 0), .010f);
             notice = Label(panel.transform, "Shell notice", new Vector3(0, .13f, 0), .006f);
+            // Feedback grows upward, leaving the hint and all pointer/touch targets fixed.
+            notice.anchor = TextAnchor.LowerCenter;
+            title.anchor = TextAnchor.LowerCenter;
             for (var i = 0; i < Capacity; i++)
                 labels[i] = Label(panel.transform, "Shell button " + i, new Vector3(0, .04f - i * .06f, 0), .009f);
             var hint = Label(panel.transform, "Shell input hint", new Vector3(0, .075f, 0), .005f);
@@ -92,6 +96,7 @@ namespace Trail.Runtime.Shell
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             child.GetComponent<MeshRenderer>().sharedMaterial = text.font.material;
             text.fontSize = 48; text.characterSize = size;
+            text.richText = false;
             text.anchor = TextAnchor.MiddleCenter; text.color = Color.white;
             return text;
         }
@@ -121,7 +126,8 @@ namespace Trail.Runtime.Shell
                     phase == GuidePhase.Holding || phase == GuidePhase.TrackingLost || phase == GuidePhase.Showing,
                 guidePaused: phase == GuidePhase.Paused,
                 guideUserConfirmed: step != null && step.CompletionMode == GuideCompletionMode.UserConfirmed,
-                libraryHasEntries: Storage != null && Storage.HasReadyGuides);
+                libraryHasEntries: Storage != null && Storage.HasReadyGuides,
+                hasUploadableCapture: Storage != null && Storage.HasUploadableCapture);
         }
 
         private void Update()
@@ -129,10 +135,13 @@ namespace Trail.Runtime.Shell
             if (title == null) return;
             var conditions = Conditions();
             view = ShellModel.Describe(state, conditions);
-            Notice = view.Notice;
+            var feedback = RouteFeedback();
+            Notice = state.Route == ShellRoute.Follow && Guide != null && Guide.Session != null
+                ? feedback.TrimStart('\n') : view.Notice + feedback;
             title.text = view.Title;
-            // The reducer's own status stays visible underneath; the shell never restates progress itself.
-            notice.text = view.Notice + (Guide != null && Guide.Session != null ? "\n" + Guide.Status : "");
+            notice.text = WrapFeedback(Notice);
+            title.transform.localPosition = new Vector3(0,
+                notice.transform.localPosition.y + notice.GetComponent<MeshRenderer>().localBounds.max.y + .025f, 0);
             for (var i = 0; i < Capacity; i++)
             {
                 var present = i < view.Entries.Count;
@@ -150,6 +159,62 @@ namespace Trail.Runtime.Shell
                 if (subscribed != null) subscribed.Observed += Observe;
             }
             if (state.DiagnosticsVisible != diagnosticsApplied) ApplyDiagnostics();
+        }
+
+        // Essential task feedback stays in the main shell even when engineering panels are hidden.
+        // Instructions and completion come from their owners; this view cannot advance the reducer.
+        private string RouteFeedback()
+        {
+            switch (state.Route)
+            {
+                case ShellRoute.Settings:
+                    return Capture == null ? "" : "\n" + Capture.Status +
+                        "\nMark stability: " + (Capture.MarkProgress * 100).ToString("F0") + "%" +
+                        "\nHand input: " + Capture.SourceLabel;
+                case ShellRoute.Create:
+                    return (Capture == null ? "" : "\n" + Capture.Status) +
+                        (Storage == null ? "" : "\n" + Storage.Status);
+                case ShellRoute.Library:
+                    return Storage == null ? "" : "\nSelected: " + Storage.SelectedTitle +
+                        (Storage.HasReadyGuides ? "\n" + (Storage.SelectedIsStoredOnDevice
+                            ? "Stored on this headset; available offline."
+                            : "Download required; pair as learner.") : "") + "\n" + Storage.Status;
+                case ShellRoute.Follow:
+                    if (Guide == null || Guide.Session == null) return "";
+                    var session = Guide.Session;
+                    var step = session.Definition.Steps[session.State.StepIndex];
+                    return "\nStep " + (session.State.StepIndex + 1) + ": " + step.Instruction +
+                        "\n" + Guide.Status + "\nExpert motion: " + Guide.ExpertSource +
+                        (Guide.ExpertSource == "live" ? "" : Guide.ExpertSource == "synthetic-fixture" ? " (SYNTHETIC DIAGNOSTIC)" : " (RECORDED FIXTURE)") +
+                        "\nLearner input: " + (session.Definition.Source == GuideSource.NativeHands ? "native hands" : "SYNTHETIC DIAGNOSTIC") +
+                        "\n" + (step.CompletionMode == GuideCompletionMode.UserConfirmed
+                            ? "USER-CONFIRMED: no automatic movement verification."
+                            : "Movement checkpoints only; not assembly verification.") +
+                        (string.IsNullOrEmpty(Guide.LastCompletion) ? "" : "\n" + Guide.LastCompletion) +
+                        (Capture != null && Capture.Registration == null ? "\n" + Capture.Status : "");
+                default: return "";
+            }
+        }
+
+        // TextMesh has no automatic wrapping. Preserve every instruction/error, including
+        // long words, while bounding each line so feedback does not run across the workspace.
+        private static string WrapFeedback(string value)
+        {
+            const int width = 64;
+            var result = new StringBuilder();
+            foreach (var paragraph in value.Replace("\r", "").Split('\n'))
+            {
+                var remaining = paragraph;
+                while (remaining.Length > width)
+                {
+                    var at = remaining.LastIndexOf(' ', width, width + 1);
+                    if (at <= 0) at = width;
+                    result.Append(remaining.Substring(0, at)).Append('\n');
+                    remaining = remaining.Substring(at).TrimStart(' ');
+                }
+                result.Append(remaining).Append('\n');
+            }
+            return result.ToString().TrimEnd('\n');
         }
 
         private void Observe(ReferenceObservation observation)

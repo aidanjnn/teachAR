@@ -52,25 +52,29 @@ namespace Trail.Runtime.Storage
     public static class TutorialLibrary
     {
         public const int MaximumEntries = 128;
-        /// <summary>Server rows first, then device-only rows. A server refresh never removes a guide
-        /// this device already holds, so losing the backend cannot empty the library.</summary>
+        /// <summary>Server rows first, then device-only rows, reserving space for every local row.
+        /// Only remote-only rows are dropped at capacity; refreshed titles still win for shared rows.</summary>
         public static TutorialLibraryEntry[] Merge(IEnumerable<TutorialLibraryEntry> server, IEnumerable<CachedTutorial> local)
         {
             var stored = new List<CachedTutorial>();
             var byKey = new Dictionary<string, CachedTutorial>(StringComparer.Ordinal);
             if (local != null)
                 foreach (var entry in local)
-                    if (entry != null && !byKey.ContainsKey(Pair(entry.Id, entry.Revision)))
+                    if (entry != null && stored.Count < MaximumEntries && !byKey.ContainsKey(Pair(entry.Id, entry.Revision)))
                     { byKey.Add(Pair(entry.Id, entry.Revision), entry); stored.Add(entry); }
             var merged = new List<TutorialLibraryEntry>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
+            var remoteSlots = MaximumEntries - stored.Count;
             if (server != null)
                 foreach (var entry in server)
                 {
-                    if (entry == null || merged.Count >= MaximumEntries) break;
+                    if (entry == null) continue;
                     var key = Pair(entry.Id, entry.Revision);
+                    var isLocal = byKey.ContainsKey(key);
+                    if (!isLocal && remoteSlots == 0) continue;
                     if (!seen.Add(key)) continue;
-                    merged.Add(new TutorialLibraryEntry(entry.Id, entry.Revision, entry.Title, entry.StepCount, byKey.ContainsKey(key)));
+                    merged.Add(new TutorialLibraryEntry(entry.Id, entry.Revision, entry.Title, entry.StepCount, isLocal));
+                    if (!isLocal) remoteSlots--;
                 }
             foreach (var entry in stored)
             {

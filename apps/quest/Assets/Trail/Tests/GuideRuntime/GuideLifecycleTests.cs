@@ -20,15 +20,21 @@ namespace Trail.Tests.GuideRuntime
 {
     public sealed class GuideFixtureSource : HandObservationSource
     {
-        public override string SourceKind => "synthetic-fixture";
+        public string Kind = "synthetic-fixture";
+        public override string SourceKind => Kind;
         public override string Availability => "injected guide lifecycle fixture";
-        public void Emit(double now, long sequence, HandSample hand) => Publish(new ReferenceObservation(now, sequence, OriginRevision, SourceKind, MotionSamples.Missing(), hand));
+        public void Emit(double now, long sequence, HandSample hand, string source = null) => Publish(new ReferenceObservation(now, sequence, OriginRevision, source ?? SourceKind, MotionSamples.Missing(), hand));
         public static HandSample At(NVector3 point) => new HandSample { Status = "valid", Joints = JointNames.Canonical.ToDictionary(n => n, _ => new CanonicalPose(point, NQuaternion.Identity)) };
     }
     public sealed class GuideLifecycleTests
     {
         [UnityTest]
-        public IEnumerator PreloadCalibrationObservationPauseAndResetUseRealAdapters()
+        public IEnumerator PreloadCalibrationObservationPauseAndResetUseRealAdapters() => ExerciseLifecycle(false);
+
+        [UnityTest]
+        public IEnumerator NativeLearnerCanFollowSyntheticExpertWithoutAcceptingSyntheticObservations() => ExerciseLifecycle(true);
+
+        private IEnumerator ExerciseLifecycle(bool nativeLearner)
         {
             var fixtureRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "../../..", "fixtures/contracts"));
             var recording = ContractJson.ParseRecording(File.ReadAllText(Path.Combine(fixtureRoot, "recording.json")));
@@ -38,6 +44,7 @@ namespace Trail.Tests.GuideRuntime
             using (var sha = SHA256.Create()) tutorial.RecordingHash = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
             var root = new GameObject("guide lifecycle synthetic fixture"); root.SetActive(false);
             var source = root.AddComponent<GuideFixtureSource>(); source.TrackingSpace = root.transform;
+            source.Kind = nativeLearner ? "live" : "synthetic-fixture"; // Injected test samples, never hardware evidence.
             var capture = root.AddComponent<CaptureReplaySession>(); capture.Source = source;
             var ghost = root.AddComponent<GhostPresentation>(); ghost.Session = capture;
             var guide = root.AddComponent<GuideController>(); guide.Capture = capture; guide.Ghost = ghost;
@@ -46,7 +53,9 @@ namespace Trail.Tests.GuideRuntime
             guide.Telemetry += e => { ContractJson.ParseGuideEvent(ContractJson.SerializeGuideEvent(e)); if (e.Type == "step-completed") completions.Add(e); else if (e.Type == "snapshot") snapshots.Add(e); };
             try
             {
-                root.SetActive(true); guide.Preload(tutorial, recording, tutorial.RecordingHash, "fixture-paired", true);
+                root.SetActive(true); guide.Preload(tutorial, recording, tutorial.RecordingHash, "fixture-paired");
+                Assert.AreEqual("synthetic-fixture", guide.ExpertSource, "expert provenance is never relabelled as live");
+                Assert.AreEqual(nativeLearner ? GuideSource.NativeHands : GuideSource.SyntheticDiagnostic, guide.Session.Definition.Source);
                 Assert.AreEqual(GuidePhase.Calibrate, guide.Session.State.Phase);
                 Assert.AreEqual(1, guide.Session.State.Attempt, "loading capture must not count as a learner retry");
                 Assert.AreEqual(1, guide.Session.State.StepRevision, "initial preload must not emit a reference-reset revision");
@@ -59,7 +68,13 @@ namespace Trail.Tests.GuideRuntime
                 Assert.AreEqual(GuidePhase.Showing, guide.Session.State.Phase);
                 now += recording.DurationMs + 1; yield return null;
                 Assert.AreEqual(GuidePhase.WaitingStart, guide.Session.State.Phase);
-                for (var i = 0; i < 7; i++) { now += 50; source.Emit(now, ++sequence, recording.Frames[0].Hands.Right); yield return null; }
+                if (nativeLearner)
+                {
+                    now += 50; source.Emit(now, ++sequence, recording.Frames[0].Hands.Right, "synthetic-fixture");
+                    Assert.AreEqual(GuidePhase.TrackingLost, guide.Session.State.Phase, "synthetic input cannot grade a native learner");
+                    Assert.AreEqual(0, guide.Session.State.DwellMs);
+                }
+                for (var i = 0; i < 12; i++) { now += 50; source.Emit(now, ++sequence, recording.Frames[0].Hands.Right); yield return null; }
                 Assert.AreEqual(GuidePhase.Guiding, guide.Session.State.Phase);
                 for (var i = 0; i < 3; i++) { now += 50; source.Emit(now, ++sequence, recording.Frames[1].Hands.Right); yield return null; }
                 for (var i = 0; i < 5; i++) { now += 50; source.Emit(now, ++sequence, recording.Frames[2].Hands.Right); yield return null; }

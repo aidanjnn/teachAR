@@ -177,7 +177,7 @@ internal static class Program
         double now = 0; long sequence = 0;
         capture.Clock = () => now; guide.Clock = () => now;
 
-        guide.Preload(tutorial, recording, tutorial.RecordingHash, "harness-paired", true);
+        guide.Preload(tutorial, recording, tutorial.RecordingHash, "harness-paired");
         Check(guide.Session.Definition.Steps[0].Targets.Count == 2, "a two-hand step survives the real tutorial adapter");
         Check(guide.PhaseLabel == "Calibrate", "phase label follows the reducer into Calibrate");
         Calibrate(capture, source, ref now, ref sequence, recording.Workspace.CalibrationMarksM);

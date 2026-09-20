@@ -22,6 +22,8 @@ namespace Trail.Runtime.Storage
         // Reflects the merged library: device-only guides count, so losing the backend does not empty it.
         public bool HasReadyGuides => library.Length > 0;
         public bool SelectedIsStoredOnDevice => library.Length > 0 && library[selected].StoredOnDevice;
+        // Upload recovery belongs to storage, independently of capture's current replay buffer.
+        public bool HasUploadableCapture => lastCapture != null || hasPendingUpload;
         public CaptureReplaySession Capture { get; private set; }
         private GuideController guide;
         private NativeApiConnection connection;
@@ -33,6 +35,7 @@ namespace Trail.Runtime.Storage
         private long generation;
         private long transportGeneration;
         private string pendingPath;
+        private bool hasPendingUpload;
         private GuideEvent pendingTelemetry;
         private bool telemetryInFlight;
         private double lastTelemetry;
@@ -45,7 +48,16 @@ namespace Trail.Runtime.Storage
             // lookup silently returned null and no recording was ever saved locally.
             Capture = context.Root.GetComponentInChildren<CaptureReplaySession>(true); guide = context.Root.GetComponentInChildren<GuideController>(true);
             if (Capture == null) throw new InvalidOperationException("Storage requires the capture feature");
-            cache = new PrivateTutorialCache(Application.persistentDataPath); cache.RecoverInterruptedWrites();
+            RestorePrivateStorage(Application.persistentDataPath);
+            if (Capture != null) Capture.RecordingCompleted += SaveCapture;
+            if (guide != null) guide.Telemetry += OnTelemetry;
+            connection.SessionInvalidated += Invalidated;
+            connection.StateChanged += ConnectionChanged;
+            var panel = new GameObject("Tutorial storage controls"); panel.transform.SetParent(context.Root.transform, false); panel.transform.position = context.TrackingSpace.TransformPoint(new Vector3(.48f, 1.15f, .8f)); panel.AddComponent<StorageControlPanel>().Storage = this;
+        }
+        private void RestorePrivateStorage(string privateRoot)
+        {
+            cache = new PrivateTutorialCache(privateRoot); cache.RecoverInterruptedWrites();
             // Populate from private storage first: the library must be useful with no server at all.
             library = TutorialLibrary.Merge(null, LocalEntries()); selected = 0;
             Status = library.Length == 0
@@ -53,12 +65,9 @@ namespace Trail.Runtime.Storage
                 : library.Length + " guide(s) stored on this headset. Preload needs no pairing.";
             try { lastCapture = cache.LoadLatestCapture(); } catch (Exception) { }
             if (lastCapture != null) Status = "Saved recording restored. " + Status;
-            pendingPath = Path.Combine(Application.persistentDataPath, "trail-pending-upload.json");
-            if (Capture != null) Capture.RecordingCompleted += SaveCapture;
-            if (guide != null) guide.Telemetry += OnTelemetry;
-            connection.SessionInvalidated += Invalidated;
-            connection.StateChanged += ConnectionChanged;
-            var panel = new GameObject("Tutorial storage controls"); panel.transform.SetParent(context.Root.transform, false); panel.transform.position = context.TrackingSpace.TransformPoint(new Vector3(.48f, 1.15f, .8f)); panel.AddComponent<StorageControlPanel>().Storage = this;
+            pendingPath = Path.Combine(privateRoot, "trail-pending-upload.json");
+            hasPendingUpload = File.Exists(pendingPath);
+            if (hasPendingUpload) Status = "Interrupted upload restored. Pair as author and Send for review to retry. " + Status;
         }
         private void SaveCapture(Recording recording)
         {
@@ -99,6 +108,7 @@ namespace Trail.Runtime.Storage
             if (File.Exists(temporary)) File.Delete(temporary);
             using (var file = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)) { var bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(pending)); file.Write(bytes,0,bytes.Length); file.Flush(true); }
             if (File.Exists(pendingPath)) File.Replace(temporary,pendingPath,null); else File.Move(temporary,pendingPath);
+            hasPendingUpload = true;
         }
         private void ResumeUpload(PendingUpload pending)
         {
@@ -121,7 +131,7 @@ namespace Trail.Runtime.Storage
                             if (revision != generation) return; busy = false;
                             if (jobStatus != 202) { Status = "Recording saved on server; retry compilation from desktop."; return; }
                             var job = JsonUtility.FromJson<Job>(jobText);
-                            if (job.status == "complete") { File.Delete(pendingPath); Status = "Draft ready. Review every step on the desktop."; }
+                            if (job.status == "complete") { File.Delete(pendingPath); hasPendingUpload = false; Status = "Draft ready. Review every step on the desktop."; }
                             else Status = "Recording preserved. Segmentation needs boundary review or a new recording.";
                         });
                     }); return;
@@ -176,7 +186,7 @@ namespace Trail.Runtime.Storage
             try {
                 // Load re-verifies the stored recording against its stored hash; nothing unverified passes here.
                 var cached=cache.Load(item.Id,item.Revision);
-                guide.Preload(cached.Tutorial,cached.Recording,cached.RecordingHash,paired?connection.SessionId:LocalSessionId,cached.Recording.Source!="live");
+                guide.Preload(cached.Tutorial,cached.Recording,cached.RecordingHash,paired?connection.SessionId:LocalSessionId);
                 Status=(paired?"Loaded from this headset's storage; spectator telemetry uses the paired session. ":"Loaded from this headset's storage with no pairing. ")
                     +"Independently calibrate the learner workspace.";
                 return;
@@ -199,7 +209,7 @@ namespace Trail.Runtime.Storage
                             get=index=> {
                                 if(revision!=generation) { data.Dispose(); return; }
                                 if(index==download.chunkCount) {
-                                    try { if(data.Length!=download.bytes)throw new IOException(); var loaded=cache.StoreReady(tutorialBytes,data.ToArray(),download.sha256); guide.Preload(loaded.Tutorial,loaded.Recording,loaded.RecordingHash,connection.SessionId,loaded.Recording.Source!="live"); library=TutorialLibrary.Merge(library,LocalEntries()); Status="Downloaded and stored on this headset; future loads need no pairing. Calibrate this learner workspace before starting."; }
+                                    try { if(data.Length!=download.bytes)throw new IOException(); var loaded=cache.StoreReady(tutorialBytes,data.ToArray(),download.sha256); guide.Preload(loaded.Tutorial,loaded.Recording,loaded.RecordingHash,connection.SessionId); library=TutorialLibrary.Merge(library,LocalEntries()); Status="Downloaded and stored on this headset; future loads need no pairing. Calibrate this learner workspace before starting."; }
                                     catch(Exception) { Status="Preload integrity or private storage check failed."; }
                                     finally { data.Dispose(); busy=false; } return;
                                 }
