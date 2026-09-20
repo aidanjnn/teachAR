@@ -20,20 +20,22 @@ Camera/microphone adapters release resources on session end and reject late perm
 `public/holographic-hand.mjs` loads left/right generic skinned hand assets from [Immersive Web input profiles](https://github.com/immersive-web/webxr-input-profiles/tree/f4992299601614adbfefd398dc8e281556bb7444/packages/assets/profiles/generic-hand). MIT license, source commit and SHA256 hashes are included in `public/assets/hands`. These are third-party generic models, not captured user hands.
 
 - All 25 named WebXR joint positions/quaternions drive the skin; recorded data, calibration and matcher contracts are unchanged.
-- Meshes use cyan translucent surfaces and view-dependent rim brightness. Learner surfaces are subtler; tracking markers and connecting rods are hidden in `/tutorial` and review.
+- Meshes use cyan translucent surfaces and view-dependent rim brightness. Learner surfaces are subtler; tracking markers and connecting rods are hidden in `/tutorial` and review once the skin is ready. Loading or failed models retain the measured joint outlines so capture and review remain visible; missing joints are never inferred.
 - Incomplete joint data hides a skin rather than retaining a plausible frozen pose. Asset failure is surfaced and pauses learning. Motion checks still use their existing valid-hand rules, not mesh vertices.
 - This is a generic hand silhouette, not anatomical personalization. No forearm, cloth/object occlusion, missing-hand inference, grasp verification or finger-pose grading is added. Real headset appearance/performance remain unmeasured.
 - Three.js GLTFLoader and SkeletonUtils are copied from the exact locked Three version, source-hash checked and served locally. No runtime CDN fetches. `prepare-vendor.mjs` also validates the hand assets and license.
 
 The surface is presentation only. Future vision/OMNI/voice integrations must preserve the existing local progression authority and freshness rules in [web-practice-flow.md](web-practice-flow.md). Do not advance steps from a green hand, audio response, or visual model verdict.
 
+The optional Voice coach card remains available under **Browser tools · review, import and backup**. Start it there before entering AR; the in-headset Ask coach action and local progression remain unchanged.
+
 ## Source seams
 
-- `public/tutorial.html`, `tutorial.css`: minimal launcher and collapsed browser tools.
-- `public/ar.js`: user-activated XR entry, capture resource adapters, session cleanup and exit dispatch.
-- `public/experience-entry.mjs`: optional capture coordination and cancellation generation; adapters own late-acquired stream cleanup.
-- `public/tutorial-ui.mjs`, `tutorial-guide.mjs`: immersive preparation states and fallback.
-- `public/holographic-hand.mjs`, `hand-guide.mjs`, `tutorial-review.mjs`: skin loading, pose mapping and presentation.
+- `apps/webxr/public/tutorial.html`, `tutorial.css`: minimal launcher and collapsed browser tools.
+- `apps/webxr/public/ar.js`: user-activated XR entry, capture resource adapters, session cleanup and exit dispatch.
+- `apps/webxr/public/experience-entry.mjs`: optional capture coordination and cancellation generation; adapters own late-acquired stream cleanup.
+- `apps/webxr/public/tutorial-ui.mjs`, `tutorial-guide.mjs`: immersive preparation states and fallback.
+- `apps/webxr/public/holographic-hand.mjs`, `hand-guide.mjs`, `tutorial-review.mjs`: skin loading, pose mapping and presentation.
 
 ## Acceptance on Quest
 

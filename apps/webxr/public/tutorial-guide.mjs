@@ -559,7 +559,7 @@ export class TutorialGuide extends HandGuide {
     for(const side of ['left','right']){this.hand=side;this.currentHands[side]=this.localJoints(this.sample(frame,session,reference));}
     this.hand='right';this.joints=this.currentHands.right;
     const assetError=this.skinHand?.error||this.leftGhost.skinHand?.error;
-    if(assetError){this.problem='Hand visuals could not load. Exit AR and reload the page.';if(this.mode==='learn')this.gatePaused=true;}
+    if(assetError){this.problem='Detailed hands unavailable; showing joint outlines. Exit AR and reload to retry.';if(this.mode==='learn')this.gatePaused=true;}
     const now=performance.now();
     if(this.pending?.kind.startsWith('cue-')){
       if(now>this.pending.until-400){const p=this.currentHands.right?.[9]?.p;if(p)this.pending.samples.push([...p]);else this.pending.samples=[];}

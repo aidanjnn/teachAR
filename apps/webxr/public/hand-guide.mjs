@@ -177,10 +177,14 @@ export class HandGuide {
   enableHologram(live=false,side='right'){
     if(this.skinHand)return;
     this.skinHand=new HolographicHand(this.ghost,side,live);
-    this.dots.forEach(m=>m.visible=false);this.boneMeshes.forEach(m=>m.visible=false);this.bones.visible=false;
   }
   drawHand(joints,color){
-    if(this.skinHand){this.ghost.visible=this.skinHand.draw(joints,color);return;}
+    if(this.skinHand?.ready){
+      this.dots.forEach(m=>m.visible=false);this.boneMeshes.forEach(m=>m.visible=false);this.bones.visible=false;
+      this.ghost.visible=this.skinHand.draw(joints,color);return;
+    }
+    // Loading or failed assets retain the measured joint visualization.
+    if(this.skinHand)this.skinHand.root.visible=false;
     if(!tracked(joints)){this.ghost.visible=false;return;}
     if(this.palmMesh){
       const ids=[0,1,6,11,16,21],valid=ids.every(i=>joints[i]);
@@ -192,7 +196,7 @@ export class HandGuide {
         this.palmMesh.material.color.setHex(color);this.palmEdge.material.color.setHex(color);
       }
     }
-    this.ghost.visible=true;this.dots[0].material.color.setHex(color);this.bones.material.color.setHex(color);
+    this.ghost.visible=true;this.bones.visible=true;this.dots[0].material.color.setHex(color);this.bones.material.color.setHex(color);
     this.dots.forEach((dot,i)=>{dot.visible=!!joints[i];if(dot.visible)dot.position.fromArray(joints[i].p);});
     this.boneMeshes.forEach((mesh,i)=>{if(this.palmMesh)mesh.material.color.setHex(color);const [a,b]=BONE_PAIRS[i];mesh.visible=!!joints[a]&&!!joints[b];if(!mesh.visible)return;const pa=new THREE.Vector3(...joints[a].p),pb=new THREE.Vector3(...joints[b].p),delta=pb.clone().sub(pa);mesh.position.copy(pa.add(pb).multiplyScalar(.5));mesh.scale.y=delta.length();mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());});
     const positions=this.bones.geometry.attributes.position;let n=0;
