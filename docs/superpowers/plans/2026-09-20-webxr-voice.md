@@ -154,7 +154,7 @@
 
 ### Task 10: Full gate and manual smoke
 
-- [ ] **Step 1:** `pnpm check`, `pnpm validate:fixtures`, `pnpm test:e2e`, and `cd experiments/quest-browser && sh test-all.sh`.
-- [ ] **Step 2: Real key on the desktop:** `ALLOW_USB_LOOPBACK=true PAIRING_ORIGINS=http://127.0.0.1:3001 pnpm dev` with `AI_PROVIDER=openai`; open `http://127.0.0.1:3001/tutorial.html`; pair with the bootstrap author code; Start coach reaches `live`; ask "what do I do now" and "am I done"; record the answers in the codex log.
-- [ ] **Step 3: Draft from narration with a real key:** record a short narration on a step in the desktop tutor, run Draft from narration, confirm provenance `model`.
-- [ ] **Step 4:** Update the codex log with results, then hand off to `/trail-staff-review`.
+- [x] **Step 1:** `pnpm check`, `pnpm validate:fixtures`, `pnpm test:e2e`, and `cd experiments/quest-browser && sh test-all.sh`.
+- [x] **Step 2: Real key on the desktop:** `ALLOW_USB_LOOPBACK=true PAIRING_ORIGINS=http://127.0.0.1:3001 pnpm dev` with `AI_PROVIDER=openai`; open `http://127.0.0.1:3001/tutorial.html`; pair with the bootstrap author code; Start coach reaches `live`; ask "what do I do now" and "am I done"; record the answers in the codex log.
+- [x] **Step 3: Draft from narration with a real key:** record a short narration on a step in the desktop tutor, run Draft from narration, confirm provenance `model`.
+- [x] **Step 4:** Update the codex log with results, then hand off to `/trail-staff-review`.
