@@ -149,8 +149,8 @@
 **Files:**
 - Modify: `README.md` (browser tutor section: one origin, coach, pairing), `docs/web-delivery.md` (voice row now connected, open device gate), `apps/server/src/routes/README.md`, `experiments/quest-browser/README.md`, `docs/codex-log.md` (dated entry with checks and limits), `.env.example` comment for `PAIRING_ORIGINS` with the tutor origin.
 
-- [ ] **Step 1: Write the entries.** State plainly: verified with the mock provider in CI and with a real key on the desktop; headset mic plus WebRTC plus immersive session unverified.
-- [ ] **Step 2: Commit:** `docs(web): document the browser tutor coach and narration drafting`.
+- [x] **Step 1: Write the entries.** State plainly: verified with the mock provider in CI and with a real key on the desktop; headset mic plus WebRTC plus immersive session unverified.
+- [x] **Step 2: Commit:** `docs(web): document the browser tutor coach and narration drafting`.
 
 ### Task 10: Full gate and manual smoke
 

@@ -22,8 +22,12 @@ than task-specific code or cached answers.
 ## Run the browser tutor now
 
 Start with [the Quest Browser instructions](experiments/quest-browser/README.md).
-The product entry is `/tutorial` on port 4321; `pnpm dev` starts the separate desktop/backend app.
-No Unity install or API key is needed for hand recording and ghost guidance.
+The main API also serves the tutor at `/tutorial` on its own port, so the headset gets one
+origin for the page, pairing and the voice coach: run `pnpm dev`, `adb reverse tcp:3001 tcp:3001`,
+and open `http://localhost:3001/tutorial` in Quest Browser. The legacy `server.py` on port 4321
+still serves the camera lab. No Unity install or API key is needed for hand recording and
+ghost guidance; the coach and narration drafting need the paired API and, for live voice,
+`AI_PROVIDER=openai` on the server.
 
 See [web delivery status and next steps](docs/web-delivery.md) for what works, what is missing,
 and [the clean UI reference](docs/design/trail-ui/README.md) for the proposed presentation.
@@ -259,6 +263,17 @@ native checks run locally. Hosted checks do not establish native or physical
 readiness.
 
 ### Voice and AI diagnostics
+
+The browser tutor carries the same coach. Its Voice coach card pairs the browser, publishes
+the current tutorial's reviewed step titles and instructions as a **coach guide**
+(`POST /api/coach-guides`, author only), and starts the coach before AR so the XR entry click
+stays synchronous. Step changes and restarts reach the model through the server's own channel;
+an Ask coach button on the headset panel opens the microphone. The review screen's
+"Draft titles from narration" sends each step's WAV through `whisper-1` and the label route and
+shows the drafts for the expert to apply. With the mock provider the coach answers in text; with
+a real key it goes live. Microphone, WebRTC and an immersive session together on the Quest are
+not yet verified.
+
 
 The browser Voice Lab at `http://127.0.0.1:5173/voice-lab.html` provides recorder,
 transcription, label and coach diagnostics.

@@ -29,6 +29,25 @@ This runs `adb reverse tcp:4321 tcp:4321` and opens `http://localhost:4321/tutor
 
 For another local port: `PORT=4331 sh start.sh`, then `adb reverse tcp:4331 tcp:4331` and manually open `http://localhost:4331/tutorial`. The convenience launch script uses port 4321. Stop the foreground server with Ctrl-C. `start-background.py` is optional and records its PID in `.runtime/server.pid`; stop only that process when finished.
 
+## Voice coach and narration drafting
+
+The tutor page has a Voice coach card. It pairs this browser with the Trail API, publishes the
+current tutorial's reviewed step titles and instructions as a coach guide, and starts the coach
+before you enter AR so the entry click stays synchronous. Inside AR the practice panel gains
+**Ask coach**; press it, speak, and the answer comes back over the coach's own audio. The coach
+answers only from the published step text and never advances a step. On the review page,
+**Draft titles from narration** sends each narrated step's WAV through the transcription and
+label routes and shows drafts to apply.
+
+Run the tutor from the API origin for this: from the repository root, `pnpm dev`, then
+`adb reverse tcp:3001 tcp:3001` and open `http://localhost:3001/tutorial` in Quest Browser
+(the API serves this folder's files and `/vendor/trail-coach.js`, built from `apps/web` by
+`prepare-vendor.mjs`). With `ALLOW_USB_LOOPBACK=true` and `PAIRING_ORIGINS=http://localhost:3001`
+the page asks for a pairing code; mint an author code from the desktop authoring page or use the
+bootstrap code in `data/<dir>/pairing.json`. Without pairing the coach uses the steps in this
+browser. Live voice needs `AI_PROVIDER=openai` on the server; the mock provider answers in text.
+Microphone, WebRTC and an immersive session together on the Quest are not yet verified.
+
 ## What is included
 
 - `/tutorial`: Create/Follow shell, one save position per tutorial, hand-motion capture/pause/resume, clean-save trimming, review, automatic device-local library, explicit import/export, workspace placement, paired holographic ghosts, live palm zones and learner-paced checkpoints.

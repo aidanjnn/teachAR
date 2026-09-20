@@ -14,3 +14,11 @@ refused, every session ends on its own 30-minute timer, and a channel error drop
 the session so the browser falls back to text.
 Recording uploads, jobs and tutorial routes are registered in `../storage/routes.ts`;
 see the [authoring and storage guide](../../../../docs/authoring-storage.md).
+`coach-guides.ts` (registered only with pairing) stores reviewed step text that browser
+tutorials publish: `POST /api/coach-guides` (author) mints a server id and bumps the
+revision per `sourceId`; `GET /api/coach-guides/:id` and `POST /api/coach-guides/:id/query`
+(learner or author) read it back. `createApp` resolves coach context from the tutorial
+repository first and then from this store, so grounding holds for guides that only exist in a
+browser. `createApp` also serves the Quest Browser tutor's static files behind the desktop
+build when `tutorRoot` is set, with `/tutorial` served directly because the page keys off
+that pathname.
