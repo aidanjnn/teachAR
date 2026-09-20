@@ -86,9 +86,10 @@ function speak(message) {
 }
 // The coach's own text answers bypass the hold: they are the voice the learner is waiting for.
 function speakNow(message) {
-  if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return;
+  if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return Promise.resolve();
   speechSynthesis.cancel(); const utterance=new SpeechSynthesisUtterance(message);
-  utterance.rate=1; speechSynthesis.speak(utterance);
+  utterance.rate=1;
+  return new Promise(resolve=>{utterance.onend=()=>resolve();utterance.onerror=()=>resolve();speechSynthesis.speak(utterance);});
 }
 async function api(path, body, timeout=5000) {
   const response=await fetch(path,{method:body===undefined?'GET':'POST',

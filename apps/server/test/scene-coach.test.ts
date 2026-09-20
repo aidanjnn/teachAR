@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import { SceneAdviceResponseSchema } from '@trail/contracts';
-import { GUARDED_LINE, type SceneAdviceInput, type SceneCoachProvider } from '../src/ai/scene-coach.js';
+import { GUARDED_LINE, UNPAIRED_REASON, type SceneAdviceInput, type SceneCoachProvider } from '../src/ai/scene-coach.js';
 import { createApp } from '../src/app.js';
 import { readConfig } from '../src/config.js';
 
@@ -41,6 +41,14 @@ describe('POST /api/scene-coach', () => {
       expect(response.json()).toEqual({ error: 'scene_unavailable', message: 'Scene coaching is not configured on this server.' });
       expect((await app.inject('/api/health')).json().providers.scene).toBe('off');
     } finally { await app.close(); }
+    // A configured model on an unpaired server is refused too: nothing could ground or gate the paid request.
+    const unpaired = await createApp(readConfig({ DATA_DIR: await temp(), SCENE_COACH: 'omni', OMNI_API_KEY: 'sk-omni-test' }));
+    try {
+      const response = await unpaired.inject({ method: 'POST', url: '/api/scene-coach', headers: json, payload: await request(await jpeg()) });
+      expect(response.statusCode).toBe(503);
+      expect(response.json().message).toBe(UNPAIRED_REASON);
+      expect((await unpaired.inject('/api/health')).json().providers.scene).toBe('omni');
+    } finally { await unpaired.close(); }
   });
   it('bounds both images, forwards the grounded context and returns speech with provenance', async () => {
     const wav = { format: 'wav' as const, dataBase64: Buffer.alloc(200, 3).toString('base64') };

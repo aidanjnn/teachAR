@@ -76,5 +76,5 @@ Look & advise (XR panel or card)
   (grounding, bounds, freshness, guard, spacing, 503 when off).
 - Tutor Node tests: request shaping, stale-reply discard, fallback speech, caption path.
 - Browser workflow: `browser-coach.cjs` gains a mocked `/api/scene-coach` call with the fake camera.
-- Live: `pnpm omni:smoke` sends a synthetic frame and question through the real gateway once the
+- Live: `node scripts/omni-smoke.mjs` sends a synthetic frame and question through the real gateway once the
   key exists; reports transcript, audio presence and latency. Headset audio remains a device gate.

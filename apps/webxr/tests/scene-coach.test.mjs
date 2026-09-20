@@ -48,6 +48,19 @@ test('drops an answer that arrives after the step or epoch changed, and surfaces
   assert.equal(refused.told.at(-1),'Scene coaching is not configured on this server.');assert.equal(refused.scene.busy,false);
 });
 
+test('the tutor voice fallback counts as speaking until it finishes, and the request timer never aborts a newer look',async()=>{
+  const h=harness();
+  let finish;const speaking=[];
+  const scene=createSceneCoach({guide:h.guide,coach:{active:true,contextFor:()=>({}),announce:()=>{}},snapshot:async()=>({image:JPEG,capture:{request_age_ms:10}}),fetchImpl:async()=>({ok:true,status:200,json:async()=>({transcript:'Slide it left.',audio:null,provenance:'model'})}),speakFallback:()=>new Promise(r=>{finish=r;}),audioContextFactory:()=>{throw Error('no audio');}});
+  scene.onState(s=>speaking.push(s.speaking));
+  const pending=scene.look();
+  await new Promise(r=>setTimeout(r,5));
+  assert.equal(scene.speaking,true,'held speech in the page waits while the advice is read');
+  finish();await pending;
+  assert.equal(scene.speaking,false);assert.equal(scene.busy,false);
+  assert.ok(speaking.includes(true)&&speaking.at(-1)===false);
+});
+
 test('a guarded answer is captioned with its provenance and stop() cancels an in-flight look',async()=>{
   const guarded=harness({body:{schemaVersion:1,transcript:'I cannot judge that from one picture.',audio:null,provenance:'guarded'}});
   await guarded.scene.look();

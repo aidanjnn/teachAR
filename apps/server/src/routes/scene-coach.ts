@@ -43,27 +43,35 @@ export async function registerSceneCoachRoutes(app: FastifyInstance, provider: S
   const roleOf = (request: FastifyRequest): PairingRole | null => (auth ? auth.authorize(request, { roles: ['author', 'learner'], sessionId: auth.sessionId }).role : null);
   // Authenticate before the body is parsed so an unpaired client cannot make the server read two images.
   const guard: RouteShorthandOptions = auth ? { onRequest: auth.require({ roles: ['learner', 'author'], sessionId: auth.sessionId }) } : {};
-  const refuse = (reply: FastifyReply, status: number, error: string, message: string) => reply.code(status).header('Cache-Control', 'no-store').send({ error, message });
+  const refuse = (reply: FastifyReply, status: number, error: string, message: string, headers: Record<string, string> = {}) => {
+    reply.code(status).header('Cache-Control', 'no-store');
+    for (const [name, value] of Object.entries(headers)) reply.header(name, value);
+    return reply.send({ error, message });
+  };
   let busy = false, attempts = 0, nextAt = 0;
+  // An unconfigured server refuses before the two images are even read.
+  const refuseWhenOff = (_request: FastifyRequest, reply: FastifyReply, done: () => void) => {
+    if (provider.name === 'off') { void refuse(reply, 503, 'scene_unavailable', provider.reason ?? 'Scene coaching is not configured on this server.'); return; }
+    done();
+  };
+  const hooks = [...(guard.onRequest ? [guard.onRequest as (request: FastifyRequest, reply: FastifyReply, done: () => void) => void] : []), refuseWhenOff];
 
-  app.post('/api/scene-coach', { ...guard, bodyLimit: BODY_LIMIT }, async (request, reply) => {
+  app.post('/api/scene-coach', { onRequest: hooks, bodyLimit: BODY_LIMIT }, async (request, reply) => {
     reply.header('Cache-Control', 'no-store');
-    if (provider.name === 'off') return refuse(reply, 503, 'scene_unavailable', 'Scene coaching is not configured on this server.');
     const parsed = SceneAdviceRequestSchema.safeParse(request.body);
     if (!parsed.success) return refuse(reply, 400, 'invalid_request', 'Scene advice request failed validation.');
     const body = parsed.data;
     if (body.captureAgeMs > MAX_CAPTURE_AGE_MS) return refuse(reply, 400, 'stale_capture', 'The camera frame is too old; look again.');
     const grounded = await groundContext(body.context, resolveTutorial, roleOf(request));
     if (!grounded.ok) return refuse(reply, grounded.status, grounded.body.error, grounded.body.message);
-    if (busy || Date.now() < nextAt) return reply.code(429).header('Cache-Control', 'no-store').header('Retry-After', '3').send({ error: 'scene_busy', message: 'One look at a time. Try again in a moment.' });
+    if (busy || Date.now() < nextAt) return refuse(reply, 429, 'scene_busy', 'One look at a time. Try again in a moment.', { 'Retry-After': '3' });
     if (attempts >= limit) return refuse(reply, 429, 'scene_limit', 'The scene coaching allowance for this server run is used up.');
     busy = true;
     const startedAt = Date.now();
     try {
-      const image = await boundImage(body.image);
+      // Both decodes are independent; a reference the model cannot read is dropped, not fatal.
+      const [image, reference] = await Promise.all([boundImage(body.image), body.reference ? boundImage(body.reference) : Promise.resolve(null)]);
       if (!image) return refuse(reply, 400, 'invalid_image', 'Send a JPEG frame within limits.');
-      // A reference the model cannot read is dropped, not fatal: the fresh frame still gets advice.
-      const reference = body.reference ? await boundImage(body.reference) : null;
       // Only a request that reaches the model counts against spacing and the allowance.
       attempts++; nextAt = Date.now() + SPACING_MS;
       const advice = await provider.advise({ context: grounded.context, question: body.question, image, reference, source: body.source }, AbortSignal.timeout(DEADLINE_MS));
@@ -76,8 +84,8 @@ export async function registerSceneCoachRoutes(app: FastifyInstance, provider: S
         model: advice.model, provenance: guarded ? 'guarded' : 'model', latencyMs: Date.now() - startedAt,
       });
     } catch (error) {
-      // Gateway status and body stay out of the reply and the logs; the learner only needs to know to keep going.
-      request.log.warn({ status: error instanceof SceneCoachError ? error.status : 503 }, 'scene coach unavailable');
+      // The learner only needs to know to keep going; the operator's log gets the sanitized reason (gateway status, timeout, bad answer shape), never the body.
+      request.log.warn({ reason: error instanceof SceneCoachError ? error.message : error instanceof Error ? error.name : 'unknown', status: error instanceof SceneCoachError ? error.status : null }, 'scene coach unavailable');
       return refuse(reply, 503, 'scene_unavailable', 'The scene coach could not answer. Keep following the ghost hand.');
     } finally {
       busy = false;

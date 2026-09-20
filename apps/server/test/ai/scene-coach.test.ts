@@ -25,7 +25,7 @@ describe('omni scene coach gateway', () => {
         '[DONE]',
       ]);
     }) as typeof fetch;
-    const coach = createOmniSceneCoach({ apiKey: 'sk-omni-test', baseUrl: 'https://gateway.example/v1/', model: 'qwen3.5-omni-flash', voice: 'Cherry', fetchImpl });
+    const coach = createOmniSceneCoach({ apiKey: 'sk-omni-test', baseUrl: 'https://gateway.example/v1', model: 'qwen3.5-omni-flash', voice: 'Cherry', fetchImpl });
     const advice = await coach.advise({ context, question: 'Is my paper placed right?', image, reference: image, source: 'quest-camera' }, AbortSignal.timeout(5_000));
     expect(advice.transcript).toBe('Turn the sheet so the marked corner is nearest you.');
     expect(advice.model).toBe('qwen3.5-omni-flash');
@@ -49,6 +49,7 @@ describe('omni scene coach gateway', () => {
     expect(parts.map((part: { type: string }) => part.type)).toEqual(['image_url', 'image_url', 'text']);
     expect(parts[1].image_url.url.startsWith('data:image/jpeg;base64,')).toBe(true);
     expect(parts[2].text).toContain('Is my paper placed right?');
+    expect(parts[2].text).toContain('headset camera');
   });
   it('accepts a gateway that answers once as JSON and reports no audio when none came back', async () => {
     const fetchImpl = (async () => new Response(JSON.stringify({ choices: [{ message: { content: 'I cannot see the sheet from here.' } }] }), { status: 200, headers: { 'content-type': 'application/json' } })) as typeof fetch;
@@ -58,7 +59,7 @@ describe('omni scene coach gateway', () => {
   });
   it('turns gateway refusals, empty answers and timeouts into a typed 503 without the body', async () => {
     const refused = createOmniSceneCoach({ apiKey: 'k', baseUrl: 'https://gateway.example/v1', model: 'm', voice: 'v', fetchImpl: (async () => new Response('{"error":"bad key sk-secret"}', { status: 401 })) as typeof fetch });
-    await expect(refused.advise({ context, question: 'q', image, reference: null, source: 'quest-camera' }, AbortSignal.timeout(5_000))).rejects.toMatchObject({ name: 'SceneCoachError', status: 503, message: 'OMNI gateway answered 401' });
+    await expect(refused.advise({ context, question: 'q', image, reference: null, source: 'quest-camera' }, AbortSignal.timeout(5_000))).rejects.toMatchObject({ name: 'SceneCoachError', status: 401, message: 'OMNI gateway answered 401' });
     const empty = createOmniSceneCoach({ apiKey: 'k', baseUrl: 'https://gateway.example/v1', model: 'm', voice: 'v', fetchImpl: (async () => sse(['[DONE]'])) as typeof fetch });
     await expect(empty.advise({ context, question: 'q', image, reference: null, source: 'quest-camera' }, AbortSignal.timeout(5_000))).rejects.toBeInstanceOf(SceneCoachError);
     const aborted = new AbortController(); aborted.abort();

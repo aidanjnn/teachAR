@@ -20,8 +20,11 @@ export interface SceneAdvice {
 export interface SceneCoachProvider {
   readonly name: 'off' | 'omni';
   readonly model: string;
+  /** Why an `off` provider refuses; shown to the learner. */
+  readonly reason?: string;
   advise(input: SceneAdviceInput, signal: AbortSignal): Promise<SceneAdvice>;
 }
+/** `status` is the gateway's HTTP status when there was one (for the server log), never forwarded to the learner. */
 export class SceneCoachError extends Error {
   constructor(message: string, readonly status: number) { super(message); this.name = 'SceneCoachError'; }
 }
@@ -77,19 +80,24 @@ export async function readCompletionStream(response: Response): Promise<Streamed
       if (typeof delta.audio.data === 'string' && delta.audio.data) answer.pcm.push(Buffer.from(delta.audio.data, 'base64'));
     }
   };
-  const contentType = response.headers.get('content-type') ?? '';
-  if (contentType.includes('application/json')) {
-    // A gateway that ignores `stream` answers once; the audio then arrives complete.
-    const body = await response.text();
-    if (body.length > MAX_STREAM_BYTES) throw new SceneCoachError('OMNI response too large', 503);
-    const json = JSON.parse(body) as { choices?: { message?: { content?: unknown; audio?: { transcript?: unknown; data?: unknown } } }[] };
-    take(json.choices?.[0]?.message);
-    return answer;
-  }
   const reader = response.body?.getReader();
   if (!reader) throw new SceneCoachError('OMNI response had no body', 503);
   const decoder = new TextDecoder();
   let buffered = '', total = 0;
+  const contentType = response.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) {
+    // A gateway that ignores `stream` answers once; the audio then arrives complete. Read within the same bound as the stream.
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_STREAM_BYTES) { await reader.cancel().catch(() => undefined); throw new SceneCoachError('OMNI response too large', 503); }
+      buffered += decoder.decode(value, { stream: true });
+    }
+    const json = JSON.parse(buffered) as { choices?: { message?: { content?: unknown; audio?: { transcript?: unknown; data?: unknown } } }[] };
+    take(json.choices?.[0]?.message);
+    return answer;
+  }
   const handleLine = (line: string): boolean => {
     if (!line.startsWith('data:')) return false;
     const payload = line.slice(5).trim();
@@ -122,7 +130,7 @@ export interface OmniOptions { apiKey: string; baseUrl: string; model: string; v
 /** Qwen-Omni through an OpenAI-compatible gateway (yibuapi): one streamed chat completion with text and audio output. */
 export function createOmniSceneCoach(options: OmniOptions): SceneCoachProvider {
   const fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
-  const baseUrl = options.baseUrl.replace(/\/+$/, '');
+  const baseUrl = options.baseUrl;
   return {
     name: 'omni',
     model: options.model,
@@ -130,7 +138,8 @@ export function createOmniSceneCoach(options: OmniOptions): SceneCoachProvider {
       const content: unknown[] = [];
       if (input.reference) content.push({ type: 'image_url', image_url: { url: `data:${input.reference.mimeType};base64,${input.reference.dataBase64}` } });
       content.push({ type: 'image_url', image_url: { url: `data:${input.image.mimeType};base64,${input.image.dataBase64}` } });
-      content.push({ type: 'text', text: `${input.reference ? "First image: the expert's reference photo for this step. Second image: my table now." : 'The image is my table now.'} Question: ${input.question}` });
+      const camera = input.source === 'quest-camera' ? 'my headset camera' : 'a webcam over my workspace';
+      content.push({ type: 'text', text: `${input.reference ? `First image: the expert's reference photo for this step. Second image: my table now, from ${camera}.` : `The image is my table now, from ${camera}.`} Question: ${input.question}` });
       const body = {
         model: options.model, stream: true, modalities: ['text', 'audio'], audio: { voice: options.voice, format: 'wav' },
         messages: [{ role: 'system', content: sceneInstructions(input.context) }, { role: 'user', content }],
@@ -145,8 +154,8 @@ export function createOmniSceneCoach(options: OmniOptions): SceneCoachProvider {
       } catch {
         throw new SceneCoachError(signal.aborted ? 'OMNI request timed out' : 'OMNI request failed', 503);
       }
-      // Status only; the body may echo our images or carry gateway text we never log.
-      if (!response.ok) throw new SceneCoachError(`OMNI gateway answered ${response.status}`, 503);
+      // Status only; the body may echo our images or carry gateway text we never log, so it is dropped unread.
+      if (!response.ok) { await response.body?.cancel().catch(() => undefined); throw new SceneCoachError(`OMNI gateway answered ${response.status}`, response.status); }
       const streamed = await readCompletionStream(response);
       const transcript = (streamed.transcript || streamed.text).replace(/\s+/g, ' ').trim().slice(0, MAX_TRANSCRIPT_CHARS);
       if (!transcript) throw new SceneCoachError('OMNI returned no answer', 503);
@@ -156,9 +165,11 @@ export function createOmniSceneCoach(options: OmniOptions): SceneCoachProvider {
   };
 }
 
-/** The default: no provider, no key, an honest 503. Nothing is mocked into a synthetic verdict. */
-export const offSceneCoach: SceneCoachProvider = {
-  name: 'off',
-  model: 'none',
-  async advise() { throw new SceneCoachError('Scene coaching is not configured on this server.', 503); },
-};
+export const OFF_REASON = 'Scene coaching is not configured on this server.';
+export const UNPAIRED_REASON = 'Scene coaching runs only on a paired server. Set PAIRING_ORIGINS or ALLOW_USB_LOOPBACK and pair the browser.';
+
+/** No provider, or one this server may not expose: an honest 503 with the reason. Nothing is mocked into a synthetic verdict. */
+export function createOffSceneCoach(reason = OFF_REASON): SceneCoachProvider {
+  return { name: 'off', model: 'none', reason, async advise() { throw new SceneCoachError(reason, 503); } };
+}
+export const offSceneCoach: SceneCoachProvider = createOffSceneCoach();

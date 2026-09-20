@@ -2,7 +2,7 @@
 
 `createApp` in `../app.ts` registers `GET /api/health` and the voice plugin in
 `voice.ts` (`POST /api/voice/transcriptions`, `POST /api/voice/labels`,
-`POST /api/scene-coach` (Look & advise: a fresh JPEG frame, the step's reference photo and a question, grounded like `/api/coach`, sent to the OMNI model when `SCENE_COACH=omni`; speech back as WAV, completion claims replaced by a guarded line, one request in flight, 3 s spacing, frames older than 3 s refused),
+`POST /api/scene-coach` (registered by `routes/scene-coach.ts` beside the voice plugin; Look & advise: a fresh JPEG frame, the step's reference photo and a question, grounded like `/api/coach`, sent to the OMNI model when `SCENE_COACH=omni`; speech back as WAV, completion claims replaced by a guarded line, one request in flight, 3 s spacing, frames older than 3 s refused),
 `POST /api/coach`, `POST /api/live/sessions`, `POST /api/live/sessions/:id/step`,
 `DELETE /api/live/sessions/:id`). `registerVoiceRoutes` accepts the
 `PairingAuthority` (author token for narration/labels, learner or author for
