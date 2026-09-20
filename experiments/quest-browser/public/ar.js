@@ -361,7 +361,7 @@ $('speech').onchange=()=>{if(!$('speech').checked)window.speechSynthesis?.cancel
 hud.onclick=event=>{if(tutorialMode&&!session){tell('This is a preview. Enter AR on Quest to use these controls.');return;}const r=hud.getBoundingClientRect();const id=(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)((event.clientX-r.left)/r.width,1-(event.clientY-r.top)/r.height);if(id)void action(id);};
 document.addEventListener('visibilitychange',()=>{if(!visible()){pauseOnLeave();guide?.hide();if(!session)stopCamera();}});
 window.addEventListener('pagehide',()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();});
-window.addEventListener('beforeunload',event=>{if(tutorialMode&&['capture','capture-paused','saving'].includes(guide.mode)){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(tutorialMode&&['capture','capture-paused','saving','saving-tutorial','save-failed'].includes(guide.mode)){event.preventDefault();event.returnValue='';}});
 // A separate timer keeps the non-immersive setup and fallback usable.
 setInterval(()=>{service(performance.now());update();},200);
 try {xrSupported=!!navigator.xr && await navigator.xr.isSessionSupported('immersive-ar');}

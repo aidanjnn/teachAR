@@ -26,6 +26,35 @@ namespace Trail.Tests
             finally { incoming.Response.Close(); }
         }
         [UnityTest]
+        public IEnumerator HidingPairingKeepsTheRigAndApplicationActive()
+        {
+            var root = new GameObject("pairing-root-visibility-test");
+            try
+            {
+                var rig = new GameObject("rig"); rig.transform.SetParent(root.transform);
+                var camera = rig.AddComponent<Camera>();
+                var connection = root.AddComponent<NativeApiConnection>();
+                var invalidations = 0; connection.SessionInvalidated += () => invalidations++;
+                var panel = root.AddComponent<NativePairingPanel>();
+                panel.Initialize(new PlatformContext(root, rig.transform, camera, connection));
+                // Match bootstrap composition: the rig is inactive when the shell hides diagnostics.
+                rig.SetActive(false);
+                panel.SetPanelVisible(false);
+                rig.SetActive(true);
+                yield return null;
+                Assert.IsTrue(root.activeInHierarchy);
+                Assert.IsTrue(camera.isActiveAndEnabled);
+                Assert.AreEqual(0, invalidations, "hiding the canvas must not disconnect the application");
+                Assert.IsFalse(panel.enabled, "hidden keys must not accept dwell input");
+                Assert.IsFalse(rig.transform.Find("Native pairing setup").gameObject.activeInHierarchy);
+                panel.SetPanelVisible(true);
+                Assert.IsTrue(panel.enabled);
+                Assert.IsTrue(rig.transform.Find("Native pairing setup").gameObject.activeInHierarchy);
+            }
+            finally { Object.Destroy(root); }
+        }
+
+        [UnityTest]
         public IEnumerator UnauthorizedResponseSuppressesAllConcurrentCallbacks()
         {
             var reservation = new TcpListener(IPAddress.Loopback, 0); reservation.Start();

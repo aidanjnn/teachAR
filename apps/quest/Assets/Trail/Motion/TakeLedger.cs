@@ -21,6 +21,7 @@ namespace Trail.Motion
         public Recording Recording { get; }
         public AudioAsset Narration { get; }
         public NarrationTrim NarrationSource { get; }
+        // Null keeps the entire recording, including its final timestamp.
         public TakeTrim Trim { get; }
         public string DroppedNarrationReason { get; }
         internal TrimmedTake(Recording recording, AudioAsset narration, NarrationTrim source, TakeTrim trim, string droppedReason)
@@ -32,6 +33,7 @@ namespace Trail.Motion
         public Recording Recording { get; }
         public AudioAsset Narration { get; }
         public NarrationTrim NarrationSource { get; }
+        // Null keeps the entire recording, including its final timestamp.
         public TakeTrim Trim { get; }
         public string TrimReason { get; }
         internal RecordedTake(TrimmedTake trimmed, string trimReason)
@@ -81,10 +83,10 @@ namespace Trail.Motion
             }
             var result = new Recording { SchemaVersion = recording.SchemaVersion, Id = recordingId, CoordinateFrame = recording.CoordinateFrame,
                 Workspace = recording.Workspace, JointOrder = recording.JointOrder, NominalSampleHz = recording.NominalSampleHz,
-                DurationMs = kept[kept.Count - 1].TMs, Frames = kept.ToArray(), Markers = markers.ToArray(), Audio = audio, Source = recording.Source };
+                DurationMs = (trim == null ? recording.DurationMs : Math.Min(recording.DurationMs, trim.EndMsExclusive)) - start, Frames = kept.ToArray(), Markers = markers.ToArray(), Audio = audio, Source = recording.Source };
             // Validation and deep copy at the save boundary, exactly as MotionCapture.Finish does.
             return new TrimmedTake(ContractJson.ParseRecording(ContractJson.SerializeRecording(result)), audio, source,
-                trim ?? new TakeTrim(0, result.DurationMs + 1), dropped);
+                trim, dropped);
         }
     }
 
@@ -152,7 +154,8 @@ namespace Trail.Motion
             if (transition.AdmitFrameAtMs.HasValue)
             {
                 if (observation == null) throw new ArgumentNullException(nameof(observation));
-                AppendFrame(transition.AdmitFrameAtMs.Value, observation.Left, observation.Right);
+                if (!AppendFrame(transition.AdmitFrameAtMs.Value, observation.Left, observation.Right))
+                    throw new InvalidOperationException("Take admission stopped: " + (PendingStopReason ?? "invalid or out-of-range timestamp"));
             }
             if (transition.Commit == null) return null;
             return Commit(transition.Commit.ReplaceIndex, transition.Commit.Trim, transition.Commit.Reason,

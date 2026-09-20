@@ -46,6 +46,8 @@ namespace Trail.Runtime.Shell
         // Set for exactly one reduction, on the withdrawal that confirms. Never latched.
         public int ConfirmedIndex { get; internal set; } = -1;
         public string ConfirmedId { get; internal set; }
+        internal int TouchingHand = -1;
+        internal string TouchingId;
         internal double StartedMs = -1, SampleMs = -1;
         internal long Sequence = -1;
         internal int OriginRevision = int.MinValue;
@@ -94,14 +96,22 @@ namespace Trail.Runtime.Shell
             s.SampleMs = sample.SampleTimeMs; s.Sequence = sample.Sequence;
             if (gap > StallMs) return Clear(s);
 
-            var selected = Nearest(buttons, sample.LeftTipM, sample.RightTipM);
+            // Evidence belongs to one button and one hand. A missing owner is not a withdrawal,
+            // and another hand cannot inherit its dwell or keep its touch alive.
+            if (s.TouchingIndex >= 0 && (s.TouchingIndex >= buttons.Length ||
+                buttons[s.TouchingIndex] == null || !buttons[s.TouchingIndex].Enabled ||
+                buttons[s.TouchingIndex].Id != s.TouchingId ||
+                !Valid(s.TouchingHand == 0 ? sample.LeftTipM : sample.RightTipM))) return Clear(s);
+            var selected = Nearest(buttons,
+                s.TouchingHand == 1 ? null : sample.LeftTipM,
+                s.TouchingHand == 0 ? null : sample.RightTipM, out var hand);
             if (selected != s.TouchingIndex)
             {
                 // Only a fresh, tracked withdrawal from an armed label confirms. Sliding onto a
                 // different label cancels instead, so a drifting hand cannot trigger a neighbour.
                 var armed = s.Touch == ShellTouch.Armed && selected < 0 ? s.TouchingIndex : -1;
                 Clear(s);
-                if (selected >= 0) { s.TouchingIndex = selected; s.Touch = ShellTouch.Touching; s.StartedMs = sample.SampleTimeMs; }
+                if (selected >= 0) { s.TouchingIndex = selected; s.TouchingId = buttons[selected].Id; s.TouchingHand = hand; s.Touch = ShellTouch.Touching; s.StartedMs = sample.SampleTimeMs; }
                 if (armed >= 0) { s.ConfirmedIndex = armed; s.ConfirmedId = buttons[armed].Id; }
                 return s;
             }
@@ -118,26 +128,30 @@ namespace Trail.Runtime.Shell
         }
 
         private static ShellInteractionState Clear(ShellInteractionState s)
-        { s.Touch = ShellTouch.Idle; s.TouchingIndex = -1; s.StartedMs = -1; return s; }
+        { s.Touch = ShellTouch.Idle; s.TouchingIndex = -1; s.TouchingId = null; s.TouchingHand = -1; s.StartedMs = -1; return s; }
 
-        private static int Nearest(ShellButton[] buttons, Vector3? left, Vector3? right)
+        private static int Nearest(ShellButton[] buttons, Vector3? left, Vector3? right, out int hand)
         {
+            hand = -1;
             var best = -1; var bestDistance = HitRadiusM;
             for (var i = 0; i < buttons.Length; i++)
             {
                 var button = buttons[i];
                 if (button == null || !button.Enabled) continue;
-                foreach (var tip in new[] { left, right })
+                for (var side = 0; side < 2; side++)
                 {
-                    if (!tip.HasValue) continue;
+                    var tip = side == 0 ? left : right;
+                    if (!Valid(tip)) continue;
                     var point = tip.Value;
-                    if (!ShellButton.Finite(point.X) || !ShellButton.Finite(point.Y) || !ShellButton.Finite(point.Z)) continue;
                     var distance = Vector3.Distance(point, button.PositionM);
-                    if (distance <= bestDistance) { bestDistance = distance; best = i; }
+                    if (distance <= bestDistance) { bestDistance = distance; best = i; hand = side; }
                 }
             }
             return best;
         }
+
+        private static bool Valid(Vector3? tip) => tip.HasValue && ShellButton.Finite(tip.Value.X) &&
+            ShellButton.Finite(tip.Value.Y) && ShellButton.Finite(tip.Value.Z);
 
         private static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
     }

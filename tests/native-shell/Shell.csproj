@@ -5,5 +5,7 @@
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Shell/ShellInteraction.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Shell/ShellModel.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="GuideConfirmationRegression.cs" />
+    <ProjectReference Include="../guide-harness/GuideRuntime.csproj" />
   </ItemGroup>
 </Project>

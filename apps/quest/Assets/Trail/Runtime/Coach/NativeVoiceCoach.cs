@@ -13,8 +13,7 @@ namespace Trail.Runtime.Coach
     /// microphone, the live transport handle and the paired HTTP calls. It makes no coaching decision of its
     /// own, and it calls no guide action -- the headset reducer alone starts, completes and repeats steps.
     ///
-    /// NOT COMPILED HERE: Unity is not installed in this repository checkout, so this file is source-reviewed
-    /// only. The transport implementation it drives does not exist yet either (see ICoachTransport).
+    /// Production transport and microphone implementations remain deferred (see ICoachTransport).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class NativeVoiceCoach : MonoBehaviour
@@ -45,6 +44,7 @@ namespace Trail.Runtime.Coach
         private double listenDeadline, connectDeadline;
         private bool outputGateClosed;
         private bool subscribed;
+        private bool releasing;
         private GuideContextRef bound;
 
         /// <summary>
@@ -143,9 +143,12 @@ namespace Trail.Runtime.Coach
             { EndSession("The guide changed run or revision. Prepare the coach again for it."); return; }
             if (!Session.Context.Contains(current.StepId))
             { EndSession("The guide moved to a step this coach context does not hold."); return; }
-            if (current.AttemptId != bound.AttemptId) Raise(CoachEvent.AttemptChanged(current.AttemptId));
+            // Invalidate before queued replies, never behind them. Watch runs outside dispatch.
+            if (current.AttemptId != bound.AttemptId || current.StepId != bound.StepId || current.StepRevision != bound.StepRevision)
+                LastAnswer = null;
+            if (current.AttemptId != bound.AttemptId) Session.Dispatch(CoachEvent.AttemptChanged(current.AttemptId));
             if (current.StepId != bound.StepId || current.StepRevision != bound.StepRevision)
-                Raise(CoachEvent.StepChanged(current.StepId, current.StepRevision));
+                Session.Dispatch(CoachEvent.StepChanged(current.StepId, current.StepRevision));
             bound = current;
         }
 
@@ -253,21 +256,27 @@ namespace Trail.Runtime.Coach
         /// <summary>Every exit path ends here. The microphone is freed first, before anything that can fail.</summary>
         private void ReleaseLive()
         {
-            generation++;
-            listenDeadline = 0; connectDeadline = 0;
-            if (Microphone != null) Microphone.Release();
-            if (Transport != null)
+            if (releasing) return;
+            releasing = true;
+            try
             {
-                if (Transport.Open) { try { Transport.Send(CoachLiveEvents.Close(++eventSequence)); } catch (Exception) { /* already closed */ } }
-                // The audio sink outlives this conversation; never leave it muted for the next one.
-                Transport.SetOutputMuted(false);
-                Transport.Close();
+                generation++;
+                listenDeadline = 0; connectDeadline = 0;
+                if (Microphone != null) Microphone.Release();
+                if (Transport != null)
+                {
+                    if (Transport.Open) { try { Transport.Send(CoachLiveEvents.Close(++eventSequence)); } catch (Exception) { /* already closed */ } }
+                    // The audio sink outlives this conversation; never leave it muted for the next one.
+                    Transport.SetOutputMuted(false);
+                    Transport.Close();
+                }
+                outputGateClosed = false;
+                var id = liveSessionId;
+                liveSessionId = null;
+                if (id != null && Connection != null && Connection.State == ConnectionState.Ready)
+                    Connection.Request("DELETE", "/api/live/sessions/" + id, null, (_, __) => { });
             }
-            outputGateClosed = false;
-            var id = liveSessionId;
-            liveSessionId = null;
-            if (id != null && Connection != null && Connection.State == ConnectionState.Ready)
-                Connection.Request("DELETE", "/api/live/sessions/" + id, null, (_, __) => { });
+            finally { releasing = false; }
         }
 
         private void Refuse(long status, string response)
@@ -281,6 +290,7 @@ namespace Trail.Runtime.Coach
 
         private void EndSession(string status)
         {
+            LastAnswer = null;
             var active = Session;
             if (active != null)
             {
@@ -312,8 +322,12 @@ namespace Trail.Runtime.Coach
         private void OnConnectionInvalidated()
         {
             // The loaded guide is untouched by this; only the coach becomes explicitly unavailable.
-            if (Session != null) Session.Dispatch(CoachEvent.Of(CoachEventKind.BackendLost));
-            else ReleaseLive();
+            // Request can revoke pairing synchronously from inside an effect. Release now,
+            // but let the current dispatch unwind before reducing the invalidation.
+            LastAnswer = null;
+            pending.Clear();
+            ReleaseLive();
+            Raise(CoachEvent.Of(CoachEventKind.BackendLost));
         }
         private void OnEnable() => Bind();
         private void OnApplicationPause(bool paused) { if (paused) Suspend(CoachEventKind.ApplicationPaused); }
