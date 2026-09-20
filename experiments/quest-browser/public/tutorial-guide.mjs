@@ -163,7 +163,7 @@ export class TutorialGuide extends HandGuide {
   }
   handleUX(id){
     if(id==='settings'){
-      if(this.pending)return true;
+      if(this.pending||this.mediaPending)return true;
       if(this.mode==='capture'){this.mode='capture-paused';this.narrator?.pause();this.endpoint.interrupt();}
       this.settingsReturn=this.mode;this.gatePaused=true;this.followEngine?.pause();this.practice?.pause();if(this.player)this.player.paused=true;this.audioPlayer?.stop();this.mode='settings';return true;
     }
@@ -199,13 +199,13 @@ export class TutorialGuide extends HandGuide {
       this.reset();this.instructions=[];this.tutorial=newTutorial(`Tutorial ${new Date().toLocaleDateString()}`);this.intent='create';this.mode=this.media?'media-setup':'save-home';this.cleanSave=true;this.persist();return true;
     }
     if(id==='media-enable'&&this.mode==='media-setup'){
-      this.mode='media-wait';this.mediaPending=true;const epoch=this.epoch;
+      this.mode='media-wait';this.mediaPending=true;const generation=this.takeGeneration;
       this.mediaTask=this.media.enable().then(result=>{
-        if(epoch!==this.epoch||this.mode!=='media-wait'||!result)return;
+        if(generation!==this.takeGeneration||this.mode!=='media-wait'||!result)return;
         this.mediaPending=false;this.captureCapabilities=result;this.mode='save-home';
         this.notify('record',result.errors.length?'Continue with available features':'Narration and photos ready');
         this.note=result.errors.length?'Some permissions were declined. Hand recording still works.':'Narration and photos are ready. Set your save position.';
-      }).catch(e=>{if(epoch===this.epoch){this.mediaPending=false;this.mode='save-home';this.problem=`Capture setup unavailable: ${e.message}. Hand recording still works.`;}});return true;
+      }).catch(e=>{if(generation===this.takeGeneration&&this.mode==='media-wait'){this.mediaPending=false;this.mode='save-home';this.problem=`Capture setup unavailable: ${e.message}. Hand recording still works.`;}});return true;
     }
     if(id==='media-skip'&&['media-setup','media-wait'].includes(this.mode)){
       this.media?.cancel();this.mediaPending=false;this.captureCapabilities={camera:false,microphone:false};this.mode='save-home';return true;

@@ -59,7 +59,7 @@ export function tutorialView(g){
 export function uiButtons(view){
  const buttons=view.buttons;
  const global=view.compact?[{id:'settings',label:'Settings',x:860,y:420,w:180,h:64}]:[{id:'settings',label:'Settings',x:736,y:20,w:140,h:48},{id:'exit',label:'Exit AR',x:892,y:20,w:148,h:48}];
- if(view.mode==='settings')global.splice(0,1);
+ if(['settings','media-wait'].includes(view.mode))global.splice(0,1);
  if(view.mode==='home')return buttons.map((b,i)=>({...b,x:i<2?40+i*508:40,y:i<2?224:460,w:i<2?492:1000,h:i<2?210:64,icon:i<2?(i?'library':'plus'):null})).concat(global);
  if(view.compact){const width=Math.min(248,(792-(buttons.length-1)*12)/Math.max(1,buttons.length));return buttons.map((b,i)=>({...b,x:40+i*(width+12),y:420,w:width,h:64})).concat(global);}
  const columns=buttons.length>6?3:2,rows=Math.ceil(buttons.length/columns),height=rows>2?55:64,gap=12,start=536-rows*(height+gap),width=(1000-(columns-1)*16)/columns;
