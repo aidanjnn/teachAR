@@ -126,6 +126,32 @@ test(`a stationary support hand stays required without inventing motion for it (
  assert.equal(f.done,true);
 });
 
+function noisySupportStep(){
+ const s=linearStep();
+ s.frames.forEach((frame,i)=>{frame.right=hand(.4).map(j=>({p:[j.p[0]+.003*Math.sin(i),.002*Math.cos(i),.003*Math.sin(i*.7)]}));});
+ return s;
+}
+test(`recorded support-hand jitter does not demand matching live jitter (${relaxed?'practice':'ordered'})`,()=>{
+ const f=follow(noisySupportStep()),d=driver(f);d.hold(hands(0));
+ for(const x of [.09,.18])d.hold({left:hand(x),right:hand(.4)});
+ assert.equal(f.done,true);
+});
+
+test(`a noisy support hand still requires fresh tracking and target proximity (${relaxed?'practice':'ordered'})`,()=>{
+ for(const support of [null,hand(.8)]){
+  const f=follow(noisySupportStep()),d=driver(f);d.hold(hands(0));
+  for(let i=0;i<125;i++)d.tick({left:f.target.left,right:support});
+  assert.equal(f.index,1);assert.equal(f.done,false);
+ }
+});
+
+test(`small deliberate support-hand movement still requires live motion (${relaxed?'practice':'ordered'})`,()=>{
+ const s=linearStep();s.frames.forEach((frame,i)=>{frame.right=hand(.4+.03*i/40);});
+ const f=follow(s),d=driver(f);d.hold(hands(0));
+ for(let i=0;i<125;i++)d.tick({left:f.target.left,right:hand(.4)});
+ assert.equal(f.index,1);assert.equal(f.done,false);
+});
+
 test(`interruptions discard partial movement and do not credit a hidden jump (${relaxed?'practice':'ordered'})`,()=>{
  const interruptions=[
   (f,d)=>f.pause(),

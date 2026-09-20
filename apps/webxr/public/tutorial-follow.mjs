@@ -5,6 +5,10 @@ export const MAX_SAMPLE_GAP_MS=200;
 // Fraction of each recorded gate displacement that must be observed live.
 // This is a prototype tuning value, not measured headset accuracy.
 const MIN_GATE_MOVEMENT_FRACTION=.6;
+// A required hand confined to a 1 cm bounding-box diagonal for the whole
+// recording is a stationary support. This prototype noise floor is not a
+// headset accuracy claim; sub-centimetre actions are not movement-validated.
+const STATIONARY_HAND_SPAN_M=.01;
 export function requiredHands(step){
   const choice=step.guide_hands;
   if(choice==='left'||choice==='right')return [choice];
@@ -31,6 +35,12 @@ export class TutorialFollower {
   constructor(step,options={}){
     this.relaxed=!!options.relaxed;
     this.step=step;this.hands=requiredHands(step);this.gates=[];this.invalid=!guidanceReadiness(step).ready;
+    this.stationaryHands=new Set();
+    if(!this.invalid)for(const side of this.hands){
+      const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+      for(const frame of step.frames)palm(frame[side]).forEach((v,i)=>{min[i]=Math.min(min[i],v);max[i]=Math.max(max[i],v);});
+      if(distance(min,max)<=STATIONARY_HAND_SPAN_M)this.stationaryHands.add(side);
+    }
     for(const f of this.invalid?[]:step.frames){
       const last=this.gates.at(-1);
       if(!last||this.hands.some(side=>distance(palm(f[side]),palm(last[side]))>=(this.relaxed?.18:.09)))this.gates.push(f);
@@ -75,8 +85,9 @@ export class TutorialFollower {
     if(this.started&&this.index>0)for(const side of this.hands){
       const previous=palm(this.gates[this.index-1][side]),target=palm(this.target[side]);
       const delta=target.map((v,i)=>v-previous[i]),length2=delta.reduce((sum,v)=>sum+v*v,0);
-      // Static required hands still need proximity, but no invented movement.
-      if(length2<=1e-12)continue;
+      // Stationary required hands still need fresh tracking and proximity,
+      // without requiring the learner to reproduce recorded sensor jitter.
+      if(this.stationaryHands.has(side)||length2<=1e-12)continue;
       if(this.lastPalms){
         const progress=delta.reduce((sum,v,i)=>sum+v*(points[side][i]-this.lastPalms[side][i]),0)/length2;
         // Net directional excursion, not path length: small back-and-forth
