@@ -6,7 +6,10 @@ Start with [web delivery status and next steps](../../docs/web-delivery.md), inc
 
 ## Run from a fresh checkout
 
-Use the repository's Node 22 / pnpm setup and Python 3.12+ with venv/pip. From the repository root:
+The launchers support **macOS and Linux**, require a POSIX shell (`sh`), and use
+the Unix virtual-environment layout (`.venv/bin/python`). Native Windows startup
+is not supported. Use the repository's Node 22 / pnpm setup and Python 3.12+ with
+venv/pip. From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile

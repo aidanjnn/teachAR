@@ -8,6 +8,8 @@ dist/
 .env
 .env.*
 !.env.example
+*.keystore
+*.jks
 
 # Private runtime data and captures; approve real fixtures individually
 /data/

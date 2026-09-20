@@ -12,8 +12,10 @@ have been retired. Their history remains in Git and [the activity log](docs/code
 
 ## Start the WebXR tutor
 
-Use Node **22.23.1** ([.node-version](.node-version)), pnpm **11.3.0**, and
-Python **3.12+** with `venv` and `pip`. From the repository root:
+The launchers support **macOS and Linux** and require a POSIX shell (`sh`).
+Native Windows startup is not supported. Use Node **22.23.1**
+([.node-version](.node-version)), pnpm **11.3.0**, and Python **3.12+** with
+`venv` and `pip`. From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
