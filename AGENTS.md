@@ -19,7 +19,7 @@ TypeScript diagnostics, authoring, storage and provider services. Use
 paired step-text voice coaching and narration drafting. Fresh visual coaching
 and concurrent headset voice acceptance remain pending. The clean UI is connected to real actions; its standalone
 preview remains simulated. Read [the UI base](docs/web-ui-base.md) and
-[practice flow](docs/web-practice-flow.md) before extending the tutor.
+[practice flow](docs/web-practice-flow.md) and [immersive entry](docs/web-immersive-entry.md) before extending the tutor.
 
 Implement the requested work and necessary validation. Preserve unrelated work.
 A build request does not authorize publication; review is read-only unless fixes

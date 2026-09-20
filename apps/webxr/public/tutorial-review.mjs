@@ -37,7 +37,7 @@ export function mountReview(guide,{isActive,tell}){
     if(renderer)return;
     renderer=new THREE.WebGLRenderer({canvas:$('motion-preview'),antialias:true});renderer.setSize(640,400,false);renderer.setClearColor('#242522');
     scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(55,640/400,.01,20);
-    ghosts=['right','left'].map(()=>{const g=new HandGuide({speak:()=>{},verify:()=>{},exit:()=>{}});g.attach(scene);g.enableHologram();return g;});
+    ghosts=['right','left'].map(side=>{const g=new HandGuide({speak:()=>{},verify:()=>{},exit:()=>{}});g.attach(scene);g.enableHologram(false,side);return g;});
     foldPreview=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffd47d}));scene.add(foldPreview);
     scene.add(new THREE.GridHelper(1.2,12,0x838777,0x56584f));
   }

@@ -10,7 +10,7 @@ const assert=require('node:assert/strict');
       assert.equal(route.request().method(),'GET','Tutorial preview must not send images or invoke paid APIs');
       await route.fulfill({contentType:'application/json',body:JSON.stringify({enabled:true,calls:0,automatic:{enabled:false},capture:{source:'quest'}})});
     });
-    await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);
+    await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await page.locator('#browser-tools').evaluate(e=>e.open=true);
     await page.waitForFunction(()=>document.querySelector('#hud-preview').getAttribute('aria-label').includes('Your workspace'));
     const result=await page.evaluate(async()=>{
       const THREE=await import('/vendor/three.module.js');
@@ -91,7 +91,7 @@ const assert=require('node:assert/strict');
     for(const [key,path] of [['tutorialRender','/tmp/trail-tutorial-ghosts.png'],['tutorialHud','/tmp/trail-tutorial-hud.png']]){
       const data=await page.evaluate(key=>window[key],key);fs.writeFileSync(path,Buffer.from(data.split(',')[1],'base64'));
     }
-    await page.reload();
+    await page.reload();await page.locator('#browser-tools').evaluate(e=>e.open=true);
     await page.waitForFunction(()=>document.querySelector('#tutorial-instructions').value==='Step 1\nStep 2');
     assert.deepEqual(errors,[]);
     console.log('PASS tutorial browser workflow',result);

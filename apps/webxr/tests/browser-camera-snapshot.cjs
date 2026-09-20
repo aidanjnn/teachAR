@@ -19,7 +19,7 @@ const assert=require('node:assert/strict');
       }});
       Object.defineProperty(navigator.mediaDevices,'enumerateDevices',{value:async()=>[]});
     });
-    await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await page.locator('#device-settings').evaluate(e=>e.open=true);await page.locator('#camera-start').click();
+    await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.locator('#device-settings').evaluate(e=>e.open=true);await page.locator('#camera-start').click();
     await page.waitForFunction(()=>document.querySelector('#camera-status').textContent.includes('No frames uploaded'));
     const result=await page.evaluate(async()=>{
       const {nextVideoSnapshot}=await import('/camera-snapshot.mjs');
