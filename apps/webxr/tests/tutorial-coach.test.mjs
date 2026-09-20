@@ -111,3 +111,29 @@ test('a server without pairing coaches from client steps, and a refused publish 
   assert.equal(stateRefused.grounded,false);assert.equal(stateRefused.reason,'publish_403');
   assert.equal(refused.calls.createCoach.length,1);
 });
+
+test('stop during a pending start cancels it: nothing is created or connected afterwards',async()=>{
+  let releasePublish;const gate=new Promise(r=>{releasePublish=r;});
+  const {runtime,calls}=fakeRuntime();
+  const fetchImpl=async(url,init={})=>{calls.fetch.push({url,init});if(url==='/api/coach-guides'){await gate;return {ok:true,status:200,json:async()=>({id:'11111111-1111-4111-8111-111111111111',revision:1})};}throw Error('unexpected '+url);};
+  const coach=createTutorCoach({runtime,fetchImpl,storage:memoryStorage()});
+  const pending=coach.start(tutorial(),tutorial().steps[0],1);
+  await Promise.resolve();await Promise.resolve();
+  coach.stop();
+  releasePublish();const state=await pending;
+  assert.equal(calls.createCoach.length,0,'no runtime created after stop');
+  assert.equal(coach.active,false);assert.equal(state.mode,'idle');assert.equal(coach.tutorialId,null);
+});
+
+test('a newer start supersedes a pending one and only the newer coach survives',async()=>{
+  let releaseFirst;const first=new Promise(r=>{releaseFirst=r;});let publishes=0;
+  const {runtime,calls}=fakeRuntime();
+  const fetchImpl=async(url,init={})=>{calls.fetch.push({url,init});if(url==='/api/coach-guides'){publishes++;if(publishes===1)await first;return {ok:true,status:200,json:async()=>({id:'11111111-1111-4111-8111-111111111111',revision:publishes})};}throw Error('unexpected '+url);};
+  const coach=createTutorCoach({runtime,fetchImpl,storage:memoryStorage()});
+  const stale=coach.start(tutorial(),tutorial().steps[0],1);
+  await Promise.resolve();await Promise.resolve();
+  const fresh=coach.start(tutorial(4),tutorial(4).steps[1],2);
+  releaseFirst();await stale;await fresh;
+  assert.equal(calls.createCoach.length,1,'only the newer start created a coach');
+  assert.equal(calls.createCoach[0].context.currentStepId,'s2');assert.equal(coach.tutorialRevision,4);
+});

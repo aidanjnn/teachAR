@@ -37,7 +37,7 @@ function writeMap(storage,map){try{storage?.setItem(GUIDE_MAP_KEY,JSON.stringify
  * it is loaded lazily from /vendor/trail-coach.js unless injected, so tests never touch the network or a microphone.
  */
 export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(input,init),storage=globalThis.localStorage,audioSink=null,tell=()=>{}}={}){
-  let api=null,loaded=runtime,attemptId=null,epoch=0,captionAt=0;
+  let api=null,loaded=runtime,attemptId=null,epoch=0,captionAt=0,startGeneration=0;
   const state={mode:'idle',pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:'',tutorialId:null,tutorialRevision:null};
   const stateHandlers=new Set(),captionHandlers=new Set();
   const snapshot=()=>({...state});
@@ -63,13 +63,19 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   }
 
   async function start(tutorial,step,currentEpoch=0){
-    const rt=await load();
-    const session=await rt.sessionState(fetchImpl);
-    if(session.status==='unpaired'){stop();state.pairing='unpaired';state.role=null;state.reason='unpaired';state.error=session.message||null;emit();return snapshot();}
-    state.pairing=session.status==='paired'?'paired':'none';state.role=session.role||null;state.error=null;
+    // Any stop() or tutorial change while this start is still awaiting cancels it; nothing is created or connected afterwards.
     stop();
+    const generation=++startGeneration;
+    const cancelled=()=>generation!==startGeneration;
+    const rt=await load();
+    if(cancelled())return snapshot();
+    const session=await rt.sessionState(fetchImpl);
+    if(cancelled())return snapshot();
+    if(session.status==='unpaired'){state.pairing='unpaired';state.role=null;state.reason='unpaired';state.error=session.message||null;emit();return snapshot();}
+    state.pairing=session.status==='paired'?'paired':'none';state.role=session.role||null;state.error=null;
     epoch=currentEpoch;attemptId=uuid();state.tutorialId=tutorial.id;state.tutorialRevision=tutorial.revision;state.caption='';
     const guide=session.status==='no-pairing'?{id:tutorial.id,revision:tutorial.revision,grounded:false,reason:'no-pairing'}:await ensureGuide(tutorial);
+    if(cancelled())return snapshot();
     state.grounded=guide.grounded;state.reason=guide.reason;
     const context=coachContextFor(tutorial,guide,{runId:uuid(),attemptId,stepId:step.id,epoch});
     const created=rt.createCoach({context,fetchImpl,...(audioSink?{audioSink}:{})});
@@ -80,15 +86,15 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
     created.onLiveError(error=>{if(api!==created)return;state.error=error.message;emit();tell(error.message);});
     state.mode='connecting';emit();
     let mode='text';
-    try{mode=await created.connect();}catch(e){state.error=e?.message||'Coach did not start.';}
-    if(api===created){state.mode=mode;emit();}
+    try{mode=await created.connect();}catch(e){if(api===created)state.error=e?.message||'Coach did not start.';}
+    if(api===created&&!cancelled()){state.mode=mode;emit();}
     return snapshot();
   }
   function onStep(step,currentEpoch){epoch=currentEpoch;api?.setStep(step.id,Math.max(0,Math.floor(currentEpoch||0)));}
   function onAttempt(){if(!api)return;attemptId=uuid();api.setAttempt(attemptId);}
   function ask(){api?.ask();}
   function askText(question){return api?api.askText(question):Promise.resolve(null);}
-  function stop(){if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}state.tutorialId=null;state.tutorialRevision=null;if(state.mode!=='idle'){state.mode='idle';emit();}}
+  function stop(){startGeneration++;if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}state.tutorialId=null;state.tutorialRevision=null;if(state.mode!=='idle'){state.mode='idle';emit();}}
   async function pair(code){
     const rt=await load();const result=await rt.pairBrowser(code,fetchImpl);
     if(result.ok){state.pairing='paired';state.role=result.role;state.reason=null;state.error=null;}else state.error=result.message;
