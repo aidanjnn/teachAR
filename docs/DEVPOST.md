@@ -5,7 +5,7 @@ Copy each block into the matching Devpost field. Markers used below:
 - `[UPDATE BEFORE SUBMIT]` marks a fact that was true late Saturday and may improve overnight.
 - `[PLACEHOLDER]` marks a sponsor section with nothing behind it yet. Delete it if that is still true.
 
-Facts were checked against `main` after the stack merged at 6:05 am Sunday (PR 17, 23, 24, 26 and the voice PR 28, main head `763676d`, CI green). Unity was retired in PR 26; the headset app is the Quest Browser tutor in `apps/webxr`.
+Facts were checked against `main` at 7:48 am Sunday after PR 29 (continuous capture, movable panels, immersive library), PR 30 (immersive launcher, holographic hands) and PR 32 (voice coach hardening, spoken greeting, headset rehearsal checklist) landed on top of the merged stack (main head `4e38d2e`, CI green). Unity was retired in PR 26; the headset app is the Quest Browser tutor in `apps/webxr`. PR 33 (Sentry tracing, logs and replay around the spatial controls) and PR 34 (OpenAI track brief) landed at 8:20 am (main head `26c2162`). The OMNI scene coach (Look & advise) is on branch `codex/omni-scene-coach` `[UPDATE BEFORE SUBMIT: merged to main?]`.
 
 ---
 
@@ -56,7 +56,8 @@ There are two people in the loop and one 50 by 35 centimetre mat. Everything els
 | Record | The expert registers the mat by touching three marks, then does the task while narrating. Trail records 25 named joints per hand, 30 times a second, in mat coordinates, with the narration on the same clock. | Calibration must fit within 2 cm or recording will not start. |
 | Review | On the laptop, Trail finds the pauses in the wrist motion, proposes step boundaries, transcribes the narration and drafts a title and one-line instruction per step. | The expert edits and finalizes. A finalized guide is immutable. |
 | Follow | The learner lays out the same parts on their own mat and touches the same marks. A cyan ghost hand shows each move with a short path line and a ring at the destination. | Wrist inside the ring, within 4 cm, held for half a second. Path gates in order. Tracking loss resets the hold. |
-| Ask | The learner talks to a voice coach while working. "What now?" repeats the step. "Am I done?" gets a refusal. "Am I doing this right?" sends a fresh camera frame to a vision service that compares it with the expert's reference photo. | The coach answers only from reviewed step text. The vision service returns advice with a stated limitation, never "verified." |
+| Ask | The learner talks to a voice coach while working. "What now?" repeats the step. "Am I done?" gets a refusal. The coach says "Coach ready" the moment its audio path is up, so you know it can hear you before you put the headset on. | The coach answers only from reviewed step text and never advances a step. |
+| Look | **Look & advise.** One press takes a fresh camera frame; the server sends it with the expert's reference photo for the step, the approved step text and the question to Qwen3.5-Omni, and the answer comes back spoken, with a caption on the practice panel. | Advice only. A guard replaces any answer that claims completion, verification or measurements. Frames older than 3 seconds are refused. |
 | Watch | A laptop page shows the live step and progress to everyone standing around the table. | Spectators can look. They cannot touch progression. |
 
 Here is a real exchange from Saturday night, running against the live model, with the fixture guide loaded:
@@ -121,12 +122,13 @@ That second answer is the whole product in one line. The coach knows what it can
 | Headset | Quest Browser, WebXR hand input and passthrough, Three.js, IndexedDB, served by our API over one origin | Passthrough, hand tracking, the ghost, local guide library, no install |
 | Progression | Pure JS follower and practice modules with adversarial tests | Decide, alone, when a step is complete; missing or stale tracking pauses a gate |
 | Coach in the tutor | `tutorial-coach.mjs` plus the bundled desktop coach runtime (`trail-coach.js`) | Publishes reviewed step text as a coach guide, starts GPT-Live before AR, follows step and attempt changes, Ask coach on the headset panel |
+| Scene coach | `scene-coach.mjs`, `POST /api/scene-coach`, Sharp, Qwen3.5-Omni through the yibuapi OpenAI-compatible gateway | Fresh frame plus reference photo plus question in, speech and caption out, one streamed call, advice only |
 | Contracts | Zod 4 schemas, generated C#, shared fixture files | One recording and guide format that TypeScript and C# both validate |
 | Server | Node 22, Fastify 5, WebSocket | Storage, pairing, spectator relay, live session registry, credential boundary |
-| Vision | Second Fastify process, Sharp, Responses API | Compares a fresh frame with reference photos, returns structured advice |
+| Vision service | Second Fastify process, Sharp, Responses API | Built for the retired native client; the browser tutor uses the scene coach above |
 | Desktop | Vite 8, TypeScript, Three.js | Authoring workbench, 3D replay, spectator page, Voice Lab |
-| Voice | GPT-Live over WebRTC, whisper-1, gpt-4.1-mini structured outputs | Spoken coach, timestamped transcription, step labels |
-| Checks | Vitest, node:test, Playwright, GitHub Actions | 365 server and web tests, 97 tutor tests, 10 tutor browser workflows, 8 end-to-end flows |
+| Voice | GPT-Live over WebRTC, whisper-1, gpt-4.1-mini structured outputs, Qwen3.5-Omni speech output | Spoken coach, timestamped transcription, step labels, spoken scene advice |
+| Checks | Vitest, node:test, Playwright, GitHub Actions | 383 server, web and contracts tests, 110 tutor tests, 16 tutor browser workflows, 8 end-to-end flows (OMNI branch, 8:35 am Sunday) |
 
 ### The pieces that took the most thought
 
@@ -178,7 +180,7 @@ learner speaks ──► headset mic ──WebRTC──► GPT-Live ──WebRTC
 
 The step text the model hears comes from the stored guide, never from the client. The browser used to be able to append text to the session. It cannot any more.
 
-**5. Visual coaching with freshness rules.** When the learner asks "am I doing this right?", the headset captures a frame and the server forwards it to the vision service with up to two reviewed reference photos. The model answers in a strict JSON schema with a verdict from a fixed set, the evidence it saw, a limitation it must fill in, and a suggested action. A frame older than 5 seconds at dispatch is refused. One inspection at a time. A favourable verdict pauses nothing and advances nothing.
+**5. Visual coaching with freshness rules.** Look & advise sends one fresh headset frame, the expert's reference photo for the step, the approved step text and the learner's question to Qwen3.5-Omni in a single streamed call and plays the spoken answer back. The frame is re-encoded within 1024 px on the server, refused when older than 3 seconds, one request in flight, key never on the device. A lexical guard, the same one our earlier vision service used, replaces any answer that claims completion, verification or a measurement with "I can't judge that from one picture." A favourable answer pauses nothing and advances nothing.
 
 **6. Pairing before exposure.** Browsers get a cookie and must pass an origin check, including on the WebSocket upgrade. The headset gets a scoped bearer token. Spectators can watch and never control. Finalized guides are immutable. A missing Origin header never bypasses anything.
 
@@ -240,7 +242,9 @@ Twenty-eight pull requests over the weekend, each with the same checklist: typec
 | Object tracking | Deferred on purpose | Parts could move independently and the ghost could retarget to where they are. The first version keeps the starting layout fixed. |
 | Authoring on the headset | Partly built | Recording, save position and multi-take exist on device. Segmentation and review still go through the laptop. |
 | Mirroring for left-handed learners | Planned | A right-handed demonstration should flip cleanly across the mat. |
-| Native voice measured on device | In progress | Echo cancellation, interruption and latency with mic, hands and camera all running at once. |
+| Headset voice rehearsal | Checklist written, device run pending | `docs/voice-demo-checklist.md`: audio in, audio out, step context and recovery on the Quest 3S with mic, hands and camera running at once. |
+| Natural voice commands ("save it now", "go back") | In review | Short speech clips, structured intent, spoken acknowledgements; never confirms a physical result. |
+| Ghost hands anchored to the real object | Researched, next | A marked sheet of paper: Qwen-Omni finds it, local geometry refines the corners and places the ghost at its original scale. Manual origin-plus-heading placement stays until then. |
 | A library recorded by people who are good at things | The point | Trail is only as good as the hands it records. |
 
 ## For the sponsor judges
@@ -266,21 +270,37 @@ How Codex helped. Trail's delivery workflow was built around Codex from the firs
 
 Devin opened two pull requests during the event. PR 9 rewrote the plan to record the Unity commitment, reorder voice delivery and add demo-risk handling. PR 12 added verified local desktop execution notes to the manual-flows skill. Both were reviewed and merged. [TEAM: this is thin for "most technically impressive project built with Devin." Decide whether to keep this track selected.]
 
-### Sentry, best use of Sentry `[PLACEHOLDER]`
+### Sentry, best use of Sentry
 
-Not integrated as of Saturday night. The plan proposes Tracing and Logs as the two products beyond error monitoring, and the prize wants one concrete defect found with them. If that happens by morning, write three sentences here: which two products, what they showed, what changed. Otherwise delete this section.
+When a spatial control seems unresponsive in a headset, an exception alone cannot tell you whether targeting missed, dispatch was rejected, the app was waiting or the UI changed. We built an observatory around those runtime boundaries with three Sentry products: **Tracing** (custom `trail.interaction` traces with child spans for targeting, activation, hit-test, dispatch, state change and render submission, with explicit rejection and timeout paths), **Logs** (structured `trail.interaction`, `trail.guide_state`, `trail.guide_action` and `trail.step_summary` records carrying generated run and attempt aliases, never tutorial text or hand coordinates) and **Session Replay** of a sanitized diagnostics panel linked to the interaction traces. All three received data in our Sentry project on September 20. The first live Replay exposed a privacy defect in our own integration; we fixed it and verified the corrected session. Evidence, hosted trace links and the demo are in `docs/sentry.md` and `docs/sentry-observability.md`. No room footage, tutorial text or hand coordinates leave the device.
 
-### Huawei OMNI Live challenge `[PLACEHOLDER]`
+### Huawei OMNI Live challenge
 
-Not integrated as of Saturday night. Environment placeholders exist and nothing in the repo calls an OMNI model. The prize requires vision, speech and language from an OMNI model in one end-to-end scenario with a working demo. This page must not claim OMNI use unless that changes. [TEAM: decide whether to keep this track selected.]
+Trail's coach could hear but not see. For this track we built **Look & advise**. The learner presses one button, on the headset panel or the Voice coach card; the browser grabs a fresh camera frame; our server sends that frame, the expert's reference photo for the step, the approved step text and the learner's question to **Qwen3.5-Omni** through the yibuapi OpenAI-compatible gateway in a single streamed call with `modalities: ["text", "audio"]`. The model's speech (PCM wrapped as WAV) plays in the headset and the caption lands on the practice panel. Vision, speech and language in one request, about a real scene, while the learner's hands stay on the task.
+
+What the model is not allowed to do is the design. It never advances a step. A lexical guard replaces any answer that claims completion, verification or a measurement with "I can't judge that from one picture." Frames are bounded to 1024 px, refused when older than 3 seconds, one request in flight, and the key never leaves the server. Off by default: without the key the route says so instead of inventing a verdict.
+
+```
+learner: "Is my paper placed right?"        headset frame + expert reference photo + step text
+   |                                                        |
+   v                                                        v
+Quest Browser  --USB loopback-->  paired Fastify API  --https-->  Qwen3.5-Omni (yibuapi)
+   ^                                                        |
+   |            spoken answer (WAV) + caption                |
+   +--------------------------------------------------------+
+```
+
+`[UPDATE BEFORE SUBMIT]` The route, guard, bounds and the browser flow are tested end to end against a fake provider (server suites, tutor tests, a Chromium workflow with a fake camera). The first real Qwen-Omni call runs the moment the team key arrives (`node scripts/omni-smoke.mjs`); write "verified live" here only after that run and paste the round-trip time. Camera plus immersive session concurrency on the Quest 3S is still a device gate; the flat tutor page in Quest Browser, or a laptop webcam, is the fallback demo path and the README says so.
+
+Next for this track: anchor the ghost hands to the actual sheet of paper (marker mat, corner refinement, versioned anchor metadata), then interruptible realtime conversation through `qwen3.5-omni-plus-realtime`.
 
 ## Full tech stack
 
 **Headset:** Quest Browser, WebXR hand input and passthrough, Three.js 0.186, IndexedDB, served from the main API origin
 **Server:** Node 22, Fastify 5, Zod 4, ws, Sharp, OpenAI SDK 7
-**Vision:** Fastify 5, Sharp, OpenAI Responses API with strict JSON schema output
+**Vision:** Qwen3.5-Omni through the yibuapi OpenAI-compatible gateway (scene coach), Sharp; an earlier Responses API vision service remains for the retired native client
 **Desktop:** Vite 8, TypeScript 5.9, Three.js 0.186, plain HTML and CSS
-**Voice:** GPT-Live over WebRTC, whisper-1, gpt-4.1-mini structured outputs
+**Voice:** GPT-Live over WebRTC, whisper-1, gpt-4.1-mini structured outputs, Qwen3.5-Omni speech output
 **Checks:** Vitest 5, node:test, Playwright 1.63, GitHub Actions
 **Process:** pnpm 11 workspace, Conventional Commits, Codex skills, a dated decision log
 
@@ -292,9 +312,9 @@ Devpost tags, lowercase, up to 25. Past finalists list between two and ten. Keep
 
 Always: `meta-quest`, `openai`, `gpt-live`, `whisper`, `typescript`, `node.js`, `fastify`, `zod`, `webrtc`, `websocket`, `playwright`, `codex`
 
-Also: `webxr`, `three.js`, `javascript`
+Also: `webxr`, `three.js`, `javascript`, `qwen`, `huawei`
 
-Add `devin` only if the Cognition track stays selected.
+Add `devin` only if the Cognition track stays selected. Add `sentry` now that the integration is live.
 
 ---
 
