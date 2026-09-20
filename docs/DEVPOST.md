@@ -128,7 +128,7 @@ That second answer is the whole product in one line. The coach knows what it can
 | Vision service | Second Fastify process, Sharp, Responses API | Built for the retired native client; the browser tutor uses the scene coach above |
 | Desktop | Vite 8, TypeScript, Three.js | Authoring workbench, 3D replay, spectator page, Voice Lab |
 | Voice | GPT-Live over WebRTC, whisper-1, gpt-4.1-mini structured outputs, Qwen3.5-Omni speech output | Spoken coach, timestamped transcription, step labels, spoken scene advice |
-| Checks | Vitest, node:test, Playwright, GitHub Actions | 383 server, web and contracts tests, 110 tutor tests, 16 tutor browser workflows, 8 end-to-end flows (OMNI branch, 8:35 am Sunday) |
+| Checks | Vitest, node:test, Playwright, GitHub Actions | 405 server, web and contracts tests, 147 tutor tests, 18 tutor browser workflows, 8 end-to-end flows (OMNI branch on top of main, 8:45 am Sunday) |
 
 ### The pieces that took the most thought
 
