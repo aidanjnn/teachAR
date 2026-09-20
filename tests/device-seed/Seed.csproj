@@ -5,6 +5,7 @@
          what the headset will accept. PrivateTutorialCache has no UnityEngine reference. -->
     <Compile Include="../../apps/quest/Assets/Trail/Contracts/*.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Storage/PrivateTutorialCache.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Record/NarrationPcm.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>

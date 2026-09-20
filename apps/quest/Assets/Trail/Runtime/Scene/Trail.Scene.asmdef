@@ -8,6 +8,7 @@
     "meta.xr.mrutilitykit",
     "Trail.Guide",
     "Trail.Coach",
+    "Trail.Storage",
     "Unity.Collections"
   ],
   "includePlatforms": [],

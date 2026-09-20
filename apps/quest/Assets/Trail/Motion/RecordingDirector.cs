@@ -217,7 +217,16 @@ namespace Trail.Motion
                         s.LastFrameMs = double.NegativeInfinity; s.Armed = false; ClearEndpoint();
                         Emit(RecordingEffectKind.TakeStarted, "Recording. Hold the starting pose briefly, perform the action, hold the finished pose, then return both hands to the save position.");
                     }
-                    else s.TakeMs += delta;
+                    else
+                    {
+                        s.TakeMs = Math.Min(120000, s.TakeMs + delta);
+                        if (s.TakeMs >= 120000)
+                        {
+                            CommitTake(null, "duration-limit");
+                            s.Notice = "120-second limit reached. Full take saved for review.";
+                            break;
+                        }
+                    }
                     if (s.TakeMs - s.LastFrameMs >= policy.FramePeriodMs)
                     { admit = s.TakeMs; s.LastFrameMs = s.TakeMs; s.FrameCount++; }
                     s.LastPalmLeft = left; s.LastPalmRight = right;

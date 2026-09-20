@@ -7,24 +7,21 @@ using UnityEngine;
 
 namespace Trail.Runtime.Scene
 {
-    /// <summary>Explicit spoken Check -> fresh camera inspection -> server-owned Live commentary.
-    /// Speech delivery is requested, never treated as playback acknowledgement or guide completion.</summary>
+    /// <summary>Explicit spoken Check -> fresh camera inspection -> server-owned Live commentary.</summary>
     [DisallowMultipleComponent]
     public sealed class SpokenSceneInspection : MonoBehaviour
     {
         public NativeVoiceCoach Coach;
         public SceneInspectionController Inspection;
         public string Status { get; private set; } = "Say ‘check my placement’ with the camera enabled.";
-        private bool subscribed;
-        private string liveSession;
+        private bool subscribed, queuedStart, supersedingSpeech, stopping;
+        private string liveSession, candidate, waitingQuestion;
         private int liveGeneration;
         private long epoch;
-        private string candidate;
-        private double candidateAfter;
+        private double candidateAfter, connectUntil;
         private GuideContextRef expected;
-        private string waitingQuestion;
-        private double connectUntil;
-        private bool queuedStart;
+        private CoachSession ownedSession;
+        public Func<double> Clock { get; set; } = () => Time.realtimeSinceStartupAsDouble;
         private bool VoiceReady => Coach != null && Coach.Session != null && Coach.Session.State.Sync == CoachSync.Idle &&
             (Coach.Session.State.Mode == CoachMode.Live || Coach.Session.State.Mode == CoachMode.Listening);
 
@@ -41,115 +38,115 @@ namespace Trail.Runtime.Scene
         {
             if (liveSession != null)
             {
-                // After explicit Unmute, any new question supersedes the checked snapshot and its audio.
-                candidate = null; Inspection.Cancel(); return;
+                // Stop obsolete speech immediately, but retain the mic long enough to receive the
+                // whole replacement command. Never reopen this peer's output after this point.
+                supersedingSpeech = true;
+                Coach.SilenceInspectionOutput();
+                Inspection.Cancel();
             }
-            // Live has no completed-turn event. Wait briefly for suffixes (e.g. "... tomorrow")
-            // instead of treating a matching intermediate fragment as final user intent.
             candidate = SpokenInspectionIntent.IsCheck(transcript) || SpokenInspectionIntent.IsCancel(transcript) ? transcript : null;
-            candidateAfter = Time.realtimeSinceStartupAsDouble + .45;
+            candidateAfter = Clock() + .45;
         }
         private void DispatchCommand(string transcript)
         {
             Coach.ClearLearnerTranscript();
-            if (SpokenInspectionIntent.IsCancel(transcript)) { Inspection.Cancel(); return; }
-            if (liveSession != null)
-            {
-                // A prior request may already have buffered speech. End that generation before reuse.
-                Inspection.Cancel();
-                Status = "Previous check cancelled. Restart voice before asking for a fresh check.";
-                return;
-            }
-            if (!VoiceReady || string.IsNullOrEmpty(Coach.LiveSessionId)) return;
+            if (SpokenInspectionIntent.IsCancel(transcript)) { supersedingSpeech = false; Inspection.Cancel(); return; }
+            if (!VoiceReady || !Coach.ListeningRequested || string.IsNullOrEmpty(Coach.LiveSessionId))
+            { RecoverConversation(); return; }
             if (Inspection.CameraSource == null || !Inspection.CameraSource.ReadyForCapture)
-            { Status = "Enable the camera before asking for a placement check."; return; }
+            { RecoverConversation(); Status = "Enable the camera before asking for a placement check."; return; }
             try
             {
                 Inspection.Guide.PauseForInspection();
                 expected = GuideTelemetry.Context(Inspection.Guide.Session);
             }
-            catch { Status = "Load and calibrate a guide before checking placement."; return; }
-            // Never reopen audio containing the original question's ungrounded answer.
-            // Start a silent fresh conversation before capturing, so reconnect latency cannot age the image.
-            if (!Coach.BeginInspectionConversation()) return;
+            catch { RecoverConversation(); Status = "Load and calibrate a guide before checking placement."; return; }
+            if (!Coach.BeginInspectionConversation()) { RecoverConversation(); return; }
+            supersedingSpeech = false;
+            ownedSession = Coach.Session;
             waitingQuestion = transcript;
-            connectUntil = Time.realtimeSinceStartupAsDouble + 20;
+            connectUntil = Clock() + 20;
             Status = "Preparing a fresh voice response; guide paused. Resume cancels the check.";
         }
         private void OnStarted()
         {
-            if (!queuedStart || Coach == null || !VoiceReady || string.IsNullOrEmpty(Coach.LiveSessionId)) return;
+            if (!queuedStart || !VoiceReady || string.IsNullOrEmpty(Coach.LiveSessionId)) return;
             queuedStart = false;
             liveSession = Coach.LiveSessionId;
             liveGeneration = Coach.SessionGeneration;
+            ownedSession = Coach.Session;
             epoch++;
         }
-        private bool Current() => liveSession != null && Coach != null && VoiceReady &&
+        private bool Current() => liveSession != null && VoiceReady && Coach.Session == ownedSession &&
             Coach.LiveSessionId == liveSession && Coach.SessionGeneration == liveGeneration;
         private void OnFindings(InspectionResult result)
         {
             if (!Current() || !Inspection.FindingsCurrent(result)) return;
             var current = epoch;
-            // IDs from the strict server grant parser are URL-safe. Findings prose never crosses this boundary.
             var body = "{\"requestEpoch\":" + result.Request.RequestEpoch.ToString(CultureInfo.InvariantCulture) +
                 ",\"liveSessionId\":\"" + liveSession + "\",\"generation\":" + liveGeneration.ToString(CultureInfo.InvariantCulture) + "}";
-            // This peer has received no learner audio; only accepted findings can now produce speech.
-            // Open before dispatch so fast commentary audio is not clipped while HTTP acknowledgement returns.
+            // This new peer received no learner audio before acceptance. Open before dispatch to avoid
+            // clipping fast commentary, and restore only the user's existing listening intent.
             Coach.AllowInspectionOutput();
             Inspection.Connection.Request("POST", "/api/inspections/" + Uri.EscapeDataString(result.Request.RequestId) + "/speak", body,
                 (status, _) => {
                     if (current != epoch || !Current()) return;
                     if (!Inspection.FindingsCurrent(result)) { Inspection.Cancel(); return; }
-                    if (status != 204) { liveSession = null; Coach.InvalidateOutput(); }
-                    Status = status == 204 ? "Visual findings sent to voice. Resume remains your choice." :
+                    if (status != 204) Inspection.Cancel();
+                    Status = status == 204 ? "Visual findings sent. Say ‘check again’ for a fresh view, or Resume." :
                         "Voice delivery unavailable; read the checked snapshot, then Retry or Resume.";
                 });
         }
         private void Update()
         {
             if (liveSession != null && !Current()) Inspection.Cancel();
-            if (queuedStart && !Inspection.IsBusy)
+            if (ownedSession != null && Coach.Session != ownedSession)
             {
-                queuedStart = false; Coach.InvalidateOutput();
-                Status = "Camera check could not start. Retry voice or Resume.";
+                // Explicit End, focus loss, provider failure or another Start owns the new lifecycle.
+                ownedSession = null; waitingQuestion = null; queuedStart = false; supersedingSpeech = false; candidate = null;
             }
+            if (queuedStart && !Inspection.IsBusy) { queuedStart = false; RecoverConversation(); }
             if (waitingQuestion != null)
             {
-                if (!Inspection.IsCurrent(expected) || Coach.Session == null || Time.realtimeSinceStartupAsDouble > connectUntil)
-                {
-                    waitingQuestion = null; queuedStart = false; Coach.InvalidateOutput();
-                    Status = "Voice check unavailable or cancelled. Retry voice or Resume.";
-                }
+                if (!Inspection.IsCurrent(expected) || Coach.Session == null || Clock() > connectUntil)
+                { waitingQuestion = null; queuedStart = false; RecoverConversation(); }
                 else if (VoiceReady && !string.IsNullOrEmpty(Coach.LiveSessionId))
                 {
                     var question = waitingQuestion; waitingQuestion = null; queuedStart = true;
                     Inspection.CheckPlacement(question);
                 }
             }
-            if (candidate != null && Time.realtimeSinceStartupAsDouble >= candidateAfter)
+            if ((candidate != null || supersedingSpeech) && Clock() >= candidateAfter)
             {
                 var command = candidate; candidate = null;
-                if (VoiceReady) DispatchCommand(command);
+                if (command != null && VoiceReady && Coach.ListeningRequested) DispatchCommand(command);
+                else RecoverConversation();
             }
         }
         private void OnInvalidated()
         {
-            epoch++;
-            if (waitingQuestion != null)
-            { waitingQuestion = null; Coach.InvalidateOutput(); }
-            if (liveSession == null) return;
-            liveSession = null;
-            // A context acknowledgement cannot prove previously queued audio is gone.
-            Coach.InvalidateOutput();
-            Status = "Check ended. Restart voice to discard old audio before another conversation.";
+            epoch++; liveSession = null;
+            if (queuedStart || supersedingSpeech) return;
+            waitingQuestion = null;
+            RecoverConversation();
+        }
+        private void RecoverConversation()
+        {
+            liveSession = null; candidate = null; waitingQuestion = null; supersedingSpeech = false; queuedStart = false;
+            var owned = ownedSession; ownedSession = null;
+            if (Coach == null || owned == null || Coach.Session != owned) return;
+            // One attempt only. Never resurrect End/mute/focus loss, and never resume guidance.
+            if (!stopping && Coach.RecoverInspectionConversation())
+                Status = "Voice reconnecting with the old snapshot discarded. Say ‘check again’ when ready.";
+            else { Coach.InvalidateOutput(); Status = "Check ended. Voice remains stopped or muted."; }
         }
         private void OnDisable()
         {
-            candidate = null;
-            if ((liveSession != null || waitingQuestion != null || queuedStart) && Inspection != null) Inspection.Cancel();
-            if (queuedStart && Coach != null) Coach.InvalidateOutput();
-            queuedStart = false;
+            stopping = true;
+            if (Inspection != null && ownedSession != null) Inspection.Cancel();
+            RecoverConversation();
         }
+        private void OnEnable() { stopping = false; }
         private void OnDestroy()
         {
             if (!subscribed) return;

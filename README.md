@@ -36,18 +36,13 @@ browser tutor's Create/Follow shell, save-zone/clean-trim recording, two-hand gh
 presentation and a native voice-coach session layer. The complete headset experience is
 still being integrated and validated. Source availability is not device acceptance.
 
-**The new native code has never been compiled by Unity.** Its pure-C# decision logic is
-covered by console harnesses that build the actual shipped sources; its `MonoBehaviour`
-adapters are not. Treat every native claim below as source availability until the local
-Unity EditMode/PlayMode and Android ARM64/IL2CPP gates have run.
-
-| Component | Available in source | Still required |
-| --- | --- | --- |
-| Quest app | Unity/Meta/OpenXR setup, pairing, hand capture, registration, local guide reducer, MRUK inspection, verified preload, plus new Create/Follow shell, save-zone/trim reducer, two-hand ghost and a voice-coach session layer | **Unity compilation of the new native code**, save-zone wiring into capture, a WebRTC/microphone transport implementation, a two-hand PlayMode test, and end-to-end device validation |
-| Desktop | Replay diagnostics, authoring review, storage/spectator tools and Voice Lab | Integration polish and live-provider acceptance |
-| Main API | Scoped pairing, durable recording/tutorial publication, inspection coordination, and pair-gated voice routes with tutorial-grounded coaching | Complete paired native composition; a native client that actually exercises the live voice routes |
-| Vision backend | Authenticated inspection jobs, input validation, bounded provider adapter and cancellation | Fresh-headset/live-model acceptance and measured reliability; not continuous object tracking |
-| Shared packages | Versioned strict recording/tutorial/inspection schemas, native parity fixtures and rigid transforms | Explicit versioning for new save-zone metadata; physical calibration/transfer acceptance |
+The post-#19 branch has passed local Unity EditMode/PlayMode checks and an
+Android ARM64/IL2CPP build. Follow-through integrates narrated recording, generated
+labels, native voice and spoken inspection; device acceptance is still open.
+See [the implementation checkpoint](docs/post-19-progress.md) for exact tested
+scope and [the physical rehearsal runbook](docs/end-to-end-runbook.md) for the
+remaining observations. Automated tests do not prove a visibly usable Quest app,
+acoustic behavior, fresh camera-grounded speech or independent learner success.
 
 Health means reachability, not provider or headset readiness. See the
 [current Unity handoff](docs/ux-unity-handoff.md), [native setup evidence](docs/native-setup.md)

@@ -15,7 +15,7 @@ namespace Trail.Runtime.Scene
 
         public SceneInspectionController Inspection;
         private TextMesh status;
-        private readonly TextMesh[] buttons = new TextMesh[3];
+        private readonly TextMesh[] buttons = new TextMesh[5];
         private HandObservationSource source;
         private int touching = -1;
         private double since, lastTime = -1;
@@ -24,7 +24,7 @@ namespace Trail.Runtime.Scene
         private void Start()
         {
             status = Label("Scene inspection", new Vector3(0, .18f, 0), .004f);
-            string[] labels = { "Enable camera", "Check placement / Retry", "Cancel inspection" };
+            string[] labels = { "Enable camera", "Check placement / Retry", "Cancel inspection", "Toggle expert endpoint photos", "Retry expert photo upload" };
             for (int i = 0; i < labels.Length; i++) buttons[i] = Label(labels[i], new Vector3(0, -.06f * i, 0), .006f);
         }
         private TextMesh Label(string text, Vector3 position, float size)
@@ -37,8 +37,9 @@ namespace Trail.Runtime.Scene
         {
             if (Inspection == null) return;
             var spoken = Inspection.GetComponent<SpokenSceneInspection>();
+            var expert = GetComponentInParent<ExpertReferenceCapture>();
             status.text = "Camera: " + Inspection.CameraSource.Status + "\n" + Inspection.Status +
-                (spoken == null ? "" : "\n" + spoken.Status);
+                (spoken == null ? "" : "\n" + spoken.Status) + (expert == null ? "" : "\n" + expert.Status);
             var next = Inspection.Guide?.Capture?.Source;
             if (next != source) { Detach(); source = next; if (source != null) source.Observed += Observe; }
             if (MotionClock.NowMs - lastTime > 100) ResetTouch();
@@ -65,6 +66,9 @@ namespace Trail.Runtime.Scene
             if (selected == 0) Inspection.CameraSource.EnableCamera();
             if (selected == 1) Inspection.CheckPlacement();
             if (selected == 2) Inspection.Cancel();
+            var expert = GetComponentInParent<ExpertReferenceCapture>();
+            if (selected == 3 && expert != null) expert.ToggleCapture();
+            if (selected == 4 && expert != null) expert.RetryUpload();
         }
         private void ResetTouch() { touching = -1; latched = false; }
         private void Detach() { if (source != null) source.Observed -= Observe; source = null; lastSequence = -1; lastTime = -1; ResetTouch(); }

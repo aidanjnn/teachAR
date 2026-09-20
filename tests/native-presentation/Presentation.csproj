@@ -10,7 +10,7 @@
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideSession.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideTelemetry.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideTutorialAdapter.cs" />
-    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Record/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Record/*.cs" Exclude="../../apps/quest/Assets/Trail/Runtime/Record/UnityNarrationCapture.cs;../../apps/quest/Assets/Trail/Runtime/Record/NarrationPlatformFeature.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Motion/*.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Contracts/*.cs" />
     <Compile Include="Program.cs" />

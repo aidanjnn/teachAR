@@ -81,10 +81,10 @@ namespace Trail.Motion
             }
             var result = new Recording { SchemaVersion = recording.SchemaVersion, Id = recordingId, CoordinateFrame = recording.CoordinateFrame,
                 Workspace = recording.Workspace, JointOrder = recording.JointOrder, NominalSampleHz = recording.NominalSampleHz,
-                DurationMs = kept[kept.Count - 1].TMs, Frames = kept.ToArray(), Markers = markers.ToArray(), Audio = audio, Source = recording.Source };
+                DurationMs = (trim == null ? recording.DurationMs : Math.Min(recording.DurationMs, trim.EndMsExclusive)) - start, Frames = kept.ToArray(), Markers = markers.ToArray(), Audio = audio, Source = recording.Source };
             // Validation and deep copy at the save boundary, exactly as MotionCapture.Finish does.
             return new TrimmedTake(ContractJson.ParseRecording(ContractJson.SerializeRecording(result)), audio, source,
-                trim ?? new TakeTrim(0, result.DurationMs + 1), dropped);
+                trim, dropped);
         }
     }
 
@@ -149,12 +149,23 @@ namespace Trail.Motion
                 ContractJson.SerializeWorkspaceDefinition(capture.Recording.Workspace) != ContractJson.SerializeWorkspaceDefinition(workspace))
                 throw new ArgumentException("Saved takes must be contiguous and share one workspace and source.");
             var trim = capture.Authoring.Trim;
-            takes.Add(new RecordedTake(new TrimmedTake(capture.Recording, null, null,
-                new TakeTrim(trim.StartMs, trim.EndMsExclusive), null), capture.Authoring.TrimReason));
+            var whole = capture.Authoring.TrimReason == "explicit-stop" || capture.Authoring.TrimReason == "duration-limit";
+            takes.Add(new RecordedTake(new TrimmedTake(capture.Recording, capture.Recording.Audio, null,
+                whole ? null : new TakeTrim(trim.StartMs, trim.EndMsExclusive), null), capture.Authoring.TrimReason));
         }
         // A tutorial upload contains every committed action, with explicit boundaries so
         // server segmentation cannot mistake inter-take discontinuities for physical motion.
-        public Recording Export(string recordingId)
+        public double PreviewDuration(TakeTrim trim, double? admittedFrameMs = null)
+        {
+            double last = -1;
+            foreach (var frame in pending) if (trim == null || trim.Contains(frame.TMs)) last = frame.TMs;
+            if (admittedFrameMs.HasValue && (trim == null || trim.Contains(admittedFrameMs.Value))) last = Math.Max(last, admittedFrameMs.Value);
+            if (last < 0) throw new InvalidOperationException("The trim leaves no motion.");
+            var wholeDuration = pending.Count == 0 ? 0 : pending[pending.Count - 1].TMs;
+            if (admittedFrameMs.HasValue) wholeDuration = Math.Max(wholeDuration, admittedFrameMs.Value);
+            return (trim == null ? wholeDuration : Math.Min(wholeDuration, trim.EndMsExclusive)) - (trim?.StartMs ?? 0);
+        }
+        public Recording Export(string recordingId, AudioAsset narration = null)
         {
             if (takes.Count == 0) throw new InvalidOperationException("No saved takes to export.");
             var totalFrames = 0; double totalDuration = 0;
@@ -166,20 +177,21 @@ namespace Trail.Motion
             if (totalFrames > 3600 || totalDuration - 1000.0 / 30 > 120000)
                 throw new InvalidOperationException("Saved actions exceed the portable recording limit.");
             var frames = new List<MotionFrame>(totalFrames); var markers = new List<StepMarker>();
-            double offset = 0;
+            double offset = 0, finalEnd = 0;
             for (var i = 0; i < takes.Count; i++)
             {
                 var take = takes[i].Recording;
-                if (take.Audio != null) throw new InvalidOperationException("Narrated takes require synchronized audio assembly.");
+                if (take.Audio != null && narration == null) throw new InvalidOperationException("Narrated takes require synchronized audio assembly.");
                 markers.Add(new StepMarker { Id = "take-" + i + "-start", TMs = offset, Kind = "step-start", Source = "expert-control" });
                 foreach (var frame in take.Frames)
                     frames.Add(new MotionFrame { TMs = offset + frame.TMs, Hands = frame.Hands, Head = frame.Head });
                 markers.Add(new StepMarker { Id = "take-" + i + "-end", TMs = offset + take.DurationMs, Kind = "step-end", Source = "expert-control" });
-                offset += take.DurationMs + 1000.0 / 30;
+                finalEnd = offset + take.DurationMs;
+                offset = finalEnd + 1000.0 / 30;
             }
             var recording = new Recording { SchemaVersion = 1, Id = recordingId, CoordinateFrame = "workspace", Workspace = workspace,
-                JointOrder = Names(), NominalSampleHz = 30, DurationMs = frames[frames.Count - 1].TMs, Frames = frames.ToArray(),
-                Markers = markers.ToArray(), Audio = null, Source = source };
+                JointOrder = Names(), NominalSampleHz = 30, DurationMs = finalEnd, Frames = frames.ToArray(),
+                Markers = markers.ToArray(), Audio = narration, Source = source };
             // Aggregate limits apply to the whole upload too; never silently truncate later actions.
             return ContractJson.ParseRecording(ContractJson.SerializeRecording(recording));
         }
@@ -193,7 +205,8 @@ namespace Trail.Motion
             if (transition.AdmitFrameAtMs.HasValue)
             {
                 if (observation == null) throw new ArgumentNullException(nameof(observation));
-                AppendFrame(transition.AdmitFrameAtMs.Value, observation.Left, observation.Right);
+                if (!AppendFrame(transition.AdmitFrameAtMs.Value, observation.Left, observation.Right))
+                    throw new InvalidOperationException("Take admission stopped: " + (PendingStopReason ?? "invalid or out-of-range timestamp"));
             }
             if (transition.Commit == null) return null;
             return Commit(transition.Commit.ReplaceIndex, transition.Commit.Trim, transition.Commit.Reason,

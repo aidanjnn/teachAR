@@ -37,6 +37,7 @@ export async function createApp(
   options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
 ) {
   let resolveTutorial = options.resolveTutorial;
+  const provider = options.provider ?? createProvider(config);
   const liveSessions = new LiveSessionRegistry();
   const https = config.tls ? { cert: await readFile(config.tls.certFile), key: await readFile(config.tls.keyFile) } : null;
   const app = Fastify({
@@ -55,7 +56,7 @@ export async function createApp(
     const relay = new SpectatorRelay();
     await relay.register(app, options.auth);
     registerPairingRoutes(app, options.auth);
-    const repository = new TutorialRepository(config.dataDir);
+    const repository = new TutorialRepository(config.dataDir, provider);
     await repository.recover();
     // The coach speaks only from stored tutorials once pairing is on; unknown or malformed IDs read as "no tutorial".
     resolveTutorial ??= async id => {
@@ -94,7 +95,7 @@ export async function createApp(
     reply.header('Cache-Control', 'no-store');
     return probeVision(config.vision);
   });
-  await registerVoiceRoutes(app, options.provider ?? createProvider(config), {
+  await registerVoiceRoutes(app, provider, {
     sessions: liveSessions,
     ...(options.auth ? { auth: options.auth } : {}),
     ...(resolveTutorial ? { resolveTutorial } : {}),

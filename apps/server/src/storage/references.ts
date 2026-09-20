@@ -23,12 +23,26 @@ export class ReferenceStore {
       let count = 0; let total = bytes.length;
       for (const id of await this.repository.files.ids('assets')) {
         const asset = await this.repository.files.read<Asset>('assets', id);
-        if (asset.recordingId === parsed.recordingId) { count++; total += Buffer.byteLength(asset.image.dataBase64, 'base64'); }
+        if (asset.recordingId === parsed.recordingId) {
+          if (asset.recordingHash === parsed.recordingHash && asset.frameIndex === parsed.frameIndex && asset.source === parsed.source && asset.image.sha256 === parsed.image.sha256) return { id: asset.id, sha256: asset.image.sha256 };
+          count++; total += Buffer.byteLength(asset.image.dataBase64, 'base64');
+        }
       }
       if (count >= 240 || total > 64 * 1024 * 1024) throw new StoreError(413, 'Reference capture limit reached');
       const id = randomUUID(); await this.repository.files.write('assets', id, { ...parsed, id });
       return { id, sha256: parsed.image.sha256 };
     });
+  }
+  async candidates(recordingId: string) {
+    const { sha256 } = await this.repository.recording(recordingId);
+    const result = [];
+    for (const id of await this.repository.files.ids('assets')) {
+      const asset = await this.repository.files.read<Asset>('assets', id);
+      if (asset.recordingId !== recordingId || asset.recordingHash !== sha256) continue;
+      const { image, ...identity } = asset; const { dataBase64: _bytes, ...metadata } = image;
+      result.push({ ...identity, image: metadata });
+    }
+    return result.sort((a, b) => a.frameIndex - b.frameIndex);
   }
   async review(id: string, input: unknown) {
     const edit = ReferenceEditSchema.parse(input);

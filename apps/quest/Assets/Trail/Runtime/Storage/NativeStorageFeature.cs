@@ -23,10 +23,12 @@ namespace Trail.Runtime.Storage
         public bool HasReadyGuides => library.Length > 0;
         public bool SelectedIsStoredOnDevice => library.Length > 0 && library[selected].StoredOnDevice;
         public CaptureReplaySession Capture { get; private set; }
+        public event Action<Recording, string, string[]> RecordingUploaded;
         private GuideController guide;
         private NativeApiConnection connection;
         private PrivateTutorialCache cache;
         private Recording lastCapture;
+        private byte[] lastNarration;
         private TutorialLibraryEntry[] library = new TutorialLibraryEntry[0];
         private int selected;
         private bool busy;
@@ -56,7 +58,13 @@ namespace Trail.Runtime.Storage
                 lastCapture = cache.LoadLatestCapture(out var authoring);
                 if (lastCapture != null)
                 {
-                    if (authoring != null) Capture.RestoreAuthoring(cache.LoadAuthoredTakes(authoring.TutorialId), authoring);
+                    lastNarration = cache.LoadNarration(lastCapture);
+                    if (authoring != null)
+                    {
+                        var takes = cache.LoadAuthoredTakes(authoring.TutorialId); var waves = new byte[takes.Length][];
+                        for (var i = 0; i < takes.Length; i++) waves[i] = cache.LoadNarration(takes[i].Recording);
+                        Capture.RestoreAuthoring(takes, authoring, waves);
+                    }
                     else Capture.LoadRecording(lastCapture);
                 }
             }
@@ -71,7 +79,7 @@ namespace Trail.Runtime.Storage
         }
         private void SaveCapture(Recording recording)
         {
-            try { cache.SaveCapture(recording, Capture.LastAuthoringMetadata); lastCapture = recording; Status = "Recording saved privately. Upload as author to review on desktop."; }
+            try { cache.SaveCapture(recording, Capture.LastAuthoringMetadata, Capture.LastNarration); lastCapture = recording; lastNarration = Capture.LastNarration; Status = "Recording saved privately. Upload as author to review on desktop."; }
             catch (Exception) { Status = "Local save failed. Free private storage and record again."; }
         }
         public void UploadLastCapture()
@@ -85,13 +93,19 @@ namespace Trail.Runtime.Storage
             }
             if (Capture != null && Capture.Takes.Count > 0)
             {
-                try { lastCapture = Capture.ExportTakes(); }
+                try { lastCapture = Capture.ExportTakes(); lastNarration = Capture.ExportedNarration; }
                 catch (Exception) { Status = "Saved actions exceed one upload or a take is unfinished. Keep the tutorial within 120 seconds and 3600 frames."; return; }
             }
             if (lastCapture == null) { Status = "Record a new demonstration first."; return; }
-            if (lastCapture.Audio != null) { Status = "Narration upload is provided by the voice integration."; return; }
+            if (lastCapture.Audio != null)
+            {
+                try { NarrationPcm.Validate(lastNarration, lastCapture.Audio); }
+                catch (ArgumentException) { Status = "Narration bytes are missing or invalid; saved motion is preserved."; return; }
+            }
             busy = true; var revision = ++generation;
             var r = ContractJson.ParseRecording(ContractJson.SerializeRecording(lastCapture));
+            var uploadNarration = lastNarration == null ? null : (byte[])lastNarration.Clone();
+            var localTakes = new List<string>(); if (Capture != null) foreach (var take in Capture.Takes) localTakes.Add(take.Recording.Id);
             var metadata = new RecordingMetadata { SchemaVersion = r.SchemaVersion, Id = r.Id, CoordinateFrame = r.CoordinateFrame, Workspace = r.Workspace, JointOrder = r.JointOrder, NominalSampleHz = r.NominalSampleHz, DurationMs = r.DurationMs, Markers = r.Markers, Audio = r.Audio, Source = r.Source };
             connection.Request("POST", "/api/recordings", ContractJson.SerializeCreateRecordingRequest(new CreateRecordingRequest { Metadata = metadata }), (status, text) =>
             {
@@ -101,7 +115,8 @@ namespace Trail.Runtime.Storage
                     if (status != 200) throw new IOException();
                     var created = JsonUtility.FromJson<Created>(text); Guid parsed; if (!Guid.TryParseExact(created.id,"D",out parsed)) throw new IOException();
                     r.Id = created.id;
-                    var json = ContractJson.SerializeRecording(r); var pending = new PendingUpload { id = r.Id, json = json, hash = PrivateTutorialCache.Hash(Encoding.UTF8.GetBytes(json)) };
+                    var json = ContractJson.SerializeRecording(r); var pending = new PendingUpload { id = r.Id, json = json, hash = PrivateTutorialCache.Hash(Encoding.UTF8.GetBytes(json)),
+                        narrationBase64 = uploadNarration == null ? null : Convert.ToBase64String(uploadNarration), narrationHash = uploadNarration == null ? null : PrivateTutorialCache.Hash(uploadNarration), takeIds = localTakes.ToArray() };
                     WritePending(pending); busy = false; ResumeUpload(pending);
                 }
                 catch (Exception) { busy = false; Status = "Could not create upload. Desktop can inspect an unfinished server upload."; }
@@ -119,6 +134,14 @@ namespace Trail.Runtime.Storage
             Guid parsed; if (!Guid.TryParseExact(pending.id,"D",out parsed)) throw new IOException();
             var recording = ContractJson.ParseRecording(pending.json); var bytes = Encoding.UTF8.GetBytes(pending.json);
             if (recording.Id != pending.id || bytes.Length > PrivateTutorialCache.MaximumRecordingBytes || PrivateTutorialCache.Hash(bytes) != pending.hash) throw new IOException();
+            byte[] narration = null;
+            if (recording.Audio != null)
+            {
+                if (string.IsNullOrEmpty(pending.narrationBase64) || pending.narrationBase64.Length > 16 * 1024 * 1024) throw new IOException("Missing narration upload.");
+                narration = Convert.FromBase64String(pending.narrationBase64); NarrationPcm.Validate(narration, recording.Audio);
+                if (PrivateTutorialCache.Hash(narration) != pending.narrationHash) throw new IOException("Narration upload integrity failed.");
+            }
+            else if (!string.IsNullOrEmpty(pending.narrationBase64)) throw new IOException("Undeclared narration upload.");
             busy = true; var revision = ++generation; var count = (bytes.Length + 1024 * 1024 - 1) / (1024 * 1024);
             Action<int> send = null;
             send = index =>
@@ -130,6 +153,7 @@ namespace Trail.Runtime.Storage
                     {
                         if (revision != generation) return;
                         if (status != 200) { busy = false; Status = "Upload finalization failed. Retry preserves the saved recording."; return; }
+                        RecordingUploaded?.Invoke(recording, pending.hash, pending.takeIds ?? Array.Empty<string>());
                         connection.Request("POST", "/api/tutorial-jobs", "{\"recordingId\":\"" + pending.id + "\",\"recordingHash\":\"" + pending.hash + "\",\"segmentationRevision\":1}", (jobStatus,jobText) =>
                         {
                             if (revision != generation) return; busy = false;
@@ -137,7 +161,7 @@ namespace Trail.Runtime.Storage
                             var job = JsonUtility.FromJson<Job>(jobText);
                             if (job.status == "complete") { File.Delete(pendingPath); Status = "Draft ready. Review every step on the desktop."; }
                             else Status = "Recording preserved. Segmentation needs boundary review or a new recording.";
-                        });
+                        }, timeoutSeconds: 60);
                     }); return;
                 }
                 var length = Math.Min(1024 * 1024, bytes.Length-index*1024*1024); var part = new byte[length]; Buffer.BlockCopy(bytes,index*1024*1024,part,0,length);
@@ -145,7 +169,19 @@ namespace Trail.Runtime.Storage
                 var body = "{\"dataBase64\":\""+Convert.ToBase64String(part)+"\",\"sha256\":\""+PrivateTutorialCache.Hash(part)+"\"}";
                 connection.Request("PUT", "/api/recordings/"+pending.id+"/bytes/"+index,body,(status,text) => { if (revision != generation) return; if (status != 200) { busy=false; Status="Upload interrupted. Tap Upload to retry identical chunks."; return; } send(index+1); });
             };
-            send(0);
+            if (narration == null) send(0);
+            else
+            {
+                Status = "Uploading synchronized narration.";
+                connection.RequestBytes("PUT", "/api/recordings/" + pending.id + "/narration", narration, "audio/wav", (status, text) =>
+                {
+                    if (revision != generation) return;
+                    if (status != 200) { busy = false; Status = "Narration upload interrupted. Retry uses the same saved bytes."; return; }
+                    try { if (JsonUtility.FromJson<NarrationUpload>(text).sha256 != pending.narrationHash) throw new IOException(); }
+                    catch (Exception) { busy = false; Status = "Server narration checksum did not match; motion was not finalized."; return; }
+                    send(0);
+                });
+            }
         }
         /// <summary>Server refresh stays a paired operation; it merges into, never replaces, local entries.</summary>
         public void RefreshLibrary()
@@ -241,7 +277,8 @@ namespace Trail.Runtime.Storage
         }
         private void Invalidated() { generation++; transportGeneration++; busy=false; telemetryInFlight=false; pendingTelemetry=null; Status="Backend disconnected. Loaded guidance stays local; reconnect to sync."; }
         private void OnDestroy() { if(Capture!=null)Capture.RecordingCompleted-=SaveCapture; if(guide!=null)guide.Telemetry-=OnTelemetry; if(connection!=null) { connection.SessionInvalidated-=Invalidated; connection.StateChanged-=ConnectionChanged; } }
-        [Serializable] private sealed class PendingUpload { public string id,json,hash; }
+        [Serializable] private sealed class PendingUpload { public string id,json,hash,narrationBase64,narrationHash; public string[] takeIds; }
+        [Serializable] private sealed class NarrationUpload { public string sha256; }
         [Serializable] private sealed class Created { public string id; }
         [Serializable] private sealed class Job { public string status; }
         [Serializable] private sealed class TutorialItem { public string id,title,status; public int revision,steps; }

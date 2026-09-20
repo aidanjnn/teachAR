@@ -21,6 +21,10 @@ it('binds decoded images to reviewed checkpoint revisions and invalidates approv
     const request = { recordingId: upload.id, recordingHash: hash, frameIndex: tutorial.steps[0]!.checkpointFrame, source: 'workspace-webcam' as const, image: { mimeType: 'image/png' as const, dataBase64: image.toString('base64'), sha256: digest(image), width: 32, height: 32 } };
     await expect(store.upload({ ...request, image: { ...request.image, width: 33 } })).rejects.toThrow('decoded');
     const asset = await store.upload(request);
+    expect(await store.upload(request)).toEqual(asset);
+    const candidates = await store.candidates(recording.id); expect(candidates).toHaveLength(1);
+    expect(candidates[0]!.frameIndex).toBe(tutorial.steps[0]!.checkpointFrame); expect(candidates[0]!.image).not.toHaveProperty('dataBase64');
+    expect((await repository.bundle(tutorial.id)).references).toHaveLength(0);
     const reference = { id: 'checkpoint-view', recordingId: upload.id, recordingHash: hash, tutorialId: tutorial.id, tutorialRevision: tutorial.revision, stepId: tutorial.steps[0]!.id, assetId: asset.id, source: request.source, visibleOutcome: 'Large part is visible at the right side.' };
     const reviewed = await store.review(tutorial.id, { baseRevision: tutorial.revision, references: [reference] });
     await expect(store.review(tutorial.id, { baseRevision: tutorial.revision, references: [reference] })).rejects.toThrow('stale');

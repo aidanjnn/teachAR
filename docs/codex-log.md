@@ -1076,3 +1076,23 @@ The user heard “Test sequence observed” from the local regression browser: t
 ## Publication follow-up
 
 - User requested publication after the local checkpoint. Preparing the tested recording, native voice and spoken-inspection integration for `codex/recording-integration`; reusing the unchanged-code checks recorded above. Full product acceptance remains open. No merge or deployment is included.
+
+## Continued implementation after checkpoint publication
+
+- Published `528f1b0` on `origin/codex/recording-integration`; remote SHA verified.
+  Continued work rather than treating a local implementation checkpoint as completion.
+- Implemented native piecewise PCM16 narration, private audio integrity, aligned
+  multi-take upload, strict server WAV transport, transcription/segment-label
+  application and desktop transcript/audio review. Provider failure preserves
+  a manually editable draft; mock transcript provenance remains visible.
+- Added opt-in expert endpoint-image candidates with exact exported frame mapping,
+  private persistence and explicit desktop approval. Added repeated spoken checks
+  with mute/End protections and operator-selected spectator cast composition.
+- Focused narrated HTTP, corruption/immutability, label-citation and reference
+  tests pass. Browser workflows passed8/8; pure narration15, presentation36 and
+  C#/TypeScript WAV upload/reload checks passed. Full web gate passed typecheck,
+  unit tests and builds, then encountered a missing .meta while the Scene agent
+  was still creating files; final stable-tree rerun follows. Native gates are
+  pending the PR #19 follow-up merge, not yet claimed for this new code.
+- User confirmed no Quest available. Added the physical rehearsal runbook; no
+  headset, learner, actual media/provider or acoustic acceptance evidence exists.

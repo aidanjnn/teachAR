@@ -4,16 +4,20 @@ import { dirname } from 'node:path';
 import { RecordingSchema, parseContractJson, TutorialSchema, TutorialDraftEditSchema, parseTutorialForRecording, type MotionFrame, type Recording, type Tutorial, type TutorialDraftEdit, type StepSceneReference, type TutorialLabelBatch, TutorialLabelBatchSchema } from '@trail/contracts';
 import { deriveStep, proposeSteps } from '@trail/motion';
 import { digest, PrivateFiles, StoreError } from './files.js';
+import { validateNarration } from './narration.js';
+import type { AiProvider } from '../ai/provider.js';
+import { LabelRequestSchema, LabelResultSchema, TranscriptResultSchema } from '@trail/contracts';
+import { validateLabelOutput } from '../ai/labels.js';
 
 type TutorialBundle = { tutorial: Tutorial; references: StepSceneReference[] };
-type Upload = { id: string; status: 'uploading' | 'ready'; metadata: Omit<Recording, 'id' | 'frames'>; chunks: { hash: string; bytes: number; frames: number }[]; hash: string | null; format?: 'frames' | 'bytes' };
+type Upload = { id: string; status: 'uploading' | 'ready'; metadata: Omit<Recording, 'id' | 'frames'>; chunks: { hash: string; bytes: number; frames: number }[]; hash: string | null; narration?: { sha256: string; bytes: number }; format?: 'frames' | 'bytes' };
 export type CompileJob = { id: string; recordingId: string; recordingHash: string; segmentationRevision: number; status: 'running' | 'complete' | 'interrupted' | 'failed'; tutorialId: string | null; error: string | null };
 const MAX_CHUNK_BYTES = 2 * 1024 * 1024;
 const MAX_MOTION_BYTES = 64 * 1024 * 1024;
 
 export class TutorialRepository {
   readonly files: PrivateFiles;
-  constructor(root: string) { this.files = new PrivateFiles(root); }
+  constructor(root: string, private readonly provider?: AiProvider) { this.files = new PrivateFiles(root); }
   async recover() {
     for (const id of await this.files.ids('jobs')) {
       const job = await this.files.read<CompileJob>('jobs', id);
@@ -68,6 +72,40 @@ export class TutorialRepository {
     for (const id of await this.files.ids('recordings')) { const upload = await this.uploadStatus(id); if (upload.status === 'uploading') result.push(upload); }
     return result;
   }
+  async uploadNarration(id: string, bytes: Buffer) {
+    return this.files.serial(id, async () => {
+      const upload = await this.uploadStatus(id);
+      validateNarration(bytes, upload.metadata.audio);
+      const sha256 = digest(bytes);
+      if (upload.narration) {
+        if (upload.narration.sha256 !== sha256) throw new StoreError(409, 'Narration retry differs');
+        await this.verifyNarration(upload, upload.metadata);
+        return { sha256, repeated: true };
+      }
+      if (upload.status !== 'uploading') throw new StoreError(409, 'Finalized recording is immutable');
+      await this.files.writeBytes('recordings', id, bytes, 'narration.wav');
+      await this.files.write('recordings', id, { ...upload, narration: { sha256, bytes: bytes.length } });
+      return { sha256, repeated: false };
+    });
+  }
+  private async verifyNarration(upload: Upload, recording: Pick<Recording, 'audio'>) {
+    if (!recording.audio) {
+      if (upload.narration) throw new StoreError(422, 'Unreferenced narration asset');
+      return;
+    }
+    if (!upload.narration) throw new StoreError(422, 'Upload narration before finalizing motion');
+    let bytes: Buffer;
+    try { bytes = await readFile(this.files.path('recordings', upload.id, 'narration.wav')); }
+    catch { throw new StoreError(422, 'Narration asset is missing'); }
+    if (bytes.length !== upload.narration.bytes || digest(bytes) !== upload.narration.sha256)
+      throw new StoreError(422, 'Narration integrity check failed');
+    validateNarration(bytes, recording.audio);
+  }
+  async narration(id: string) {
+    const { recording } = await this.recording(id);
+    if (!recording.audio) throw new StoreError(404, 'Recording has no narration');
+    return readFile(this.files.path('recordings', id, 'narration.wav'));
+  }
   async uploadStatus(id: string) { return this.files.read<Upload>('recordings', id); }
   async finalizeRecording(id: string, chunkCount: number, expectedHash: string) {
     return this.files.serial(id, async () => {
@@ -85,8 +123,7 @@ export class TutorialRepository {
         frames.push(...chunk);
       }
       const recording = RecordingSchema.parse({ ...upload.metadata, id, frames });
-      // Audio is owned by the voice transport. Never finalize a dangling asset claim.
-      if (recording.audio) throw new StoreError(422, 'Narration asset transport is not connected; import motion without audio');
+      await this.verifyNarration(upload, recording);
       const hash = digest(JSON.stringify(recording));
       if (hash !== expectedHash) throw new StoreError(422, 'Recording hash mismatch');
       await this.files.write('recordings', id, recording, 'recording.json');
@@ -100,6 +137,7 @@ export class TutorialRepository {
     const bytes = await readFile(this.files.path('recordings', id, 'recording.json'));
     const recording = parseContractJson(RecordingSchema, bytes.toString('utf8'));
     if (digest(bytes) !== manifest.hash) throw new StoreError(422, 'Recording integrity check failed');
+    await this.verifyNarration(manifest, recording);
     return { recording, sha256: manifest.hash };
   }
   async recordingContent(id: string) { await this.recording(id); return readFile(this.files.path('recordings', id, 'recording.json')); }
@@ -131,7 +169,8 @@ export class TutorialRepository {
       if (digest(bytes) !== expectedHash) throw new StoreError(422, 'Recording byte hash mismatch');
       let recording: Recording;
       try { recording = parseContractJson(RecordingSchema, new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { throw new StoreError(422, 'Invalid recording JSON'); }
-      if (recording.id !== id || recording.audio) throw new StoreError(422, 'Recording identity or unsupported narration asset');
+      if (recording.id !== id) throw new StoreError(422, 'Recording identity mismatch');
+      await this.verifyNarration(upload, recording);
       const { frames: _frames, id: _id, ...metadata } = recording;
       const expected = { ...upload.metadata } as Record<string, unknown>; delete expected.id;
       if (JSON.stringify(metadata) !== JSON.stringify(expected)) throw new StoreError(409, 'Recording metadata changed during upload');
@@ -156,7 +195,31 @@ export class TutorialRepository {
         const proposed = proposeSteps(recording);
         const tutorial = parseTutorialForRecording({ schemaVersion: 1, id: randomUUID(), revision: 1, recordingId, recordingHash, workspace: recording.workspace, status: 'draft', steps: proposed.steps.map(step => deriveStep(recording, step)), provenance: { segmentation: proposed.segmentation, labels: 'fallback', model: null, promptVersion: 'manual-review-v1' } }, recording, recordingHash);
         await this.files.write('tutorials', tutorial.id, { tutorial, references: [] });
-        job.status = 'complete'; job.tutorialId = tutorial.id;
+        job.tutorialId = tutorial.id;
+        if (recording.audio && this.provider) {
+          try {
+            const bytes = await this.narration(recordingId);
+            const transcript = TranscriptResultSchema.parse(await this.provider.transcribe({ bytes: new Uint8Array(bytes),
+              mimeType: recording.audio.mimeType, audioStartOffsetMs: recording.audio.audioStartOffsetMs,
+              audioDurationHintMs: recording.audio.durationMs, signal: AbortSignal.timeout(30000) }));
+            const request = LabelRequestSchema.parse({ schemaVersion: 1, transcript, segments: tutorial.steps.map(step => ({
+              id: step.id, startMs: Math.round(recording.frames[step.startFrame]!.tMs),
+              endMs: Math.round(recording.frames[step.endFrameExclusive]?.tMs ?? recording.durationMs + 1),
+            })) });
+            const result = LabelResultSchema.parse(await this.provider.label(request, AbortSignal.timeout(15000)));
+            const checked = validateLabelOutput(request, { labels: result.labels });
+            if (!checked.ok) throw new StoreError(422, 'Labels do not match recorded segments');
+            // Keep the reviewed transcript and citations beside the immutable recording identity.
+            await this.files.write('tutorials', tutorial.id, { recordingHash, transcript, segments: request.segments, result }, 'narration-review.json');
+            await this.applyLabels(tutorial.id, { baseRevision: tutorial.revision, recordingHash,
+              labels: checked.labels.map(label => ({ id: label.stepId, title: label.title, instruction: label.instruction, narrationSpanIds: label.narrationSpanIds })),
+              provenance: result.provenance });
+          } catch {
+            // A provider outage must leave a durable manually reviewable draft, not lose the recording.
+            job.error = 'Narration generation unavailable; review and write instructions manually.';
+          }
+        }
+        job.status = 'complete';
       } catch (error) { job.status = 'failed'; job.error = error instanceof Error ? error.message.slice(0, 240) : 'Compilation failed'; }
       await this.files.write('jobs', job.id, job);
       return job;

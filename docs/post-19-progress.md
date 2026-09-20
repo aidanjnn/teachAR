@@ -4,6 +4,11 @@ Base: `bdfb757`, isolated worktree branch `codex/recording-integration`.
 This is an implementation checkpoint, **not a usable-Quest or learner acceptance signoff**.
 PR #19's rendering/bootstrap work remains a dependency.
 
+## Published checkpoint
+
+`528f1b0` is pushed to `codex/recording-integration`. The following evidence first
+covered that checkpoint; follow-through results are recorded below.
+
 ## Implemented here
 
 - Capture now executes `RecordingDirector`/`TakeLedger`. The shell exposes stable
@@ -66,3 +71,32 @@ native tooling; no production check was weakened.
 The next physical milestone remains one fresh recording, desktop-reviewed tutorial,
 and an independent learner completing one step on a visibly working Quest. Synthetic
 exports and injected media tests do not satisfy that milestone.
+
+## Follow-through after publication
+
+- Native PCM16 WAV narration now follows active take time, excludes pauses and
+  endpoint-return trims, persists atomically with each take, joins takes with the
+  same motion offsets and uploads before motion finalization. Clock drift beyond
+  100 ms or missing microphone history refuses the pending take; device timing
+  and acoustic behavior still need measurement.
+- The server validates actual WAV headers/samples/duration and durable hashes,
+  transcribes finalized audio, labels the actual compiled segments, validates
+  narration citations and applies labels to a draft. Provider failure retains a
+  manual-review draft. Desktop review plays audio and shows per-step transcript;
+  mock fixture transcripts are explicitly disclosed.
+- Opt-in endpoint photos retain only candidates aligned to an admitted kept
+  motion frame. Candidates persist privately and upload against the exact exported
+  recording/frame map. Desktop preview and explicit approval connect them to a
+  reviewed step. The camera timing sidecar says delivery-aligned-unverified.
+- Repeated spoken placement checks restore prior listening intent and replace
+  stale peers, while respecting Mute, End, focus loss and backend invalidation.
+- Spectator now supports an operator-selected cast beside progress, including
+  stopped-stream detection and reconnect controls. Browser synthetic-stream tests
+  do not prove actual Quest casting or audio.
+- PR #19 advanced to `de74ae7`; its duration-limit, trim-tail and lifecycle fixes
+  are being reconciled before final native validation.
+
+The user confirmed no Quest is available. A separate starting-layout capture/review
+workflow and verified acoustic echo/interruption behavior remain software or
+integration gaps; hardware/learner gates cannot be completed in this session.
+See `end-to-end-runbook.md` for the complete physical acceptance sequence.

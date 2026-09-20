@@ -5,6 +5,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using Trail.Contracts;
+using Trail.Runtime.Record;
 
 namespace Trail.Runtime.Storage
 {
@@ -205,14 +206,17 @@ namespace Trail.Runtime.Storage
         {
             lock (gate) foreach (var folder in Directory.GetDirectories(root, ".pending-*")) Directory.Delete(folder, true);
         }
-        public string SaveCapture(Recording recording, TakeAuthoringMetadata authoring = null)
+        public string SaveCapture(Recording recording, TakeAuthoringMetadata authoring = null, byte[] narration = null)
         {
+            if (recording.Audio != null) NarrationPcm.Validate(narration, recording.Audio);
+            else if (narration != null) throw new ArgumentException("Narration bytes require recording metadata.");
             var bytes = Encoding.UTF8.GetBytes(authoring == null ? ContractJson.SerializeRecording(recording) :
                 ContractJson.SerializeAuthoredCapture(new AuthoredCapture { SchemaVersion = 1, Recording = recording, Authoring = authoring }));
             if (bytes.Length > MaximumRecordingBytes) throw new IOException("Recording exceeds local limit");
             lock (gate)
             {
-                if (availableBytes() < bytes.Length + 1024 * 1024) throw new IOException("Not enough private storage");
+                if (availableBytes() < (long)bytes.Length + (narration?.Length ?? 0) + 1024 * 1024) throw new IOException("Not enough private storage");
+                if (narration != null) SaveNarration(recording, narration);
                 var name = "capture-" + Guid.NewGuid().ToString("N") + ".json";
                 var temporary = Path.Combine(root, name + ".tmp");
                 try { WriteSynced(temporary, bytes); File.Move(temporary, Path.Combine(root, name)); }
@@ -237,9 +241,10 @@ namespace Trail.Runtime.Storage
                         try
                         {
                             var capture = ContractJson.ParseAuthoredCapture(json);
+                            if (capture.Recording.Audio != null) LoadNarration(capture.Recording);
                             authoring = capture.Authoring; return capture.Recording;
                         }
-                        catch (ContractException) { return ContractJson.ParseRecording(json); }
+                        catch (ContractException) { var recording = ContractJson.ParseRecording(json); if (recording.Audio != null) LoadNarration(recording); return recording; }
                     }
                     catch (Exception) { }
                 }
@@ -258,12 +263,43 @@ namespace Trail.Runtime.Storage
                     try
                     {
                         var capture = ContractJson.ParseAuthoredCapture(new UTF8Encoding(false, true).GetString(ReadBounded(file, MaximumRecordingBytes)));
+                        if (capture.Recording.Audio != null) LoadNarration(capture.Recording);
                         if (capture.Authoring.TutorialId == tutorialId && !byIndex.ContainsKey(capture.Authoring.TakeIndex))
                             byIndex.Add(capture.Authoring.TakeIndex, capture);
                     }
                     catch (Exception) { }
                 }
                 var result = new AuthoredCapture[byIndex.Count]; byIndex.Values.CopyTo(result, 0); return result;
+            }
+        }
+        private string NarrationDirectory(Recording recording) => Path.Combine(root, "narration-" + Hash(Encoding.UTF8.GetBytes(recording.Id)));
+        private void SaveNarration(Recording recording, byte[] narration)
+        {
+            var directory = NarrationDirectory(recording);
+            if (Directory.Exists(directory))
+            {
+                if (Hash(LoadNarration(recording)) != Hash(narration)) throw new IOException("Saved narration is immutable.");
+                return;
+            }
+            var temporary = Path.Combine(root, ".pending-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(temporary);
+            try
+            {
+                WriteSynced(Path.Combine(temporary, "narration.wav"), narration);
+                WriteSynced(Path.Combine(temporary, "sha256"), Encoding.ASCII.GetBytes(Hash(narration)));
+                Directory.Move(temporary, directory);
+            }
+            finally { if (Directory.Exists(temporary)) Directory.Delete(temporary, true); }
+        }
+        public byte[] LoadNarration(Recording recording)
+        {
+            if (recording.Audio == null) return null;
+            lock (gate)
+            {
+                var directory = NarrationDirectory(recording);
+                var bytes = ReadBounded(Path.Combine(directory, "narration.wav"), NarrationPcm.MaximumBytes);
+                var expected = Encoding.ASCII.GetString(ReadBounded(Path.Combine(directory, "sha256"), 64));
+                if (Hash(bytes) != expected) throw new IOException("Narration integrity check failed.");
+                NarrationPcm.Validate(bytes, recording.Audio); return bytes;
             }
         }
         private static PreloadedTutorial Validate(byte[] tutorialJson, byte[] recordingJson, string expectedHash)

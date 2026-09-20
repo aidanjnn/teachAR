@@ -1,5 +1,6 @@
-import { RecordingSchema, TutorialSchema, SpectatorStateSchema, type Recording, type Tutorial, type TutorialDraftEdit, type SpectatorState, type StepSceneReference } from '@trail/contracts';
+import { TranscriptResultSchema, LabelResultSchema, type TranscriptResult, RecordingSchema, TutorialSchema, SpectatorStateSchema, type Recording, type Tutorial, type TutorialDraftEdit, type SpectatorState, type StepSceneReference, type ReferenceImageUpload } from '@trail/contracts';
 import { createAuthoringFixture } from '@trail/motion';
+import { mountCast } from '../spectator/cast.js';
 import { createViewer } from '../replay/viewer.js';
 
 async function api(path: string, body?: unknown, method = 'POST'): Promise<unknown> {
@@ -26,9 +27,12 @@ export function mountWorkbench(root: HTMLElement) {
       <div class="author-heading"><div><h1>Give every movement a moment.</h1><p>Review the starts, paths and checkpoints your learner will follow.</p></div><span id="author-source" class="source-label">No recording loaded</span></div>
       <div class="author-toolbar"><button id="import-demo" class="primary">Import four-step sample</button><label class="file-button">Import recording <input id="recording-file" type="file" accept=".json,application/json"></label><button id="discard-upload">Discard unfinished upload</button><button id="reload-library">Reload saved guides</button><select id="tutorial-library" aria-label="Saved guides"><option value="">Choose a saved guide</option></select></div>
       <p id="author-status" class="author-status" role="status">Pair your browser, then import a recording or try the synthetic sample.</p>
-      <div id="review-layout" class="review-layout" hidden><ol id="step-strip" class="step-strip" aria-label="Ordered steps"></ol><div class="review-body"><div class="review-preview"><div id="review-scene"></div><div class="frame-actions"><button id="show-start">Show start</button><button id="show-checkpoint">Show checkpoint</button><label>Frame <input id="review-frame" type="range" min="0" step="1"></label><output id="frame-label"></output></div><p id="target-summary"></p></div><form id="step-form" class="step-form"><div class="step-heading"><h2 id="step-heading">Review step</h2><span id="label-provenance"></span></div><label>Title<input id="step-title" maxlength="60" required></label><label>Instruction<textarea id="step-instruction" rows="3" maxlength="240" required></textarea></label><div class="boundary-fields"><label>Start frame<input id="step-start" type="number" min="0" required></label><label>End (exclusive)<input id="step-end" type="number" min="1" required></label><label>Checkpoint<input id="step-checkpoint" type="number" min="0" required></label></div><div class="boundary-fields"><label>Active hands<select id="step-hands"><option value="right">Right hand</option><option value="left">Left hand</option><option value="both">Both hands</option></select></label><label>Completion<select id="step-mode"><option value="pose-match">Checkpoint pose</option><option value="path-and-pose">Ordered path + pose</option><option value="user-confirmed">Learner confirms</option></select></label></div><p class="review-hint">Keep a still, tracked hold at each end. Path targets are recalculated from the recording when you save.</p><button type="submit">Apply step edits</button></form><section class="reference-review" aria-label="Checkpoint reference"><h3>Reviewed checkpoint image</h3><p>Upload a captured view from this recording at the selected checkpoint. Save instruction edits first; later edits clear image approval.</p><label>Captured image <input id="reference-file" type="file" accept="image/png,image/jpeg"></label><label>Scene source <select id="reference-source"><option value="quest-camera">Quest camera</option><option value="workspace-webcam">Workspace webcam (reduced demo)</option></select></label><label>Visible outcome <input id="reference-outcome" maxlength="240" placeholder="Describe only what can be seen"></label><button id="review-reference" type="button">Approve checkpoint image</button><img id="reference-preview" alt="Reviewed expert checkpoint" hidden><p id="reference-state">No approved view for this step.</p></section></div><div class="review-footer"><span id="revision-label"></span><button id="save-review" class="primary">Save reviewed draft</button><button id="finalize-guide">Finalize guide</button></div></div>
+      <div id="review-layout" class="review-layout" hidden><ol id="step-strip" class="step-strip" aria-label="Ordered steps"></ol><div class="review-body"><div class="review-preview"><div id="review-scene"></div><div class="frame-actions"><button id="show-start">Show start</button><button id="show-checkpoint">Show checkpoint</button><label>Frame <input id="review-frame" type="range" min="0" step="1"></label><output id="frame-label"></output></div><p id="target-summary"></p><section id="narration-review" hidden aria-label="Recorded narration"><h3>Recorded narration</h3><audio id="narration-audio" controls preload="none"></audio><p id="narration-source"></p><p id="narration-spans"></p></section></div><form id="step-form" class="step-form"><div class="step-heading"><h2 id="step-heading">Review step</h2><span id="label-provenance"></span></div><label>Title<input id="step-title" maxlength="60" required></label><label>Instruction<textarea id="step-instruction" rows="3" maxlength="240" required></textarea></label><div class="boundary-fields"><label>Start frame<input id="step-start" type="number" min="0" required></label><label>End (exclusive)<input id="step-end" type="number" min="1" required></label><label>Checkpoint<input id="step-checkpoint" type="number" min="0" required></label></div><div class="boundary-fields"><label>Active hands<select id="step-hands"><option value="right">Right hand</option><option value="left">Left hand</option><option value="both">Both hands</option></select></label><label>Completion<select id="step-mode"><option value="pose-match">Checkpoint pose</option><option value="path-and-pose">Ordered path + pose</option><option value="user-confirmed">Learner confirms</option></select></label></div><p class="review-hint">Keep a still, tracked hold at each end. Path targets are recalculated from the recording when you save.</p><button type="submit">Apply step edits</button></form><section class="reference-review" aria-label="Checkpoint reference"><h3>Reviewed checkpoint image</h3><p>Upload a captured view from this recording at the selected checkpoint. Save instruction edits first; later edits clear image approval.</p><label>Captured on headset <select id="reference-candidate"><option value="">Choose a captured view or upload a file</option></select></label><p id="reference-timing">Captured views need visual review; device delivery timing does not establish exact sensor alignment.</p><label>Captured image <input id="reference-file" type="file" accept="image/png,image/jpeg"></label><label>Scene source <select id="reference-source"><option value="quest-camera">Quest camera</option><option value="workspace-webcam">Workspace webcam (reduced demo)</option></select></label><label>Visible outcome <input id="reference-outcome" maxlength="240" placeholder="Describe only what can be seen"></label><button id="review-reference" type="button">Approve checkpoint image</button><img id="reference-preview" alt="Reviewed expert checkpoint" hidden><p id="reference-state">No approved view for this step.</p></section></div><div class="review-footer"><span id="revision-label"></span><button id="save-review" class="primary">Save reviewed draft</button><button id="finalize-guide">Finalize guide</button></div></div>
     </section>
-    <section id="spectator-panel" hidden aria-label="Read-only spectator"><div class="author-heading"><div><h1>At the learner’s pace.</h1><p>A schematic view of headset progress. Movement matching does not verify assembly.</p></div><span id="spectator-connection" class="source-label">Disconnected</span></div><div class="spectator-stage"><span id="spectator-phase">Waiting for a learner</span><h2 id="spectator-step">No active step</h2><progress id="spectator-progress" max="1" value="0"></progress><p id="spectator-evidence">Only the headset can advance the guide.</p><div id="spectator-tracking"></div></div><button id="spectator-reconnect">Reconnect spectator</button></section>`;
+    <section id="spectator-panel" hidden aria-label="Read-only spectator"><div class="author-heading"><div><h1>At the learner’s pace.</h1><p>Headset progress alongside an operator-selected action view. Movement matching does not verify assembly.</p></div><span id="spectator-connection" class="source-label">Disconnected</span></div><div class="spectator-stage"><span id="spectator-phase">Waiting for a learner</span><h2 id="spectator-step">No active step</h2><progress id="spectator-progress" max="1" value="0"></progress><p id="spectator-evidence">Only the headset can advance the guide.</p><div id="spectator-tracking"></div></div><section id="spectator-cast" class="spectator-cast" aria-label="Headset cast"></section><button id="spectator-reconnect">Reconnect spectator</button></section>`;
+  const disposeCast = mountCast(node(root, '#spectator-cast'));
+  let candidates: (Omit<ReferenceImageUpload, 'image'> & { id: string })[] = [];
+  let narrationUrl: string | undefined; let transcript: TranscriptResult | undefined;
   let tutorial: Tutorial | undefined; let recording: Recording | undefined; let draft: TutorialDraftEdit | undefined; let selected = 0; let dirty = false; let references: StepSceneReference[] = [];
   let viewer: ReturnType<typeof createViewer> | undefined; let socket: WebSocket | undefined; let reconnect: ReturnType<typeof setTimeout> | undefined; let spectator: SpectatorState | undefined; let spectatorActive = false; let spectatorReceivedAt = 0;
   const status = (message: string) => { node(root, '#author-status').textContent = message; };
@@ -49,6 +53,7 @@ export function mountWorkbench(root: HTMLElement) {
   function showFrame(index: number) {
     if (!recording) return;
     const frame = recording.frames[index]; if (!frame) return;
+    if (narrationUrl) node<HTMLAudioElement>(root, '#narration-audio').currentTime = frame.tMs / 1000;
     viewer?.showFrame(frame); node<HTMLInputElement>(root, '#review-frame').value = String(index); node(root, '#frame-label').textContent = `${index} / ${(frame.tMs / 1000).toFixed(2)} s`;
   }
   function renderSteps() {
@@ -61,12 +66,20 @@ export function mountWorkbench(root: HTMLElement) {
     });
     const step = draft.steps[selected]!;
     node(root, '#step-heading').textContent = `Step ${selected + 1}`;
+    node(root, '#narration-spans').textContent = transcript?.spans.filter(span =>
+      span.startMs < (recording!.frames[step.endFrameExclusive]?.tMs ?? recording!.durationMs + 1) &&
+      span.endMs > recording!.frames[step.startFrame]!.tMs).map(span => span.text).join(' ') || 'No transcript for this movement. Review the recorded audio and write the instruction.';
     node(root, '#label-provenance').textContent = `${tutorial.provenance.labels} instructions`;
     for (const [id, value] of [['title', step.title], ['instruction', step.instruction], ['start', step.startFrame], ['end', step.endFrameExclusive], ['checkpoint', step.checkpointFrame], ['hands', step.activeHands.length === 2 ? 'both' : step.activeHands[0]!], ['mode', step.completionMode]] as const) node<HTMLInputElement>(root, `#step-${id}`).value = String(value);
     const frameInput = node<HTMLInputElement>(root, '#review-frame'); frameInput.max = String(recording.frames.length - 1);
     node(root, '#revision-label').textContent = `Revision ${tutorial.revision} · ${tutorial.status}${dirty ? ' · unsaved changes' : ''}`;
     const targets = tutorial.steps[selected]!.targets;
     node(root, '#target-summary').textContent = targets.map(target => `${target.side}: start ${target.startPose.positionM.map(n => n.toFixed(2)).join(', ')} m → checkpoint ${target.checkpointPose.positionM.map(n => n.toFixed(2)).join(', ')} m; ${target.motionGates.length} intermediate gates`).join(' | ');
+    const candidateSelect = node<HTMLSelectElement>(root, '#reference-candidate'); candidateSelect.replaceChildren(new Option('Choose a captured view or upload a file', ''));
+    for (const candidate of candidates) {
+      if (candidate.frameIndex >= step.startFrame && candidate.frameIndex < step.endFrameExclusive && Math.abs(recording.frames[candidate.frameIndex]!.tMs - recording.frames[step.checkpointFrame]!.tMs) <= 250)
+        candidateSelect.add(new Option(`${candidate.source} · frame ${candidate.frameIndex}`, candidate.id));
+    }
     const approved = references.find(reference => reference.stepId === step.id);
     node(root, '#reference-state').textContent = approved ? approved.visibleOutcome : 'No approved view for this step. Visual inspection is unavailable until a view is reviewed.';
     node<HTMLButtonElement>(root, '#review-reference').disabled = tutorial.status === 'ready' || dirty;
@@ -101,7 +114,27 @@ export function mountWorkbench(root: HTMLElement) {
     if (dirty) throw new Error('Save the current draft before switching guides.');
     tutorial = TutorialSchema.parse(await api(`/api/tutorials/${encodeURIComponent(id)}/query`));
     const result = await api(`/api/recordings/${encodeURIComponent(tutorial.recordingId)}/query`) as { recording: unknown };
-    recording = RecordingSchema.parse(result.recording); references = await api(`/api/tutorials/${tutorial.id}/references/query`) as StepSceneReference[]; draft = editOf(tutorial); selected = 0; dirty = false;
+    recording = RecordingSchema.parse(result.recording);
+    transcript = undefined; if (narrationUrl) URL.revokeObjectURL(narrationUrl); narrationUrl = undefined;
+    const audio = node<HTMLAudioElement>(root, '#narration-audio'); audio.pause(); audio.removeAttribute('src'); audio.load();
+    node(root, '#narration-review').hidden = !recording.audio;
+    if (recording.audio) {
+      try {
+        const response = await fetch(`/api/recordings/${encodeURIComponent(recording.id)}/narration/query`, { method: 'POST', credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(20000) });
+        if (!response.ok) throw new Error('Narration unavailable');
+        narrationUrl = URL.createObjectURL(await response.blob()); audio.src = narrationUrl;
+      } catch { node(root, '#narration-source').textContent = 'Recorded audio unavailable. Retry loading this guide.'; }
+      try {
+        const review = await api(`/api/tutorials/${tutorial.id}/narration/query`) as { recordingHash: string; transcript: unknown; result: unknown };
+        if (review.recordingHash !== tutorial.recordingHash) throw new Error('Stale transcript');
+        transcript = TranscriptResultSchema.parse(review.transcript); const labels = LabelResultSchema.parse(review.result);
+        node(root, '#narration-source').textContent = transcript.source === 'fixture'
+          ? 'Synthetic mock transcript; these words were not recognized from your recording. Review the audio and replace the instructions.'
+          : `Transcribed narration · ${labels.provenance.labels} labels. Review every instruction against the recording.`;
+      } catch { node(root, '#narration-source').textContent = 'Automatic transcription unavailable. Listen and write instructions manually.'; }
+    }
+    candidates = await api(`/api/recordings/${tutorial.recordingId}/reference-images/query`) as typeof candidates;
+    references = await api(`/api/tutorials/${tutorial.id}/references/query`) as StepSceneReference[]; draft = editOf(tutorial); selected = 0; dirty = false;
     node(root, '#review-layout').hidden = false; viewer?.dispose();
     try { viewer = createViewer(node(root, '#review-scene'), recording); } catch { node(root, '#review-scene').textContent = 'WebGL unavailable. Frame and target review remain available.'; }
     node(root, '#author-source').textContent = recording.source === 'synthetic-fixture' ? 'Synthetic recording' : recording.source;
@@ -178,21 +211,35 @@ export function mountWorkbench(root: HTMLElement) {
   node(root, '#finalize-guide').addEventListener('click', () => { void busy(async () => {
     if (!tutorial || dirty) return; tutorial = TutorialSchema.parse(await api(`/api/tutorials/${tutorial.id}/finalize`, { baseRevision: tutorial.revision })); draft = editOf(tutorial); renderSteps(); await library(); status('Guide finalized. This version is ready to preload and cannot be edited.');
   }); });
+  node<HTMLSelectElement>(root, '#reference-candidate').addEventListener('change', () => { void busy(async () => {
+    const id = node<HTMLSelectElement>(root, '#reference-candidate').value;
+    if (!id) { node<HTMLImageElement>(root, '#reference-preview').hidden = true; return; }
+    const asset = await api(`/api/reference-images/${id}/query`) as ReferenceImageUpload;
+    const preview = node<HTMLImageElement>(root, '#reference-preview'); preview.src = `data:${asset.image.mimeType};base64,${asset.image.dataBase64}`; preview.hidden = false;
+    node<HTMLSelectElement>(root, '#reference-source').value = asset.source;
+    node(root, '#reference-state').textContent = 'Unapproved captured view. Compare it with the checkpoint and describe only what is visible.';
+  }); });
   node(root, '#review-reference').addEventListener('click', () => { void busy(async () => {
     if (!tutorial || !recording || dirty || tutorial.status === 'ready') throw new Error('Save the draft before approving its checkpoint image.');
     const file = node<HTMLInputElement>(root, '#reference-file').files?.[0]; const outcome = node<HTMLInputElement>(root, '#reference-outcome').value.trim();
-    if (!file || !outcome || file.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg'].includes(file.type)) throw new Error('Choose a PNG/JPEG under 2 MiB and describe the visible outcome.');
-    const bytes = new Uint8Array(await file.arrayBuffer()); const bitmap = await createImageBitmap(file); const width = bitmap.width; const height = bitmap.height; bitmap.close();
-    if (width > 1280 || height > 1280) throw new Error('Reference dimensions must be at most 1280 pixels.');
-    let binary = ''; for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
-    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(n => n.toString(16).padStart(2, '0')).join('');
-    const source = node<HTMLSelectElement>(root, '#reference-source').value as 'quest-camera' | 'workspace-webcam';
-    const asset = await api('/api/reference-images', { recordingId: tutorial.recordingId, recordingHash: tutorial.recordingHash, frameIndex: tutorial.steps[selected]!.checkpointFrame, source, image: { mimeType: file.type, dataBase64: btoa(binary), sha256: hash, width, height } }) as { id: string };
+    const selectedCandidate = candidates.find(value => value.id === node<HTMLSelectElement>(root, '#reference-candidate').value);
+    if (!outcome) throw new Error('Describe the visible outcome before approving this view.');
+    let source: 'quest-camera' | 'workspace-webcam'; let asset: { id: string };
+    if (selectedCandidate) { source = selectedCandidate.source; asset = selectedCandidate; }
+    else {
+      if (!file || file.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg'].includes(file.type)) throw new Error('Choose a captured view or a PNG/JPEG under 2 MiB.');
+      const bytes = new Uint8Array(await file.arrayBuffer()); const bitmap = await createImageBitmap(file); const width = bitmap.width; const height = bitmap.height; bitmap.close();
+      if (width > 1280 || height > 1280) throw new Error('Reference dimensions must be at most 1280 pixels.');
+      let binary = ''; for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(n => n.toString(16).padStart(2, '0')).join('');
+      source = node<HTMLSelectElement>(root, '#reference-source').value as 'quest-camera' | 'workspace-webcam';
+      asset = await api('/api/reference-images', { recordingId: tutorial.recordingId, recordingHash: tutorial.recordingHash, frameIndex: tutorial.steps[selected]!.checkpointFrame, source, image: { mimeType: file.type, dataBase64: btoa(binary), sha256: hash, width, height } }) as { id: string };
+    }
     const reference: StepSceneReference = { id: crypto.randomUUID(), recordingId: tutorial.recordingId, recordingHash: tutorial.recordingHash, tutorialId: tutorial.id, tutorialRevision: tutorial.revision, stepId: tutorial.steps[selected]!.id, assetId: asset.id, source, visibleOutcome: outcome };
     const batch = [...references.filter(value => value.stepId !== reference.stepId).map(value => ({ ...value, tutorialRevision: tutorial!.revision })), reference];
     const result = await api(`/api/tutorials/${tutorial.id}/references`, { baseRevision: tutorial.revision, references: batch }, 'PUT') as { tutorial: unknown; references: StepSceneReference[] };
     tutorial = TutorialSchema.parse(result.tutorial); references = result.references; draft = editOf(tutorial); renderSteps();
-    const preview = node<HTMLImageElement>(root, '#reference-preview'); preview.src = `data:${file.type};base64,${btoa(binary)}`; preview.hidden = false; status('Checkpoint image approved for this revision.');
+    status('Checkpoint image approved for this revision.');
   }); });
   node(root, '#show-start').addEventListener('click', () => { if (draft) showFrame(draft.steps[selected]!.startFrame); });
   node(root, '#show-checkpoint').addEventListener('click', () => { if (draft) showFrame(draft.steps[selected]!.checkpointFrame); });
@@ -221,7 +268,7 @@ export function mountWorkbench(root: HTMLElement) {
   }
   node(root, '#spectator-reconnect').addEventListener('click', connectSpectator);
   const timer = setInterval(renderSpectator, 1000);
-  const dispose = () => { spectatorActive = false; clearInterval(timer); clearTimeout(codeTimer); clearTimeout(reconnect); socket?.close(); viewer?.dispose(); };
+  const dispose = () => { disposeCast(); if (narrationUrl) URL.revokeObjectURL(narrationUrl); spectatorActive = false; clearInterval(timer); clearTimeout(codeTimer); clearTimeout(reconnect); socket?.close(); viewer?.dispose(); };
   window.addEventListener('pagehide', dispose, { once: true });
   return dispose;
 }

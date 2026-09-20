@@ -36,7 +36,9 @@ namespace Trail.Tests.CaptureRuntime
             Assert.AreEqual(XRHandJointID.IndexTip, XRHandsSource.CanonicalJoints[9]);
             Assert.AreEqual(XRHandJointID.LittleTip, XRHandsSource.CanonicalJoints[24]);
         }
-        [Test] public void IntegratedTakesTrimReturnPreserveReplacementAndPauseTime()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void IntegratedTakesTrimReturnPreserveReplacementAndPauseTime(bool narrated)
         {
             var root = new GameObject("recording integration fixture"); root.SetActive(false);
             try
@@ -44,6 +46,7 @@ namespace Trail.Tests.CaptureRuntime
                 var source = root.AddComponent<FixtureHands>(); source.TrackingSpace = root.transform;
                 var session = root.AddComponent<CaptureReplaySession>(); session.Source = source;
                 double now = 0; long sequence = 0; session.Clock = () => now;
+                var narration = new FixtureNarration(); if (narrated) session.Narration = narration;
                 root.SetActive(true);
                 void Samples(int count, NVector3 point)
                 { for (var i = 0; i < count; i++) { now += 40; source.Emit(now, ++sequence, point); } }
@@ -61,23 +64,36 @@ namespace Trail.Tests.CaptureRuntime
                 Samples(50, new NVector3(.3f, .1f, 0));
                 Assert.IsTrue(session.Authoring.EndpointCandidateMs.HasValue);
                 var boundary = session.Authoring.EndpointCandidateMs.Value;
-                Samples(25, NVector3.Zero);
+                narration.Value = 999; Samples(25, NVector3.Zero); narration.Value = 100;
                 Assert.AreEqual(1, saved); Assert.AreEqual(1, session.Takes.Count);
                 Assert.AreEqual("endpoint-hold-return", session.Takes[0].TrimReason);
                 Assert.AreEqual(boundary, session.Takes[0].Trim.EndMsExclusive);
-                Assert.Less(session.LastRecording.DurationMs, boundary);
+                Assert.AreEqual(boundary, session.LastRecording.DurationMs);
+                Assert.Less(session.LastRecording.Frames.Last().TMs, boundary);
                 Assert.AreEqual(.3f, session.LastRecording.Frames.Last().Hands.Right.Joints["wrist"].PositionM.X, .00001f);
-                var original = session.LastRecording; var originalMetadata = session.LastAuthoringMetadata;
+                var original = session.LastRecording; var originalMetadata = session.LastAuthoringMetadata; var originalWave = session.LastNarration;
+                if (narrated)
+                {
+                    NarrationPcm.Validate(originalWave, original.Audio);
+                    Assert.IsFalse(NarrationPcm.Decode(originalWave).Contains((short)999), "return gesture audio is trimmed with motion");
+                }
                 session.ReRecordTake(0); Samples(76, NVector3.Zero); Samples(40, new NVector3(.4f, 0, 0));
                 session.DiscardRecording(); Assert.AreSame(original, session.LastRecording);
                 Assert.AreEqual(1, session.Takes.Count); Assert.AreEqual(1, saved);
                 session.StartRecording(); Samples(76, NVector3.Zero); Samples(35, new NVector3(.4f, 0, 0));
                 session.PauseRecording(); var pausedMs = session.Authoring.TakeMs;
-                Samples(100, new NVector3(.4f, 0, 0));
+                narration.Value = 999; Samples(100, new NVector3(.4f, 0, 0)); narration.Value = 200;
                 Assert.AreEqual(pausedMs, session.Authoring.TakeMs);
                 session.ResumeRecording(); Samples(10, new NVector3(.4f, 0, 0)); session.StopRecording();
                 Assert.AreEqual(2, saved); Assert.AreEqual(2, session.Takes.Count);
+                if (narrated)
+                {
+                    var pcm = NarrationPcm.Decode(session.LastNarration);
+                    Assert.IsTrue(pcm.Contains((short)100) && pcm.Contains((short)200));
+                    Assert.IsFalse(pcm.Contains((short)999), "paused microphone samples are not saved");
+                }
                 var exported = session.ExportTakes();
+                if (narrated) NarrationPcm.Validate(session.ExportedNarration, exported.Audio);
                 Assert.AreEqual(4, exported.Markers.Length);
                 Assert.AreEqual("step-start", exported.Markers[2].Kind);
                 Assert.Greater(exported.Markers[2].TMs, exported.Markers[1].TMs);
@@ -92,8 +108,9 @@ namespace Trail.Tests.CaptureRuntime
                     new AuthoredCapture { SchemaVersion = 1, Recording = session.LastRecording, Authoring = session.LastAuthoringMetadata }
                 };
                 var latestMetadata = session.LastAuthoringMetadata;
+                var restoredWaves = narrated ? new[] { originalWave, session.LastNarration } : null;
                 session.NewTutorial(); Assert.IsFalse(session.SavePositionSet); Assert.AreEqual(0, session.Takes.Count);
-                session.RestoreAuthoring(captures, latestMetadata);
+                session.RestoreAuthoring(captures, latestMetadata, restoredWaves);
                 Assert.AreEqual(2, session.Takes.Count); Assert.IsTrue(session.SavePositionSet);
                 Assert.IsNull(session.Registration, "restored actions never restore session calibration");
                 Assert.AreEqual(4, session.ExportTakes().Markers.Length);
@@ -101,6 +118,16 @@ namespace Trail.Tests.CaptureRuntime
                 session.StartRecording(); Assert.IsFalse(session.IsRecording, "recalibration is required after restoring");
             }
             finally { Object.DestroyImmediate(root); }
+        }
+        private sealed class FixtureNarration : INarrationCapture
+        {
+            public short Value = 100;
+            public string Status => "Synthetic narration fixture";
+            private NarrationTimeline timeline;
+            public bool Begin() { timeline = new NarrationTimeline(); return true; }
+            public void Align(double sourceMs, double takeMs) => timeline.AppendTo(takeMs, (_, __) => Value);
+            public byte[] Finish(double startMs, double durationMs) { var bytes = timeline.Trim(startMs, durationMs); timeline = null; return bytes; }
+            public void Discard() => timeline = null;
         }
         [UnityTest] public IEnumerator InvalidationStopsCaptureGhostAndRequiresNewRegistration()
         {

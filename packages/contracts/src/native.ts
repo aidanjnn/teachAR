@@ -39,7 +39,7 @@ export const TakeAuthoringMetadataSchema = z.strictObject({
   takeIndex: z.number().int().min(0).max(127),
   savePosition: z.strictObject({ leftM: Vec3Schema, rightM: Vec3Schema }),
   trim: z.strictObject({ startMs: z.number().min(0).max(120_000), endMsExclusive: z.number().positive().max(120_001) }),
-  trimReason: z.enum(['endpoint-hold', 'endpoint-hold-return', 'explicit-stop']),
+  trimReason: z.enum(['endpoint-hold', 'endpoint-hold-return', 'explicit-stop', 'duration-limit']),
 }).superRefine((value, ctx) => {
   if ([...value.savePosition.leftM, ...value.savePosition.rightM].some(v => Math.abs(v) > 10))
     ctx.addIssue({ code: 'custom', message: 'Save position must lie within 10 m of the workspace origin' });
@@ -49,7 +49,8 @@ export const TakeAuthoringMetadataSchema = z.strictObject({
 export const AuthoredCaptureSchema = z.strictObject({
   schemaVersion: z.literal(1), recording: RecordingSchema, authoring: TakeAuthoringMetadataSchema,
 }).superRefine((value, ctx) => {
-  if (value.recording.durationMs >= value.authoring.trim.endMsExclusive - value.authoring.trim.startMs)
+  const retainedMs = value.authoring.trim.endMsExclusive - value.authoring.trim.startMs;
+  if (value.recording.durationMs > retainedMs || value.recording.frames.some(frame => frame.tMs >= retainedMs))
     ctx.addIssue({ code: 'custom', message: 'Motion must fit inside the retained half-open interval' });
 });
 export type TakeAuthoringMetadata = z.infer<typeof TakeAuthoringMetadataSchema>;

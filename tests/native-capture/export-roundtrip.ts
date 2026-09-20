@@ -56,5 +56,19 @@ try {
   const restarted = new TutorialRepository(join(dir, 'store')); await restarted.recover();
   assert.deepEqual(await restarted.tutorial(id), ready.json());
   assert.equal((await restarted.recording(recording.id)).sha256, sha256);
+  const narratedDir = join(dir, 'narrated');
+  execFileSync(process.env.DOTNET ?? 'dotnet', ['run', '--project', 'tests/native-narration/Narration.csproj', '--', narratedDir], { stdio: 'inherit' });
+  const narrated = RecordingSchema.parse(JSON.parse(await readFile(join(narratedDir, 'recording.json'), 'utf8')));
+  const wav = await readFile(join(narratedDir, 'narration.wav'));
+  const { frames: narratedFrames, ...narratedMetadata } = narrated;
+  const audioCreated = await app.inject({ method: 'POST', url: '/api/recordings', headers, payload: { metadata: narratedMetadata } });
+  assert.equal(audioCreated.statusCode, 200, audioCreated.body); narrated.id = audioCreated.json().id;
+  const audioUploaded = await app.inject({ method: 'PUT', url: `/api/recordings/${narrated.id}/narration`, headers: { ...headers, 'content-type': 'audio/wav' }, payload: wav });
+  assert.equal(audioUploaded.statusCode, 200, audioUploaded.body);
+  const audioMotion = await app.inject({ method: 'PUT', url: `/api/recordings/${narrated.id}/motion/0`, headers, payload: { frames: narratedFrames, sha256: digest(JSON.stringify(narratedFrames)) } });
+  assert.equal(audioMotion.statusCode, 200, audioMotion.body);
+  const audioFinal = await app.inject({ method: 'POST', url: `/api/recordings/${narrated.id}/finalize`, headers, payload: { chunkCount: 1, sha256: digest(JSON.stringify(narrated)) } });
+  assert.equal(audioFinal.statusCode, 200, audioFinal.body); assert.deepEqual(await restarted.narration(narrated.id), wav);
+  console.log('PASS: C# generated WAV + motion metadata → authenticated narration upload → finalization → byte-identical reload. Synthetic PCM only.');
   console.log('PASS: synthetic native C# takes → authenticated byte upload → 3-step draft → explicit review → ready tutorial → repository restart. No narration, model, headset or learner evidence.');
 } finally { await app.close(); await rm(dir, { recursive: true, force: true }); }

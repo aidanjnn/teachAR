@@ -69,8 +69,10 @@ namespace Trail.Contracts
         }
         public static void Validate(AuthoredCapture value)
         {
-            Require(value.Recording.DurationMs < value.Authoring.Trim.EndMsExclusive - value.Authoring.Trim.StartMs,
+            Require(value.Recording.DurationMs <= value.Authoring.Trim.EndMsExclusive - value.Authoring.Trim.StartMs,
                 "Motion must fit inside the retained half-open interval");
+            foreach (var frame in value.Recording.Frames)
+                Require(frame.TMs < value.Authoring.Trim.EndMsExclusive - value.Authoring.Trim.StartMs, "Motion frame reaches excluded trim boundary");
         }
         public static void ValidateTutorialRecording(Tutorial tutorial, Recording recording, string recordingHash)
         {

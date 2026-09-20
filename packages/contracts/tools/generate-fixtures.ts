@@ -130,4 +130,6 @@ bad('TakeAuthoringMetadata','take-authoring','empty take trim',['trim','startMs'
 bad('TakeAuthoringMetadata','take-authoring','unsupported authoring version',['schemaVersion'],2);
 bad('TakeAuthoringMetadata','take-authoring','negative take index',['takeIndex'],-1);
 bad('AuthoredCapture','authored-capture','motion reaches excluded trim boundary',['authoring','trim','endMsExclusive'],100);
+cases.push({name:'duration boundary may exceed final admitted frame',contract:'AuthoredCapture',file:'authored-capture.json',valid:true,patches:[{path:['authoring','trim','endMsExclusive'],value:100},{path:['recording','frames',2,'tMs'],value:99}]});
+cases.push({name:'duration limit authoring reason',contract:'TakeAuthoringMetadata',file:'take-authoring.json',valid:true,patches:[{path:['trimReason'],value:'duration-limit'}]});
 save('corpus',{cases});

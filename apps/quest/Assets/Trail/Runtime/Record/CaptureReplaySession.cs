@@ -9,6 +9,11 @@ namespace Trail.Runtime.Record
     public sealed class CaptureReplaySession : MonoBehaviour
     {
         public HandObservationSource Source;
+        public INarrationCapture Narration { get; set; }
+        public byte[] LastNarration { get; private set; }
+        public byte[] ExportedNarration { get; private set; }
+        private bool narrationActive;
+        private readonly System.Collections.Generic.Dictionary<string, byte[]> takeNarrations = new System.Collections.Generic.Dictionary<string, byte[]>();
         public Func<double> Clock = () => MotionClock.NowMs;
         public float WidthM = .5f;
         public float DepthM = .35f;
@@ -34,6 +39,7 @@ namespace Trail.Runtime.Record
         public event Action<CalibrationRegistration, int> CalibrationChanged;
         public event Action<string, int> Invalidated;
         public event Action<Recording> RecordingCompleted;
+        public event Action<RecordingTransition, ReferenceObservation> AuthoringReduced;
         private readonly StableMarkSampler markSampler = new StableMarkSampler();
         private readonly NVector3[] marks = new NVector3[4];
         private int markIndex;
@@ -152,7 +158,7 @@ namespace Trail.Runtime.Record
                 else ReplayFrame = replay.Sample(elapsed);
             }
         }
-        public void RestoreAuthoring(AuthoredCapture[] takes, TakeAuthoringMetadata latest)
+        public void RestoreAuthoring(AuthoredCapture[] takes, TakeAuthoringMetadata latest, byte[][] narration = null)
         {
             if (IsRecording || takes == null || takes.Length == 0 || latest == null)
                 throw new InvalidOperationException("No saved tutorial to restore, or capture is active.");
@@ -161,8 +167,14 @@ namespace Trail.Runtime.Record
                 new SaveZone(latest.SavePosition.LeftM, latest.SavePosition.RightM), takes.Length, latest.TakeIndex);
             var first = takes[0].Recording;
             var restored = new TakeLedger(first.Workspace, first.Source);
-            foreach (var take in takes)
+            for (var index = 0; index < takes.Length; index++)
             {
+                var take = takes[index];
+                if (take.Recording.Audio != null)
+                {
+                    if (narration == null || narration.Length != takes.Length) throw new ArgumentException("Saved narration is unavailable.");
+                    NarrationPcm.Validate(narration[index], take.Recording.Audio);
+                }
                 if (take.Authoring.TutorialId != latest.TutorialId) throw new ArgumentException("Mixed tutorials cannot be restored.");
                 restored.Restore(take);
             }
@@ -171,11 +183,15 @@ namespace Trail.Runtime.Record
             LoadRecording(takes[latest.TakeIndex].Recording);
             ledger = restored; recordedWorkspace = first.Workspace; policy = new RecordingPolicy(first.Source);
             Authoring = restoredState;
+            for (var index = 0; index < takes.Length; index++)
+                if (takes[index].Recording.Audio != null) takeNarrations[takes[index].Recording.Id] = narration[index];
+            LastNarration = takes[latest.TakeIndex].Recording.Audio == null ? null : narration[latest.TakeIndex];
             LastAuthoringMetadata = latest; Status = Authoring.Notice;
         }
         public void NewTutorial()
         {
             Reduce(RecordingAction.NewTutorial);
+            Narration?.Discard(); narrationActive = false; takeNarrations.Clear(); LastNarration = null; ExportedNarration = null;
             ledger = null; LastRecording = null; LastAuthoringMetadata = null; completedMetadata = null; replay = null; StopReplay();
         }
         public void BeginSavePosition() => Reduce(RecordingAction.BeginSaveZone);
@@ -187,7 +203,14 @@ namespace Trail.Runtime.Record
         {
             if (IsRecording) throw new InvalidOperationException("Finish or discard the current take before sending for review.");
             if (ledger == null) throw new InvalidOperationException("No saved takes to export.");
-            return ledger.Export(Guid.NewGuid().ToString("N"));
+            var recordings = new System.Collections.Generic.List<Recording>();
+            var waves = new System.Collections.Generic.List<byte[]>();
+            foreach (var take in ledger.Takes)
+            {
+                recordings.Add(take.Recording); takeNarrations.TryGetValue(take.Recording.Id, out var wav); waves.Add(wav);
+            }
+            ExportedNarration = NarrationPcm.Join(recordings, waves);
+            return ledger.Export(Guid.NewGuid().ToString("N"), ExportedNarration == null ? null : NarrationPcm.Metadata(ExportedNarration));
         }
         public void ApproveTake() => Reduce(RecordingAction.ApproveTake);
         public void ReRecordTake(int index) => BeginTake(120000, index);
@@ -207,9 +230,15 @@ namespace Trail.Runtime.Record
                 (float)recordedWorkspace.WidthM != WidthM || (float)recordedWorkspace.DepthM != DepthM ||
                 recordedWorkspace.DominantHand != (UseLeftHand ? "left" : "right") || policy.Source != Source.SourceKind))
             { Status = "Start a new tutorial before changing its workspace or hand source."; return; }
+            if (Narration != null)
+            {
+                if (!Narration.Begin()) { Status = Narration.Status; return; }
+                narrationActive = true;
+            }
             maximumTakeMs = durationMs;
             Reduce(replaceIndex.HasValue ? RecordingAction.ReRecordTake : RecordingAction.StartTake, takeIndex: replaceIndex ?? -1);
             if (Authoring.Phase == RecordingPhase.Arming) { recordedWorkspace = MakeWorkspace(); StopReplay(); }
+            else { Narration?.Discard(); narrationActive = false; }
         }
         public void StopRecording() => Reduce(RecordingAction.StopFullTake);
         private void Reduce(RecordingAction action, ReferenceObservation observation = null, int takeIndex = -1)
@@ -221,9 +250,22 @@ namespace Trail.Runtime.Record
                 action == RecordingAction.NewTutorial ? Guid.NewGuid().ToString("N") : null, OriginRevision, takeIndex));
             try
             {
-                // Finalize/validate the buffer before publishing the reducer's committed state.
-                var take = ledger == null ? null : ledger.Apply(transition, observation, transition.Commit == null ? null : Guid.NewGuid().ToString("N"));
+                byte[] narrationBytes = null; AudioAsset narrationAsset = null;
+                if (narrationActive && observation != null && (transition.State.Phase == RecordingPhase.Recording || transition.Commit != null))
+                    Narration.Align(observation.TimestampMs, transition.Commit == null ? transition.State.TakeMs : (transition.AdmitFrameAtMs ?? Authoring.TakeMs));
+                if (narrationActive && transition.Commit != null)
+                {
+                    var start = transition.Commit.Trim?.StartMs ?? 0;
+                    narrationBytes = Narration.Finish(start, ledger.PreviewDuration(transition.Commit.Trim, transition.AdmitFrameAtMs));
+                    narrationAsset = NarrationPcm.Metadata(narrationBytes); narrationAsset.AudioStartOffsetMs = start;
+                    narrationActive = false;
+                }
+                // Audio is finalized before ledger publication, so an audio failure cannot replace a saved take.
+                var take = ledger == null ? null : ledger.Apply(transition, observation, transition.Commit == null ? null : Guid.NewGuid().ToString("N"), narrationAsset, "narration");
+                if ((transition.DiscardPendingTake && transition.State.Phase != RecordingPhase.Arming) || transition.ClearCommittedTakes)
+                { Narration?.Discard(); narrationActive = false; }
                 Authoring = transition.State;
+                AuthoringReduced?.Invoke(transition, observation);
                 if (action != RecordingAction.Sample && action != RecordingAction.Tick || transition.Effects.Count > 0)
                     Status = Authoring.Notice;
                 foreach (var effect in transition.Effects)
@@ -242,11 +284,16 @@ namespace Trail.Runtime.Record
                     if (effect.Kind == RecordingEffectKind.TakePaused) takeClockContinuous = false;
                 if (take != null)
                 {
+                    LastNarration = narrationBytes;
+                    if (narrationBytes != null) takeNarrations[take.Recording.Id] = narrationBytes;
+                    var retained = new System.Collections.Generic.HashSet<string>(); foreach (var saved in ledger.Takes) retained.Add(saved.Recording.Id);
+                    var stale = new System.Collections.Generic.List<string>(); foreach (var id in takeNarrations.Keys) if (!retained.Contains(id)) stale.Add(id);
+                    foreach (var id in stale) takeNarrations.Remove(id);
                     LastRecording = take.Recording; completedMetadata = captureMetadata; completedClockContinuous = takeClockContinuous;
                     LastAuthoringMetadata = new TakeAuthoringMetadata { SchemaVersion = 1, TutorialId = Authoring.TutorialId,
                         TakeIndex = Authoring.LastTakeIndex,
                         SavePosition = new TakeAuthoringMetadataSavePosition { LeftM = Authoring.SavePosition.LeftM, RightM = Authoring.SavePosition.RightM },
-                        Trim = new TakeAuthoringMetadataTrim { StartMs = take.Trim.StartMs, EndMsExclusive = take.Trim.EndMsExclusive },
+                        Trim = new TakeAuthoringMetadataTrim { StartMs = take.Trim?.StartMs ?? 0, EndMsExclusive = take.Trim?.EndMsExclusive ?? (take.Recording.DurationMs + 1) },
                         TrimReason = take.TrimReason };
                     replay = new MotionReplay(LastRecording);
                     RecordingCompleted?.Invoke(LastRecording);
@@ -260,6 +307,7 @@ namespace Trail.Runtime.Record
             catch (Exception error) when (error is InvalidOperationException || error is ContractException || error is ArgumentException)
             {
                 // A failed finalization must not invent a saved take or overwrite the previous one.
+                Narration?.Discard(); narrationActive = false;
                 ledger?.DiscardPending();
                 Authoring = RecordingDirector.Reduce(policy, Authoring,
                     new RecordingInput(RecordingAction.DiscardTake, Clock())).State;

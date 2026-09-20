@@ -5,6 +5,7 @@ import { CreateRecordingRequestSchema, MotionChunkSchema, FinalizeRecordingReque
 import type { PairingAuthority } from '../auth/pairing.js';
 import { TutorialRepository } from './repository.js';
 import { StoreError } from './files.js';
+import { MAX_WAV_BYTES } from './narration.js';
 const Id = z.strictObject({ id: z.uuid() });
 const ChunkId = Id.extend({ chunk: z.coerce.number().int().min(0).max(63) });
 
@@ -23,8 +24,10 @@ export async function registerStorageRoutes(app: FastifyInstance, repository: Tu
       const status = (error as { statusCode?: number }).statusCode ?? 500;
       void reply.code(status).send({ error: status < 500 ? (error as Error).message : 'Storage operation failed' });
     });
+    scope.addContentTypeParser('audio/wav', { parseAs: 'buffer' }, (_request, body, done) => done(null, body));
     const author = { onRequest: auth.require({ roles: ['author'] }) };
     const reader = { onRequest: auth.require({ roles: ['author', 'learner'] }) };
+    scope.post('/api/recordings/:id/reference-images/query', author, request => references.candidates(Id.parse(request.params).id));
     scope.post('/api/reference-images', { ...author, bodyLimit: 3 * 1024 * 1024 }, request => references.upload(request.body as never));
     scope.post('/api/reference-images/:id/query', author, request => references.image(Id.parse(request.params).id));
     scope.post('/api/tutorials/:id/references/query', author, async request => (await repository.bundle(Id.parse(request.params).id)).references);
@@ -34,6 +37,16 @@ export async function registerStorageRoutes(app: FastifyInstance, repository: Tu
       const { metadata } = CreateRecordingRequestSchema.parse(request.body);
       return repository.createRecording(metadata);
     });
+    scope.put('/api/recordings/:id/narration', { ...author, bodyLimit: MAX_WAV_BYTES }, request => {
+      if (!Buffer.isBuffer(request.body)) throw new StoreError(415, 'Send raw audio/wav');
+      return repository.uploadNarration(Id.parse(request.params).id, request.body);
+    });
+    scope.get('/api/recordings/:id/narration', author, async (request, reply) =>
+      reply.type('audio/wav').send(await repository.narration(Id.parse(request.params).id)));
+    scope.post('/api/recordings/:id/narration/query', author, async (request, reply) =>
+      reply.type('audio/wav').send(await repository.narration(Id.parse(request.params).id)));
+    scope.post('/api/tutorials/:id/narration/query', author, request =>
+      repository.files.read('tutorials', Id.parse(request.params).id, 'narration-review.json'));
     scope.put('/api/recordings/:id/bytes/:chunk', { ...author, bodyLimit: 3 * 1024 * 1024 }, async request => {
       const { id, chunk } = ChunkId.parse(request.params); const body = RecordingByteChunkSchema.parse(request.body);
       return repository.uploadBytes(id, chunk, Buffer.from(body.dataBase64, 'base64'), body.sha256);

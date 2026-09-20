@@ -260,3 +260,16 @@ explicit expert-control start/end markers for each take. Combined duration/frame
 limits are validated rather than truncating later actions. The authoring envelope
 is local metadata; the current server upload still receives portable motion, not
 this envelope. The native client still requires desktop step review and publication.
+
+### Native narration follow-through
+
+Native authored captures may now carry canonical mono48kHz PCM16 WAV bytes in
+private sibling files. The portable v1 audio metadata uses durable asset ID
+`narration`, `manual-markers`, zero start offset and actual sample duration. Native
+pause intervals and return trims are removed before serialization; joined WAV
+samples use the same offsets as concatenated motion. The server accepts only
+bounded canonical PCM16 WAV (16/24/48kHz), validates its duration against metadata,
+and prevents finalization with missing/corrupt narration. No v1 sync enum was widened.
+Authored trim intervals remain half-open for frames; recording duration may equal
+the trim end when its last admitted frame precedes that end. `duration-limit` is
+now a valid trim reason for the hard120s stop from PR #19.

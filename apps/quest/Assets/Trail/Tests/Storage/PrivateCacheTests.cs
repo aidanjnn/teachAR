@@ -32,7 +32,7 @@ namespace Trail.Tests.Storage
                 Assert.AreEqual(1, new PrivateTutorialCache(root).LoadAuthoredTakes(metadata.TutorialId).Length, "replacement revisions do not duplicate steps");
                 File.Delete(Path.Combine(root, "trail-cache", duplicate));
                 Assert.AreEqual(0, metadata.SavePosition.LeftM.X, "zero is a valid workspace position");
-                authored.Authoring.Trim.EndMsExclusive = 100;
+                authored.Authoring.Trim.EndMsExclusive = 99;
                 Assert.Throws<ContractException>(() => cache.SaveCapture(authored.Recording, authored.Authoring));
                 Assert.AreEqual(101, new PrivateTutorialCache(root).LoadLatestCapture(out metadata).DurationMs + 1);
                 File.WriteAllText(Path.Combine(root, "trail-cache", file), "{}");

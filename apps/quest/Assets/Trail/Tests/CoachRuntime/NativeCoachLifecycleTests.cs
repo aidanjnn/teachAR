@@ -114,11 +114,11 @@ namespace Trail.Tests.CoachRuntime
             Assert.IsTrue(coach.WaitingForInspection);
             Assert.IsFalse(microphone.Capturing); Assert.IsTrue(transport.Muted);
             coach.NotifyLearnerSpoke(); Assert.IsTrue(transport.Muted, "a transcript cannot bypass visual-result acceptance");
-            coach.ToggleListen(); Tick(); Assert.IsFalse(microphone.Capturing, "cannot feed another question into the pending visual result");
+            Assert.IsTrue(coach.ListeningRequested, "internal capture gate preserves the explicit Start intent");
             coach.AllowInspectionOutput();
             Assert.IsFalse(transport.Muted); Assert.IsFalse(microphone.Capturing);
             Assert.IsFalse(coach.WaitingForInspection);
-            coach.ToggleListen(); Tick(); Assert.IsTrue(microphone.Capturing);
+            Tick(); Assert.IsTrue(microphone.Capturing, "accepted findings restore the existing hands-free intent");
         }
         [TestCase(false)]
         [TestCase(true)]
@@ -131,9 +131,18 @@ namespace Trail.Tests.CoachRuntime
             bridge.Coach = coach; bridge.Inspection = inspection; bridge.Bind();
             typeof(NativeVoiceCoach).GetField("liveSessionId", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(coach, "fixture-live");
             typeof(SpokenSceneInspection).GetField("liveSession", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(bridge, "fixture-live");
+            typeof(SpokenSceneInspection).GetField("ownedSession", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(bridge, coach.Session);
             coach.Connection = null; // No HTTP endpoint in this injected lifecycle test.
             Invoke("OnTranscript", "coach", "checked snapshot");
-            if (supersedingQuestion) Invoke("OnTranscript", "learner", "What should I move now?");
+            if (supersedingQuestion)
+            {
+                bridge.Clock = () => now;
+                Invoke("OnTranscript", "learner", "What should I move now?");
+                Assert.IsTrue(transport.Muted, "first fragment silences stale snapshot audio immediately");
+                Assert.IsNotNull(coach.Session, "retain mic until the replacement utterance is collected");
+                now += 1;
+                typeof(SpokenSceneInspection).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(bridge, null);
+            }
             else inspection.Cancel();
             Assert.IsNull(coach.Session);
             Assert.IsFalse(transport.Open); Assert.IsFalse(microphone.Held);
@@ -154,6 +163,45 @@ namespace Trail.Tests.CoachRuntime
                 .Invoke(bridge, new object[] { new InspectionResult() });
             Assert.IsTrue(transport.Muted, "unsolicited/stale findings cannot open the output gate");
             inspection.Cancel();
+        }
+        [Test]
+        public void MuteDuringInspectionSurvivesAcceptedFindings()
+        {
+            Ready();
+            typeof(NativeVoiceCoach).GetField("liveSessionId", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(coach, "fixture-live");
+            var connection = coach.Connection; coach.Connection = null;
+            Assert.IsTrue(coach.BeginInspectionConversation()); coach.Connection = connection; Tick();
+            coach.Session.LiveReady(); Tick();
+            coach.ToggleListen(); // Explicit mute while the internal microphone gate is already shut.
+            Assert.IsFalse(coach.ListeningRequested);
+            coach.AllowInspectionOutput(); Tick();
+            Assert.IsFalse(microphone.Capturing);
+            Assert.IsFalse(coach.RecoverInspectionConversation(), "mute never starts another peer");
+        }
+        [Test]
+        public void RecoveryReplacesPeerOnceWithoutAdvancingGuideAndRespectsEnd()
+        {
+            Ready(); var previous = coach.Session; var guideState = guide.Session.State;
+            Assert.IsTrue(coach.RecoverInspectionConversation());
+            Assert.AreNotSame(previous, coach.Session); Tick();
+            Assert.AreEqual(2, transport.Offers);
+            Assert.IsFalse(coach.RecoverInspectionConversation(), "do not duplicate a pending recovery");
+            coach.Session.LiveReady(); Tick(); Assert.IsTrue(microphone.Capturing);
+            Assert.AreSame(guideState, guide.Session.State);
+            coach.EndConversation();
+            Assert.IsFalse(coach.RecoverInspectionConversation());
+            Assert.IsFalse(microphone.Held);
+        }
+        [Test]
+        public void FocusLossAndSupersedingTranscriptCannotReopenOldInspectionAudio()
+        {
+            Ready(); coach.SilenceInspectionOutput();
+            Invoke("OnTranscript", "learner", "check");
+            Invoke("OnTranscript", "learner", " again");
+            Assert.IsTrue(transport.Muted, "later fragments do not reopen the obsolete peer");
+            Invoke("OnApplicationFocus", false);
+            Assert.IsFalse(coach.RecoverInspectionConversation());
+            Assert.IsFalse(microphone.Held);
         }
         [Test]
         public void NegotiationTimeoutReleasesWithoutChangingLoadedGuide()

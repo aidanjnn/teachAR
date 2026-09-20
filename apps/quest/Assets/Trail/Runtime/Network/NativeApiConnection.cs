@@ -53,15 +53,26 @@ namespace Trail.Runtime.Network
             }, 8192));
         }
         /// <summary>Result status 0 means transport/unavailable; callbacks suppressed after lifecycle invalidation.</summary>
-        public void Request(string method, string path, string json, Action<long, string> completed)
+        public void Request(string method, string path, string json, Action<long, string> completed, int timeoutSeconds = 10)
         {
             if (completed == null) throw new ArgumentNullException(nameof(completed));
             if (!session.IsAvailable(Now)) { Disconnect(); SetState(ConnectionState.Expired); completed(0, ""); return; }
             if (method != "GET" && method != "POST" && method != "PUT" && method != "PATCH" && method != "DELETE") throw new ArgumentException("Unsupported method");
             policy.Endpoint(path); // Reject before starting a coroutine.
-            StartCoroutine(Send(method, path, json, true, completed, 16 * 1024 * 1024));
+            if (timeoutSeconds < 1 || timeoutSeconds > 90) throw new ArgumentOutOfRangeException(nameof(timeoutSeconds));
+            StartCoroutine(Send(method, path, json, true, completed, 16 * 1024 * 1024, timeoutSeconds));
         }
-        private IEnumerator Send(string method, string path, string json, bool authenticated, Action<long, string> completed, int maxResponse)
+        public void RequestBytes(string method, string path, byte[] bytes, string contentType, Action<long, string> completed)
+        {
+            if (completed == null) throw new ArgumentNullException(nameof(completed));
+            if (method != "PUT" || contentType != "audio/wav" || bytes == null || bytes.Length == 0 || bytes.Length > 12 * 1024 * 1024)
+                throw new ArgumentException("Expected a bounded WAV upload.");
+            if (!session.IsAvailable(Now)) { Disconnect(); SetState(ConnectionState.Expired); completed(0, ""); return; }
+            policy.Endpoint(path);
+            StartCoroutine(Send(method, path, null, true, completed, 8192, 60, bytes, contentType));
+        }
+        private IEnumerator Send(string method, string path, string json, bool authenticated, Action<long, string> completed, int maxResponse,
+            int timeoutSeconds = 10, byte[] raw = null, string contentType = null)
         {
             var revision = generation;
             if (active.Count >= 4 || (json != null && Encoding.UTF8.GetByteCount(json) > 16 * 1024 * 1024)) { completed(0, ""); yield break; }
@@ -69,10 +80,11 @@ namespace Trail.Runtime.Network
             {
                 var download = new BoundedDownload(maxResponse);
                 request.downloadHandler = download;
-                request.redirectLimit = 0; request.timeout = 10;
+                request.redirectLimit = 0; request.timeout = timeoutSeconds;
                 request.SetRequestHeader("Accept", "application/json");
                 if (authenticated) request.SetRequestHeader("Authorization", "Bearer " + session.Token);
-                if (json != null) { request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json)); request.SetRequestHeader("Content-Type", "application/json"); }
+                if (raw != null) { request.uploadHandler = new UploadHandlerRaw(raw); request.SetRequestHeader("Content-Type", contentType); }
+                else if (json != null) { request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json)); request.SetRequestHeader("Content-Type", "application/json"); }
                 active.Add(request);
                 try
                 {
