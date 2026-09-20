@@ -31,7 +31,7 @@ export function registerVoiceCommands(app: FastifyInstance, provider: AiProvider
     catch { return reply.code(503).send({ error: 'speech_unavailable' }); }
   });
   const status = () => ({ enabled: provider.name === 'openai', attempts, limit: LIMIT, remaining: LIMIT - attempts });
-  app.get('/api/voice/commands', guard, async (_request, reply) => reply.header('Cache-Control', 'no-store').send(status()));
+  app.post('/api/voice/commands/status', guard, async (_request, reply) => reply.header('Cache-Control', 'no-store').send(status()));
   app.post('/api/voice/commands', { ...guard, bodyLimit: MAX_BYTES }, async (request, reply) => {
     reply.header('Cache-Control', 'no-store');
     if (provider.name !== 'openai') return reply.code(503).send({ error: 'voice_unavailable', message: 'Voice commands need the configured transcription provider. Mock speech never controls the tutorial.' });

@@ -1249,3 +1249,28 @@ No claim of physical crease verification or automatic object-to-XR registration.
 - GitHub's full Check workflow passed on `f1860aa`. Automatic review then identified a verified P1 in #25's renderer: `enableHologram` hid the existing joints before the asynchronous replacement was ready, so capture/review could continue with invisible motion.
 - Added a regression that delays real GLB requests and reproduces the invisible hand before repair, then rejects both left/right assets. Preserve the measured joint/bone display during loading or failure, switch entirely to the skin once ready, keep fallback poses fresh and hide missing tracking. Existing learning pause on an asset failure remains; its message now identifies the joint-outline fallback. Updated the hand-rendering handoff and suite count.
 - Fresh checks after repair: `pnpm test:webxr` passed 99 Node cases, 53 Python cases and 15 synthetic browser workflows, including delayed/failed asset recovery and the existing loaded-skin/no-scaffolding assertions. All eight desktop Chromium workflows passed again. Reused the prior passing workspace/fixture evidence for unchanged TypeScript, build, dependency and fixture inputs; a new hosted Check runs on the repair commit. No new headset, live-provider or physical-transfer evidence.
+
+### 2026-09-20 — Voice validation and latest-main integration
+
+- Merged main `dfaf572` (PR #30), preserving the hand-asset fallback fix and its
+  regression. Paired-browser testing caught GET status lacking the Origin required
+  by cookie authentication; switched voice preflight to POST and added a cookie-role
+  regression. Added a bounded audio-playback wait so stalled output cannot keep the
+  command loop busy indefinitely; use the device's native audio sample rate.
+- `pnpm check` passed 372 tests across 34 files plus typechecks/builds. Fixture
+  validation and eight paired desktop workflows passed. Full WebXR suite passed
+  112 Node tests, 53 Python tests and 17 synthetic browser workflows. Focused voice
+  browser/Node/API regressions passed again after the final playback changes.
+- Live provider smoke: five text intents (previous, replay, save, negation/no action,
+  read instruction), synthetic-speech transcription and TTS succeeded. Connected
+  Quest Browser 152 inspection confirmed microphone/AudioWorklet availability and
+  no browser speechSynthesis. In a separate in-memory guide in that browser, synthetic
+  speech passed through real ASR/intent and changed index 1→0; generated MP3 decoded.
+  Playback completion was NOT observed: its audio clock stalled in remote testing,
+  including a top-page probe. Sound heard by a wearer and real microphone recognition
+  remain unverified. Probes were removed and audio stopped; existing tutorial/scene/
+  IndexedDB were not modified. No claim of full human headset acceptance.
+- Replaced only this task's old Python port4345 server with the paired Fastify API,
+  preserved the Quest localhost4345 origin and USB reverse, and paired that browser.
+  Private existing credentials are read by the server only. Users must exit AR and
+  reload before using new modules. See the handoff for fresh wearing-headset checks.

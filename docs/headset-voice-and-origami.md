@@ -146,3 +146,16 @@ Automated tests distinguish synthetic hand/audio and mocked providers from live 
 checks. Successful transcription/interpretation/TTS requests do not establish real
 Quest microphone recognition, audible playback, concurrency, or a successful crane.
 Record final device observations separately before claiming end-to-end human acceptance.
+
+### Observed during this delivery
+
+Software gates: 372 shared/API tests + typechecks/builds; fixtures; eight desktop
+workflows; 112 browser-module tests, 53 Python cases, 17 synthetic browser workflows.
+Focused voice tests were rerun after final playback changes. Live API examples above
+and synthetic audio transcription/TTS passed. On the connected Quest Browser 152,
+a separate in-memory guide received synthetic speech through real ASR/intent and
+navigated from step index 1 to 0. Reply audio decoded, but playback completion was
+not observed; the audio clock stalled during remote tests (including a top-page
+probe). This is an open worn-headset acceptance item, not a claim that audible replies
+are already verified. A bounded playback timeout retains text and unlocks commands.
+Existing recordings were not modified; probes were removed and streams/contexts stopped.

@@ -43,3 +43,7 @@ it('permits only one bounded speech reply per command ticket',async()=>{
  expect((await reply()).statusCode).toBe(200);expect((await reply()).statusCode).toBe(403);expect(spoken).toBe(1);
  }finally{await app.close();}
 });
+it('cookie-paired browsers use POST status with Origin before acquiring the mic',async()=>{
+ const origin='http://localhost:3401',auth=createPairingAuthority({allowedOrigins:[origin],allowUsbLoopback:true}),app=await appWith(provider,auth);
+ try{const h={host:'localhost:3401',origin};const pair=await app.inject({method:'POST',url:'/api/pair',headers:h,payload:{code:auth.issueCode('author',auth.sessionId,'browser').code,client:'browser'}});const cookie=String(pair.headers['set-cookie']).split(';')[0];const status=await app.inject({method:'POST',url:'/api/voice/commands/status',headers:{...h,cookie}});expect(status.statusCode).toBe(200);expect(status.json()).toMatchObject({enabled:true,remaining:120});}finally{await app.close();}
+});

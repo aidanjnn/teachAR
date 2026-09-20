@@ -23,13 +23,13 @@ export class VoiceCommands{
  async start(){
   this.stop();const generation=this.generation;this.state='connecting';this.message='Preparing voice controls…';
   try{
-   const response=await this.fetchImpl('/api/voice/commands',{credentials:'same-origin'});
+   const response=await this.fetchImpl('/api/voice/commands/status',{method:'POST',credentials:'same-origin'});
    if(!response.ok)throw Error(response.status===401||response.status===403?'Pair this browser in Voice setup first.':'Voice API unavailable. Run the paired Trail server.');
    const status=await response.json();if(!status.enabled)throw Error('Transcription provider is off. Configure server voice first.');if(!status.remaining)throw Error('Server voice allowance used. Buttons still work.');
    if(generation!==this.generation)return;
    const stream=await this.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1},video:false});
    if(generation!==this.generation){stream.getTracks().forEach(t=>t.stop());return;}
-   this.stream=stream;const context=new AudioContext({sampleRate:16000});this.context=context;await context.resume();if(generation!==this.generation)return;await context.audioWorklet.addModule('/command-audio-worklet.js');
+   this.stream=stream;const context=new AudioContext();this.context=context;await context.resume();if(generation!==this.generation)return;await context.audioWorklet.addModule('/command-audio-worklet.js');
    if(generation!==this.generation)return;
    const node=new AudioWorkletNode(this.context,'trail-command-audio');this.node=node;this.source=this.context.createMediaStreamSource(stream);this.source.connect(node);const silent=this.context.createGain();silent.gain.value=0;node.connect(silent).connect(this.context.destination);
    this.gate=new UtteranceGate(this.context.sampleRate);this.active=true;this.state='listening';this.message='Listening. Speak naturally: “save it now” or “go back please”.';this.attempts=0;this.startedAt=Date.now();this.muteFor(1200);
@@ -57,7 +57,7 @@ export class VoiceCommands{
    const command=result.action;
    if(command==='none'){this.message=String(result.response||'Listening…').slice(0,240);if(result.response)await this.reply(this.message,result.speechTicket);return;}
    if(!voiceIntentContext(this.guide).allowed.includes(command)){this.message='That action is not available here.';return;}
-   if(command==='stop'){await this.reply('Voice controls off.',result.speechTicket);if(generation===this.generation)this.stop('Voice controls off.');return;}
+   if(command==='stop'){this.active=false;this.state='off';this.stream?.getTracks().forEach(t=>t.stop());this.message='Voice controls off.';await this.reply('Voice controls off.',result.speechTicket);if(generation===this.generation)this.stop('Voice controls off.');return;}
    const outcome=applyVoiceCommand(this.guide,command);this.message=outcome.message;this.tell(outcome.message);this.guide.notify(outcome.ok?'open':'error',outcome.message);this.muteFor(900);await this.reply(outcome.message,result.speechTicket);
   }catch(e){if(generation===this.generation)this.message=e.name==='AbortError'?'Voice timed out. Try again.':e.message;}
   finally{clearTimeout(timeout);if(generation===this.generation){this.busy=false;this.state=this.active?'listening':'off';this.muteFor(700);}}
@@ -72,7 +72,12 @@ export class VoiceCommands{
    const decoded=await context.decodeAudioData(await response.arrayBuffer());
    if(generation!==this.generation||key!==voiceContext(this.guide)||!this.canListen())return;
    const node=context.createBufferSource();this.replyNode=node;node.buffer=decoded;node.connect(context.destination);
-   await new Promise(resolve=>{const watchdog=setInterval(()=>{if(generation!==this.generation||key!==voiceContext(this.guide)||!this.canListen())node.stop();},100);node.onended=()=>{clearInterval(watchdog);node.disconnect();if(this.replyNode===node)this.replyNode=null;resolve();};node.start();});
+   await new Promise(resolve=>{
+    let settled=false;const done=()=>{if(settled)return;settled=true;clearInterval(watchdog);clearTimeout(deadline);node.disconnect();if(this.replyNode===node)this.replyNode=null;resolve();};
+    const watchdog=setInterval(()=>{if(generation!==this.generation||key!==voiceContext(this.guide)||!this.canListen()){node.stop();done();}},100);
+    const deadline=setTimeout(()=>{node.stop();if(generation===this.generation)this.message=text+' · Audio interrupted; reply shown here.';done();},Math.min(20000,decoded.duration*1000+2500));
+    node.onended=done;node.start();
+   });
    this.muteFor(900);
   }catch{if(generation===this.generation)this.message=text+' · Audio unavailable; reply shown here.';}
  }
