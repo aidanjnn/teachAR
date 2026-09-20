@@ -230,11 +230,14 @@ class Handler(BaseHTTPRequestHandler):
                      "/narration.mjs":"narration.mjs","/narration-core.mjs":"narration-core.mjs","/camera-snapshot.mjs":"camera-snapshot.mjs","/tutorial-review.mjs":"tutorial-review.mjs","/tutorial":"tutorial.html","/tutorial-core.mjs":"tutorial-core.mjs","/tutorial-guide.mjs":"tutorial-guide.mjs","/tutorial-store.mjs":"tutorial-store.mjs",
                      "/hands":"hands.html","/hand-guide.mjs":"hand-guide.mjs","/motion-core.mjs":"motion-core.mjs",
                      "/ar":"ar.html","/ar.js":"ar.js","/ar-state.mjs":"ar-state.mjs","/ar.css":"ar.css",
+                     "/holographic-hand.mjs":"holographic-hand.mjs","/experience-entry.mjs":"experience-entry.mjs",
+                     "/assets/hands/left.glb":"assets/hands/left.glb","/assets/hands/right.glb":"assets/hands/right.glb",
+                     "/vendor/GLTFLoader.js":"vendor/GLTFLoader.js","/vendor/SkeletonUtils.js":"vendor/SkeletonUtils.js","/vendor/BufferGeometryUtils.js":"vendor/BufferGeometryUtils.js",
                      "/vendor/three.module.js":"vendor/three.module.js","/vendor/three.core.js":"vendor/three.core.js"}
             if path not in files:
                 return self.send(404,{"error":"Not found"})
             file = ROOT/"public"/files[path]
-            mime = "text/javascript" if file.suffix in (".js",".mjs") else "text/css" if file.suffix==".css" else "text/html"
+            mime = "model/gltf-binary" if file.suffix==".glb" else "text/javascript" if file.suffix in (".js",".mjs") else "text/css" if file.suffix==".css" else "text/html"
             self.send(200,file.read_bytes(),mime+"; charset=utf-8")
 
     def valid_host(self):

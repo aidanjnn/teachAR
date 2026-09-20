@@ -58,3 +58,17 @@ body.tutorial-page{background:var(--trail-ground);color:var(--trail-ink);font:40
 .tutorial-page [data-screen=create]>label{display:block;width:100%;margin:20px 0}
 .tutorial-page [data-screen=create]>label input:not([type=checkbox]),.tutorial-page [data-screen=create]>label textarea{width:100%;max-width:none;margin-top:8px}
 .tutorial-page [data-screen=create] .setup-choice{display:flex;align-items:center;gap:8px}.tutorial-page .setup-choice input{flex-shrink:0}
+
+.experience-launch{min-height:72vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:64px 20px;gap:18px}
+.tutorial-page .experience-launch h1{font-size:clamp(72px,12vw,144px);font-weight:500;letter-spacing:-.065em;margin:0}
+.experience-launch>p{max-width:480px;margin:0;color:var(--trail-muted)}
+.tutorial-page .experience-launch #enter{min-width:260px;min-height:64px;margin-top:18px;background:var(--trail-action);color:var(--trail-actionInk);border:0}
+.experience-launch #notice{font-size:14px;max-width:540px}
+.experience-launch .entry-note{font-size:14px;max-width:390px}
+.browser-tools{border-top:1px solid var(--trail-line);padding:24px 0}
+.browser-tools>summary{color:var(--trail-muted);font-size:15px;cursor:pointer}
+.browser-tools[open]>summary{margin-bottom:30px}
+
+html:has(.tutorial-page){background:var(--trail-ground)}
+.tutorial-page{min-height:100vh}
+.tutorial-page .experience-launch #enter{width:auto;max-width:100%;border-radius:999px;font-size:20px;font-weight:500;padding:18px 30px}

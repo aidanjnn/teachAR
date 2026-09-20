@@ -1,5 +1,7 @@
 # Connected browser UI/UX base
 
+**Presentation update:** [Immersive entry and continuous hand surfaces](web-immersive-entry.md) supersede this document’s procedural-hand description and browser-first entry instructions. Movement rules below remain in effect.
+
 This builds on the runnable browser tutor rather than replacing it with the design preview. No Unity assets or native code are required. Start `experiments/quest-browser/start.sh` using its README, then open `/tutorial`; use `launch-ar.sh tutorial` for the USB-connected Quest. Existing device-local tutorials remain on their original browser origin. Changing the port creates a different library.
 
 The follow loop is now extended by [watch / prepare / practise](web-practice-flow.md): previews and automatic movement-only transitions replace per-step result buttons.

@@ -3,12 +3,12 @@ const assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({headless:true,channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,args:['--enable-unsafe-swiftshader','--mute-audio']});try{
  const page=await browser.newPage({viewport:{width:1280,height:1000}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));await page.route('**/api/**',r=>r.fulfill({contentType:'application/json',body:'{}'}));
- await page.goto(`${process.env.TRAIL_TEST_ORIGIN}/tutorial`);
+ await page.goto(`${process.env.TRAIL_TEST_ORIGIN}/tutorial`);await page.locator('#browser-tools').evaluate(e=>e.open=true);
  await page.locator('#create-tutorial').waitFor();
  await page.locator('#device-settings').evaluate(e=>e.open=true);
  await page.locator('#appearance-toggle').click();assert.equal(await page.locator('html').getAttribute('data-theme'),'light');
  await page.locator('#event-sounds').click();assert.equal(await page.locator('#event-sounds').getAttribute('aria-pressed'),'false');
- await page.reload();await page.locator('#device-settings').evaluate(e=>e.open=true);
+ await page.reload();await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.locator('#device-settings').evaluate(e=>e.open=true);
  await page.waitForFunction(()=>document.documentElement.dataset.theme==='light');assert.equal(await page.locator('#event-sounds').getAttribute('aria-pressed'),'false');
  await page.locator('#appearance-toggle').click();
  await page.locator('#developer-tools').evaluate(e=>e.open=true);await page.locator('#load-synthetic').click();
