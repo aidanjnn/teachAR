@@ -302,6 +302,18 @@ describe('coach startup and output gating', () => {
 });
 
 describe('coach text path', () => {
+  it.each(['step', 'attempt'])('drops an offline fallback when the %s changes before the request fails', async change => {
+    let fail!: (error: Error) => void;
+    const coach = createCoach({ context, fetchImpl: () => new Promise((_, reject) => { fail = reject; }) });
+    const answered = vi.fn(); coach.onAnswer(answered);
+    const pending = coach.askText('Help');
+    if (change === 'step') coach.setStep('s2', 1);
+    else coach.setAttempt('attempt-2');
+    fail(new TypeError('offline'));
+    expect(await pending).toBeNull();
+    expect(answered).not.toHaveBeenCalled();
+    coach.dispose();
+  });
   it('returns the server answer for the current step and drops one that arrives after a step change', async () => {
     const gate = { release: null as (() => void) | null };
     const fetchImpl: typeof fetch = async (_input, init) => {

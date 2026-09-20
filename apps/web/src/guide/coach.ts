@@ -1,5 +1,5 @@
 import {
-  CoachAnswerSchema, CoachSessionResponseSchema, type CoachAnswer, type CoachContext, type CoachStep,
+  COACH_TEXT_DEADLINE_MS, CoachAnswerSchema, CoachSessionResponseSchema, fallbackCoachAnswer, type CoachAnswer, type CoachContext,
 } from '@trail/contracts';
 import { initialCoachState, reduceCoach, type CoachEffect, type CoachEvent, type CoachState } from './coach-state.js';
 import { createWebRtcLiveTransport, type LiveClientEvent, type LiveServerEvent, type LiveTransport } from './live-transport.js';
@@ -33,11 +33,6 @@ export interface CoachApi {
   onLiveError(handler: (error: LiveError) => void): () => void;
 }
 
-function stepOf(context: CoachContext): CoachStep {
-  const step = context.steps.find(item => item.id === context.currentStepId);
-  if (!step) throw new Error('Coach context has no current step');
-  return step;
-}
 function newId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -49,7 +44,7 @@ export function createCoach(options: CoachOptions): CoachApi {
   const transportFactory = options.transportFactory ?? createWebRtcLiveTransport;
   const listenTimeoutMs = options.listenTimeoutMs ?? 10_000;
   const liveStartTimeoutMs = options.liveStartTimeoutMs ?? 15_000;
-  const textDeadlineMs = options.textDeadlineMs ?? 5_000;
+  const textDeadlineMs = options.textDeadlineMs ?? COACH_TEXT_DEADLINE_MS;
   let context: CoachContext = { ...options.context };
   let state = initialCoachState({
     runId: context.runId, tutorialId: context.tutorialId, tutorialRevision: context.tutorialRevision,
@@ -174,14 +169,6 @@ export function createCoach(options: CoachOptions): CoachApi {
         break;
     }
   }
-  function localFallback(requestId: string): CoachAnswer {
-    const step = stepOf(context);
-    return CoachAnswerSchema.parse({
-      schemaVersion: 1, requestId, runId: context.runId, tutorialId: context.tutorialId, tutorialRevision: context.tutorialRevision,
-      stepId: context.currentStepId, stepRevision: context.stepRevision, attemptId: context.attemptId,
-      answer: `${step.title}. ${step.instruction}`.slice(0, 600), grounded: true, source: 'fallback', model: null,
-    });
-  }
 
   return {
     get state() { return state; },
@@ -241,17 +228,18 @@ export function createCoach(options: CoachOptions): CoachApi {
     ask() { dispatch({ type: 'listen-toggled' }); },
     async askText(question) {
       const requestId = newId();
+      const requestContext = context;
       dispatch({ type: 'text-asked', requestId });
       let answer: CoachAnswer;
       try {
         const response = await fetchImpl('/api/coach', {
           method: 'POST', headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(textDeadlineMs),
-          body: JSON.stringify({ schemaVersion: 1, requestId, context, question }),
+          body: JSON.stringify({ schemaVersion: 1, requestId, context: requestContext, question }),
         });
         if (!response.ok) throw new Error(`Coach refused (${response.status})`);
         answer = CoachAnswerSchema.parse(await response.json());
       } catch {
-        answer = localFallback(requestId);
+        answer = fallbackCoachAnswer({ requestId, context: requestContext });
       }
       const effects = dispatch({ type: 'answer-received', answer });
       return effects.some(effect => effect.type === 'emit-answer') ? answer : null;

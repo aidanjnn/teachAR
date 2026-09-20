@@ -12,4 +12,5 @@ over the SDK sideband (`ai/live-sessions.ts`): a session is only handed out once
 control channel is open, step updates carry a client generation and older ones are
 refused, every session ends on its own 30-minute timer, and a channel error drops
 the session so the browser falls back to text.
-Recording uploads, jobs, and tutorial storage remain planned.
+Recording uploads, jobs and tutorial routes are registered in `../storage/routes.ts`;
+see the [authoring and storage guide](../../../../docs/authoring-storage.md).

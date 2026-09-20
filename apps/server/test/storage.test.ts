@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -33,6 +33,20 @@ async function upload(s: Awaited<ReturnType<typeof setup>>) {
 }
 
 describe('durable authoring HTTP flow', () => {
+  it('rejects corrupted stored bytes through every download route', { timeout: 20000 }, async () => {
+    const s = await setup();
+    try {
+      const { id } = await upload(s);
+      const repo = new TutorialRepository(s.dir);
+      const { recording } = await repo.recording(id);
+      await writeFile(repo.files.path('recordings', id, 'recording.json'), JSON.stringify({ ...recording, source: 'recorded-fixture' }));
+      for (const suffix of ['', '/download', '/content', '/content/0']) {
+        const response = await s.app.inject({ url: `/api/recordings/${id}${suffix}`, headers: s.headers });
+        expect(response.statusCode).toBe(422);
+        expect(response.json()).toEqual({ error: 'Recording integrity check failed' });
+      }
+    } finally { await s.app.close(); }
+  });
   it('uploads, compiles, reviews, finalizes and reloads immutable steps across restart', { timeout: 20000 }, async () => {
     const s = await setup();
     try {

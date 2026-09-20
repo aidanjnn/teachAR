@@ -30,7 +30,7 @@ const env = {
   // This launcher owns the local vision process, so its URL must match its port.
   VISION_SERVICE_URL: `http://127.0.0.1:${port}`,
 };
-console.log('Starting desktop, main API and vision skeleton. Image interpretation is not implemented.');
+console.log('Starting desktop, main API and vision service. Live providers require explicit configuration.');
 // Use the existing CLI: its published library types conflict with strict optional types.
 // No -k: a failed vision process must not terminate the other development services.
 const detached = process.platform !== 'win32';

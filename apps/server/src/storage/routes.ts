@@ -56,18 +56,18 @@ export async function registerStorageRoutes(app: FastifyInstance, repository: Tu
     scope.get('/api/recordings/:id', reader, request => repository.recording(Id.parse(request.params).id));
     scope.post('/api/recordings/:id/query', reader, request => repository.recording(Id.parse(request.params).id));
     scope.get('/api/recordings/:id/download', reader, async request => {
-      const id = Id.parse(request.params).id; const { sha256 } = await repository.recording(id); const bytes = await repository.recordingContent(id);
+      const { bytes, sha256 } = await repository.recordingContent(Id.parse(request.params).id);
       return { sha256, bytes: bytes.length, chunkCount: Math.ceil(bytes.length / (1024 * 1024)) };
     });
     scope.get('/api/recordings/:id/content/:chunk', reader, async request => {
-      const { id, chunk } = ChunkId.parse(request.params); const bytes = await repository.recordingContent(id);
+      const { id, chunk } = ChunkId.parse(request.params); const { bytes } = await repository.recordingContent(id);
       const part = bytes.subarray(chunk * 1024 * 1024, (chunk + 1) * 1024 * 1024);
       if (!part.length) throw new StoreError(404, 'No such content chunk');
       return { dataBase64: part.toString('base64') };
     });
     scope.get('/api/recordings/:id/content', reader, async (request, reply) => {
-      const id = Id.parse(request.params).id; const { sha256 } = await repository.recording(id);
-      return reply.type('application/json').header('X-Content-SHA256', sha256).send(await repository.recordingContent(id));
+      const { bytes, sha256 } = await repository.recordingContent(Id.parse(request.params).id);
+      return reply.type('application/json').header('X-Content-SHA256', sha256).send(bytes);
     });
     scope.post('/api/tutorial-jobs', author, async (request, reply) => {
       const input = TutorialJobCreateSchema.parse(request.body);
