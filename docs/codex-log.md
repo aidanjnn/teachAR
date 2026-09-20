@@ -1151,3 +1151,12 @@ parent task and remains a separate gate.
   (`test-play-6c4882c6-a332-4868-b26d-87e0ff17f77a`). Focused export/storage tests
   also cover ready-only learner access and fresh-directory reload. No Quest is
   available; no actual visibility, camera timing, voice quality or learner claim.
+
+- Final checkpoint `3e11b8e`: browser8/8, C#contracts175, synthetic native
+  narration/export reload passed. Android release ARM64/IL2CPP succeeded at
+  `build-385a862a-a262-4c2b-b23d-ec5b9bcd0d2e`, 69,723,468bytes, SHA-256
+  `d1fcfafe8e994ff56888e1a7d30ea31b3b90440ac3c0b27bf8f89c9a3dbe501f`.
+  APK DEX contains `com.trail.audio.TrailVoiceCapture`; ARM64 WebRTC and required
+  microphone/audio/hand/camera permissions verified. Unity-only formatting changes
+  were inspected and restored. Local matched package: `artifacts/demo/3e11b8e`.
+  No hardware, provider or human acceptance was performed.

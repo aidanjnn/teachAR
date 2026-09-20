@@ -67,6 +67,27 @@ remain separate from Unity and headset evidence. These items remain unchecked:
 real expert capture/replay, audio trimming, device controls and novice acceptance
 have not been demonstrated by this implementation.
 
+### Narration, starting layouts and display follow-through
+
+The recording integration now captures and trims actual PCM16 WAV data against
+kept motion intervals, persists it privately and uploads before finalization.
+Compilation transcribes and labels actual segments; desktop review retains manual
+approval and explicit mock/fallback provenance. These paths have synthetic audio
+and native-to-server regression evidence, not device synchronization evidence.
+
+A separate opt-in first-action image can be reviewed with arrangement notes and
+reloaded by learners from a ready tutorial. Endpoint and layout approvals track
+revision changes. Export validates the selected ready tutorial and its assets
+without exporting pairings or credentials. Desktop setup is currently the layout
+viewer; a headset-only review/setup image panel remains presentation scope.
+
+World-space shell, guidance and voice TextMesh labels now use a stereo-aware URP
+font material; PlayMode checks verify owned material/atlas lifecycle. Physical
+readability, both-hand appearance/performance and an authored hand asset/rig still
+require work and device evaluation. The procedural ghost remains the disclosed
+joint-skeleton presentation. MRUK room-assisted placement remains an unverified
+optional aid to mandatory independent mat calibration, never a replacement.
+
 ## Where the porting references live
 
 All paths below are under [experiments/quest-browser](../experiments/quest-browser/README.md).
@@ -95,7 +116,7 @@ validation results are recorded in [the activity log](codex-log.md).
 - General object detection, depth localization, object-relative retargeting, grasps and cloth deformation. The [offline detector spike](../experiments/model-spike/README.md) showed false positives and seconds-long CPU passes; it is not a live guidance dependency.
 - Reliable evaluation of occluded hands. Use visible entry/exit checkpoints, pause grading during loss, and do not grade inferred joints as observations.
 - Task success from motion alone, or portability to all shirts/assemblies. Same-size objects and a restored starting layout remain the bounded transfer claim.
-- Native microphone/WebRTC coaching and grounding integration, including open PR 14. Browser voice implementation is not native voice acceptance.
+- Native microphone/WebRTC coaching and camera-to-speech are integrated on `codex/recording-integration`; actual headset duplex speech, echo rejection, interruption and camera grounding still need acceptance. See [native audio](native-voice-audio.md).
 - Multi-device tutorial synchronization from the browser prototype. Private browser recordings are intentionally not included in this PR; export separately only when their owner intends to share them.
 
 ## Merge and implementation protocol

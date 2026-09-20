@@ -4,6 +4,26 @@ Base: `bdfb757`, isolated worktree branch `codex/recording-integration`.
 This is an implementation checkpoint, **not a usable-Quest or learner acceptance signoff**.
 PR #19 through `de74ae7` is merged into this branch; physical rendering remains unverified.
 
+## Latest software checkpoint
+
+`3e11b8e` is pushed to `codex/recording-integration`, including the merged PR #19
+follow-up. Automated evidence: 389 tests/33 files, strict typechecks and production
+builds, 175 C# contract checks, synthetic native narration/export round trips,
+72/72 Unity EditMode, 26/26 PlayMode and 8/8 Chromium workflows. Android SDK
+compilation plus 30 synthetic audio lifecycle checks cover the new capture bridge.
+
+Release APK: `artifacts/quest/build-385a862a-a262-4c2b-b23d-ec5b9bcd0d2e/Trail.apk`;
+69,723,468 bytes; Unity 6000.3.24f1, ARM64/IL2CPP.
+SHA-256: `d1fcfafe8e994ff56888e1a7d30ea31b3b90440ac3c0b27bf8f89c9a3dbe501f`.
+The APK contains the Java audio bridge and ARM64 WebRTC library. A matching local
+APK/source/runbook package is in `artifacts/demo/3e11b8e`; no real tutorial or
+backup video is represented as available. Hosted CI does not trigger on this
+non-main branch push; the checks above ran locally.
+
+Headset acceptance remains open. The procedural hand presentation is still a
+fallback; an authored hand asset/rig, headset layout-view presentation and MRUK
+feasibility evaluation remain follow-up scope alongside the physical trials.
+
 ## Published checkpoint
 
 `528f1b0` is pushed to `codex/recording-integration`. The following evidence first
