@@ -1361,3 +1361,35 @@ inspected at 1200 px and 375 px. Reused previous passing shared/API build, fixtu
 desktop evidence because those inputs are unchanged. No new paid API calls. Actual
 worn-Quest rotation feel and grip targeting remain to be tested; exit AR and reload
 the existing localhost4345 origin to load the new modules.
+
+## 2026-09-20 — Reported headset voice and workflow repairs
+
+Fixed the browser-native fetch receiver in VoiceCommands: assigning bare fetch to an
+instance and invoking it as a method caused Illegal invocation before status/commands
+reached the server. Added a native-browser-fetch regression rather than relying only
+on injected function mocks. Enabling voice returns to the task; pause/resume/navigation
+also work in review. Narration no longer closes the listening gate; the microphone uses
+echo cancellation, processing pauses preview/progression, and replies remain excluded.
+Acoustic echo and live mic acceptance still require the worn headset.
+
+Library selection opens tutorial detail with Edit/Follow. AR entry remains Home; Follow
+leads to setup then placement. Edit opens review, requesting placement only for spatial
+preview or another recording. Manual capture inherits selected capture hands; legacy
+missing choices open explicit Left/Right/Both controls. Review's main actions are fewer;
+advanced editing remains under More options. Button fill is neutral until targeted or
+selected, including light mode.
+
+Finish now persists the original tutorial, automatically prepares concise narration and
+speech sequentially, then saves generated assets. Existing voices are not regenerated.
+Ambiguous wording keeps its original; provider/auth/allowance failure stops further
+requests and reports partial completion. No per-step approval is fabricated: generated
+wording is not expert-reviewed, while explicit movement acceptance remains. Cancellation
+and late result guards preserve the saved original. Manual editing remains available.
+
+Validation: pnpm check passed 378 shared/API cases with typecheck/build; fixtures and
+eight desktop workflows passed. WebXR passed 117 Node cases, 53 Python cases and 22
+synthetic browser workflows. Focused repair/review/UI tests rerun for final edits. Actual
+AR review/detail canvases and desktop detail at 1100 px/375 px inspected. No paid inference
+or personal recording was used. Restarted only task-owned port4345 (PID21379); health is
+good. Quest disconnected during update; USB forwarding and author pairing could not be
+restored, and new physical microphone/echo tests remain pending reconnect.

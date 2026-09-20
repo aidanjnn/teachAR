@@ -35,3 +35,7 @@ it('caps authoring including failures and bounds input',async()=>{
 it('prompt removes filler and control chatter while preserving conditions and missing context',()=>{
  const prompt=buildLabelPrompt({schemaVersion:1,segments:[{id:'instruction',startMs:0,endMs:1000}],transcript});expect(prompt.instructions).toContain('Remove fillers');expect(prompt.instructions).toContain('negation');expect(prompt.instructions).toContain('Do not guess');
 });
+it('allows explicitly automatic finish speech without pretending wording was reviewed',async()=>{
+ const speak=vi.fn(provider.speak!),app=await appWith({...provider,speak});
+ try{const response=await app.inject({method:'POST',url:'/api/voice/instruction-audio',payload:{text:'Bring the edges together.',automatic:true}});expect(response.statusCode).toBe(200);expect(speak).toHaveBeenCalledTimes(1);}finally{await app.close();}
+});

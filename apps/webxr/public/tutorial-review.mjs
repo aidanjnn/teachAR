@@ -31,7 +31,7 @@ export function mountReview(guide,{isActive,tell}){
   const status=message=>{$('review-status').textContent=message;};
   const voice=new NarrationPlayback({onError:status});
   let instructionBusy=false;
-  const editable=()=>{if(isActive())throw Error('Exit AR before editing, importing or replacing a tutorial.');};
+  const editable=()=>{if(['saving-tutorial','polishing-tutorial'].includes(guide.mode))throw Error('Finishing your tutorial. Please wait.');if(isActive())throw Error('Exit AR before editing, importing or replacing a tutorial.');};
   const report=async fn=>{try{editable();await fn();}catch(e){status(e.message);tell(e.message);}};
   async function replace(data){await guide.replaceTutorial(data);sourceStep=null;renderList();}
   function selectedStep(){return guide.tutorial.steps[selected];}
@@ -91,7 +91,7 @@ export function mountReview(guide,{isActive,tell}){
     await replace(next);status('Starting layout and title saved. Tutorial is a draft until finished again.');
   });
   $('finish-tutorial').onclick=()=>void report(async()=>{
-    await replace(finishTutorial(guide.tutorial));status('Tutorial finished and saved. You can export it or start learning in AR.');
+    await guide.finishAuthoring();sourceStep=null;renderList();status(guide.problem||`Tutorial saved. ${guide.autoPolishSummary||'Ready to follow in AR.'}`);
   });
   $('import-tutorial').onchange=event=>void report(async()=>{
     const file=event.target.files[0];event.target.value='';if(!file)return;

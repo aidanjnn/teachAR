@@ -4,7 +4,7 @@ import {newTutorial,validateTutorial} from './tutorial-core.mjs';
 import {listTutorials,findTutorial} from './tutorial-store.mjs';
 export function mountTutorialShell(guide,{isActive,tell}){
  const $=id=>document.getElementById(id);let route='home',generation=0;
- const locked=()=>{if(isActive())throw Error('Exit AR before changing tutorials.');};
+ const locked=()=>{if(['saving-tutorial','polishing-tutorial'].includes(guide.mode))throw Error('Finishing your tutorial. Please wait.');if(isActive())throw Error('Exit AR before changing tutorials.');};
  const run=fn=>{Promise.resolve().then(()=>{locked();return fn();}).catch(e=>tell(e.message));};
  function show(next){
   route=next;document.querySelectorAll('[data-screen]').forEach(e=>e.hidden=e.dataset.screen!==next);
@@ -22,14 +22,16 @@ export function mountTutorialShell(guide,{isActive,tell}){
     const row=document.createElement('div');row.className='library-item';row.setAttribute('role','listitem');
     const info=document.createElement('div'),title=document.createElement('strong'),meta=document.createElement('p'),button=document.createElement('button');
     title.textContent=t.title;meta.textContent=`${t.steps.length} recordings · ${t.completion?'Ready to follow':'Draft — needs review'}`;
-    button.textContent=t.completion?'Follow tutorial':'Review draft';button.dataset.tutorialEdit='';button.disabled=isActive();
-    button.onclick=()=>run(async()=>{await guide.replaceTutorial(validateTutorial(await findTutorial(t.id)));if(t.completion){show('home');guide.nextEntry='follow';$('launch-title').textContent=`Follow: ${t.title}`;$('launch-help').textContent='Enter AR to check the starting setup and place the tutorial in your workspace.';}else show('review');});
+    button.textContent='Open tutorial';button.dataset.tutorialEdit='';button.disabled=isActive();
+    button.onclick=()=>run(async()=>{await guide.replaceTutorial(validateTutorial(await findTutorial(t.id)));show('tutorial-detail');$('selected-tutorial-title').textContent=guide.tutorial.title;$('selected-tutorial-summary').textContent=`${guide.tutorial.steps.length} steps · ${guide.tutorial.completion?'Ready to follow':'Draft — needs review'}`;});
     info.append(title,meta);row.append(info,button);host.append(row);
    }
    $('library-status').textContent=host.children.length?'':'No recordings yet. Create a tutorial to start.';
   }catch(e){$('library-status').textContent=e.message;}
  }
  document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>run(()=>show(b.dataset.route)));
+ $('selected-edit').onclick=()=>run(()=>show('review'));
+ $('selected-follow').onclick=()=>run(()=>{show('home');$('launch-title').textContent='Follow inside AR';$('launch-help').textContent='Enter AR, open Library and choose your tutorial, then Follow to place its workspace.';$('enter').scrollIntoView({block:'center'});});
  $('create-tutorial').onclick=()=>run(async()=>{await guide.replaceTutorial(newTutorial(`Tutorial ${new Date().toLocaleDateString()}`));$('tutorial-instructions').value='';show('create');});
  $('ready-create').onclick=()=>run(async()=>{
   const next=structuredClone(guide.tutorial);next.title=$('tutorial-title').value.trim()||'Untitled tutorial';

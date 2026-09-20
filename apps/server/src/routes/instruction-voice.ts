@@ -31,8 +31,8 @@ export function registerInstructionVoice(app: FastifyInstance, provider: AiProvi
     });
   });
   app.post('/api/voice/instruction-audio', { ...guard, bodyLimit: 2048 }, async (request, reply) => {
-    const parsed = z.object({ text: z.string().trim().min(1).max(240), approved: z.literal(true) }).strict().safeParse(request.body);
-    if (!parsed.success) return reply.code(400).send({ message: 'Review and approve the instruction before generating its voice.' });
+    const parsed = z.union([z.object({ text: z.string().trim().min(1).max(240), approved: z.literal(true) }).strict(), z.object({ text: z.string().trim().min(1).max(240), automatic: z.literal(true) }).strict()]).safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ message: 'Choose reviewed speech or finish-tutorial automatic speech.' });
     return run(reply, async () => {
       if (!provider.speak) throw Error('Speech unavailable');
       const bytes = await provider.speak(parsed.data.text, AbortSignal.timeout(20000));

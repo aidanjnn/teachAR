@@ -74,7 +74,7 @@ const assert=require('node:assert/strict');
   const saved=a.tutorial.steps[0];a.action('hand');t=a.pending.until;atick();a.action('discard-confirm');a.action('discard-take');
   if(a.tutorial.steps[0]!==saved)fail('New replacement discard erased original');
   a.action('hand');for(let i=0;i<3;i++)a.action('guide-hands');a.action('primary');await a.saveTask;if(a.mode!=='saved'||!a.tutorial.completion)fail('Approve did not finish and save: '+a.problem);
-  a.action('start-follow');if(a.mode!=='learn'||a.followEngine.started)fail('Created tutorial did not start with waiting ghost');
+  a.action('start-follow');if(a.mode!=='setup-follow'||a.workspace)fail('Follow skipped intentional placement');a.action('setup-ready');amark([0,1,0]);amark([.5,1,0]);a.action('placement-ready');if(a.mode!=='learn'||a.followEngine.started)fail('Created tutorial did not start with waiting ghost');
   a.endSession();
   const blank=syntheticTutorial();blank.title='Other saved recording';await saveTutorial(blank,draftVersion(await loadTutorial()));
   const library=await listTutorials();if(!library.some(t=>t.id===demo.id)||!library.some(t=>t.id===blank.id))fail('Creating a new project lost an existing one');
@@ -82,7 +82,7 @@ const assert=require('node:assert/strict');
  });
  require('node:fs').writeFileSync('/tmp/trail-new-hud.png',Buffer.from((await page.evaluate(()=>window.trailNewHud)).split(',')[1],'base64'));
  await page.reload();await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.locator('[data-route=library]').first().click();await page.waitForFunction(()=>document.querySelectorAll('.library-item').length===2);
- await page.screenshot({path:'/tmp/trail-library-new.png',fullPage:true});await page.locator('.library-item').filter({hasText:'Recorded movement test'}).getByRole('button',{name:'Follow tutorial'}).click();await page.waitForFunction(()=>document.querySelector('#launch-title').textContent.startsWith('Follow:'));
+ await page.screenshot({path:'/tmp/trail-library-new.png',fullPage:true});await page.locator('.library-item').filter({hasText:'Recorded movement test'}).getByRole('button',{name:'Open tutorial'}).click();await page.locator('#selected-follow').click();await page.waitForFunction(()=>document.querySelector('#launch-title').textContent==='Follow inside AR');
  await page.locator('[data-route=home]').click();await page.screenshot({path:'/tmp/trail-home-new.png',fullPage:true});
  await page.setViewportSize({width:375,height:950});await page.screenshot({path:'/tmp/trail-home-mobile.png',fullPage:true});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  // Upgrade the actual old IndexedDB shape in a fresh browser profile.

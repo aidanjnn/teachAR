@@ -82,3 +82,8 @@ html:has(.tutorial-page){background:var(--trail-ground)}
 .tutorial-page #step-title,.tutorial-page #step-instruction{display:block;box-sizing:border-box;width:100%;margin-top:8px;background:var(--trail-ground);color:var(--trail-ink);border:1px solid var(--trail-line);border-radius:12px;font:inherit;padding:12px 14px}
 .tutorial-page #generate-instruction-voice{background:var(--trail-action);color:var(--trail-actionInk)}
 .tutorial-page #instruction-voice-status{overflow-wrap:anywhere}
+
+/* Filled ink means an active choice, never just the first action on a screen. */
+.tutorial-page .primary,.tutorial-page #enter,.tutorial-page #ready-create,.tutorial-page #finish-tutorial,.tutorial-page .experience-launch #enter,.tutorial-page #generate-instruction-voice{background:var(--trail-raised);color:var(--trail-ink);border:1px solid var(--trail-line)}
+.tutorial-page button:active:not(:disabled),.tutorial-page button[aria-pressed=true]{background:var(--trail-ink);color:var(--trail-ground)}
+.library-actions{display:flex;gap:12px;flex-wrap:wrap}

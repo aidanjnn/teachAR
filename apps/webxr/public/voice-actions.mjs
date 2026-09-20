@@ -2,17 +2,18 @@
 export function voiceIntentContext(g){
  const allowed=['help','stop','home'];
  if(g.mode==='learn')allowed.push('pause','resume','replay','instruction',...(g.player.index>0?['previous']:[]),...(g.player.index<g.tutorial.steps.length-1?['next']:[]));
+ if(g.mode==='review-step')allowed.push('pause','resume','replay',...(g.player.index>0?['previous']:[]),...(g.player.index<g.tutorial.steps.length-1?['next']:[]));
  if(g.mode==='author')allowed.push('record','finish');
  if(['capture','capture-paused'].includes(g.mode))allowed.push('save',g.mode==='capture'?'pause':'resume',...(g.fluidCapture?['finish']:[]));
  if(g.mode==='confirm-home')allowed.push('save','resume');
  const step=g.player?.step;
- return {mode:g.mode,allowed:g.pending||['saving','saving-tutorial'].includes(g.mode)?['stop']:allowed,step:step?{title:String(step.title||'').slice(0,100),instruction:String(step.instruction||'').slice(0,1000)}:null};
+ return {mode:g.mode,allowed:g.pending||['saving','saving-tutorial','polishing-tutorial'].includes(g.mode)?['stop']:allowed,step:step?{title:String(step.title||'').slice(0,100),instruction:String(step.instruction||'').slice(0,1000)}:null};
 }
 export function voiceContext(g){return [g.takeGeneration,g.tutorial?.id,g.tutorial?.revision,g.mode,g.player?.index,g.epoch,g.gatePaused].join('|');}
 export function applyVoiceCommand(g,command){
  if(!g.activeSession)return {ok:false,message:'Enter AR first.'};
- if(g.pending||['saving','saving-tutorial'].includes(g.mode))return {ok:false,message:'Wait for the countdown or save to finish.'};
- const follow=g.mode==='learn',capture=['capture','capture-paused'].includes(g.mode);
+ if(g.pending||['saving','saving-tutorial','polishing-tutorial'].includes(g.mode))return {ok:false,message:'Wait for the countdown or save to finish.'};
+ const review=g.mode==='review-step',follow=g.mode==='learn',capture=['capture','capture-paused'].includes(g.mode);
  const done=message=>{g.log('voice_command',{command,kind:'user-requested',physical_verified:false});return {ok:true,message};};
  if(command==='help'){g.action('voice-open');g.action('voice-help');return done('Here are some things you can say.');}
  if(command==='home'){g.action('home');return done(g.mode==='confirm-home'?'Would you like to save this take before going Home?':'Home');}
@@ -20,6 +21,10 @@ export function applyVoiceCommand(g,command){
  if(g.mode==='confirm-home'&&command==='resume'){g.action('keep-take');return done('Your take is paused. Say resume when ready.');}
  if(command==='instruction'&&follow)return done(g.player.step.instruction);
  if(command==='record'&&g.mode==='author'){g.action('primary');return done('Recording starts in three seconds.');}
+ if(review&&['pause','resume','replay','next','previous'].includes(command)){
+  if(command==='pause'||command==='resume'){g.player.paused=command==='pause';g.player.audioPaused=command==='pause';if(command==='pause')g.audioPlayer?.stop();return done(command==='pause'?'Preview paused.':'Preview resumed.');}
+  const index=g.player.index+(command==='next'?1:command==='previous'?-1:0);if(index<0||index>=g.tutorial.steps.length)return {ok:false,message:'There is no step in that direction.'};g.audioPlayer?.stop();g.player.index=index;g.action('replay');return done(`Showing step ${index+1}.`);
+ }
  if(command==='pause'){
   if(g.mode==='capture'){g.action('replay');return done('Recording paused.');}
   if(follow){if(g.watchOnly?!!g.audioPlayer?.node||!g.player.paused:!g.gatePaused)g.action('replay');return done('Guidance paused.');}

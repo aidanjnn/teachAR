@@ -19,7 +19,7 @@ export class UtteranceGate{
  }
 }
 export class VoiceCommands{
- constructor(guide,{fetchImpl=fetch,getUserMedia=c=>navigator.mediaDevices.getUserMedia(c),tell=()=>{},respond=()=>{},canListen=()=>true}={}){Object.assign(this,{guide,fetchImpl,getUserMedia,tell,respond,canListen});this.generation=0;this.active=false;this.state='off';this.message='Voice controls off';this.attempts=0;this.limit=60;this.muteUntil=0;}
+ constructor(guide,{fetchImpl=(...args)=>globalThis.fetch(...args),getUserMedia=c=>navigator.mediaDevices.getUserMedia(c),tell=()=>{},respond=()=>{},canListen=()=>true}={}){Object.assign(this,{guide,fetchImpl,getUserMedia,tell,respond,canListen});this.generation=0;this.active=false;this.state='off';this.message='Voice controls off';this.attempts=0;this.limit=60;this.muteUntil=0;}
  async start(){
   this.stop();const generation=this.generation;this.state='connecting';this.message='Preparing voice controls…';
   try{

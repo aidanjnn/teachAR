@@ -32,3 +32,15 @@ test('instruction playback stays normal speed, survives short motion, resumes an
  a.node.onended();a.sync(p);assert.equal(starts,2);assert.equal(a.instructionPending(p),false);
  p.replay();a.sync(p);assert.equal(starts,3);assert.equal(a.offset,0);a.enabled=false;a.sync(p);assert.equal(a.node,null);assert.equal(a.instructionPending(p),false);
 });
+test('finish prepares clear narration sequentially, keeps originals and skips ambiguous or existing voice',async()=>{
+ const {polishTutorialInstructions}=await import('../public/instruction-voice.mjs');
+ const s=step();delete s.instruction_voice;
+ const input={revision:2,completion:{revision:2},steps:[{...s,id:'a',reviewed:true},{...s,id:'b'},{...step(),id:'c'}]},calls=[];
+ const result=await polishTutorialInstructions(input,{wait:async()=>{},services:{polishStep:async s=>{calls.push(`draft:${s.id}`);return {title:'Fold',instruction:'Bring the edges together.',needsReview:s.id==='b'};},generateInstructionVoice:async(text,options)=>{assert.equal(options.automatic,true);calls.push('speak');return {...step().instruction_voice,text};}}});
+ assert.deepEqual(calls,['draft:a','speak','draft:b']);assert.equal(result.prepared,1);assert.equal(result.issues.length,1);assert.equal(result.tutorial.steps[0].narration.audio,input.steps[0].narration.audio);assert.equal(result.tutorial.steps[0].reviewed,false);assert.equal(result.tutorial.steps[0].acceptance,'finish');assert.equal(input.revision,2);assert.equal(result.tutorial.completion.revision,3);
+});
+test('finish stops after provider failure and rejects late cancelled results',async()=>{
+ const {polishTutorialInstructions}=await import('../public/instruction-voice.mjs');const s=step();delete s.instruction_voice;let calls=0;
+ const result=await polishTutorialInstructions({revision:1,steps:[s,s]},{wait:async()=>{},services:{polishStep:async()=>{calls++;throw Error('Pair first');}}});assert.equal(calls,1);assert.equal(result.prepared,0);assert.match(result.issues[0],/Pair first/);
+ const controller=new AbortController();await assert.rejects(()=>polishTutorialInstructions({revision:1,steps:[s]},{signal:controller.signal,services:{polishStep:async()=>{controller.abort();return {needsReview:false};}}}),{name:'AbortError'});
+});

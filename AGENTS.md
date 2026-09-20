@@ -92,6 +92,9 @@ The current Python server remains a loopback development service, not a public h
   execute I/O. Keep ghost rendering separate from real hand observations.
 - Save success follows the durable IndexedDB write. Preserve explicit review,
   manual alternatives to save gestures, import validation and recovery behavior.
+  Finishing now auto-polishes usable narration after persisting the original tutorial.
+  Generated wording is not expert-reviewed: retain movement acceptance, skip ambiguous
+  wording, preserve original audio and bound sequential provider requests.
 - Practice previews each step, then waits at the start before ordered movement
   gates and automatic next-step preview. The final “Movements finished” state and
   `movement_step_completed` events are movement-only, with physical results

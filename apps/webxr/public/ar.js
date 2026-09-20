@@ -22,7 +22,7 @@ const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:(
 const $=id=>document.getElementById(id);
 // Voice is opted into from AR; paid command clips and live coaching have separate, exclusive listening modes.
 const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell}):null;
-const voice=tutorialMode?new VoiceCommands(guide,{tell,getUserMedia:constraints=>narrator?.ready?Promise.resolve(narrator.stream.clone()):navigator.mediaDevices.getUserMedia(constraints),canListen:()=>!!session&&session.visibilityState==='visible'&&!coach?.active&&!narrationPlayer?.node&&!globalThis.speechSynthesis?.speaking}):null;
+const voice=tutorialMode?new VoiceCommands(guide,{tell,getUserMedia:constraints=>narrator?.ready?Promise.resolve(narrator.stream.clone()):navigator.mediaDevices.getUserMedia(constraints),canListen:()=>!!session&&session.visibilityState==='visible'&&!coach?.active&&!globalThis.speechSynthesis?.speaking}):null;
 if(guide&&coach){guide.coach=coach;guide.voice=voice;}
 coach?.onState(state=>{if(state.mode==='connecting')voice?.stop('Voice commands paused for the coach.');});
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
@@ -210,7 +210,7 @@ function wrap(text,x,y,width,lineHeight,font,maxLines=3) {
 function update() {
   const now=performance.now();
   if(handsMode){
-    $('enter').disabled=!!session||!xrSupported||busy||(tutorialMode&&guide.loading);
+    $('enter').disabled=!!session||!xrSupported||busy||(tutorialMode&&(guide.loading||['saving-tutorial','polishing-tutorial'].includes(guide.mode)));
     $('enter').textContent=tutorialMode?'Enter the experience':xrSupported?'Enter hand guidance · free':'Immersive AR unavailable in this browser';
     if(now-handHudTime<50)return;handHudTime=now;
     const network=now<noticeUntil?notice:pendingCheck?'Image check in '+Math.ceil((pendingCheck-now)/1000)+'s':busy?'Image check running…':`Motion guidance: no API calls · camera ${now-lastUpload<3000?'connected':'off'} · image checks ${status?.calls||0}/${status?.max_calls||100}`;
@@ -403,7 +403,7 @@ $('speech').onchange=()=>{if(!$('speech').checked)window.speechSynthesis?.cancel
 hud.onclick=event=>{if(tutorialMode&&!session){tell('This is a preview. Enter AR on Quest to use these controls.');return;}const r=hud.getBoundingClientRect();const id=(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)((event.clientX-r.left)/r.width,1-(event.clientY-r.top)/r.height);if(id)void action(id);};
 document.addEventListener('visibilitychange',()=>{if(!visible()){pauseOnLeave();guide?.hide();if(!session)stopCamera();}});
 window.addEventListener('pagehide',()=>{voice?.stop();feedbackAudio.close();pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();coach?.stop();});
-window.addEventListener('beforeunload',event=>{if(tutorialMode&&(guide.hasUnfinishedTake()||guide.segmentJobs.size||['saving','saving-tutorial'].includes(guide.mode)||['saving','failed'].includes(guide.saveStatus))){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(tutorialMode&&(guide.hasUnfinishedTake()||guide.segmentJobs.size||['saving','saving-tutorial','polishing-tutorial'].includes(guide.mode)||['saving','failed'].includes(guide.saveStatus))){event.preventDefault();event.returnValue='';}});
 // A separate timer keeps the non-immersive setup and fallback usable.
 setInterval(()=>{service(performance.now());update();},200);
 try {xrSupported=!!navigator.xr && await navigator.xr.isSessionSupported('immersive-ar');}

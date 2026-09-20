@@ -10,6 +10,13 @@ Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practi
 - Settings → **Bring panel here** repositions the main panel near the current view. **Reset panel layout** restores its size/location and puts the timer back on the calibrated workspace. Facing/rotation never alters the tutorial calibration. Lost input pose, focus, session or reference-space reset cancels manipulation. Controls do not auto-resume a paused recording or practice.
 - This is WebXR presentation manipulation with hands/controllers, not an OS-native window API. Panel layout is session-local. Grip comfort, wrist/ray rotation, readability and timing need a worn-Quest test. To relocate the recorded motion itself, use tutorial placement controls.
 - A small timer/status panel sits beside the calibrated workspace. It shows countdowns, recording time, actual save feedback, and practice/next-preview status. This position comes from user calibration, not automatic table detection. It can be moved independently.
+- Library opens a tutorial detail page with Edit / Follow. Entry always opens Home;
+  Follow then opens setup and workspace placement. Edit opens review first; placing
+  the workspace is requested only for spatial replay or additional recording.
+- Review exposes a direct Left / Right / Both chooser. Manual recordings inherit
+  the author's selected capture hands; legacy recordings still require an explicit
+  choice. Neutral button fills are the default in both themes; ink fill denotes
+  targeting or an actual selected choice.
 - Library has a three-card page, title/layout search, All/Ready/Draft filters and paging. Panel entrances animate for 220 ms; reduced-motion removes scale motion. It contains real local tutorials; no fake sample projects are inserted.
 - Search focuses a DOM input through Meta's supported system-keyboard integration. If unavailable, connected-keyboard search and card/filter browsing remain available. This needs real headset acceptance.
 - Short pitch-swept Web Audio cues accompany navigation, capture, pause, movement checkpoints and durable saves. Settings can mute them; visual status always remains. Save cues can be audible during continuous narration; test echo/bleed on Quest.

@@ -10,7 +10,7 @@ the merged immersive entry/holographic hands and fluid-workspace UX from PRs #25
 `apps/webxr`. It adds natural spoken actions to the actual `TutorialGuide`, not a separate
 voice demo. Unity remains retired. No OMNI or visual grading was added.
 
-Inside AR, open **Voice → Enable voice controls → Back to task**. Say one request and
+Inside AR, open **Voice → Enable voice controls** (returns to the task automatically). Say one request and
 wait for the acknowledgement. **Commands & help** has three pages of examples:
 
 | Say, for example | Behavior |
@@ -80,7 +80,12 @@ Live access depends on the configured account/model; failure must not stop hand 
   are explicitly user-requested and `physical_verified:false`.
 - `ar.js`: command microphone can clone an existing narration stream; stopping the
   clone does not stop narration. Exit/pagehide release it; XR invisibility prevents
-  requests/actions. Narration and live coach speech suppress command listening.
+  requests/actions. Live coach speech and local system speech suppress command listening.
+  Narration no longer blocks commands: the microphone requests echo cancellation,
+  playback/progression pause during command processing, and the command loop ignores
+  its own spoken replies. Test acoustic echo/false triggers on the worn headset.
+  Default fetch is called through a global wrapper so browsers never receive the
+  VoiceCommands instance as the native fetch receiver.
 - Speech replies use `gpt-4o-mini-tts-2025-12-15` through the server and Web Audio playback.
   The connected Quest Browser has no `speechSynthesis`; do not assume desktop TTS works.
   Captions remain if speech fails. The UI labels the voice as AI.
