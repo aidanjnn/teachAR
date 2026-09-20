@@ -139,3 +139,39 @@ Sources: [Unity editor release](https://unity.com/releases/editor/whats-new/6000
 [Hub installation CLI](https://docs.unity.com/en-us/hub/use-hub-cli),
 [Meta UPM setup](https://developers.meta.com/horizon/documentation/unity/unity-package-manager/),
 [WebRTC requirements](https://docs.unity3d.com/Packages/com.unity.webrtc@3.0/manual/requirements.html).
+
+## Native gate on the MVP integration branch — 2026-09-19
+
+Ran on `codex/native-mvp-integration` at `b9bb1b9` (clean tree), on a machine
+where Unity was installed during this session: Unity Hub 3.21.3, editor
+**6000.3.24f1** revision `4e7b9b5b6244` (ARM64) with Android Build Support and its
+child modules (NDK r27c, CMake 3.22.1, build-tools 36.0.0, platforms 34-37).
+The machine already carried a Unity Personal entitlement; no license was purchased
+or activated for this run. .NET SDK 8.0.425, Node 22.23.2.
+
+This was the first time any of the branch's MonoBehaviour code met a compiler.
+
+- `pnpm quest:setup`: passed. 47 packages resolved, including the Meta XR scoped
+  registry. Pinned versions resolved exactly: Meta Core/Interaction/MRUK 205.0.0,
+  `com.unity.webrtc` 3.0.0, XR Hands 1.7.2, OpenXR 1.18.0. **Zero `error CS`**
+  across 1,654 build steps; the two new assemblies `Trail.Shell.dll` and
+  `Trail.Coach.dll` compiled and were copied to `Library/ScriptAssemblies`,
+  confirming the new assembly reference graph has no cycle.
+- `pnpm quest:test` (EditMode): **33 passed, 0 failed, 0 skipped**.
+- `pnpm quest:test:play` (PlayMode): **8 passed, 0 failed, 0 skipped**.
+- `pnpm quest:build`: **Succeeded**. Release ARM64/IL2CPP APK, `development: false`.
+  `Trail.apk` is **69,334,490 bytes**, SHA-256
+  `85710f31d24e424ff1abdedb2d5a5ebb830add656a5775a6601ec89bb6d845e9`,
+  package `com.trail.guide` versionName `0.1.0`, target/compile SDK 36,
+  `native-code: 'arm64-v8a'` only. 31 ARM64 libraries including `libil2cpp.so`,
+  `libwebrtc.so`, `libOVRPlugin.so`, `libUnityOpenXR.so` and
+  `libUnityOpenXRHands.so`. The `assets/lib/armeabi-v7a/` entries are Meta SDK
+  telemetry assets, not loadable libraries for this ABI.
+
+**This is editor and build evidence only.** No Quest was connected (`adb devices`
+was empty), the APK was not installed or launched, and nothing here establishes
+hand tracking, passthrough, calibration accuracy, two-hand ghost legibility, frame
+time, microphone or WebRTC behaviour, or that a learner can use the shell. IL2CPP
+compiling the coach and shell does not mean the voice transport exists:
+`ICoachTransport` and `ICoachMicrophone` still have no implementation. Device
+results belong in `docs/validation.md` once they exist.
