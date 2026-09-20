@@ -150,7 +150,7 @@ Record final device observations separately before claiming end-to-end human acc
 ### Observed during this delivery
 
 Software gates: 372 shared/API tests + typechecks/builds; fixtures; eight desktop
-workflows; 112 browser-module tests, 53 Python cases, 17 synthetic browser workflows.
+workflows; 112 browser-module tests, 53 Python cases, 18 synthetic browser workflows.
 Focused voice tests were rerun after final playback changes. Live API examples above
 and synthetic audio transcription/TTS passed. On the connected Quest Browser 152,
 a separate in-memory guide received synthetic speech through real ASR/intent and

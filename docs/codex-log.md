@@ -1314,3 +1314,9 @@ and storage recovery, narration-issue handling, review acceptance invalidation a
 countdown cancellation on panel manipulation. Removed the older inline manipulation
 override so it cannot shadow the repaired guide method. Reused unchanged shared/API
 check and fixture evidence; reran the combined WebXR and eight desktop workflows.
+
+The reconciled WebXR gate passed 112 Node tests, 53 Python tests and 18 browser
+workflows; all eight desktop workflows passed. A final focused synthetic browser
+case also drove spoken-action dispatch through the real countdown, continuous step
+save, durable write and tutorial finalization methods. These are software proofs,
+not a human crane or microphone acceptance run. PR #31 was verified mergeable.
