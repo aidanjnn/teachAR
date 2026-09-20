@@ -27,8 +27,14 @@ test('library filters titles and layouts without mutating items',()=>{
 test('hold acceptance survives export honestly and trimming requires review',async()=>{
  const {newTutorial,prepareStep,finishTutorial,validateTutorial,trimStep,authoringReadiness}=await import('../public/tutorial-core.mjs');
  const tutorial=newTutorial('Example');tutorial.setup='Arrange the objects';tutorial.calibration_span_m=.5;
- const step=prepareStep(Array.from({length:80},(_,i)=>({t:i*40,...hands(i*.004)})),'Transfer');step.acceptance='hold';tutorial.steps=[step];
+ const step=prepareStep(Array.from({length:80},(_,i)=>({t:i*40,...hands(i*.004)})),'Transfer');step.guide_hands='both';step.acceptance='hold';tutorial.steps=[step];
  const ready=validateTutorial(finishTutorial(tutorial));assert(!ready.steps[0].reviewed);assert(ready.completion.kind.startsWith('expert-accepted'));
  ready.steps[0]=trimStep(ready.steps[0],0,2000);assert(!authoringReadiness(ready).ready);
  step.acceptance='model-approved';assert.throws(()=>validateTutorial(tutorial),/acceptance/);
+});
+
+test('explicit required hands cannot silently shrink to the visible hand',()=>{
+ const s=new HoldSegmenter();s.reset('both');
+ for(let t=0;t<4000;t+=40)assert(!s.update({right:hand(t<40?0:.2)},t));
+ assert.deepEqual(s.sides,['left','right']);assert.equal(s.progress,0);
 });

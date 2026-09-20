@@ -3,7 +3,7 @@ import {distance} from './motion-core.mjs';
 // A deliberate still hold accepts a segment, never a physical-result verdict.
 export class HoldSegmenter {
  constructor(){this.reset();}
- reset(){this.sides=null;this.origin=null;this.anchor=null;this.since=null;this.last=null;this.armed=false;this.progress=0;this.elapsed=0;}
+ reset(required=null){this.sides=required==='both'?['left','right']:required?[required]:null;this.origin=null;this.anchor=null;this.since=null;this.last=null;this.armed=false;this.progress=0;this.elapsed=0;}
  interrupt(){this.anchor=null;this.since=null;this.progress=0;this.last=null;}
  update(hands,time){
   if(!Number.isFinite(time))return false;

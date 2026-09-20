@@ -10,7 +10,7 @@ const assert=require('node:assert/strict');
   const THREE=await import('/vendor/three.module.js'),{TutorialGuide,tutorialButton}=await import('/tutorial-guide.mjs');
   const {syntheticTutorial}=await import('/tutorial-review.mjs'),{finishTutorial}=await import('/tutorial-core.mjs');
   const {toWorld}=await import('/motion-core.mjs'),{saveTutorial,loadTutorial,listTutorials,draftVersion}=await import('/tutorial-store.mjs');
-  const fail=m=>{throw Error(m);};const original=syntheticTutorial();original.title='Recorded movement test';original.steps.forEach(s=>s.reviewed=true);const demo=finishTutorial(original);
+  const fail=m=>{throw Error(m);};const original=syntheticTutorial();original.title='Recorded movement test';original.steps.forEach(s=>{s.guide_hands='both';s.reviewed=true;});const demo=finishTutorial(original);
   await saveTutorial(demo,draftVersion(await loadTutorial()));
   const g=new TutorialGuide({speak:()=>{},exit:()=>{}});g.persist=()=>Promise.resolve();g.tutorial=structuredClone(demo);g.attach(new THREE.Scene());g.begin('follow');
   let t=1000,data={};Object.defineProperty(performance,'now',{configurable:true,value:()=>t});g.sample=()=>data[g.hand];
@@ -30,6 +30,9 @@ const assert=require('node:assert/strict');
   while(g.practice.phase==='preview')tick();data=near(g.followEngine.target);for(let i=0;i<18;i++)tick();if(!g.followEngine.started)fail('Start hold failed');
   const gate=g.followEngine.index;data={};for(let i=0;i<20;i++)tick();if(g.followEngine.index!==gate||g.followEngine.state!=='tracking')fail('Missing hands advanced');
   g.hide();session.visibilityState='visible';data=near(g.followEngine.target);tick();if(g.followEngine.index!==gate)fail('Visibility loss lost current gate');g.action('replay');
+  for(let i=0;i<40;i++)tick();if(g.followEngine.index!==gate)fail('Unobserved movement during tracking loss advanced a gate');
+  // Repeat the approach with fresh tracking; a hidden jump is not movement evidence.
+  data=near(g.followEngine.gates[gate-1]);for(let i=0;i<20;i++)tick();
   for(let i=0;i<500&&!g.followEngine.done;i++){data=near(g.followEngine.target);tick();}
   if(!g.followEngine.done||g.player.index!==0)fail('Checkpoint or progression authority failed');
   const hud=document.createElement('canvas');hud.width=1080;hud.height=560;g.draw(hud.getContext('2d'),t,'');window.trailNewHud=hud.toDataURL();
@@ -40,6 +43,7 @@ const assert=require('node:assert/strict');
   g.action('try-follow');if(g.watchOnly||g.followEngine.started)fail('Return to guided mode skipped start');
   for(let i=0;i<600&&g.mode==='learn';i++){data=near(g.followEngine.target);tick();}
   if(g.mode!=='finished'||!g.movementOnly||g.player.confirmations.length)fail('Final movement must finish hands-free without physical confirmation');
+  if(g.exportDiagnostics().events.filter(e=>e.event==='movement_step_completed').length!==2)fail('Movement-only completions disappeared from exported diagnostics');
   g.endSession();
   // New contextual authoring, including pause and safe replacement discard.
   const a=new TutorialGuide({speak:()=>{},exit:()=>{}});a.attach(new THREE.Scene());a.persist=()=>Promise.resolve();a.begin('home');a.sample=()=>data[a.hand];
@@ -55,7 +59,7 @@ const assert=require('node:assert/strict');
   a.action('primary');if(a.mode!=='review-step'||a.tutorial.steps.length!==1)fail('New capture did not open review: '+a.problem);
   const saved=a.tutorial.steps[0];a.action('hand');t=a.pending.until;atick();a.action('discard-confirm');a.action('discard-take');
   if(a.tutorial.steps[0]!==saved)fail('New replacement discard erased original');
-  a.action('hand');a.action('primary');await a.saveTask;if(a.mode!=='saved'||!a.tutorial.completion)fail('Approve did not finish and save: '+a.problem);
+  a.action('hand');for(let i=0;i<3;i++)a.action('guide-hands');a.action('primary');await a.saveTask;if(a.mode!=='saved'||!a.tutorial.completion)fail('Approve did not finish and save: '+a.problem);
   a.action('start-follow');if(a.mode!=='learn'||a.followEngine.started)fail('Created tutorial did not start with waiting ghost');
   a.endSession();
   const blank=syntheticTutorial();blank.title='Other saved recording';await saveTutorial(blank,draftVersion(await loadTutorial()));

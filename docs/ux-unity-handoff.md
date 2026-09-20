@@ -47,7 +47,7 @@ All paths below are under [experiments/quest-browser](../experiments/quest-brows
 | --- | --- | --- |
 | Create/Follow, one-time setup, library | `public/tutorial-shell.mjs`, `tutorial-guide.mjs`, `tutorial-ui.mjs`, `tutorial-store.mjs` | `tests/browser-trail-flow.cjs`, `browser-save-position.cjs` |
 | Recording / save-zone / clean trim | `public/tutorial-core.mjs`, `narration-core.mjs` | `tests/tutorial-core.test.mjs`, `narration.test.mjs`, `browser-narration.cjs` |
-| Start wait, ordered palm gates, stale/lost tracking | `public/tutorial-follow.mjs`, `motion-core.mjs` | `tests/tutorial-follow.test.mjs`, `motion-core.test.mjs` |
+| Start wait, ordered palm gates with observed directional motion, stale/lost tracking | `public/tutorial-follow.mjs`, `motion-core.mjs` | `tests/tutorial-follow.test.mjs`, `motion-core.test.mjs`, `tests/browser-trail-flow.cjs`; native port remains unverified |
 | Holograms, workspace placement and UI | `public/tutorial-guide.mjs`, `tutorial-ui.mjs` | `tests/browser-tutorial.cjs`, `browser-trail-flow.cjs`; still requires visual/device acceptance |
 | Review / trim / save / reload | `public/tutorial-review.mjs`, `tutorial-store.mjs` | `tests/browser-review.cjs`, `browser-tutorial.cjs` |
 | Fresh photo / advisory state | `public/camera-snapshot.mjs`, `tutorial-assist.mjs` | `tests/camera-snapshot.test.mjs`, `tutorial-assist.test.mjs`, `browser-camera-snapshot.cjs`, `browser-assistance.cjs` |

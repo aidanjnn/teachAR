@@ -14,9 +14,9 @@ Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practi
 
 ## Continuous authoring
 
-Create defaults to **hold-to-save**. Prepare the objects, choose origin and heading, then start one demonstration. A save-position ritual is no longer required in this mode. The prior return-to-save/manual mode remains selectable from recording setup/options.
+Create defaults to **hold-to-save**. Prepare the objects, choose origin and heading, then start one demonstration. A save-position ritual is no longer required in this mode. The prior return-to-save/manual mode remains selectable from recording setup/options. Re-recording an existing step uses manual capture and review so it replaces that step rather than appending continuous segments.
 
-1. First valid tracked hands define which hands must remain visible for this segment.
+1. Required hands default to Both, shown before recording. More options can select Left or Right for a one-hand task. A momentarily hidden hand never changes that selection.
 2. At least 8 cm of palm displacement and 1.2 s of valid sampling arms the hold.
 3. Stay within a 2 cm palm region for 1.4 s. Rings around the tracked palms and the surface bar show the hold filling.
 4. The segment is committed and capture immediately continues; no per-segment approval screen. Fresh movement must arm another hold, so remaining still does not create duplicates.
@@ -28,7 +28,7 @@ Narration finishes asynchronously per segment while the next take begins. At mos
 
 ### Browser format change
 
-The existing browser v3 format accepts optional step `acceptance: "hold" | "finish" | null`. `reviewed` remains false for continuous captures: a deliberate recording hold is author acceptance, not replay review. Completion reports `expert-accepted; physical result unverified` when any step was not replay-reviewed. Imported values are validated; narration issues still block readiness. Edits to layout, guide hands, cues/photos, narration, step order or trimmed motion invalidate acceptance and require review again. Old recordings remain readable; old clients do not understand this acceptance field and may require review. Native wire contracts are unchanged.
+The existing browser v3 format accepts optional step `acceptance: "hold" | "finish" | null`. `reviewed` remains false for continuous captures: a deliberate recording hold is author acceptance, not replay review. Completion reports `expert-accepted; physical result unverified` when any step was not replay-reviewed. Imported values are validated; required-hand tracking/timestamp gaps and narration issues still block readiness. Gapped continuous segments remain drafts needing repair. Edits to layout, guide hands, cues/photos, narration, step order or trimmed motion invalidate acceptance and require review again. Old recordings remain readable; old clients do not understand this acceptance field and may require review. Native wire contracts are unchanged.
 
 ## Quest boundary limitation
 
