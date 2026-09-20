@@ -27,7 +27,8 @@ export function mountTutorialShell(guide,{isActive,tell}){
    $('library-status').textContent=host.children.length?'':'No recordings yet. Create a tutorial to start.';
   }catch(e){$('library-status').textContent=e.message;}
  }
- document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>run(()=>show(b.dataset.route)));
+ // Module bootstrap outlives the load event, so navigation ships disabled: a tap is never silently lost.
+ document.querySelectorAll('[data-route]').forEach(b=>{b.onclick=()=>run(()=>show(b.dataset.route));b.disabled=false;});
  $('create-tutorial').onclick=()=>run(async()=>{await guide.replaceTutorial(newTutorial(`Tutorial ${new Date().toLocaleDateString()}`));$('tutorial-instructions').value='';show('create');});
  $('ready-create').onclick=()=>run(async()=>{
   const next=structuredClone(guide.tutorial);next.title=$('tutorial-title').value.trim()||'Untitled tutorial';

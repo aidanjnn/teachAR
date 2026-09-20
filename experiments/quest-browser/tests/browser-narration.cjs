@@ -76,7 +76,9 @@ const assert=require('node:assert/strict');
       await playback.context.close();
       return {motion_ms:step.duration_ms,audio_ms:step.narration.duration_ms,pause_excluded:true,late_response_rejected:true};
     });
-    await page.reload();await page.locator('[data-route=review]').click();await page.waitForFunction(()=>document.querySelector('#narration-summary').textContent.includes('Recorded narration'));
+    // textContent/innerText also read a non-rendered pane, so require the route to be on screen first.
+    await page.reload();await page.locator('[data-route=review]').click();await page.locator('[data-screen=review]').waitFor();
+    await page.waitForFunction(()=>document.querySelector('#narration-summary').textContent.includes('Recorded narration'));
     assert.match(await page.locator('#authoring-status').innerText(),/^FINISHED/);
     await page.locator('#remove-narration').click();await page.waitForFunction(()=>document.querySelector('#narration-summary').textContent.includes('No recorded narration'));
     assert.match(await page.locator('#authoring-status').innerText(),/^DRAFT/);
