@@ -15,7 +15,7 @@ namespace Trail.Runtime.Scene
 
         public SceneInspectionController Inspection;
         private TextMesh status;
-        private readonly TextMesh[] buttons = new TextMesh[5];
+        private readonly TextMesh[] buttons = new TextMesh[6];
         private HandObservationSource source;
         private int touching = -1;
         private double since, lastTime = -1;
@@ -24,7 +24,7 @@ namespace Trail.Runtime.Scene
         private void Start()
         {
             status = Label("Scene inspection", new Vector3(0, .18f, 0), .004f);
-            string[] labels = { "Enable camera", "Check placement / Retry", "Cancel inspection", "Toggle expert endpoint photos", "Retry expert photo upload" };
+            string[] labels = { "Enable camera", "Check placement / Retry", "Cancel inspection", "Toggle expert endpoint photos", "Retry expert photo upload", "Toggle starting-layout photo" };
             for (int i = 0; i < labels.Length; i++) buttons[i] = Label(labels[i], new Vector3(0, -.06f * i, 0), .006f);
         }
         private TextMesh Label(string text, Vector3 position, float size)
@@ -69,6 +69,7 @@ namespace Trail.Runtime.Scene
             var expert = GetComponentInParent<ExpertReferenceCapture>();
             if (selected == 3 && expert != null) expert.ToggleCapture();
             if (selected == 4 && expert != null) expert.RetryUpload();
+            if (selected == 5 && expert != null) expert.ToggleLayoutCapture();
         }
         private void ResetTouch() { touching = -1; latched = false; }
         private void Detach() { if (source != null) source.Observed -= Observe; source = null; lastSequence = -1; lastTime = -1; ResetTouch(); }

@@ -4,6 +4,7 @@
     <Compile Include="../../apps/quest/Assets/Trail/Contracts/*.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Record/NarrationPcm.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Storage/PrivateTutorialCache.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/MicrophoneLease.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>

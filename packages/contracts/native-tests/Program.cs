@@ -11,6 +11,8 @@ class Program
     {
         switch (name)
         {
+            case "StartingLayout": return ContractJson.SerializeStartingLayout(ContractJson.ParseStartingLayout(json));
+            case "StartingLayoutEdit": return ContractJson.SerializeStartingLayoutEdit(ContractJson.ParseStartingLayoutEdit(json));
             case "TakeAuthoringMetadata": return ContractJson.SerializeTakeAuthoringMetadata(ContractJson.ParseTakeAuthoringMetadata(json));
             case "AuthoredCapture": return ContractJson.SerializeAuthoredCapture(ContractJson.ParseAuthoredCapture(json));
             case "Recording": return ContractJson.SerializeRecording(ContractJson.ParseRecording(json));

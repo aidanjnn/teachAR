@@ -999,6 +999,58 @@ namespace Trail.Contracts
             map["source"] = (object)value.Source;
             return map;
         }
+        public static StartingLayout ParseStartingLayout(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("StartingLayout", raw); return ReadStartingLayout(raw); }
+        public static string SerializeStartingLayout(StartingLayout value) { var json = StrictJson.Stringify(WriteStartingLayout(value)); ParseStartingLayout(json); return json; }
+        private static StartingLayout ReadStartingLayout(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new StartingLayout();
+            if (map.ContainsKey("schemaVersion")) result.SchemaVersion = (int)(double)map["schemaVersion"];
+            if (map.ContainsKey("recordingId")) result.RecordingId = (string)map["recordingId"];
+            if (map.ContainsKey("recordingHash")) result.RecordingHash = (string)map["recordingHash"];
+            if (map.ContainsKey("tutorialId")) result.TutorialId = (string)map["tutorialId"];
+            if (map.ContainsKey("tutorialRevision")) result.TutorialRevision = (int)(double)map["tutorialRevision"];
+            if (map.ContainsKey("assetId")) result.AssetId = (string)map["assetId"];
+            if (map.ContainsKey("source")) result.Source = (string)map["source"];
+            if (map.ContainsKey("frameIndex")) result.FrameIndex = (int)(double)map["frameIndex"];
+            if (map.ContainsKey("notes")) result.Notes = (string)map["notes"];
+            return result;
+        }
+        private static object WriteStartingLayout(StartingLayout value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["schemaVersion"] = (object)value.SchemaVersion;
+            map["recordingId"] = (object)value.RecordingId;
+            map["recordingHash"] = (object)value.RecordingHash;
+            map["tutorialId"] = (object)value.TutorialId;
+            map["tutorialRevision"] = (object)value.TutorialRevision;
+            map["assetId"] = (object)value.AssetId;
+            map["source"] = (object)value.Source;
+            map["frameIndex"] = (object)value.FrameIndex;
+            map["notes"] = (object)value.Notes;
+            return map;
+        }
+        public static StartingLayoutEdit ParseStartingLayoutEdit(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("StartingLayoutEdit", raw); return ReadStartingLayoutEdit(raw); }
+        public static string SerializeStartingLayoutEdit(StartingLayoutEdit value) { var json = StrictJson.Stringify(WriteStartingLayoutEdit(value)); ParseStartingLayoutEdit(json); return json; }
+        private static StartingLayoutEdit ReadStartingLayoutEdit(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new StartingLayoutEdit();
+            if (map.ContainsKey("baseRevision")) result.BaseRevision = (int)(double)map["baseRevision"];
+            if (map.ContainsKey("assetId")) result.AssetId = (string)map["assetId"];
+            if (map.ContainsKey("notes")) result.Notes = (string)map["notes"];
+            return result;
+        }
+        private static object WriteStartingLayoutEdit(StartingLayoutEdit value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["baseRevision"] = (object)value.BaseRevision;
+            map["assetId"] = (object)value.AssetId;
+            map["notes"] = (object)value.Notes;
+            return map;
+        }
         public static Tutorial ParseTutorial(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("Tutorial", raw); return ReadTutorial(raw); }
         public static string SerializeTutorial(Tutorial value) { var json = StrictJson.Stringify(WriteTutorial(value)); ParseTutorial(json); return json; }
         private static Tutorial ReadTutorial(object value)

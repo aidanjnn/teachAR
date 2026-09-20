@@ -1114,3 +1114,40 @@ The user heard “Test sequence observed” from the local regression browser: t
 - Merged dependency `de74ae7` without rewriting the published branch. Preserved both the original stale-reply/shutdown regressions and the new native adapters/hands-free behavior.
 - Found and fixed a real-clock-domain mismatch in expert image association: Stopwatch hand timestamps now map into Unity camera-delivery time while preserving sample age. Added seven offset/future/stale regression cases. Sensor timing remains explicitly unverified.
 - Final merged native tests: EditMode66/66 (`test-f62f2c4c-1be3-41b3-ba7a-10a778be68a7`), PlayMode24/24 (`test-play-3aa7088e-2b89-4522-af61-bb68624c2009`). Full web check379tests/33files,165C# contract checks,236shell checks,16adapter checks and purecoach harness passed. Android build follows.
+
+### 2026-09-20 — Android voice capture and explicit AEC capability
+
+Added Android `AudioRecord` VOICE_COMMUNICATION capture with session-bound
+AcousticEchoCanceler and an explicit headphones-required fallback when AEC is
+unavailable. The bounded worker drops muted/in-flight stale reads, releases the
+capture/effect on teardown, and restores the prior audio mode. A shared microphone
+lease excludes narration/coaching overlap. Native microphone loss closes the
+coach transport; permission recovery and provider behavior remain unchanged.
+The voice panel reports capability and uses the shared URP text material helper.
+
+Validation: real Android SDK Java compilation; 30 synthetic Java lifecycle
+assertions; 21 PCM/narration/lease assertions; 16 portable coach adapter checks;
+Android and Editor microphone C# branches compile against installed Unity/WebRTC
+assemblies with zero warnings/errors. Existing APK manifest contains both required
+permissions. No microphone, provider or headset calls occurred. Hardware AEC
+quality, speaker routing and simultaneous XR duplex still require device evidence;
+see `docs/native-voice-audio.md`. Integrated Unity/Android build is owned by the
+parent task and remains a separate gate.
+
+### 2026-09-20 — Reviewed starting layouts and portable tutorial export
+
+- Added independent opt-in first-action camera capture, with stable-palm, clock,
+  trim and first-slot checks. Starting images persist separately from endpoints.
+  Desktop authors preview and approve an image plus arrangement notes; learner
+  setup shows only approved ready layouts. Revision changes preserve or invalidate
+  approval consistently. Strict C#/TypeScript sidecar fixtures agree.
+- Added a ready-tutorial export command that validates motion-derived targets,
+  recording/narration hashes and approved image bindings, excludes unrelated
+  assets/pairings/credentials, and refuses existing output directories.
+- World-space TextMesh controls now own a URP stereo font material and follow
+  dynamic atlas rebuilds without modifying the shared font resource.
+- Automated evidence: 389 web/server tests in33files, typechecks/builds/scaffold189;
+  Unity EditMode72/72 (`test-15fd0fd8-52a6-4768-ab55-fe49fa55bba1`) and PlayMode26/26
+  (`test-play-6c4882c6-a332-4868-b26d-87e0ff17f77a`). Focused export/storage tests
+  also cover ready-only learner access and fresh-directory reload. No Quest is
+  available; no actual visibility, camera timing, voice quality or learner claim.

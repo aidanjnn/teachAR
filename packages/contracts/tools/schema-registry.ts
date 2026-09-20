@@ -7,7 +7,7 @@ export const NATIVE_SCHEMA_NAMES = [
   'TakeAuthoringMetadata', 'AuthoredCapture', 'JointName', 'Side', 'Vec3', 'Quat', 'Pose', 'HandSample', 'MotionFrame', 'WorkspaceDefinition', 'Recording',
   'MotionGate', 'HandTarget', 'TutorialStep', 'TutorialProvenance', 'Tutorial', 'TutorialDraftStep', 'TutorialDraftEdit', 'CompletionMode',
   'GuideContextRef', 'GuideSnapshot', 'GuideEvent', 'CalibrationV2', 'ClockMapping', 'NativeCaptureSidecar',
-  'SceneSource', 'StepSceneReference', 'SceneReferenceManifest', 'InspectionRequest', 'SceneObservation', 'CoachAssessment', 'InspectionResult',
+  'StartingLayout', 'StartingLayoutEdit', 'SceneSource', 'StepSceneReference', 'SceneReferenceManifest', 'InspectionRequest', 'SceneObservation', 'CoachAssessment', 'InspectionResult',
   'RecordingMetadata', 'CreateRecordingRequest', 'MotionChunk', 'FinalizeRecordingRequest',
   'TutorialJobCreate', 'TutorialFinalize', 'ReferenceEdit', 'ReferenceImageUpload', 'SpectatorState', 'TutorialLabelBatch', 'RecordingByteChunk',
 ] as const;

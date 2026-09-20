@@ -21,6 +21,7 @@
     <Compile Include="../../apps/quest/Assets/Trail/Motion/RecordingDirector.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Motion/TakeLedger.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Record/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/MicrophoneLease.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/XR/*.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Network/*.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Platform/PlatformFeatures.cs" />

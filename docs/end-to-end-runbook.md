@@ -59,7 +59,7 @@ in the APK or exported tutorial. Record provider failures explicitly.
   error in millimetres and orientation error using the plan's thresholds; never
   enlarge tolerances to hide error.
 - [ ] Fresh bottle demonstration — set the save position, allow microphone,
-  opt into endpoint photos in Diagnostics, enable the camera, then record three
+  opt into endpoint and starting-layout photos in Diagnostics, enable the camera, then record three
   short actions → countdown/UI motion is excluded, narration is audible, stable
   starts and ends produce usable boundaries, and returning to save trims cleanly.
 - [ ] Take correction — pause/resume, replace a take, then discard a replacement
@@ -72,9 +72,10 @@ in the APK or exported tutorial. Record provider failures explicitly.
   picture, describe its visible outcome and approve → approval is bound to this
   recording/step/revision; later instruction edits clear approval. Delivery-aligned
   camera timing is an estimate that needs device measurement.
-- [ ] Starting layout — record and review the exact physical arrangement before
-  learner setup. The separate reviewed starting-layout image workflow is still a
-  software gap; do not claim endpoint images close this requirement.
+- [ ] Starting layout — select the separately captured first-action image in desktop
+  review, enter arrangement notes and approve before finalization. Open Starting
+  layout as learner and load the ready guide → the approved image and notes
+  survive reload. A late camera frame must not be accepted as the starting frame.
 - [ ] Independent learner — pair as learner, preload the ready guide, move to a
   different table/room and independently calibrate A/B/C plus D → complete one
   step without the expert supplying movement-by-movement instructions. Observe
@@ -84,7 +85,9 @@ in the APK or exported tutorial. Record provider failures explicitly.
 
 - [ ] Native Live — explicitly Start, then converse with hands and guidance active
   → hear answers and see captions; test interruption, echo, Mute/Unmute and End.
-  The current custom microphone adapter does not establish platform AEC support.
+  Record the voice panel's Android AEC capability status; test actual speaker
+  echo rejection. Use headphones when unavailable or ineffective. See
+  `native-voice-audio.md`; an enabled effect is not proof of effective cancellation.
 - [ ] Camera speech — ask “check my placement” on correct, wrong and obscured
   arrangements → hear different appropriately qualified findings from fresh
   headset images, without automatic advancement. Adjust and say “check again.”
@@ -119,6 +122,22 @@ in the APK or exported tutorial. Record provider failures explicitly.
 - [ ] Record a clearly labelled backup video of the actual completed experience.
   A synthetic browser replay or generated illustration is not this evidence.
 
-Full signoff remains blocked until these observations exist. Separate unfinished
-software (starting-layout review and verified echo/interruption behavior) from
-unavailable hardware evidence in every handoff.
+## Export a reviewed tutorial
+
+With the server stopped, export one ready tutorial into a new private directory:
+
+```sh
+pnpm exec tsx scripts/export-ready-tutorial.ts ./data/quest-rehearsal TUTORIAL_UUID ./data/exported-tutorial
+```
+
+The export validates recording, narration and approved images and includes only
+that tutorial's assets. It excludes pairing state, credentials and temporary
+upload chunks, refuses an existing destination, and writes checksums in
+`export-manifest.json`. Use the exported directory as `DATA_DIR` on a server at
+the matching source revision, pair afresh, and verify reload before packaging.
+Treat it as private media; do not commit it. No real tutorial or backup video
+exists until the physical runs above are completed.
+
+Full signoff remains blocked until these observations exist. Automated capture,
+review, speech and export checks are software evidence; they do not establish
+headset usability, acoustic quality or independent learner success.

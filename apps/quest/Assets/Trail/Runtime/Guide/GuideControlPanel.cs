@@ -31,8 +31,7 @@ namespace Trail.Runtime.Guide
         {
             var child = new GameObject(label); child.transform.SetParent(transform, false); child.transform.localPosition = position;
             var text = child.AddComponent<TextMesh>(); text.fontSize = 48; text.characterSize = size; text.anchor = TextAnchor.MiddleLeft;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            child.GetComponent<MeshRenderer>().sharedMaterial = text.font.material;
+            Trail.Runtime.Platform.WorldSpaceText.Configure(text);
             text.color = Color.white; text.text = "● " + label; return text;
         }
         private void Update()

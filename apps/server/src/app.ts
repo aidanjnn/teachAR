@@ -62,7 +62,8 @@ export async function createApp(
     resolveTutorial ??= async id => {
       try {
         const tutorial = await repository.tutorial(id);
-        return { id: tutorial.id, revision: tutorial.revision, status: tutorial.status, steps: tutorial.steps.map(step => ({ id: step.id, title: step.title, instruction: step.instruction })) };
+        const layout = await new ReferenceStore(repository).layout(id);
+        return { ...(layout ? { layoutNotes: layout.layout.notes } : {}), id: tutorial.id, revision: tutorial.revision, status: tutorial.status, steps: tutorial.steps.map(step => ({ id: step.id, title: step.title, instruction: step.instruction })) };
       } catch (error) {
         const status = (error as { statusCode?: number }).statusCode;
         if (status === 404 || status === 400) return null;

@@ -75,8 +75,7 @@ namespace Trail.Runtime.Shell
             child.transform.SetParent(parent, false);
             child.transform.localPosition = localPosition;
             var text = child.AddComponent<TextMesh>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            child.GetComponent<MeshRenderer>().sharedMaterial = text.font.material;
+            Trail.Runtime.Platform.WorldSpaceText.Configure(text);
             text.fontSize = 48; text.characterSize = size;
             text.anchor = TextAnchor.MiddleCenter; text.color = Color.white;
             return text;

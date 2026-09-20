@@ -332,6 +332,24 @@ namespace Trail.Contracts
         public string CompletionMode { get; set; }
         public string Source { get; set; }
     }
+    public sealed class StartingLayout
+    {
+        public int SchemaVersion { get; set; }
+        public string RecordingId { get; set; }
+        public string RecordingHash { get; set; }
+        public string TutorialId { get; set; }
+        public int TutorialRevision { get; set; }
+        public string AssetId { get; set; }
+        public string Source { get; set; }
+        public int FrameIndex { get; set; }
+        public string Notes { get; set; }
+    }
+    public sealed class StartingLayoutEdit
+    {
+        public int BaseRevision { get; set; }
+        public string AssetId { get; set; }
+        public string Notes { get; set; }
+    }
     public sealed class Tutorial
     {
         public int SchemaVersion { get; set; }

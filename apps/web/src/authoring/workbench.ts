@@ -1,4 +1,4 @@
-import { TranscriptResultSchema, LabelResultSchema, type TranscriptResult, RecordingSchema, TutorialSchema, SpectatorStateSchema, type Recording, type Tutorial, type TutorialDraftEdit, type SpectatorState, type StepSceneReference, type ReferenceImageUpload } from '@trail/contracts';
+import { StartingLayoutSchema, type StartingLayout, TranscriptResultSchema, LabelResultSchema, type TranscriptResult, RecordingSchema, TutorialSchema, SpectatorStateSchema, type Recording, type Tutorial, type TutorialDraftEdit, type SpectatorState, type StepSceneReference, type ReferenceImageUpload } from '@trail/contracts';
 import { createAuthoringFixture } from '@trail/motion';
 import { mountCast } from '../spectator/cast.js';
 import { createViewer } from '../replay/viewer.js';
@@ -21,16 +21,18 @@ function editOf(tutorial: Tutorial): TutorialDraftEdit {
 }
 export function mountWorkbench(root: HTMLElement) {
   root.innerHTML = `
-    <nav class="workspace-tabs" aria-label="Workspace views"><button data-view="fixture" aria-pressed="true">Fixture replay</button><button data-view="authoring" aria-pressed="false">Author a guide</button><button data-view="spectator" aria-pressed="false">Spectator</button></nav>
+    <nav class="workspace-tabs" aria-label="Workspace views"><button data-view="fixture" aria-pressed="true">Fixture replay</button><button data-view="authoring" aria-pressed="false">Author a guide</button><button data-view="setup" aria-pressed="false">Starting layout</button><button data-view="spectator" aria-pressed="false">Spectator</button></nav>
     <section id="pair-panel" class="pair-panel" hidden aria-label="Pair this browser"><form id="pair-form"><label>Pairing code <input id="pair-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required placeholder="8 digit code"></label><button type="submit">Connect workspace</button></form><label class="invite-role">New device <select id="invite-role"><option value="learner">Learner</option><option value="spectator">Spectator</option><option value="author">Author</option></select></label><label class="invite-role">Client <select id="invite-client"><option value="native">Quest app</option><option value="browser">Browser</option></select></label><button id="issue-code" type="button">Create pairing code</button><output id="invite-code"></output><p id="pair-state" role="status">Use the private code from the demo operator.</p></section>
     <section id="authoring-panel" hidden aria-label="Tutorial authoring">
       <div class="author-heading"><div><h1>Give every movement a moment.</h1><p>Review the starts, paths and checkpoints your learner will follow.</p></div><span id="author-source" class="source-label">No recording loaded</span></div>
       <div class="author-toolbar"><button id="import-demo" class="primary">Import four-step sample</button><label class="file-button">Import recording <input id="recording-file" type="file" accept=".json,application/json"></label><button id="discard-upload">Discard unfinished upload</button><button id="reload-library">Reload saved guides</button><select id="tutorial-library" aria-label="Saved guides"><option value="">Choose a saved guide</option></select></div>
       <p id="author-status" class="author-status" role="status">Pair your browser, then import a recording or try the synthetic sample.</p>
-      <div id="review-layout" class="review-layout" hidden><ol id="step-strip" class="step-strip" aria-label="Ordered steps"></ol><div class="review-body"><div class="review-preview"><div id="review-scene"></div><div class="frame-actions"><button id="show-start">Show start</button><button id="show-checkpoint">Show checkpoint</button><label>Frame <input id="review-frame" type="range" min="0" step="1"></label><output id="frame-label"></output></div><p id="target-summary"></p><section id="narration-review" hidden aria-label="Recorded narration"><h3>Recorded narration</h3><audio id="narration-audio" controls preload="none"></audio><p id="narration-source"></p><p id="narration-spans"></p></section></div><form id="step-form" class="step-form"><div class="step-heading"><h2 id="step-heading">Review step</h2><span id="label-provenance"></span></div><label>Title<input id="step-title" maxlength="60" required></label><label>Instruction<textarea id="step-instruction" rows="3" maxlength="240" required></textarea></label><div class="boundary-fields"><label>Start frame<input id="step-start" type="number" min="0" required></label><label>End (exclusive)<input id="step-end" type="number" min="1" required></label><label>Checkpoint<input id="step-checkpoint" type="number" min="0" required></label></div><div class="boundary-fields"><label>Active hands<select id="step-hands"><option value="right">Right hand</option><option value="left">Left hand</option><option value="both">Both hands</option></select></label><label>Completion<select id="step-mode"><option value="pose-match">Checkpoint pose</option><option value="path-and-pose">Ordered path + pose</option><option value="user-confirmed">Learner confirms</option></select></label></div><p class="review-hint">Keep a still, tracked hold at each end. Path targets are recalculated from the recording when you save.</p><button type="submit">Apply step edits</button></form><section class="reference-review" aria-label="Checkpoint reference"><h3>Reviewed checkpoint image</h3><p>Upload a captured view from this recording at the selected checkpoint. Save instruction edits first; later edits clear image approval.</p><label>Captured on headset <select id="reference-candidate"><option value="">Choose a captured view or upload a file</option></select></label><p id="reference-timing">Captured views need visual review; device delivery timing does not establish exact sensor alignment.</p><label>Captured image <input id="reference-file" type="file" accept="image/png,image/jpeg"></label><label>Scene source <select id="reference-source"><option value="quest-camera">Quest camera</option><option value="workspace-webcam">Workspace webcam (reduced demo)</option></select></label><label>Visible outcome <input id="reference-outcome" maxlength="240" placeholder="Describe only what can be seen"></label><button id="review-reference" type="button">Approve checkpoint image</button><img id="reference-preview" alt="Reviewed expert checkpoint" hidden><p id="reference-state">No approved view for this step.</p></section></div><div class="review-footer"><span id="revision-label"></span><button id="save-review" class="primary">Save reviewed draft</button><button id="finalize-guide">Finalize guide</button></div></div>
+      <div id="review-layout" class="review-layout" hidden><ol id="step-strip" class="step-strip" aria-label="Ordered steps"></ol><div class="review-body"><div class="review-preview"><div id="review-scene"></div><div class="frame-actions"><button id="show-start">Show start</button><button id="show-checkpoint">Show checkpoint</button><label>Frame <input id="review-frame" type="range" min="0" step="1"></label><output id="frame-label"></output></div><p id="target-summary"></p><section id="narration-review" hidden aria-label="Recorded narration"><h3>Recorded narration</h3><audio id="narration-audio" controls preload="none"></audio><p id="narration-source"></p><p id="narration-spans"></p></section></div><form id="step-form" class="step-form"><div class="step-heading"><h2 id="step-heading">Review step</h2><span id="label-provenance"></span></div><label>Title<input id="step-title" maxlength="60" required></label><label>Instruction<textarea id="step-instruction" rows="3" maxlength="240" required></textarea></label><div class="boundary-fields"><label>Start frame<input id="step-start" type="number" min="0" required></label><label>End (exclusive)<input id="step-end" type="number" min="1" required></label><label>Checkpoint<input id="step-checkpoint" type="number" min="0" required></label></div><div class="boundary-fields"><label>Active hands<select id="step-hands"><option value="right">Right hand</option><option value="left">Left hand</option><option value="both">Both hands</option></select></label><label>Completion<select id="step-mode"><option value="pose-match">Checkpoint pose</option><option value="path-and-pose">Ordered path + pose</option><option value="user-confirmed">Learner confirms</option></select></label></div><p class="review-hint">Keep a still, tracked hold at each end. Path targets are recalculated from the recording when you save.</p><button type="submit">Apply step edits</button></form><section class="reference-review" aria-label="Checkpoint reference"><h3>Reviewed checkpoint image</h3><p>Upload a captured view from this recording at the selected checkpoint. Save instruction edits first; later edits clear image approval.</p><label>Captured on headset <select id="reference-candidate"><option value="">Choose a captured view or upload a file</option></select></label><p id="reference-timing">Captured views need visual review; device delivery timing does not establish exact sensor alignment.</p><label>Captured image <input id="reference-file" type="file" accept="image/png,image/jpeg"></label><label>Scene source <select id="reference-source"><option value="quest-camera">Quest camera</option><option value="workspace-webcam">Workspace webcam (reduced demo)</option></select></label><label>Visible outcome <input id="reference-outcome" maxlength="240" placeholder="Describe only what can be seen"></label><button id="review-reference" type="button">Approve checkpoint image</button><img id="reference-preview" alt="Reviewed expert checkpoint" hidden><p id="reference-state">No approved view for this step.</p></section></div><section class="layout-review" aria-label="Starting arrangement review"><h3>Starting arrangement</h3><p>Save instruction edits first, then approve the view and describe the parts and their initial placement. Later edits clear image approval.</p><label>Starting image from headset<select id="layout-candidate"><option value="">Choose a captured start view</option></select></label><label>Upload starting image<input id="layout-file" type="file" accept="image/png,image/jpeg"></label><label>Starting image source<select id="layout-source"><option value="quest-camera">Quest camera</option><option value="workspace-webcam">Workspace webcam (reduced demo)</option></select></label><label>Starting arrangement notes<textarea id="layout-notes" maxlength="500" rows="3"></textarea></label><button id="approve-layout">Approve starting layout</button><img id="layout-preview" alt="Starting arrangement for review" hidden><p id="layout-state">No approved starting layout.</p></section><div class="review-footer"><span id="revision-label"></span><button id="save-review" class="primary">Save reviewed draft</button><button id="finalize-guide">Finalize guide</button></div></div>
     </section>
+    <section id="setup-panel" hidden aria-label="Learner starting layout"><h1>Arrange your workspace</h1><p>Use the same parts, scale and arrangement as the reviewed demonstration, then independently calibrate on Quest.</p><button id="reload-setup">Load ready guides</button><select id="setup-library" aria-label="Guide to set up"><option value="">Choose a ready guide</option></select><p id="setup-state" role="status">Pair as learner or author to view an approved starting layout.</p><img id="setup-image" alt="Reviewed starting arrangement" hidden><p id="setup-notes"></p></section>
     <section id="spectator-panel" hidden aria-label="Read-only spectator"><div class="author-heading"><div><h1>At the learner’s pace.</h1><p>Headset progress alongside an operator-selected action view. Movement matching does not verify assembly.</p></div><span id="spectator-connection" class="source-label">Disconnected</span></div><div class="spectator-stage"><span id="spectator-phase">Waiting for a learner</span><h2 id="spectator-step">No active step</h2><progress id="spectator-progress" max="1" value="0"></progress><p id="spectator-evidence">Only the headset can advance the guide.</p><div id="spectator-tracking"></div></div><section id="spectator-cast" class="spectator-cast" aria-label="Headset cast"></section><button id="spectator-reconnect">Reconnect spectator</button></section>`;
   const disposeCast = mountCast(node(root, '#spectator-cast'));
+  let startingLayout: StartingLayout | undefined;
   let candidates: (Omit<ReferenceImageUpload, 'image'> & { id: string })[] = [];
   let narrationUrl: string | undefined; let transcript: TranscriptResult | undefined;
   let tutorial: Tutorial | undefined; let recording: Recording | undefined; let draft: TutorialDraftEdit | undefined; let selected = 0; let dirty = false; let references: StepSceneReference[] = [];
@@ -40,12 +42,13 @@ export function mountWorkbench(root: HTMLElement) {
   const busy = async (action: () => Promise<void>) => {
     // Inputs are locked too: edits typed during an in-flight save would be replaced by the older server response.
     const controls = root.querySelectorAll<HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('button, input, select, textarea'); controls.forEach(control => { control.disabled = true; });
-    try { await action(); } catch (error) { status(error instanceof Error ? error.message : 'Operation failed.'); }
+    try { await action(); } catch (error) { const message = error instanceof Error ? error.message : 'Operation failed.'; status(message); if (!node(root, '#setup-panel').hidden) node(root, '#setup-state').textContent = message; }
     finally { controls.forEach(control => { control.disabled = false; }); updateReadOnly(); }
   };
   const updateReadOnly = () => {
     const ready = tutorial?.status === 'ready';
     root.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>('#step-form input, #step-form select, #step-form textarea, #step-form button').forEach(control => { control.disabled = !!ready; });
+    node<HTMLButtonElement>(root, '#approve-layout').disabled = !tutorial || !!ready || dirty;
     node<HTMLButtonElement>(root, '#review-reference').disabled = !tutorial || !!ready || dirty;
     node<HTMLButtonElement>(root, '#save-review').disabled = !tutorial || !!ready;
     node<HTMLButtonElement>(root, '#finalize-guide').disabled = !tutorial || !!ready || dirty || tutorial.provenance.labels === 'fallback';
@@ -134,6 +137,16 @@ export function mountWorkbench(root: HTMLElement) {
       } catch { node(root, '#narration-source').textContent = 'Automatic transcription unavailable. Listen and write instructions manually.'; }
     }
     candidates = await api(`/api/recordings/${tutorial.recordingId}/reference-images/query`) as typeof candidates;
+    const layoutResult = await api(`/api/tutorials/${tutorial.id}/layout/query`) as { layout: unknown; image: ReferenceImageUpload['image'] } | null;
+    startingLayout = layoutResult ? StartingLayoutSchema.parse(layoutResult.layout) : undefined;
+    const layoutSelect = node<HTMLSelectElement>(root, '#layout-candidate'); layoutSelect.replaceChildren(new Option('Choose a captured start view', ''));
+    const first = tutorial.steps[0]!;
+    for (const candidate of candidates) if (candidate.frameIndex >= first.startFrame && candidate.frameIndex < first.endFrameExclusive && Math.abs(recording.frames[candidate.frameIndex]!.tMs - recording.frames[first.startFrame]!.tMs) <= 250)
+      layoutSelect.add(new Option(`${candidate.source} · frame ${candidate.frameIndex}`, candidate.id));
+    node<HTMLTextAreaElement>(root, '#layout-notes').value = startingLayout?.notes ?? '';
+    node(root, '#layout-state').textContent = startingLayout ? 'Starting arrangement approved for this tutorial revision.' : 'No approved starting layout. Capture or upload a starting view and review it.';
+    const layoutImage = node<HTMLImageElement>(root, '#layout-preview'); layoutImage.hidden = !layoutResult;
+    if (layoutResult) layoutImage.src = `data:${layoutResult.image.mimeType};base64,${layoutResult.image.dataBase64}`;
     references = await api(`/api/tutorials/${tutorial.id}/references/query`) as StepSceneReference[]; draft = editOf(tutorial); selected = 0; dirty = false;
     node(root, '#review-layout').hidden = false; viewer?.dispose();
     try { viewer = createViewer(node(root, '#review-scene'), recording); } catch { node(root, '#review-scene').textContent = 'WebGL unavailable. Frame and target review remain available.'; }
@@ -179,7 +192,7 @@ export function mountWorkbench(root: HTMLElement) {
     await load(job.tutorialId); await library();
   }
   root.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(button => button.addEventListener('click', () => {
-    const view = button.dataset.view; authorPanel.hidden = view !== 'authoring'; spectatorPanel.hidden = view !== 'spectator'; node(root, '#pair-panel').hidden = view === 'fixture';
+    const view = button.dataset.view; authorPanel.hidden = view !== 'authoring'; spectatorPanel.hidden = view !== 'spectator'; node(root, '#setup-panel').hidden = view !== 'setup'; node(root, '#pair-panel').hidden = view === 'fixture';
     document.querySelectorAll<HTMLElement>('[data-fixture-view]').forEach(element => { element.hidden = view !== 'fixture'; });
     root.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(other => other.setAttribute('aria-pressed', String(other === button)));
     spectatorActive = view === 'spectator'; if (spectatorActive) connectSpectator(); else { clearTimeout(reconnect); socket?.close(); }
@@ -206,7 +219,7 @@ export function mountWorkbench(root: HTMLElement) {
   node(root, '#step-form').addEventListener('submit', event => { event.preventDefault(); captureFields(); renderSteps(); status('Edits applied locally. Save the draft to recalculate and validate targets.'); });
   node(root, '#step-form').addEventListener('input', () => { dirty = true; updateReadOnly(); });
   node(root, '#save-review').addEventListener('click', () => { void busy(async () => {
-    if (!tutorial || !draft) return; captureFields(); tutorial = TutorialSchema.parse(await api(`/api/tutorials/${tutorial.id}`, draft, 'PATCH')); draft = editOf(tutorial); references = []; dirty = false; renderSteps(); await library(); status('Reviewed draft saved. Targets were recalculated from the recording.');
+    if (!tutorial || !draft) return; captureFields(); tutorial = TutorialSchema.parse(await api(`/api/tutorials/${tutorial.id}`, draft, 'PATCH')); draft = editOf(tutorial); references = []; startingLayout = undefined; node(root, '#layout-state').textContent = 'Instruction edits cleared starting-layout approval. Review the image again.'; dirty = false; renderSteps(); await library(); status('Reviewed draft saved. Targets were recalculated from the recording.');
   }); });
   node(root, '#finalize-guide').addEventListener('click', () => { void busy(async () => {
     if (!tutorial || dirty) return; tutorial = TutorialSchema.parse(await api(`/api/tutorials/${tutorial.id}/finalize`, { baseRevision: tutorial.revision })); draft = editOf(tutorial); renderSteps(); await library(); status('Guide finalized. This version is ready to preload and cannot be edited.');
@@ -218,6 +231,50 @@ export function mountWorkbench(root: HTMLElement) {
     const preview = node<HTMLImageElement>(root, '#reference-preview'); preview.src = `data:${asset.image.mimeType};base64,${asset.image.dataBase64}`; preview.hidden = false;
     node<HTMLSelectElement>(root, '#reference-source').value = asset.source;
     node(root, '#reference-state').textContent = 'Unapproved captured view. Compare it with the checkpoint and describe only what is visible.';
+  }); });
+  node<HTMLSelectElement>(root, '#layout-candidate').addEventListener('change', () => { void busy(async () => {
+    const id = node<HTMLSelectElement>(root, '#layout-candidate').value; if (!id) return;
+    const asset = await api(`/api/reference-images/${id}/query`) as ReferenceImageUpload;
+    const image = node<HTMLImageElement>(root, '#layout-preview'); image.src = `data:${asset.image.mimeType};base64,${asset.image.dataBase64}`; image.hidden = false;
+    node<HTMLSelectElement>(root, '#layout-source').value = asset.source;
+    node(root, '#layout-state').textContent = 'Unapproved captured starting view. Compare the parts and placement before approving.';
+  }); });
+  node(root, '#approve-layout').addEventListener('click', () => { void busy(async () => {
+    if (!tutorial || !recording || dirty || tutorial.status === 'ready') throw new Error('Save the draft before reviewing its starting layout.');
+    const notes = node<HTMLTextAreaElement>(root, '#layout-notes').value.trim(); if (!notes) throw new Error('Describe the initial parts and placement.');
+    let assetId = node<HTMLSelectElement>(root, '#layout-candidate').value;
+    if (!assetId) {
+      const file = node<HTMLInputElement>(root, '#layout-file').files?.[0];
+      if (!file || file.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg'].includes(file.type)) throw new Error('Choose a captured start view or PNG/JPEG under 2 MiB.');
+      const image = await createImageBitmap(file); const { width, height } = image; image.close();
+      if (width > 1280 || height > 1280) throw new Error('Starting image dimensions must be at most 1280 pixels.');
+      const bytes = new Uint8Array(await file.arrayBuffer()); let binary = '';
+      for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      const sha256 = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(n => n.toString(16).padStart(2, '0')).join('');
+      const asset = await api('/api/reference-images', { recordingId: tutorial.recordingId, recordingHash: tutorial.recordingHash,
+        frameIndex: tutorial.steps[0]!.startFrame, source: node<HTMLSelectElement>(root, '#layout-source').value,
+        image: { mimeType: file.type, dataBase64: btoa(binary), width, height, sha256 } }) as { id: string };
+      assetId = asset.id;
+    }
+    const result = await api(`/api/tutorials/${tutorial.id}/layout`, { baseRevision: tutorial.revision, assetId, notes }, 'PUT') as { tutorial: unknown; layout: unknown };
+    tutorial = TutorialSchema.parse(result.tutorial); startingLayout = StartingLayoutSchema.parse(result.layout);
+    draft = editOf(tutorial); references = references.map(reference => ({ ...reference, tutorialRevision: tutorial!.revision }));
+    await load(tutorial.id); await library(); status('Starting layout approved. Learners can view it after the guide is finalized.');
+  }); });
+  node(root, '#reload-setup').addEventListener('click', () => { void busy(async () => {
+    const guides = await api('/api/tutorials/ready/query') as { id: string; title: string }[];
+    const select = node<HTMLSelectElement>(root, '#setup-library'); select.replaceChildren(new Option('Choose a ready guide', ''));
+    for (const guide of guides) select.add(new Option(guide.title, guide.id));
+    node(root, '#setup-state').textContent = `${guides.length} reviewed guide(s) available.`;
+  }); });
+  node<HTMLSelectElement>(root, '#setup-library').addEventListener('change', () => { void busy(async () => {
+    const id = node<HTMLSelectElement>(root, '#setup-library').value; const image = node<HTMLImageElement>(root, '#setup-image');
+    image.hidden = true; node(root, '#setup-notes').textContent = ''; if (!id) return;
+    const result = await api(`/api/tutorials/${id}/layout/query`) as { layout: unknown; image: ReferenceImageUpload['image'] } | null;
+    if (!result) { node(root, '#setup-state').textContent = 'This guide has no approved starting image. Ask its author to provide a reviewed arrangement.'; return; }
+    const layout = StartingLayoutSchema.parse(result.layout);
+    node(root, '#setup-state').textContent = `Reviewed starting view · ${layout.source} · tutorial revision ${layout.tutorialRevision}.`;
+    node(root, '#setup-notes').textContent = layout.notes; image.src = `data:${result.image.mimeType};base64,${result.image.dataBase64}`; image.hidden = false;
   }); });
   node(root, '#review-reference').addEventListener('click', () => { void busy(async () => {
     if (!tutorial || !recording || dirty || tutorial.status === 'ready') throw new Error('Save the draft before approving its checkpoint image.');

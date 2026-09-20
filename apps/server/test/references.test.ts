@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
@@ -8,6 +8,7 @@ import { createAuthoringFixture } from '@trail/motion';
 import { TutorialRepository } from '../src/storage/repository.js';
 import { ReferenceStore } from '../src/storage/references.js';
 import { digest } from '../src/storage/files.js';
+import { exportReadyTutorial } from '../../../scripts/export-ready-tutorial.js';
 
 it('binds decoded images to reviewed checkpoint revisions and invalidates approval on edits', { timeout: 20000 }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'trail-refs-'));
@@ -28,10 +29,30 @@ it('binds decoded images to reviewed checkpoint revisions and invalidates approv
     const reference = { id: 'checkpoint-view', recordingId: upload.id, recordingHash: hash, tutorialId: tutorial.id, tutorialRevision: tutorial.revision, stepId: tutorial.steps[0]!.id, assetId: asset.id, source: request.source, visibleOutcome: 'Large part is visible at the right side.' };
     const reviewed = await store.review(tutorial.id, { baseRevision: tutorial.revision, references: [reference] });
     await expect(store.review(tutorial.id, { baseRevision: tutorial.revision, references: [reference] })).rejects.toThrow('stale');
-    const ready = await repository.finalizeTutorial(tutorial.id, reviewed.tutorial.revision);
+    await expect(store.reviewLayout(tutorial.id, { baseRevision: reviewed.tutorial.revision, assetId: asset.id, notes: 'Initial setup' })).rejects.toThrow('starting arrangement');
+    const startAsset = await store.upload({ ...request, frameIndex: tutorial.steps[0]!.startFrame });
+    const layoutReview = await store.reviewLayout(tutorial.id, { baseRevision: reviewed.tutorial.revision, assetId: startAsset.id, notes: 'Place the block on the left of the mat.' });
+    expect((await repository.bundle(tutorial.id)).references[0]!.tutorialRevision).toBe(layoutReview.tutorial.revision);
+    await expect(store.reviewLayout(tutorial.id, { baseRevision: reviewed.tutorial.revision, assetId: startAsset.id, notes: 'Stale' })).rejects.toThrow('stale');
+    const ready = await repository.finalizeTutorial(tutorial.id, layoutReview.tutorial.revision);
+    const reloaded = await new ReferenceStore(new TutorialRepository(root)).layout(ready.id);
+    expect(reloaded!.layout.tutorialRevision).toBe(ready.revision); expect(reloaded!.image.sha256).toBe(digest(image));
+    await writeFile(join(root, 'pairing.json'), 'must-not-export');
+    const exported = join(root, 'export'); const manifest = await exportReadyTutorial(root, ready.id, exported);
+    expect(manifest.recordingSha256).toBe(hash); expect(await readdir(exported)).not.toContain('pairing.json');
+    expect(await new TutorialRepository(exported).tutorial(ready.id)).toEqual(ready);
+    expect((await new ReferenceStore(new TutorialRepository(exported)).layout(ready.id))!.image.sha256).toBe(digest(image));
+    await expect(exportReadyTutorial(root, ready.id, exported)).rejects.toThrow();
     const context: GuideContextRef = { runId:'run', tutorialId:ready.id,tutorialRevision:ready.revision,stepId:ready.steps[0]!.id,stepRevision:1,attemptId:'attempt' };
     const resolved = await store.resolveReferences(context); expect(resolved.references[0]!.reference.tutorialRevision).toBe(ready.revision); expect(resolved.references[0]!.image.sha256).toBe(digest(image));
     await expect(store.resolveReferences({ ...context, tutorialRevision: ready.revision-1 })).rejects.toThrow('revision');
     await expect(store.review(ready.id, { baseRevision: ready.revision, references: [] })).rejects.toThrow('stale');
+    const nextJob = await repository.compile(upload.id, hash, 2); const other = await repository.tutorial(nextJob.tutorialId!);
+    const approvedLayout = await store.reviewLayout(other.id, { baseRevision: other.revision, assetId: startAsset.id, notes: 'Arrange the parts.' });
+    const otherReference = { ...reference, tutorialId: other.id, tutorialRevision: approvedLayout.tutorial.revision };
+    const withEndpoint = await store.review(other.id, { baseRevision: approvedLayout.tutorial.revision, references: [otherReference] });
+    expect((await store.layout(other.id))!.layout.tutorialRevision).toBe(withEndpoint.tutorial.revision);
+    await repository.edit(other.id, { baseRevision: withEndpoint.tutorial.revision, steps: other.steps.map(step => ({ id: step.id, title: step.title, instruction: 'Move the large part.', startFrame: step.startFrame, endFrameExclusive: step.endFrameExclusive, checkpointFrame: step.checkpointFrame, activeHands: step.targets.map(target => target.side), completionMode: step.completionMode })) });
+    expect(await store.layout(other.id)).toBeNull(); expect((await repository.bundle(other.id)).references).toHaveLength(0);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

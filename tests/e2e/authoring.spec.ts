@@ -22,6 +22,13 @@ test('browser pairing, import, four-step review, immutable finalize and reload',
   await expect(page.locator('#author-status')).toContainText('Reviewed draft saved');
   await page.getByRole('button',{name:'Show checkpoint',exact:true}).click();
   await expect(page.locator('#frame-label')).toContainText('359');
+  // Deliberately synthetic image on a synthetic recording, never camera acceptance.
+  const image = await page.evaluate(() => { const canvas = document.createElement('canvas'); canvas.width = 32; canvas.height = 32; canvas.getContext('2d')!.fillRect(0, 0, 32, 32); return canvas.toDataURL('image/png').split(',')[1]!; });
+  await page.locator('#layout-file').setInputFiles({ name: 'synthetic-start.png', mimeType: 'image/png', buffer: Buffer.from(image, 'base64') });
+  await page.locator('#layout-source').selectOption('workspace-webcam');
+  await page.getByLabel('Starting arrangement notes').fill('Synthetic setup: place four large parts on the left of the mat.');
+  await page.getByRole('button', { name: 'Approve starting layout', exact: true }).click();
+  await expect(page.locator('#author-status')).toContainText('Starting layout approved');
   await page.getByRole('button',{name:'Finalize guide',exact:true}).click();
   await expect(page.locator('#author-status')).toContainText('Guide finalized');
   await expect(page.locator('#step-title')).toBeDisabled();
@@ -33,6 +40,12 @@ test('browser pairing, import, four-step review, immutable finalize and reload',
   const id=savedId; await page.getByLabel('Saved guides').selectOption(id!);
   await expect(page.locator('#author-status')).toContainText('Finalized guide loaded');
   await expect(page.locator('#step-strip li')).toHaveCount(4);
+  await page.getByRole('button', { name: 'Starting layout', exact: true }).click();
+  await page.getByRole('button', { name: 'Load ready guides', exact: true }).click();
+  await page.getByLabel('Guide to set up').selectOption(id!);
+  await expect(page.locator('#setup-notes')).toContainText('Synthetic setup: place four large parts');
+  await expect(page.locator('#setup-image')).toBeVisible();
+  await page.getByRole('button', { name: 'Author a guide', exact: true }).click();
   await page.getByRole('button',{name:'Create pairing code',exact:true}).click();
   await expect(page.locator('#invite-code')).toHaveText(/^[0-9]{8}$/);
   const inviteCode = (await page.locator('#invite-code').textContent())!;
@@ -50,7 +63,7 @@ test('browser pairing, import, four-step review, immutable finalize and reload',
   await spectator.getByRole('button',{name:'Connect workspace'}).click();
   await expect(spectator.locator('#pair-state')).toHaveText('Connected as spectator.');
   await expect(spectator.locator('#spectator-connection')).toHaveText('Stale or disconnected');
-  const published = await request.post('/api/guide-events', { headers:{Authorization:`Bearer ${learner.token}`},data:{schemaVersion:1,type:'snapshot',sessionId:learner.sessionId,runId:'browser-smoke-run',seq:1,tMs:100,state:{phase:'guiding',tutorialId:id,tutorialRevision:3,stepId:'step-1',stepRevision:1,attemptId:'attempt-1',dwellProgress:0,pathProgress:.4,nextGateByHand:{right:1},calibrationValid:true,tracking:{left:'missing',right:'valid'}}} });
+  const published = await request.post('/api/guide-events', { headers:{Authorization:`Bearer ${learner.token}`},data:{schemaVersion:1,type:'snapshot',sessionId:learner.sessionId,runId:'browser-smoke-run',seq:1,tMs:100,state:{phase:'guiding',tutorialId:id,tutorialRevision:4,stepId:'step-1',stepRevision:1,attemptId:'attempt-1',dwellProgress:0,pathProgress:.4,nextGateByHand:{right:1},calibrationValid:true,tracking:{left:'missing',right:'valid'}}} });
   expect(published.status()).toBe(204);
   await expect(spectator.locator('#spectator-connection')).toHaveText('Live headset state');
   await expect(spectator.locator('#spectator-step')).toContainText('Place part 1');

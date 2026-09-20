@@ -134,6 +134,10 @@ namespace Trail.Runtime.Coach
             peer?.Close(); peer?.Dispose(); peer = null;
             remoteTrack?.Dispose(); remoteTrack = null;
         }
+        private void Update()
+        {
+            if (peer != null && (Microphone == null || !Microphone.Held)) Fail(generation);
+        }
         private void OnDisable() { Close(); if (pump != null) StopCoroutine(pump); }
         private void OnDestroy() => Close();
     }

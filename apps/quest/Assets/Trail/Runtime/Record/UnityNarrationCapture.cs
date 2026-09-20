@@ -29,6 +29,7 @@ namespace Trail.Runtime.Record
             if (Microphone.devices.Length == 0) { Status = "No microphone is available for narration."; return false; }
             device = Microphone.devices[0];
             if (Microphone.IsRecording(device)) { Status = "End voice coaching before recording narration."; return false; }
+            if (!MicrophoneLease.TryAcquire(this)) { Status = "End voice coaching before recording narration."; return false; }
             try
             {
                 clip = Microphone.Start(device, true, 2, NarrationPcm.SampleRate);
@@ -98,6 +99,7 @@ namespace Trail.Runtime.Record
         {
             if (clip != null) { Microphone.End(device); Destroy(clip); clip = null; }
             ring = null;
+            MicrophoneLease.Release(this);
         }
         private void OnDisable() => Discard();
         private void OnApplicationPause(bool paused) { if (paused) Discard(); }

@@ -16,6 +16,7 @@ namespace Trail.Runtime.Scene
     {
         public int Order => 110;
         public bool CaptureEnabled { get; private set; }
+        public bool LayoutCaptureEnabled { get; private set; }
         public string Status { get; private set; } = "Expert endpoint photos off. Enable camera, then opt in before recording.";
         private CaptureReplaySession capture;
         private SceneCaptureController cameraSource;
@@ -23,6 +24,8 @@ namespace Trail.Runtime.Scene
         private NativeApiConnection connection;
         private PrivateExpertReferenceStore files;
         private readonly ExpertReferenceSamples samples = new ExpertReferenceSamples();
+        private readonly StartingLayoutReference layout = new StartingLayoutReference();
+        private bool nonceIsLayout, layoutAttempted;
         private string nonce;
         private double requestAt, nextRequestAt;
         private Recording committed;
@@ -53,20 +56,35 @@ namespace Trail.Runtime.Scene
         public void ToggleCapture()
         {
             CaptureEnabled = !CaptureEnabled;
-            if (!CaptureEnabled) ClearPending();
+            if (!CaptureEnabled)
+            {
+                samples.Clear();
+                if (nonce != null && !nonceIsLayout) { cameraSource.Cancel(); nonce = null; }
+            }
             Status = CaptureEnabled ? "Expert endpoint photos enabled. Hold the finished pose; only kept take frames become review candidates." : "Expert endpoint photos off.";
+        }
+        public void ToggleLayoutCapture()
+        {
+            LayoutCaptureEnabled = !LayoutCaptureEnabled;
+            if (!LayoutCaptureEnabled)
+            {
+                layout.Clear();
+                if (nonce != null && nonceIsLayout) { cameraSource.Cancel(); nonce = null; }
+            }
+            Status = LayoutCaptureEnabled ? "Starting-layout photo enabled. Keep both hands still briefly as the first action begins." : "Starting-layout photo off.";
         }
         private void ClearPending()
         {
             if (nonce != null && cameraSource != null) cameraSource.Cancel();
-            nonce = null; samples.Clear(); committed = null; nextRequestAt = 0;
+            nonce = null; samples.Clear(); layout.Clear(); layoutAttempted = false; committed = null; nextRequestAt = 0;
         }
         private void OnReduced(RecordingTransition transition, ReferenceObservation observation)
         {
             if (transition.ClearCommittedTakes || transition.DiscardPendingTake) ClearPending();
             foreach (var effect in transition.Effects)
                 if (effect.Kind == RecordingEffectKind.TakeArmed) ClearPending();
-            if (!CaptureEnabled) return;
+            if (!CaptureEnabled && !LayoutCaptureEnabled) return;
+            if (transition.State.Phase == RecordingPhase.Paused) layout.InvalidateAt(Now);
             if (transition.AdmitFrameAtMs.HasValue && observation != null)
             {
                 // MotionClock uses Stopwatch's origin; camera delivery uses Unity startup time.
@@ -76,30 +94,51 @@ namespace Trail.Runtime.Scene
                 var after = Now;
                 if (after >= before && after - before <= 5 &&
                     ExpertReferenceSamples.TryMapMotionTime(observation.TimestampMs, motionNow, (before + after) / 2, out var deliveredSample))
-                    samples.Admit(transition.AdmitFrameAtMs.Value, deliveredSample);
+                {
+                    var takeTime = transition.AdmitFrameAtMs.Value;
+                    if (CaptureEnabled) samples.Admit(takeTime, deliveredSample);
+                    if (LayoutCaptureEnabled)
+                    {
+                        var left = HandPalm.Point(observation.Left); var right = HandPalm.Point(observation.Right);
+                        if (!layoutAttempted && takeTime == 0 && (transition.State.TakeCount == 0 || transition.State.ReplaceIndex == 0))
+                        {
+                            layoutAttempted = true;
+                            if (layout.Arm(takeTime, deliveredSample, left, right)) RequestPhoto(true);
+                        }
+                        else layout.Observe(deliveredSample, left, right);
+                    }
+                }
             }
             // Only stable endpoint samples; no frame from the return-to-save gesture is requested.
-            if (transition.State.Phase != RecordingPhase.Recording || !transition.State.EndpointCandidateMs.HasValue ||
+            if (!CaptureEnabled || transition.State.Phase != RecordingPhase.Recording || !transition.State.EndpointCandidateMs.HasValue ||
                 Math.Abs(transition.State.EndpointCandidateMs.Value - transition.State.TakeMs) > .001 ||
                 nonce != null || Now < nextRequestAt || !cameraSource.ReadyForCapture ||
                 (connection.State == ConnectionState.Ready && connection.Role != "author")) return;
-            nonce = Guid.NewGuid().ToString("N"); requestAt = Now; nextRequestAt = Now + 200;
+            RequestPhoto(false);
+        }
+        private void RequestPhoto(bool startingLayout)
+        {
+            if (nonce != null || !cameraSource.ReadyForCapture || (connection.State == ConnectionState.Ready && connection.Role != "author")) return;
+            nonceIsLayout = startingLayout;
+            nonce = Guid.NewGuid().ToString("N"); requestAt = Now;
+            if (!startingLayout) nextRequestAt = Now + 200;
             try { cameraSource.RequestFrame(nonce); }
-            catch { nonce = null; Status = "Endpoint photo unavailable; recording continues without a visual candidate."; }
+            catch { nonce = null; Status = "Expert photo unavailable; recording continues without that visual candidate."; }
         }
         private void OnFrame(CapturedSceneFrame frame)
         {
-            if (nonce == null || frame.Ticket.Nonce != nonce || !CaptureEnabled) return;
+            if (nonce == null || frame.Ticket.Nonce != nonce || (nonceIsLayout ? !LayoutCaptureEnabled : !CaptureEnabled)) return;
             nonce = null;
             var candidate = new ExpertReferenceCandidate { Jpeg = (byte[])frame.Jpeg.Clone(), Width = frame.Width, Height = frame.Height,
                 Sha256 = frame.Sha256, DeliveredAtMs = frame.Ticket.DeliveredAtMs, SensorTimestampTicks = frame.Ticket.SensorTimestampTicks,
                 SourceSessionId = frame.Ticket.SourceSessionId, SourceFrameSequence = frame.Ticket.SourceFrameSequence };
-            if (!samples.Add(candidate)) { Status = "Photo had no nearby admitted motion frame; it was discarded."; return; }
+            if (nonceIsLayout ? !layout.Add(candidate) : !samples.Add(candidate))
+            { Status = "Photo missed its retained sample or stable starting pose; it was discarded."; return; }
             PersistCandidate();
         }
         private void OnCommitted(Recording recording)
         {
-            if (!CaptureEnabled || capture.LastAuthoringMetadata == null) return;
+            if ((!CaptureEnabled && !LayoutCaptureEnabled) || capture.LastAuthoringMetadata == null) return;
             committed = recording;
             trimStart = capture.LastAuthoringMetadata.Trim.StartMs;
             trimEnd = capture.LastAuthoringMetadata.Trim.EndMsExclusive;
@@ -108,10 +147,23 @@ namespace Trail.Runtime.Scene
         private void PersistCandidate()
         {
             if (committed == null) return;
-            var selected = samples.Select(committed, trimStart, trimEnd, out var index);
-            if (selected == null) { Status = "Take saved without a near-endpoint photo. Motion remains available for review."; return; }
-            try { files.Save(committed, selected, index); Status = "Endpoint photo saved privately for manual desktop review (delivery-aligned timing)."; }
-            catch (Exception) { Status = "Endpoint photo could not be saved; motion recording is unaffected."; }
+            try
+            {
+                var count = 0;
+                if (CaptureEnabled)
+                {
+                    var selected = samples.Select(committed, trimStart, trimEnd, out var index);
+                    if (selected != null) { files.Save(committed, selected, index); count++; }
+                }
+                if (LayoutCaptureEnabled)
+                {
+                    var selected = layout.Select(committed, trimStart, trimEnd);
+                    if (selected != null) { files.Save(committed, selected, 0, "starting-layout"); count++; }
+                }
+                Status = count == 0 ? "Take saved without a matching expert photo. Motion remains available for review." :
+                    count + " expert photo(s) saved privately for manual review (delivery-aligned timing).";
+            }
+            catch (Exception) { Status = "Expert photo could not be saved; motion recording is unaffected."; }
         }
         private void OnUploaded(Recording recording, string hash, string[] takeIds)
         {
@@ -127,16 +179,19 @@ namespace Trail.Runtime.Scene
             var recording = uploadRecording; var hash = uploadHash; var ids = uploadTakeIds;
             uploading = true;
             Action<int> next = null;
-            next = takeIndex => {
+            next = slot => {
                 if (generation != uploadGeneration) return;
-                if (takeIndex >= ids.Length) { uploading = false; Status = "Available endpoint photos uploaded as unapproved review candidates."; return; }
+                if (slot > ids.Length) { uploading = false; Status = "Available expert photos uploaded as unapproved review candidates."; return; }
+                var startingLayout = slot == 0;
+                var takeIndex = startingLayout ? 0 : slot - 1;
                 PrivateExpertReference candidate; int index;
                 try
                 {
-                    candidate = files.Load(ids[takeIndex]);
-                    if (candidate == null) { next(takeIndex + 1); return; }
+                    candidate = files.Load(ids[takeIndex], startingLayout ? "starting-layout" : "endpoint");
+                    if (candidate == null) { next(slot + 1); return; }
                     index = ExpertReferenceUploadIndex.Resolve(recording, takeIndex, candidate.frameIndex, candidate.frameCount, candidate.frameTimeMs);
-                    if (files.WasUploaded(recording.Id, index, candidate.sha256)) { next(takeIndex + 1); return; }
+                    if (startingLayout && index != 0) throw new IOException("Starting layout did not map to exported frame zero.");
+                    if (files.WasUploaded(recording.Id, index, candidate.sha256)) { next(slot + 1); return; }
                 }
                 catch (Exception) { uploading = false; Status = "Reference identity did not match the exported take; candidate was not uploaded."; return; }
                 // All strings originate from local UUID/hash validators or fixed MIME/source constants.
@@ -148,7 +203,7 @@ namespace Trail.Runtime.Scene
                     if (status != 200 && status != 201) { uploading = false; Status = "Candidate upload interrupted. Use Retry expert photo upload after pairing as author."; return; }
                     try { files.MarkUploaded(recording.Id, index, candidate.sha256); }
                     catch (IOException) { uploading = false; Status = "Candidate accepted but receipt could not be saved; desktop review can inspect it."; return; }
-                    next(takeIndex + 1);
+                    next(slot + 1);
                 });
             };
             next(0);

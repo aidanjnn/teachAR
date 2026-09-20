@@ -2,7 +2,7 @@
 
 Base: `bdfb757`, isolated worktree branch `codex/recording-integration`.
 This is an implementation checkpoint, **not a usable-Quest or learner acceptance signoff**.
-PR #19's rendering/bootstrap work remains a dependency.
+PR #19 through `de74ae7` is merged into this branch; physical rendering remains unverified.
 
 ## Published checkpoint
 
@@ -61,9 +61,9 @@ native tooling; no production check was weakened.
 | --- | --- |
 | Usable Quest | PR #19 rendering/passthrough, readable controls, connection and real bootstrap/device regression. This APK has not been installed by this task. |
 | Recording | Fresh expert capture, real return trimming, pause/replacement trials and UI placement on the headset. Confirm stable start/end holds needed by compilation. |
-| Narrated authoring | Native synchronized WAV capture, piecewise audio clock mapping, actual byte trimming/upload, transcript-to-motion labels, reviewed expert/start-layout images. Labels in the integration proof are manual/fallback. Local authoring metadata is not yet uploaded to the server. |
-| Native conversation | Actual provider/Quest speech, interruption, acoustic echo handling and simultaneous hands/XR. Unity's custom AudioSource microphone path does not establish platform AEC. |
-| Camera-to-speech | Real correct/wrong/obscured/adjusted Quest scenes and heard responses. Commands currently use explicit English phrases; adjusted checks require Resume/Cancel, Start voice, then another placement command. |
+| Narrated authoring | Implemented WAV capture/trimming/upload, transcript-to-motion authoring and reviewed endpoint/start images need fresh narrated device evidence. Synthetic proof uses disclosed mock/manual labels. |
+| Native conversation | Actual provider/Quest speech, interruption, acoustic echo handling and simultaneous hands/XR. Android session-bound AEC is implemented; device capability and effectiveness remain unverified. |
+| Camera-to-speech | Real correct/wrong/obscured/adjusted Quest scenes and heard responses. Commands use explicit English phrases; repeated checks restore prior listening intent. |
 | Spatial guidance | Independent cross-room calibration with held-out error, both-hand legibility, slow following, tracking recovery and asset/presentation work. |
 | Spectator | Verified action/ghost view, casting/audio and reconnect trials. |
 | Acceptance/package | Two task families, three consecutive runs, a non-builder completion, reproducible tested APK/server/tutorial, runbook and backup video. |
@@ -94,9 +94,20 @@ exports and injected media tests do not satisfy that milestone.
   stopped-stream detection and reconnect controls. Browser synthetic-stream tests
   do not prove actual Quest casting or audio.
 - PR #19 advanced to `de74ae7`; its duration-limit, trim-tail and lifecycle fixes
-  are being reconciled before final native validation.
+  were merged in `1d844a5` and passed native tests and an ARM64 build.
 
-The user confirmed no Quest is available. A separate starting-layout capture/review
-workflow and verified acoustic echo/interruption behavior remain software or
-integration gaps; hardware/learner gates cannot be completed in this session.
+- Starting-layout capture now requests one frame at the first kept action sample,
+  rejects late/moving/trimmed candidates, and persists it separately from endpoint
+  photos. Desktop approval binds the image/notes to the tutorial revision; learner
+  setup reloads approved ready layouts. C#/TypeScript contracts cover the sidecar.
+- Android voice now uses a real AudioRecord session and attaches Android AEC,
+  reporting unavailable/failed effects and requiring headphones in that case.
+  A shared microphone lease prevents concurrent narration/coaching ownership.
+- World-space TextMesh controls use an owned URP font-atlas material with stereo
+  support and dynamic atlas updates; actual headset readability is unverified.
+- A ready-tutorial export tool validates and packages only the selected recording,
+  narration, reviewed images and tutorial, excluding pairings and credentials.
+
+The user confirmed no Quest is available. Physical usability, camera clock accuracy,
+acoustic echo/interruption behavior and learner acceptance remain unverified.
 See `end-to-end-runbook.md` for the complete physical acceptance sequence.

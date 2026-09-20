@@ -32,6 +32,30 @@ namespace Trail.Tests.CoachRuntime
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
         [Test]
+        public void LayoutAndEndpointPersistIndependentlyAndReplacementDoesNotInheritLayout()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "trail-reference-test-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                var recording = Recording(); var store = new PrivateExpertReferenceStore(root);
+                var endpoint = Candidate(new byte[] { 1, 2, 3 });
+                var layout = Candidate(new byte[] { 4, 5, 6 });
+                store.Save(recording, endpoint, recording.Frames.Length - 1);
+                store.Save(recording, layout, 0, "starting-layout");
+                var reloaded = new PrivateExpertReferenceStore(root);
+                Assert.AreEqual(endpoint.Sha256, reloaded.Load(recording.Id).sha256);
+                Assert.AreEqual(layout.Sha256, reloaded.Load(recording.Id, "starting-layout").sha256);
+                Assert.AreEqual("starting-layout", reloaded.Load(recording.Id, "starting-layout").kind);
+                Assert.Throws<ArgumentException>(() => store.Save(recording, layout, 1, "starting-layout"));
+                var replacement = Recording(); store.Save(replacement, endpoint, replacement.Frames.Length - 1);
+                Assert.IsNull(store.Load(replacement.Id, "starting-layout"), "replacing action one needs its own actual start image");
+                var legacyPath = Path.Combine(root, "trail-expert-reference-candidates", Guid.Parse(recording.Id).ToString("N") + ".json");
+                File.WriteAllText(legacyPath, File.ReadAllText(legacyPath).Replace("\"kind\":\"endpoint\",", ""));
+                Assert.AreEqual(endpoint.Sha256, store.Load(recording.Id).sha256, "legacy endpoint filenames still load");
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
+        [Test]
         public void CorruptionAndPathTraversalAreRejectedBeforeImageUpload()
         {
             var root = Path.Combine(Path.GetTempPath(), "trail-reference-test-" + Guid.NewGuid().ToString("N"));

@@ -31,6 +31,13 @@ export async function registerStorageRoutes(app: FastifyInstance, repository: Tu
     scope.post('/api/reference-images', { ...author, bodyLimit: 3 * 1024 * 1024 }, request => references.upload(request.body as never));
     scope.post('/api/reference-images/:id/query', author, request => references.image(Id.parse(request.params).id));
     scope.post('/api/tutorials/:id/references/query', author, async request => (await repository.bundle(Id.parse(request.params).id)).references);
+    scope.put('/api/tutorials/:id/layout', author, request => references.reviewLayout(Id.parse(request.params).id, request.body));
+    scope.post('/api/tutorials/:id/layout/query', reader, async request => {
+      const id = Id.parse(request.params).id;
+      const role = auth.authorize(request, { roles: ['author', 'learner'] }).role;
+      if (role !== 'author' && (await repository.tutorial(id)).status !== 'ready') throw new StoreError(403, 'Starting layout requires a reviewed tutorial');
+      return references.layout(id);
+    });
     scope.put('/api/tutorials/:id/references', author, request => references.review(Id.parse(request.params).id, request.body));
     scope.post('/api/recordings/uploads/query', author, () => repository.pendingUploads());
     scope.post('/api/recordings', author, async request => {
@@ -89,6 +96,7 @@ export async function registerStorageRoutes(app: FastifyInstance, repository: Tu
     scope.get('/api/tutorial-jobs/:id', author, request => repository.files.read('jobs', Id.parse(request.params).id));
     scope.post('/api/tutorial-jobs/:id/query', author, request => repository.files.read('jobs', Id.parse(request.params).id));
     scope.get('/api/tutorials', reader, async request => { const role = auth.authorize(request, { roles: ['author', 'learner'] }).role; return (await repository.list()).filter(value => role === 'author' || value.status === 'ready'); });
+    scope.post('/api/tutorials/ready/query', reader, async () => (await repository.list()).filter(value => value.status === 'ready'));
     scope.post('/api/tutorials/query', author, () => repository.list());
     const getTutorial = async (id: string, role: string) => {
       const value = await repository.tutorial(id);

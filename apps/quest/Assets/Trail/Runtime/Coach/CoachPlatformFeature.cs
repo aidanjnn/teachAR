@@ -39,8 +39,7 @@ namespace Trail.Runtime.Coach
         private static TextMesh Label(Transform parent, string name, Vector3 position, float size)
         {
             var child = new GameObject(name); child.transform.SetParent(parent, false); child.transform.localPosition = position;
-            var label = child.AddComponent<TextMesh>(); label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            child.GetComponent<MeshRenderer>().sharedMaterial = label.font.material;
+            var label = child.AddComponent<TextMesh>(); WorldSpaceText.Configure(label);
             label.fontSize = 48; label.characterSize = size; label.anchor = TextAnchor.MiddleCenter; label.color = Color.white;
             return label;
         }
@@ -48,7 +47,8 @@ namespace Trail.Runtime.Coach
         {
             if (Coach == null) return;
             var hasGuide = Coach.Guide != null && Coach.Guide.Session != null;
-            status.text = hasGuide ? Wrap(Coach.Status, 60) : "Load a reviewed tutorial to start voice.";
+            var audioStatus = Coach.Microphone is UnityCoachMicrophone native ? "\n" + native.CapabilityStatus : "";
+            status.text = hasGuide ? Wrap(Coach.Status + audioStatus, 60) : "Load a reviewed tutorial to start voice.";
             var listening = Coach.Session != null && Coach.Session.State.Mode == CoachMode.Listening;
             buttons[0].text = "Start voice"; buttons[1].text = listening ? "Mute" : "Unmute"; buttons[2].text = "End voice";
             for (var i = 0; i < 3; i++) buttons[i].color = Enabled(i) ? Color.white : Color.gray;

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { rm, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { RecordingSchema, parseContractJson, TutorialSchema, TutorialDraftEditSchema, parseTutorialForRecording, type MotionFrame, type Recording, type Tutorial, type TutorialDraftEdit, type StepSceneReference, type TutorialLabelBatch, TutorialLabelBatchSchema } from '@trail/contracts';
+import { RecordingSchema, parseContractJson, TutorialSchema, TutorialDraftEditSchema, parseTutorialForRecording, type MotionFrame, type Recording, type Tutorial, type TutorialDraftEdit, type StepSceneReference, type StartingLayout, type TutorialLabelBatch, TutorialLabelBatchSchema } from '@trail/contracts';
 import { deriveStep, proposeSteps } from '@trail/motion';
 import { digest, PrivateFiles, StoreError } from './files.js';
 import { validateNarration } from './narration.js';
@@ -9,7 +9,7 @@ import type { AiProvider } from '../ai/provider.js';
 import { LabelRequestSchema, LabelResultSchema, TranscriptResultSchema } from '@trail/contracts';
 import { validateLabelOutput } from '../ai/labels.js';
 
-type TutorialBundle = { tutorial: Tutorial; references: StepSceneReference[] };
+type TutorialBundle = { tutorial: Tutorial; references: StepSceneReference[]; layout?: StartingLayout };
 type Upload = { id: string; status: 'uploading' | 'ready'; metadata: Omit<Recording, 'id' | 'frames'>; chunks: { hash: string; bytes: number; frames: number }[]; hash: string | null; narration?: { sha256: string; bytes: number }; format?: 'frames' | 'bytes' };
 export type CompileJob = { id: string; recordingId: string; recordingHash: string; segmentationRevision: number; status: 'running' | 'complete' | 'interrupted' | 'failed'; tutorialId: string | null; error: string | null };
 const MAX_CHUNK_BYTES = 2 * 1024 * 1024;
@@ -253,8 +253,9 @@ export class TutorialRepository {
       if (current.provenance.labels === 'fallback') throw new StoreError(409, 'Review and save instructions before finalizing');
       const { recording, sha256 } = await this.recording(current.recordingId);
       const next = parseTutorialForRecording({ ...current, status: 'ready', revision: current.revision + 1 }, recording, sha256);
-      const { references } = await this.bundle(id);
-      await this.files.write('tutorials', id, { tutorial: next, references: references.map(reference => ({ ...reference, tutorialRevision: next.revision })) });
+      const { references, layout } = await this.bundle(id);
+      await this.files.write('tutorials', id, { tutorial: next, references: references.map(reference => ({ ...reference, tutorialRevision: next.revision })),
+        ...(layout ? { layout: { ...layout, tutorialRevision: next.revision } } : {}) });
       return next;
     });
   }

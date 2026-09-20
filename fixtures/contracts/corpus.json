@@ -1,6 +1,18 @@
 {
   "cases": [
     {
+      "name": "valid starting-layout",
+      "contract": "StartingLayout",
+      "file": "starting-layout.json",
+      "valid": true
+    },
+    {
+      "name": "valid starting-layout-edit",
+      "contract": "StartingLayoutEdit",
+      "file": "starting-layout-edit.json",
+      "valid": true
+    },
+    {
       "name": "valid take-authoring",
       "contract": "TakeAuthoringMetadata",
       "file": "take-authoring.json",
@@ -155,6 +167,62 @@
       "contract": "RecordingByteChunk",
       "file": "recording-byte-chunk.json",
       "valid": true
+    },
+    {
+      "name": "starting-layout unknown field",
+      "contract": "StartingLayout",
+      "file": "starting-layout.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "starting-layout missing field",
+      "contract": "StartingLayout",
+      "file": "starting-layout.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "starting-layout-edit unknown field",
+      "contract": "StartingLayoutEdit",
+      "file": "starting-layout-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "starting-layout-edit missing field",
+      "contract": "StartingLayoutEdit",
+      "file": "starting-layout-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "baseRevision"
+          ],
+          "remove": true
+        }
+      ]
     },
     {
       "name": "take-authoring unknown field",
@@ -2962,6 +3030,62 @@
             "trimReason"
           ],
           "value": "duration-limit"
+        }
+      ]
+    },
+    {
+      "name": "layout frame outside recording limit",
+      "contract": "StartingLayout",
+      "file": "starting-layout.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "frameIndex"
+          ],
+          "value": 3600
+        }
+      ]
+    },
+    {
+      "name": "layout missing notes",
+      "contract": "StartingLayout",
+      "file": "starting-layout.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "notes"
+          ],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "name": "layout unsupported source",
+      "contract": "StartingLayout",
+      "file": "starting-layout.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "source"
+          ],
+          "value": "synthetic"
+        }
+      ]
+    },
+    {
+      "name": "layout edit negative revision",
+      "contract": "StartingLayoutEdit",
+      "file": "starting-layout-edit.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "baseRevision"
+          ],
+          "value": -1
         }
       ]
     }

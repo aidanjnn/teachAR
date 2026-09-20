@@ -15,6 +15,16 @@ internal static class Program
         var temp = Path.Combine(Path.GetTempPath(), "trail-narration-" + Guid.NewGuid().ToString("N"));
         try
         {
+            var voice = new object(); var narration = new object();
+            Check(Trail.Runtime.MicrophoneLease.TryAcquire(voice), "voice obtains process microphone lease");
+            Check(!Trail.Runtime.MicrophoneLease.TryAcquire(narration), "narration cannot overlap Android voice");
+            Trail.Runtime.MicrophoneLease.Release(narration);
+            Check(!Trail.Runtime.MicrophoneLease.TryAcquire(narration), "other owner cannot release voice lease");
+            Trail.Runtime.MicrophoneLease.Release(voice);
+            Check(Trail.Runtime.MicrophoneLease.TryAcquire(narration), "narration obtains released lease");
+            Check(!Trail.Runtime.MicrophoneLease.TryAcquire(voice), "voice cannot overlap narration");
+            Trail.Runtime.MicrophoneLease.Release(narration);
+            Reject(() => Trail.Runtime.MicrophoneLease.TryAcquire(null));
             var samples = new short[] { short.MinValue, -1, 0, 1, short.MaxValue };
             var wave = NarrationPcm.Encode(samples);
             Check(NarrationPcm.Decode(wave).SequenceEqual(samples), "PCM signed extremes round trip");

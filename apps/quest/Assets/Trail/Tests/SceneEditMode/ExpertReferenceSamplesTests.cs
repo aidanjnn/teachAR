@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Numerics;
 using Trail.Contracts;
 using Trail.Runtime.Scene;
 
@@ -36,6 +37,44 @@ namespace Trail.Tests.Scene
         public void ClockMappingRejectsFutureStaleInvalidAndPreStartupSamples(double sample, double motionNow, double cameraNow)
         {
             Assert.IsFalse(ExpertReferenceSamples.TryMapMotionTime(sample, motionNow, cameraNow, out _));
+        }
+        [Test]
+        public void StartingLayoutBindsOnlyActualFirstSampleAcrossDifferentClockOrigins()
+        {
+            Assert.IsTrue(ExpertReferenceSamples.TryMapMotionTime(9000000000 - 10, 9000000000, 1000, out var sampleTime));
+            var layout = new StartingLayoutReference();
+            Assert.IsTrue(layout.Arm(0, sampleTime, Vector3.Zero, Vector3.UnitX));
+            var image = Image(1020); Assert.IsTrue(layout.Add(image));
+            Assert.AreSame(image, layout.Select(Take(0, 100), 0, 101));
+            Assert.AreEqual(0, image.TakeMs); Assert.AreEqual(990, image.SampleMonoMs);
+        }
+        [TestCase(1050, true)]
+        [TestCase(1050.001, false)]
+        [TestCase(999, false)]
+        public void StartingLayoutDeliveryWindowNeverRelabelsLateImages(double delivery, bool accepted)
+        {
+            var layout = new StartingLayoutReference(); layout.Arm(0, 1000, Vector3.Zero, Vector3.UnitX);
+            Assert.AreEqual(accepted, layout.Add(Image(delivery)));
+        }
+        [Test]
+        public void StartingLayoutRejectsMotionBeforeDeliveryButPreservesAnEarlierValidSnapshot()
+        {
+            var layout = new StartingLayoutReference(); layout.Arm(0, 1000, Vector3.Zero, Vector3.UnitX);
+            layout.Observe(1020, new Vector3(.03f, 0, 0), Vector3.UnitX);
+            Assert.IsFalse(layout.Add(Image(1030)));
+            Assert.IsTrue(layout.Add(Image(1010)), "readback may finish after movement when the delivered view preceded it");
+            layout.Clear(); layout.Arm(0, 1000, Vector3.Zero, Vector3.UnitX);
+            layout.Observe(1020, null, Vector3.UnitX);
+            Assert.IsFalse(layout.Add(Image(1030)), "tracking loss cannot establish a stable start pose");
+        }
+        [Test]
+        public void StartingLayoutCannotSurviveStartTrimDiscardOrWrongFirstFrame()
+        {
+            var layout = new StartingLayoutReference(); layout.Arm(0, 1000, Vector3.Zero, Vector3.UnitX); layout.Add(Image(1030));
+            Assert.IsNull(layout.Select(Take(0, 100), 10, 111));
+            Assert.IsNull(layout.Select(Take(33, 100), 0, 101));
+            layout.Clear(); Assert.IsNull(layout.Select(Take(0, 100), 0, 101));
+            Assert.IsFalse(layout.Arm(33, 1000, Vector3.Zero, Vector3.UnitX), "never request a later sample as frame zero");
         }
         [Test]
         public void TrimExcludesReturnGestureAndSelectsLatestRetainedEndpoint()

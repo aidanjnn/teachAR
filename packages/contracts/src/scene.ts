@@ -3,6 +3,15 @@ import { CounterSchema, HashSchema, IdSchema, RevisionSchema, unique } from './c
 import { GuideContextRefSchema } from './guide.js';
 import { TutorialSchema, type Tutorial } from './tutorial.js';
 export const SceneSourceSchema = z.enum(['quest-camera', 'workspace-webcam']);
+/** Separately reviewed setup image; never an endpoint verdict or a progression target. */
+export const StartingLayoutSchema = z.strictObject({
+  schemaVersion: z.literal(1), recordingId: IdSchema, recordingHash: HashSchema,
+  tutorialId: IdSchema, tutorialRevision: RevisionSchema, assetId: IdSchema,
+  source: SceneSourceSchema, frameIndex: z.number().int().min(0).max(3599), notes: z.string().min(1).max(500),
+});
+export type StartingLayout = z.infer<typeof StartingLayoutSchema>;
+export const StartingLayoutEditSchema = z.strictObject({ baseRevision: RevisionSchema, assetId: IdSchema, notes: z.string().min(1).max(500) });
+export type StartingLayoutEdit = z.infer<typeof StartingLayoutEditSchema>;
 export const StepSceneReferenceSchema = z.strictObject({
   id: IdSchema, recordingId: IdSchema, recordingHash: HashSchema, tutorialId: IdSchema, tutorialRevision: RevisionSchema,
   stepId: IdSchema, assetId: IdSchema, source: SceneSourceSchema, visibleOutcome: z.string().min(1).max(2000),

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import sharp from 'sharp';
-import { ReferenceEditSchema, ReferenceImageUploadSchema, SceneReferenceManifestSchema, type GuideContextRef, type ReferenceImageUpload, type StepSceneReference } from '@trail/contracts';
+import { StartingLayoutSchema, StartingLayoutEditSchema, ReferenceEditSchema, ReferenceImageUploadSchema, SceneReferenceManifestSchema, type GuideContextRef, type ReferenceImageUpload, type StepSceneReference } from '@trail/contracts';
 import { TutorialRepository } from './repository.js';
 import { digest, StoreError } from './files.js';
 
@@ -62,8 +62,37 @@ export class ReferenceStore {
       const next = { ...tutorial, revision: tutorial.revision + 1 };
       const references = edit.references.map(reference => ({ ...reference, tutorialRevision: next.revision }));
       SceneReferenceManifestSchema.parse({ schemaVersion: 1, recordingId: tutorial.recordingId, recordingHash: tutorial.recordingHash, tutorialId: id, tutorialRevision: next.revision, references });
-      await this.repository.files.write('tutorials', id, { tutorial: next, references }); return { tutorial: next, references };
+      const { layout } = await this.repository.bundle(id);
+      await this.repository.files.write('tutorials', id, { tutorial: next, references, ...(layout ? { layout: { ...layout, tutorialRevision: next.revision } } : {}) }); return { tutorial: next, references };
     });
+  }
+  async reviewLayout(id: string, input: unknown) {
+    const edit = StartingLayoutEditSchema.parse(input);
+    return this.repository.files.serial(id, async () => {
+      const { tutorial, references } = await this.repository.bundle(id);
+      if (tutorial.status !== 'draft' || tutorial.revision !== edit.baseRevision) throw new StoreError(409, 'Layout review revision is stale');
+      const { recording } = await this.repository.recording(tutorial.recordingId);
+      const asset = await this.image(edit.assetId); const start = tutorial.steps[0]!.startFrame;
+      if (asset.recordingId !== recording.id || asset.recordingHash !== tutorial.recordingHash || asset.frameIndex < start || asset.frameIndex >= recording.frames.length ||
+          asset.frameIndex >= tutorial.steps[0]!.endFrameExclusive || Math.abs(recording.frames[asset.frameIndex]!.tMs - recording.frames[start]!.tMs) > 250)
+        throw new StoreError(409, 'Layout image must depict the recorded starting arrangement');
+      const next = { ...tutorial, revision: tutorial.revision + 1 };
+      const layout = StartingLayoutSchema.parse({ schemaVersion: 1, recordingId: recording.id, recordingHash: tutorial.recordingHash,
+        tutorialId: id, tutorialRevision: next.revision, assetId: asset.id, source: asset.source, frameIndex: asset.frameIndex, notes: edit.notes.trim() });
+      await this.repository.files.write('tutorials', id, { tutorial: next, references: references.map(reference => ({ ...reference, tutorialRevision: next.revision })), layout });
+      return { tutorial: next, layout };
+    });
+  }
+  async layout(id: string) {
+    const { tutorial, layout: stored } = await this.repository.bundle(id);
+    if (!stored) return null;
+    const layout = StartingLayoutSchema.parse(stored);
+    if (layout.tutorialId !== id || layout.tutorialRevision !== tutorial.revision || layout.recordingId !== tutorial.recordingId || layout.recordingHash !== tutorial.recordingHash)
+      throw new StoreError(409, 'Starting layout revision is stale');
+    const asset = await this.image(layout.assetId);
+    if (asset.recordingId !== layout.recordingId || asset.recordingHash !== layout.recordingHash || asset.source !== layout.source || asset.frameIndex !== layout.frameIndex)
+      throw new StoreError(409, 'Starting layout image binding changed');
+    return { layout, image: asset.image };
   }
   async resolveReferences(context: GuideContextRef) {
     const { tutorial, references } = await this.repository.bundle(context.tutorialId);
