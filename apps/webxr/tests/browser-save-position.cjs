@@ -11,7 +11,8 @@ const assert=require('node:assert/strict');
   const fail=m=>{throw Error(m);};const hand=p=>Array.from({length:25},()=>({p:[...p],q:[0,0,0,1]}));
   const pair=(x,z)=>({left:hand([x,1,z]),right:hand([x+.4,1,z])});
   let t=1000,data=pair(0,.3);Object.defineProperty(performance,'now',{configurable:true,value:()=>t});
-  const g=new TutorialGuide({speak:()=>{},exit:()=>{}});await g.restore();g.attach(new THREE.Scene());g.sample=()=>data[g.hand];g.begin('home');g.action('create');g.action('toggle-fluid');g.action('change-save-position');
+  const g=new TutorialGuide({speak:()=>{},exit:()=>{}});await g.restore();g.attach(new THREE.Scene());g.sample=()=>data[g.hand];g.begin('home');g.action('create');g.action('create-continue');g.stepByStep=false;g.action('toggle-fluid');g.action('change-save-position'); // Exercise legacy manual review mode.
+
   const session={visibilityState:'visible'},tick=(n=1)=>{for(let i=0;i<n;i++){t+=40;g.tick({},session,{},t);}};
   if(g.mode!=='save-home')fail('Create did not ask for save position first');
   const setupHud=document.createElement('canvas');setupHud.width=1080;setupHud.height=560;g.draw(setupHud.getContext('2d'),t,'');window.saveSetupHud=setupHud.toDataURL();
@@ -20,7 +21,7 @@ const assert=require('node:assert/strict');
   if(g.mode!=='setup-new'||!g.saveHomeWorld)fail('Stable save position not captured');
   const hud=document.createElement('canvas');hud.width=1080;hud.height=560;
   g.action('setup-ready');
-  const mark=p=>{data.right=hand(p);g.action('primary');t=g.pending.until-380;tick(11);};
+  const mark=p=>{data.right=hand(p);g.action('primary');t=g.pending.until-380;tick(52);};
   mark([0,1,0]);mark([.5,1,0]);g.action('placement-ready');
   const home=JSON.stringify(g.tutorial.save_position);if(g.mode!=='author'||!g.cleanSave||!g.tutorial.save_position)fail('Save zone not persisted after placement');
   if(Math.abs(g.tutorial.save_position.left[2]-.3)>.001)fail('Save position not workspace relative');

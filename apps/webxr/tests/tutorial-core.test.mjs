@@ -120,10 +120,10 @@ test('poor tracking cannot silently replace the moving hand with the resting han
   const data=tutorial();data.steps=[prepareStep(motion,'Move the part with the left hand.')];data.steps[0].reviewed=true;
   assert.equal(data.steps[0].quality.left_tracked_fraction,.75);
   assert.equal(data.steps[0].quality.right_tracked_fraction,1);
-  assert.throws(()=>finishTutorial(data),/Choose required hands/);
+  assert.throws(()=>finishTutorial(data),/Required left hand is missing/);
   const follower=new TutorialFollower(data.steps[0]);
   for(let t=0;t<5000;t+=40)follower.update({left:null,right:hand(.3)},t);
-  assert.deepEqual(requiredHands(data.steps[0]),[]);assert.equal(follower.done,false);
+  assert.deepEqual(requiredHands(data.steps[0]),['left','right']);assert.equal(follower.done,false);
   data.steps[0].guide_hands='left';
   assert.throws(()=>finishTutorial(data),/Required left hand is missing/);
   assert.deepEqual(requiredHands(data.steps[0]),['left']);
@@ -147,14 +147,14 @@ test('one-hand lessons can be explicitly reviewed without requiring the unused h
   assert.equal(follower.done,true);
 });
 
-test('old automatic-hand completions migrate to reviewable drafts without losing motion',()=>{
+test('old automatic-hand completions default to both without losing motion',()=>{
   const finished=finishTutorial({...tutorial(),steps:tutorial().steps.map(s=>({...s,reviewed:true}))});
   for(const selection of [undefined,'recorded']){
     const old=structuredClone(finished);old.steps[0].guide_hands=selection;
     const restored=validateTutorial(JSON.parse(JSON.stringify(old)));
-    assert.equal(restored.completion,null);assert.equal(restored.steps[0].reviewed,false);
+    assert(restored.completion);assert.equal(restored.steps[0].guide_hands,'both');
     assert.deepEqual(restored.steps[0].frames,old.steps[0].frames);
-    assert.match(learningReadiness(restored).message,/Choose required hands/);
+    assert.equal(learningReadiness(restored).ready,true);
   }
   const damaged=structuredClone(finished);damaged.steps[0].frames[10].left=null;
   assert.equal(validateTutorial(damaged).completion,null);

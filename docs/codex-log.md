@@ -1295,6 +1295,136 @@ Publication follow-up: the user requested pushing this cleanup and opening a PR.
 - **Validation:** Added five cases to the existing fluid-recovery workflow. Four failed before the runtime repairs (resumed capture, countdown, hold draft, finish draft); all 19 recovery cases passed afterward. The complete WebXR suite passed 106 Node tests, 53 Python tests and 17 synthetic browser workflows. All eight desktop Chromium workflows passed. Reused `1f9079d`'s passing `pnpm check` (365 tests, typechecks/builds) and fixture validation after confirming their TypeScript, dependency, build and fixture inputs are unchanged. JavaScript syntax and patch whitespace passed.
 - **Evidence boundary:** Software and synthetic media/provider results only; no new Quest/human or live-provider validation. Hosted checks and review-thread resolution are verified after pushing the repair. No merge is part of this request.
 
+## 2026-09-20 — Natural headset commands and origami planning
+
+User selected a paper crane demo and requested natural spoken actions/help inside
+Quest. Integrated main's PR #28 voice services and apps/webxr relocation with the
+pending immersive/fluid UI stack. Added local context-checked navigation, recording,
+save and help commands, paired bounded ASR/structured intent, and one-use short TTS
+replies. Quest Browser inspection found AudioWorklet and microphone APIs available
+but `speechSynthesis` absent; replies therefore use decoded server audio. Added a
+single-origin headset launcher. See `headset-voice-and-origami.md` for ownership,
+limits, full test procedure, paper-corner proposal and remaining hardware evidence.
+Live API smoke used synthetic speech and five intent examples; go-back, replay,
+save, negation and instruction requests mapped correctly. TTS produced valid audio.
+No claim of physical crease verification or automatic object-to-XR registration.
+
+
+
+### 2026-09-20 — Voice validation and latest-main integration
+
+- Merged main `dfaf572` (PR #30), preserving the hand-asset fallback fix and its
+  regression. Paired-browser testing caught GET status lacking the Origin required
+  by cookie authentication; switched voice preflight to POST and added a cookie-role
+  regression. Added a bounded audio-playback wait so stalled output cannot keep the
+  command loop busy indefinitely; use the device's native audio sample rate.
+- `pnpm check` passed 372 tests across 34 files plus typechecks/builds. Fixture
+  validation and eight paired desktop workflows passed. Full WebXR suite passed
+  112 Node tests, 53 Python tests and 17 synthetic browser workflows. Focused voice
+  browser/Node/API regressions passed again after the final playback changes.
+- Live provider smoke: five text intents (previous, replay, save, negation/no action,
+  read instruction), synthetic-speech transcription and TTS succeeded. Connected
+  Quest Browser 152 inspection confirmed microphone/AudioWorklet availability and
+  no browser speechSynthesis. In a separate in-memory guide in that browser, synthetic
+  speech passed through real ASR/intent and changed index 1→0; generated MP3 decoded.
+  Playback completion was NOT observed: its audio clock stalled in remote testing,
+  including a top-page probe. Sound heard by a wearer and real microphone recognition
+  remain unverified. Probes were removed and audio stopped; existing tutorial/scene/
+  IndexedDB were not modified. No claim of full human headset acceptance.
+- Replaced only this task's old Python port4345 server with the paired Fastify API,
+  preserved the Quest localhost4345 origin and USB reverse, and paired that browser.
+  Private existing credentials are read by the server only. Users must exit AR and
+  reload before using new modules. See the handoff for fresh wearing-headset checks.
+
+
+### 2026-09-20 — Voice PR #31 catches the completed fluid-UX merge
+
+Main advanced to `f5182af` / PR #29 during publication. Preserved its unified
+unfinished-take guard (extended across Voice/help/settings), accepted-segment media
+and storage recovery, narration-issue handling, review acceptance invalidation and
+countdown cancellation on panel manipulation. Removed the older inline manipulation
+override so it cannot shadow the repaired guide method. Reused unchanged shared/API
+check and fixture evidence; reran the combined WebXR and eight desktop workflows.
+
+The reconciled WebXR gate passed 112 Node tests, 53 Python tests and 18 browser
+workflows; all eight desktop workflows passed. A final focused synthetic browser
+case also drove spoken-action dispatch through the real countdown, continuous step
+save, durable write and tutorial finalization methods. These are software proofs,
+not a human crane or microphone acceptance run. PR #31 was verified mergeable.
+
+## 2026-09-20 — Polished instruction narration
+
+User confirmed original step narration is audible on the headset and clarified the desired
+learner experience: concise professional instructions derived from the expert's explanation,
+spoken through the voice pipeline. Added an explicit draft/review/generate flow in AR and
+browser review, preserved original narration, stored portable generated speech on each step,
+and decoupled speech speed/duration from ghost motion. Preview waits for generated speech
+before offering the start pose; playback has no provider calls. Edited wording and trimmed
+motion invalidate previous speech. Added paired author-only, bounded generation routes and
+failure/stale/persistence tests. See `docs/polished-instruction-voice.md` for ownership and
+headset acceptance. This is general task/origami infrastructure, not a crane-specific lesson.
+
+Validation: 377 shared/API cases with typecheck/build, fixtures, eight desktop workflows,
+115 WebXR module cases, 53 Python cases and 20 synthetic browser workflows passed.
+Focused provider/label cases passed after refining the prompt to avoid invented force or
+axis terms observed in the first live synthetic test. Final live synthetic input produced
+concise faithful wording and generated speech. Inspected AR, 1100 px and 375 px review UI.
+Updated the task-owned 4345 server and re-paired the existing Quest tab without reloading
+or editing its library. Original narration audibility was user-reported; new generated
+voice still requires the user's worn-headset acceptance.
+
+## 2026-09-20 — Spatial panel rotation and resizing
+
+Added explicit Move, Rotate, Resize and Face me grips to the WebXR main panel; the
+workspace timer has independent rotation, resizing and facing in addition to dragging
+its surface. Rotation uses grab-relative quaternions around a stationary center. Resize
+is bounded to 65–160%, and entry animations preserve the user size. Settings can bring
+the panel to the viewer or reset the layout. Grips follow theme tokens and highlight
+on pinch. Presentation changes pause capture/guidance, preserve calibration/motion,
+suppress release clicks, and cancel on missing pose/focus/session/reference-space loss.
+Layout remains session-local; this does not expose an OS window API.
+
+Validation: full WebXR gate passed 115 Node cases, 53 Python cases and 21 synthetic
+browser workflows. New browser cases cover relative rotation from existing orientation,
+back-facing recovery, bounded resize, entrance-size retention, missing input, independent
+timer transforms, unchanged workspace and pause on all grips. Actual Three.js render
+inspected at 1200 px and 375 px. Reused previous passing shared/API build, fixture and
+desktop evidence because those inputs are unchanged. No new paid API calls. Actual
+worn-Quest rotation feel and grip targeting remain to be tested; exit AR and reload
+the existing localhost4345 origin to load the new modules.
+
+## 2026-09-20 — Reported headset voice and workflow repairs
+
+Fixed the browser-native fetch receiver in VoiceCommands: assigning bare fetch to an
+instance and invoking it as a method caused Illegal invocation before status/commands
+reached the server. Added a native-browser-fetch regression rather than relying only
+on injected function mocks. Enabling voice returns to the task; pause/resume/navigation
+also work in review. Narration no longer closes the listening gate; the microphone uses
+echo cancellation, processing pauses preview/progression, and replies remain excluded.
+Acoustic echo and live mic acceptance still require the worn headset.
+
+Library selection opens tutorial detail with Edit/Follow. AR entry remains Home; Follow
+leads to setup then placement. Edit opens review, requesting placement only for spatial
+preview or another recording. Manual capture inherits selected capture hands; legacy
+missing choices open explicit Left/Right/Both controls. Review's main actions are fewer;
+advanced editing remains under More options. Button fill is neutral until targeted or
+selected, including light mode.
+
+Finish now persists the original tutorial, automatically prepares concise narration and
+speech sequentially, then saves generated assets. Existing voices are not regenerated.
+Ambiguous wording keeps its original; provider/auth/allowance failure stops further
+requests and reports partial completion. No per-step approval is fabricated: generated
+wording is not expert-reviewed, while explicit movement acceptance remains. Cancellation
+and late result guards preserve the saved original. Manual editing remains available.
+
+Validation: pnpm check passed 378 shared/API cases with typecheck/build; fixtures and
+eight desktop workflows passed. WebXR passed 117 Node cases, 53 Python cases and 22
+synthetic browser workflows. Focused repair/review/UI tests rerun for final edits. Actual
+AR review/detail canvases and desktop detail at 1100 px/375 px inspected. No paid inference
+or personal recording was used. Restarted only task-owned port4345 (PID21379); health is
+good. Quest disconnected during update; USB forwarding and author pairing could not be
+restored, and new physical microphone/echo tests remain pending reconnect.
+
 ### 2026-09-20 — Curate OpenAI track evidence and verify the Codex improvement story
 
 - **User goal / input:** Strengthen the Codex log and supporting documentation for the supplied OpenAI judging criteria; suggest improvements to the demo. The user reports using GPT-Live and Codex for implementation. No product feature, publication or submission was requested in this turn.
@@ -1359,6 +1489,19 @@ Publication follow-up: the user requested pushing this cleanup and opening a PR.
 - **Review round (PR #32):** the automated code review returned 14 findings and Aidan's staff review requested changes (P1 quiet-reopen, P2 SDK close-before-reject, P2 held narration surviving Stop). The pinned SDK has no response cancel or turn-boundary event, so the quiet-reopen was removed: after a step change, playback stays muted and captions stay stale until the learner's next words, as before this branch; the queued Ask makes that a one-press recovery. The greeting is now requested by the browser after `session.started` (`POST /api/live/sessions/:id/greeting`, once per session) instead of being fired before the SDP answer reaches the headset. A close during startup no longer bypasses failure reporting or the session DELETE, and start failures are classified through the SDK error's `cause` chain with the server's refusal reason kept. Held step narration is tagged with the guide epoch and dropped on Stop, leave and invalidation; a learner line that arrives well after the coach's last words starts a new caption and transcript line; the queued Ask shows as `Ask queued…`; a control channel abandoned by a gone client still receives `session.close`; coach errors reach the AR detail line only in learn modes; the transition disclaimer keeps its line; the bundle-load error keeps its cause; a non-secure origin is named as such; the caption gap constant is shared. Declined: none of the findings were rejected.
 - **Not changed, by choice:** the 10 s listen window (it re-arms on speech); one browser per demo (the registry caps eight sessions and closes the oldest); PR 25/29 remain off `main` and conflict with the voice files in `ar.js`, `tutorial.html` and `server.py`; whoever lands them must keep the coach hooks.
 
+### 2026-09-20 — Catch headset voice PR #31 up with main
+
+- **Scope:** Merged main `4e38d2e` into PR #31 from `27fc710` in an isolated checkout. Reconciled the AR voice hooks so command microphone exclusion, generated narration and spatial controls coexist with main's coach error reporting, epoch-tagged held speech and session cleanup. Preserved the panel-reset action, coach readiness behavior and both activity histories.
+- **Validation:** Frozen installation and WebXR setup passed. On the reconciled tree, `pnpm check` passed typechecks, 384 tests across 35 files and builds; `pnpm validate:fixtures` passed; desktop E2E passed all eight workflows on owned port 3591. `pnpm test:webxr` passed 115 Node tests, 53 Python tests and all 21 synthetic browser workflows. JavaScript syntax and patch whitespace checks passed. Existing Vite bundle-size warnings are non-failing.
+- **Evidence boundary:** Automated and synthetic browser validation only; no new provider calls or worn-headset acceptance. The original dirty checkout and existing PR work were preserved.
+
+### 2026-09-20 — Reconcile workflow repairs with team voice updates
+
+Preserved remote `47017b3` and main `4e38d2e` voice-coach updates while retaining the native-fetch fix and narration interruption. Resolved only the AR hook and additive log conflicts. Revalidated the combined tree: 385 shared/API tests, typechecks/builds, fixtures, eight desktop workflows, 117 WebXR Node cases, 53 Python cases and 22 synthetic browser workflows passed. Task server restarted as PID22451 on port4345; health passes. Quest remains disconnected; USB forwarding, fresh author pairing and real microphone acceptance are pending. No paid inference or personal recordings used.
+
+### 2026-09-20 — Simplify headset creation, placement and voice feedback
+
+Fixed XR-origin reset routing that opened calibration before tutorial selection. Added Create onboarding, default both hands with optional overrides, a stationary-second plus one-second save circle, trimmed step saves and rest-position-triggered three-second next-take countdowns. Separated Save step from Finish tutorial; retained automatic narration polishing. Added explicit Watch & do for tasks where exact hand following is unsuitable. Status defaults below the main panel; microphone activity uses a compact icon. Common spoken commands skip intent inference after transcription; arbitrary wording keeps the model fallback. Hologram rendering still consumes raw tracking without changing detection. Physical object registration, task resizing and occluded-hand grading remain unsupported. Final integration and validation results follow below.
 ### 2026-09-20 — Catch OpenAI evidence PR #34 up with main
 
 - **Scope:** Merged main `4e38d2e` into PR #34 from `c97dc8a` in an isolated checkout. Retained the OpenAI/Codex brief, case studies, README links and both activity histories alongside the newly merged voice demo hardening. No runtime, dependency or test difference from the new base.
@@ -1371,8 +1514,75 @@ Publication follow-up: the user requested pushing this cleanup and opening a PR.
 - **Validation:** Frozen installation and WebXR setup passed. `pnpm check` passed typechecks, 394 tests across 34 files and builds; `pnpm validate:fixtures` passed; desktop E2E passed all eight workflows on owned port 3593. The complete WebXR suite passed, including the real bundled Sentry payload/privacy regression with external telemetry and provider calls disabled. JavaScript syntax, history preservation and patch whitespace checks passed; existing Vite bundle-size warnings are non-failing.
 - **Evidence boundary:** Automated and synthetic browser checks only; no new Sentry-hosted, provider or headset/human validation. This is a base catchup; the existing review finding about attributing unrelated state changes to a pending interaction remains separate. The original dirty checkout and existing Sentry worktree were preserved.
 
+### 2026-09-20 — Catch headset voice up after Sentry merges
+
+- **Scope:** Fast-forwarded the isolated PR #31 catchup branch to the team's latest voice fixes at `5ef71dc`, then merged main `4f2f4d5` (Sentry PR #33). Combined diagnostic observations and disposal with voice-command shutdown, narration cleanup and unfinished-polishing navigation protection. Served both voice and telemetry assets, retained exact dependency pins, and preserved both dated activity histories.
+- **Validation:** Frozen installation and WebXR setup passed. The reconciled tree passed `pnpm check` (407 tests across 36 files, typechecks and builds), fixture validation, all eight desktop E2E workflows on owned port 3591, and the complete WebXR suite (154 Node tests, 61 Python tests, 25 synthetic browser workflows). Includes Sentry payload/privacy, actual runtime observation, voice, auto-polish and flow-repair regressions. JavaScript/Python syntax, README local links/fences, history preservation and patch whitespace checks passed. Existing Vite bundle-size warnings are non-failing.
+- **Evidence boundary:** Automated and synthetic browser checks only, with external telemetry and paid provider calls disabled. No new hosted Sentry, provider, headset or physical-task acceptance. Original dirty files and other development worktrees were preserved.
+
+Final validation for simplified flow: preserved remote a0b1ae0 (including Sentry). Typechecks/builds and 408 shared/API tests passed; fixtures and eight desktop E2E workflows passed; the full WebXR suite passed 155 Node cases, 61 Python cases and all 26 synthetic browser workflows. Legacy review tests now explicitly exercise optional/manual review while new authoring tests cover default-both, pre-circle motion/audio trimming, next-take countdown and Home/reset recovery. Spatial checks use updated world matrices and verify UI transforms leave calibration unchanged. Actual AR canvases and desktop/mobile layouts inspected.
+
+Task-owned server restarted as PID26511 on port4345; USB reverse 4321/4345 restored, Quest author paired, health passes. One bounded live-provider probe used synthetic speech in the connected Quest browser: native fetch worked, a separate in-memory guide moved back one step, and reply audio decoded. It did not open the microphone, play audible speech or modify personal recordings. Worn-headset gesture/microphone/performance acceptance remains pending. Command pipeline remains clip-based; no automatic object registration or hidden-hand grading is claimed.
 ### 2026-09-20 — Catch OpenAI evidence up after Sentry merges
 
 - **Scope:** Merged main `4f2f4d5` (Sentry PR #33) into documentation PR #34 from `73c9c25`. Retained both branches' complete dated activity entries and all README navigation. The resulting PR still changes only README and the three OpenAI/Codex documentation files.
 - **Validation:** All 31 focused follower, practice-regression and coach tests passed. Checked 97 local documentation links and 16 immutable file references, balanced fences, preserved histories and patch whitespace; no new broken paths. Existing historical native-file links remain unchanged. Application/browser gates are not rerun for this documentation-only diff.
 - **Evidence boundary:** Automated checks only. No new provider, hosted Sentry or headset/human evidence; the original dirty checkout remains untouched.
+
+## Assisted workspace, unified live actions and forgiving practice — September 20, 2026
+
+The user asked to wire the audited improvements into the running WebXR product:
+reference-assisted markers, responsive live commands and polished narration,
+native-like panel grips, rename/delete/edit library controls, and a general
+following experience that does not demand synchronized tracing. Kept the existing
+Create/Library and gesture capture flow from #31; merged current main at 26c2162.
+
+Implemented one GPT-Live-1 session with locally checked, deduplicated action tools
+and context refresh when selecting tutorials. Home publishes generic app controls
+rather than coaching a restored draft. Added real microphone-level indication,
+stop/visibility cleanup, Marin narration and removal of sequential polish delays.
+Added opt-in JPEG landmark suggestions/reference matching, saved names/photo,
+stable median fingertip marking and smaller placement adjustments. Added durable
+rename/delete with stale-tab deletion tombstones. Default practice now repeats the
+ghost with untimed palm-proximity feedback; optional ordered guidance remains.
+Moved grips below the panel, constrained rotation to yaw, added corner resizing,
+and preserved a minimum status-panel gap across scale changes. Raw tracking,
+recorded scale and local progression authority remain separate from rendering/AI.
+
+Validation: pnpm check passed typechecking, 411 tests across 37 files and builds;
+fixture validation passed; eight Playwright end-to-end cases passed; WebXR suite
+passed 159 Node tests, 61 Python tests and all 27 isolated browser workflows.
+Updated guided-only regressions to opt into Guided explicitly and added coverage
+for the new default, library tombstones, live context refresh, tool duplication/
+staleness, landmark schema serialization and stable capture. Inspected the rendered
+3D panel/grips and fixed overlap at small panel scales and distorted grip labels.
+
+Separate live probes used the connected Quest browser, not a simulated WebRTC API:
+synthetic speech "Can you go back please?" executed previous-step in an isolated
+sample tutorial and returned streamed GPT-Live speech. Action time was 4.207 s
+from utterance start (includes speaking time); no claim of instant replies. Real
+TTS returned in about 1.53 s and decoded on Quest; playback was muted. Synthetic
+paper-image suggestions returned in about 2.2 s. The first probe exposed an SDK
+strict-schema tuple incompatibility, which was repaired and regression-tested.
+Correct landmark labels had approximate pixel positions, so manual physical
+confirmation remains necessary. No real room image or user recording was used.
+
+Not verified by these checks: worn-headset microphone/echo with narration,
+comfortable panel manipulation, measured headset rendering rate, physical landmark
+accuracy and relocation. No automatic 3D registration, variable-size retargeting,
+contact/crease verification or hidden-hand reconstruction was added. New integration
+and rehearsal guidance lives in docs/assisted-workspace-experience.md. #35 OMNI
+advice remains separate from explicit locally checked user actions.
+
+### Quick voice-noise follow-up
+
+The user supplied direct-answer latency measurements and reported periodic robotic
+welcome speech. Confirmed no probe/playback process remained. The tutorial still
+called the browser SpeechSynthesis welcome/announcement path when live voice was
+off; removed that path for tutorial mode and hid its legacy toggle. Cancelled
+queued system speech where available and disabled the toggle in the connected
+Quest tab. Recorded narration and OpenAI audio are unchanged. Strengthened the
+existing no-delegation policy for all tutorial questions and banned waiting filler;
+actions still require the registered tool path. The supplied measurements predate
+action tools, so removing all delegation would break that path. No new latency
+claim: 14 focused provider/prompt tests and server build passed.

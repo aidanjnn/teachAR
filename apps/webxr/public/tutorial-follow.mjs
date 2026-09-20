@@ -9,9 +9,9 @@ export function requiredHands(step){
   const choice=step.guide_hands;
   if(choice==='left'||choice==='right')return [choice];
   if(choice==='both')return ['left','right'];
-  // Missing/legacy automatic selection requires author review. Coverage must
-  // never remove the hand performing the demonstrated movement.
-  return [];
+  // Both is the default, including legacy recordings. Missing tracking never
+  // silently reduces the required hands.
+  return ['left','right'];
 }
 export function guidanceReadiness(step){
   const hands=requiredHands(step);

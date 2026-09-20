@@ -1,4 +1,4 @@
-// Desktop-page controls for the voice coach. Start here, before entering AR; the headset panel only exposes Ask.
+// Optional desktop diagnostics for the same coach used by immersive live voice.
 import {CAPTION_GAP_MS,LEARNER_TURN_MS} from './tutorial-coach.mjs';
 export function mountCoachPanel(guide,coach,{tell}){
   const $=id=>document.getElementById(id);
@@ -16,6 +16,7 @@ export function mountCoachPanel(guide,coach,{tell}){
     else if(state.pairing==='paired')bits.push(`Paired as ${state.role}.`);
     else if(state.pairing==='none')bits.push('Server without pairing: coaching from the steps in this browser.');
     if(state.mode==='connecting')bits.push('Connecting…');
+    else if(state.mode==='live'&&guide.voice?.live)bits.push('Live voice ready. Speak naturally.');
     else if(state.mode==='live')bits.push(state.listenRequested?'Ask queued: the microphone opens as soon as the step update is acknowledged.':'Live voice ready. Press Ask, or choose Ask coach inside AR, then speak.');
     else if(state.mode==='listening')bits.push('Listening…');
     else if(state.mode==='text')bits.push('Text answers only; live voice is not available from this server.');
@@ -35,6 +36,7 @@ export function mountCoachPanel(guide,coach,{tell}){
     current[entry.role]={el:line(entry.role,text),at:now};
   });
   $('coach-start').onclick=async()=>{
+    if(guide.voice?.live){await guide.voice.start();return;}
     const tutorial=guide.tutorial;
     if(!tutorial.steps.length){tell('Record or open a tutorial before starting the coach.');return;}
     $('coach-start').disabled=true;
@@ -54,12 +56,12 @@ export function mountCoachPanel(guide,coach,{tell}){
     const answer=await coach.askText(question);if(!answer)tell('Start the coach before asking.');
   };
   $('coach-question').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();$('coach-ask-text').click();}};
-  $('coach-stop').onclick=()=>coach.stop();
+  $('coach-stop').onclick=()=>guide.voice?.live?guide.voice.stop():coach.stop();
   // A coach started for one tutorial must not keep answering after the expert swaps or edits it: the published guide no longer matches.
   const previous=guide.onChange;
   guide.onChange=()=>{
     previous?.();
-    if(coach.active&&(guide.tutorial.id!==coach.tutorialId||guide.tutorial.revision!==coach.tutorialRevision)){
+    if(coach.active&&!guide.voice?.live&&(guide.tutorial.id!==coach.tutorialId||!guide.voice?.authoring&&guide.tutorial.revision!==coach.tutorialRevision)){
       coach.stop();status.textContent='Coach stopped because the tutorial changed. Start it again for the current steps.';
     }
   };

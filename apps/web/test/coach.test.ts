@@ -448,3 +448,18 @@ describe('coach text path', () => {
     coach.dispose();
   });
 });
+
+describe('continuous live command tools',()=>{
+ it('executes a completed tool once, rejects stale context, and keeps listening without clip uploads',async()=>{
+  const fake=fakeTransport();let local='step-1';const actions:string[]=[];
+  const coach=createCoach({context,continuous:true,actionContext:()=>local,onAction:action=>{actions.push(action);return {ok:true,message:'Paused.'};},fetchImpl:okFetch(sessionOk),getUserMedia:async()=>stream,transportFactory:()=>fake.transport});
+  const connecting=coach.connect();await vi.advanceTimersByTimeAsync(0);fake.emit(started);await connecting;
+  expect(coach.state.mode).toBe('listening');await vi.advanceTimersByTimeAsync(11000);expect(coach.state.mode).toBe('listening');
+  const delegation=(id:string)=>fake.emit({type:'session.delegation.created',event_id:id,offset_ms:0,delegation:{id,target:'responses',type:'delegation'}});
+  const tool=(id:string,call:string)=>fake.emit({type:'response.event',event_id:call,delegation_id:id,event:{type:'response.output_item.done',item:{type:'function_call',name:'trail_action',call_id:call,arguments:'{"action":"pause"}'}}});
+  delegation('d1');tool('d1','c1');tool('d1','c1');await vi.advanceTimersByTimeAsync(0);expect(actions).toEqual(['pause']);
+  expect(fake.sent.filter(e=>e.type==='response.item.create')).toHaveLength(1);
+  delegation('d2');local='step-2';tool('d2','c2');tool('missing','c3');await vi.advanceTimersByTimeAsync(0);expect(actions).toEqual(['pause']);
+  const outputs=fake.sent.filter(e=>e.type==='response.item.create');expect(outputs).toHaveLength(3);expect(JSON.stringify(outputs.at(-1))).toContain('false');coach.dispose();
+ });
+});

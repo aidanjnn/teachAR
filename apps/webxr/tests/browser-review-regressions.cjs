@@ -78,8 +78,8 @@ const assert=require('node:assert/strict');
 
       const invalid=await reviewing(),step=invalid.player.step;
       step.guide_hands='recorded';step.frames[10].left=null;
-      invalid.action('primary');check(!step.reviewed&&invalid.problem.includes('Choose required hands'),'Automatic hand selection was approved');
-      invalid.action('guide-hands');invalid.action('primary');
+      invalid.action('primary');check(!step.reviewed&&invalid.problem.includes('Required left hand is missing'),'Default-both tracking gap was approved');
+      check(invalid.mode==='review-step','Tracking gap should remain in review');invalid.action('choose-hands');invalid.action('hands-left');invalid.action('primary');
       check(!step.reviewed&&invalid.problem.includes('Required left hand is missing'),'Tracking gap was approved');
       check(invalid.mode==='review-step'&&!invalid.tutorial.completion,'Unfollowable recording escaped review');await invalid.saveQueue;invalid.endSession();
 
@@ -94,7 +94,7 @@ const assert=require('node:assert/strict');
     require('node:fs').writeFileSync('/tmp/trail-pr17-save-failure.png',Buffer.from((await page.evaluate(()=>window.saveFailurePreview)).split(',')[1],'base64'));
     await page.reload();await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.locator('[data-route=library]').first().click();
     const legacy=page.locator('.library-item').filter({hasText:'Legacy automatic hand choice'});
-    await legacy.getByRole('button',{name:'Review draft'}).click();
+    await legacy.getByRole('button',{name:'Open tutorial'}).click();await page.locator('#selected-edit').click();
     await page.locator('#guide-hands').selectOption('both');await page.locator('#reviewed').check();
     await page.locator('#save-step-edits').click();
     await page.waitForFunction(()=>document.querySelector('#review-status').textContent.includes('Required left hand is missing'));

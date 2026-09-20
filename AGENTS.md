@@ -19,7 +19,7 @@ TypeScript diagnostics, authoring, storage and provider services. Use
 paired step-text voice coaching and narration drafting. Fresh visual coaching
 and concurrent headset voice acceptance remain pending. The clean UI is connected to real actions; its standalone
 preview remains simulated. Read [the UI base](docs/web-ui-base.md) and
-[practice flow](docs/web-practice-flow.md) and [immersive entry](docs/web-immersive-entry.md) and [fluid workspace](docs/web-fluid-workspace.md) before extending the tutor.
+[practice flow](docs/web-practice-flow.md), [immersive entry](docs/web-immersive-entry.md) and [fluid workspace](docs/web-fluid-workspace.md) and [headset voice](docs/headset-voice-and-origami.md) and [assisted workspace](docs/assisted-workspace-experience.md) before extending the tutor.
 
 Implement the requested work and necessary validation. Preserve unrelated work.
 A build request does not authorize publication; review is read-only unless fixes
@@ -72,8 +72,9 @@ The current Python server remains a loopback development service, not a public h
 
 ## Product and data invariants
 
-- The headset browser alone owns live learner progression. AI, backend and
-  spectators cannot advance it or invent movement coordinates.
+- The headset browser alone owns live learner progression. AI inferences, backend and
+  spectators cannot infer completion or invent movement coordinates. Explicit spoken
+  user navigation is allowlisted and revalidated locally.
 - Preserve PR #17's browser format `trail.tutorial.prototype.v3`, import migrations,
   IndexedDB names and `/tutorial` route. The shared API's v1 recording/tutorial
   schema is separate. Never submit one format as the other without a validated,
@@ -92,8 +93,12 @@ The current Python server remains a loopback development service, not a public h
   execute I/O. Keep ghost rendering separate from real hand observations.
 - Save success follows the durable IndexedDB write. Preserve explicit review,
   manual alternatives to save gestures, import validation and recovery behavior.
-- Practice previews each step, then waits at the start before ordered movement
-  gates and automatic next-step preview. The final “Movements finished” state and
+  Finishing now auto-polishes usable narration after persisting the original tutorial.
+  Generated wording is not expert-reviewed: retain movement acceptance, skip ambiguous
+  wording, preserve original audio and bound sequential provider requests.
+- Repeat & practise is the default: looping demonstration and untimed proximity
+  never complete a task. Optional Guided movement previews each step, then waits
+  at the start before ordered movement gates and automatic next-step preview. The final “Movements finished” state and
   `movement_step_completed` events are movement-only, with physical results
   unverified. Automatic transitions must not call `TutorialPlayer.confirm()` or
   populate learner-self-confirmed results. A physical-result gate is separate

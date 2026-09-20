@@ -1,6 +1,8 @@
+import {validateLandmarks} from './workspace-assist.mjs';
 // Portable, bounded tutorial data. No XR, rendering, provider or storage dependency.
 import {JOINTS, tracked} from './motion-core.mjs';
 import {validateNarration,trimNarration} from './narration-core.mjs';
+import {validateInstructionVoice} from './instruction-voice.mjs';
 import {guidanceReadiness,MAX_SAMPLE_GAP_MS} from './tutorial-follow.mjs';
 export {MAX_SAMPLE_GAP_MS} from './tutorial-follow.mjs';
 export const MAX_FRAMES=5400, MAX_STEPS=12, MAX_TOTAL_FRAMES=12000;
@@ -108,14 +110,16 @@ export function validateTutorial(input){
     step.id=id(s.id,uid);if(ids.has(step.id))throw Error('Duplicate step IDs.');ids.add(step.id);
     // Derived duration/quality and verification claims are never trusted on import.
     if(s.guide_hands!==undefined&&!['recorded','left','right','both'].includes(s.guide_hands))throw Error('Invalid guiding hands.');
-    step.guide_hands=s.guide_hands||'recorded';
+    step.guide_hands=!s.guide_hands||s.guide_hands==='recorded'?'both':s.guide_hands;
     step.reference=validateReference(s.reference);step.cues=validateCues(s.cues);step.reviewed=s.reviewed===true&&input.schema!=='trail.tutorial.prototype.v1'&&step.guide_hands!=='recorded';
     if(s.acceptance!=null&&!['hold','finish'].includes(s.acceptance))throw Error('Invalid step acceptance.');step.acceptance=s.acceptance||null;
     step.narration=validateNarration(s.narration,step.duration_ms);step.narration_issue=s.narration_issue?boundedText(s.narration_issue,240,'Narration issue'):null;
+    step.instruction_voice=validateInstructionVoice(s.instruction_voice,step.instruction);
     return step;
   });
   const result={...newTutorial(input.title),id:id(input.id,uid),revision:Number.isSafeInteger(input.revision)&&input.revision>=0?input.revision:0,
     calibration_span_m:input.calibration_span_m??null,save_position:validateSavePosition(input.save_position),steps,source:input.source==='synthetic-fixture'?'synthetic-fixture':'live-capture',setup:boundedText(input.setup??'',2000,'Starting layout')};
+  if(input.workspace_reference){const reference=validateReference(input.workspace_reference);result.workspace_reference={...reference,...validateLandmarks(input.workspace_reference)};}
   const completed=input.completion;
   if(input.schema===SCHEMA&&record(completed)&&completed.revision===result.revision&&typeof completed.finished_at==='string'&&completed.finished_at.length<=40&&Number.isFinite(Date.parse(completed.finished_at))&&authoringReadiness(result).ready)
     result.completion={revision:result.revision,finished_at:completed.finished_at,kind:steps.some(s=>!s.reviewed)?'expert-accepted; physical result unverified':'expert-reviewed; physical result unverified'};
@@ -165,7 +169,7 @@ export class TutorialPlayer{
     const sample=this.step.frames.findLast(f=>f.t<=this.time)||this.step.frames[0];
     return this.time-sample.t>MAX_SAMPLE_GAP_MS?{t:this.time,left:null,right:null}:sample;
   }
-  replay(){this.time=0;this.paused=false;this.finished=false;}
+  replay(){this.time=0;this.paused=false;this.audioPaused=false;this.finished=false;this.playbackRevision=(this.playbackRevision||0)+1;}
   previous(){this.index=Math.max(0,this.index-1);this.replay();}
   confirm(){
     if(!this.step||this.finished)return this.finished;

@@ -32,7 +32,6 @@ for(const [name,expected] of Object.entries(handManifest.sha256)){
  const data=await readFile(resolve(root,'public/assets/hands',name));
  if(createHash('sha256').update(data).digest('hex')!==expected)throw Error(`Unexpected hand asset: ${name}`);
 }
-
 // The coach runtime is bundled from apps/web so the tutor and the desktop share one implementation.
 const coach=resolve(root,'public/vendor/trail-coach.js');
 if(process.env.TRAIL_REBUILD_COACH==='1'||!(await readFile(coach).then(()=>true,()=>false))){

@@ -92,3 +92,7 @@ are separate work when needed; movement progress does not prove object correctne
 ## Validation and publication boundaries
 
 See the latest [activity log](codex-log.md) for exact software checks on this branch. No new live provider or headset test is claimed. Keep recordings, narration, camera frames, credentials, `.runtime`, `.secrets`, virtual environments and model weights out of Git. Published source does not copy this browser origin's private library; existing tutorials remain on the original device/origin. Export/import locally if a test requires transfer.
+
+## Natural headset voice follow-up
+
+[Headset voice and origami](headset-voice-and-origami.md) documents the integrated immersive command/help surface, paired bounded natural-language actions, server speech playback, tests and headset acceptance gaps. Explicit spoken navigation does not verify movement or physical results.

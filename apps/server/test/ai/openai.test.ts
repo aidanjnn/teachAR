@@ -33,7 +33,7 @@ describe('openai provider labels', () => {
     let seen: { schemaName?: string; model?: string } = {};
     const provider = createOpenAiProvider({ ...models, gateway: gateway({ parseJson: (async (input: { schemaName: string; model: string }) => { seen = input; return { status: 'ok', parsed: goodLabels }; }) as OpenAiGateway['parseJson'] }) });
     const result = await provider.label(labelRequest, signal);
-    expect(result.provenance).toEqual({ labels: 'model', model: 'gpt-4.1-mini', promptVersion: 'labels-v1' });
+    expect(result.provenance).toEqual({ labels: 'model', model: 'gpt-4.1-mini', promptVersion: 'labels-v2-concise-instructions' });
     expect(result.labels[1]?.title).toBe('Move 2');
     expect(seen).toMatchObject({ schemaName: 'segment_labels', model: 'gpt-4.1-mini' });
   });
@@ -71,7 +71,7 @@ describe('openai provider coach', () => {
 });
 
 describe('openai provider live sessions', () => {
-  it('builds a locked-down session: approved instructions, no tools, allow-listed browser events', () => {
+  it('builds a locked-down session: approved instructions, one local action tool, allow-listed browser events', () => {
     const params = buildLiveSessionParams(coachRequest.context, 'v=0 offer', models);
     expect(params.transport).toEqual({ type: 'webrtc', sdp: 'v=0 offer' });
     expect(params.session.model).toBe('gpt-live-1');
@@ -80,7 +80,9 @@ describe('openai provider live sessions', () => {
     expect(params.session.audio).toEqual({ output: { voice: 'marin' } });
     expect(params.session.delegation).toMatchObject({ type: 'responses', responses: { model: 'gpt-5.6-luna', max_output_tokens: 200 } });
     const responses = params.session.delegation?.type === 'responses' ? params.session.delegation.responses : undefined;
-    expect(responses?.tools).toBeUndefined();
+    expect(responses?.tools).toHaveLength(1);
+    expect(responses?.tools?.[0]).toMatchObject({type:'function',name:'trail_action',strict:true});
+    expect(responses?.parallel_tool_calls).toBe(false);
     expect(responses?.tool_choice).toBeUndefined();
     expect(params.session.client?.data_channel.allowed_client_events).toEqual(BROWSER_CLIENT_EVENTS);
     expect(BROWSER_CLIENT_EVENTS).not.toContain('session.instructions.append');

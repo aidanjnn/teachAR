@@ -56,8 +56,6 @@ the coach says one short greeting when its session opens, so you hear the audio 
 the Quest are not yet verified; [docs/voice-demo-checklist.md](../../docs/voice-demo-checklist.md)
 is the rehearsal list for that.
 
-[Fluid workspace and continuous recording](../../docs/web-fluid-workspace.md) describes hold rings, Home navigation, keyboard search, acceptance provenance and the Quest boundary limitation.
-
 ## What is included
 
 - `/tutorial`: immersive Home/Create/Library, searchable local library, movable panels and surface timer, continuous hold-to-save segments or optional return-to-save mode, hand-motion capture/pause/resume, clean-save trimming, review, automatic device-local library, explicit import/export, workspace placement, paired holographic ghosts, live palm zones and learner-paced checkpoints.
@@ -88,7 +86,7 @@ pnpm setup:webxr
 pnpm test:webxr
 ```
 
-The suite runs Node and Python unit tests plus twenty browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data, disabled provider credentials and disabled external Sentry delivery, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
+The suite runs Node and Python unit tests plus synthetic browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data, disabled provider credentials and disabled external Sentry delivery, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
 
 Hosted CI runs this suite alongside the existing repository checks. Neither these tests nor `pnpm check` establish headset tracking accuracy or physical task success. The latest packaging result is in [the activity log](../../docs/codex-log.md).
 
@@ -124,3 +122,7 @@ movements are not proof that a shirt was folded or a part seated correctly.
 `TRAIL_PYTHON=/path/to/python3.12` during setup to choose a Python interpreter;
 test runs can use that variable for an existing environment with the requirements
 installed. The server remains a loopback development service.
+
+## Natural voice inside AR
+
+Use the paired unified server (`pnpm build && pnpm start:headset`) for microphone commands and AI spoken replies. The standalone Python server remains hands-only/camera lab. Read [headset voice setup, commands and origami scope](../../docs/headset-voice-and-origami.md).

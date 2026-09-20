@@ -25,7 +25,8 @@
     "dev:xr": "pnpm --filter @trail/webxr dev",
     "setup:webxr": "pnpm --filter @trail/webxr run setup",
     "test:webxr": "pnpm --filter @trail/webxr test",
-    "quest:open": "pnpm --filter @trail/webxr quest:open"
+    "quest:open": "pnpm --filter @trail/webxr quest:open",
+    "start:headset": "node scripts/start-headset.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

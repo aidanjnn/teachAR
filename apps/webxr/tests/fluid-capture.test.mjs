@@ -4,8 +4,8 @@ const hand=x=>Array.from({length:25},()=>({p:[x,0,0],q:[0,0,0,1]}));
 const hands=x=>({left:hand(x),right:hand(x+.3)});
 test('stationary hands never arm a segment; movement and sustained hold do',()=>{
  const s=new HoldSegmenter();for(let t=0;t<4000;t+=40)assert(!s.update(hands(0),t));
- let saved=false;for(let t=4000;t<5600;t+=40)saved=s.update(hands(.2),t)||saved;assert(saved);
- s.reset();for(let t=5600;t<9600;t+=40)assert(!s.update(hands(.2),t));
+ let saved=false;for(let t=4000;t<6400;t+=40)saved=s.update(hands(.2),t)||saved;assert(saved);
+ s.reset();for(let t=6400;t<10400;t+=40)assert(!s.update(hands(.2),t));
 });
 test('missing active hand, focus interruption and frame stalls reset the hold',()=>{
  for(const interruption of ['missing','pause','stall']){
@@ -37,4 +37,15 @@ test('explicit required hands cannot silently shrink to the visible hand',()=>{
  const s=new HoldSegmenter();s.reset('both');
  for(let t=0;t<4000;t+=40)assert(!s.update({right:hand(t<40?0:.2)},t));
  assert.deepEqual(s.sides,['left','right']);assert.equal(s.progress,0);
+});
+
+
+test('save circle starts after a full second and cutoff excludes the circle',()=>{
+ const s=new HoldSegmenter();s.reset('both');s.update(hands(0),0);
+ for(let t=40;t<1040;t+=40){assert(!s.update(hands(.12),t));assert.equal(s.progress,0);}
+ assert(!s.update(hands(.12),1040));assert.equal(s.progress,0);assert.equal(s.cutoff(1040),1040);
+ for(let t=1080;t<2040;t+=40)assert(!s.update(hands(.12),t));
+ assert(s.update(hands(.12),2040));assert.equal(s.cutoff(2040),1040);
+ s.update(hands(.25),2080);assert.equal(s.progress,0);assert.equal(s.cutoff(2080),1040);
+ s.interrupt();assert.equal(s.cutoff(2100),null);
 });

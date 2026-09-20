@@ -6,7 +6,8 @@ const assert=require('node:assert/strict');
   try{
     const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
     await page.route('**/api/**',async route=>{
-      assert.equal(route.request().method(),'GET','Narration must never upload audio or invoke a paid provider');
+      if(new URL(route.request().url()).pathname==='/api/voice/polish'){assert.equal(route.request().method(),'POST');return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Synthetic provider unavailable; keep original narration.'})});}
+      assert.equal(route.request().method(),'GET','Only explicit tutorial finishing may request automatic polishing');
       await route.fulfill({contentType:'application/json',body:JSON.stringify({enabled:false,automatic:{enabled:false},capture:{source:'quest'}})});
     });
     await page.addInitScript(()=>{

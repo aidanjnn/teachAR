@@ -3,22 +3,22 @@ const assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader','--mute-audio']});try{
  const context=await browser.newContext({viewport:{width:1280,height:1100}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));await context.route('**/api/**',async r=>{assert.equal(r.request().method(),'GET');await r.fulfill({contentType:'application/json',body:'{"automatic":{"enabled":false}}'});});
- await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/`);await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.getByRole('button',{name:'Create tutorial',exact:true}).click();
- await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#notice').textContent.includes('Describe the starting setup'));
- await page.locator('#setup-from-pose').check();await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#setup-status').textContent.includes('Setup saved'));
+ await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.getByRole('button',{name:'Create tutorial',exact:true}).click();
+ await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#setup-status').textContent.includes('Setup saved'));
+ await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#setup-status').textContent.includes('Setup saved'));
  const result=await page.evaluate(async()=>{
   const THREE=await import('/vendor/three.module.js'),{TutorialGuide,tutorialButton}=await import('/tutorial-guide.mjs');
   const {syntheticTutorial}=await import('/tutorial-review.mjs'),{finishTutorial}=await import('/tutorial-core.mjs');
   const {toWorld}=await import('/motion-core.mjs'),{saveTutorial,loadTutorial,listTutorials,draftVersion}=await import('/tutorial-store.mjs');
   const fail=m=>{throw Error(m);};const original=syntheticTutorial();original.title='Recorded movement test';original.steps.forEach(s=>{s.guide_hands='both';s.reviewed=true;});const demo=finishTutorial(original);
   await saveTutorial(demo,draftVersion(await loadTutorial()));
-  const g=new TutorialGuide({speak:()=>{},exit:()=>{}});g.persist=()=>Promise.resolve();g.tutorial=structuredClone(demo);g.attach(new THREE.Scene());g.begin('follow');
+  const g=new TutorialGuide({speak:()=>{},exit:()=>{}});g.persist=()=>Promise.resolve();g.tutorial=structuredClone(demo);g.attach(new THREE.Scene());g.begin('follow');g.followStyle='guided';
   const coachSteps=[];let asks=0,attempts=0,stops=0;
   g.coach={active:true,mode:'text',caption:'Follow the current movement.',captionAgeMs:0,onStep:step=>coachSteps.push(step.id),onAttempt:()=>attempts++,ask:()=>asks++,stop:()=>stops++};
   let t=1000,data={};Object.defineProperty(performance,'now',{configurable:true,value:()=>t});g.sample=()=>data[g.hand];
   const hand=p=>Array.from({length:25},()=>({p:[...p],q:[0,0,0,1],radius:.007}));
   const session={visibilityState:'visible'},tick=(dt=40)=>{t+=dt;g.tick({},session,{},t);};
-  const mark=p=>{data.right=hand(p);g.action('primary');t=g.pending.until-380;for(let i=0;i<20;i++)tick(20);};
+  const mark=p=>{data.right=hand(p);g.action('primary');t=g.pending.until-380;for(let i=0;i<105;i++)tick(20);};
   g.action('setup-ready');mark([1,1,-.3]);mark([1.75,1,-.3]);
   if(g.mode!=='placement'||Math.abs(g.workspace.span-.75)>.001)fail('New spacing rejected: '+g.problem);
   const frames=JSON.stringify(g.tutorial.steps[0].frames),p=demo.steps[0].frames[0].right[0].p;
@@ -62,9 +62,10 @@ const assert=require('node:assert/strict');
   // New contextual authoring, including pause and safe replacement discard.
   const a=new TutorialGuide({speak:()=>{},exit:()=>{}});a.attach(new THREE.Scene());a.persist=()=>Promise.resolve();a.begin('home');a.sample=()=>data[a.hand];
   const atick=(dt=40)=>{t+=dt;a.tick({},session,{},t);};
-  a.action('create');a.action('toggle-fluid');a.action('change-save-position');if(a.mode!=='save-home')fail('Create must begin with save-position setup');
+  a.action('create');a.action('create-continue');a.stepByStep=false;a.action('toggle-fluid');a.action('change-save-position'); // Exercise legacy manual review mode.
+if(a.mode!=='save-home')fail('Create must begin with save-position setup');
   a.action('set-save-position');t=a.pending.until;data={left:hand([0,1,.3]),right:hand([.4,1,.3])};for(let i=0;i<25;i++)atick();a.action('setup-ready');
-  const amark=p=>{data.right=hand(p);a.action('primary');t=a.pending.until-380;for(let i=0;i<20;i++)atick(20);};
+  const amark=p=>{data.right=hand(p);a.action('primary');t=a.pending.until-380;for(let i=0;i<105;i++)atick(20);};
   amark([0,1,0]);amark([.5,1,0]);a.action('placement-ready');
   if(a.mode!=='author'||!a.tutorial.save_position)fail('Create placement did not store save position');a.cleanSave=false; // Manual finish path remains available.
   a.action('primary');t=a.pending.until;
@@ -74,7 +75,7 @@ const assert=require('node:assert/strict');
   const saved=a.tutorial.steps[0];a.action('hand');t=a.pending.until;atick();a.action('discard-confirm');a.action('discard-take');
   if(a.tutorial.steps[0]!==saved)fail('New replacement discard erased original');
   a.action('hand');for(let i=0;i<3;i++)a.action('guide-hands');a.action('primary');await a.saveTask;if(a.mode!=='saved'||!a.tutorial.completion)fail('Approve did not finish and save: '+a.problem);
-  a.action('start-follow');if(a.mode!=='learn'||a.followEngine.started)fail('Created tutorial did not start with waiting ghost');
+  a.followStyle='guided';a.action('start-follow');if(a.mode!=='setup-follow'||a.workspace)fail('Follow skipped intentional placement');a.action('setup-ready');amark([0,1,0]);amark([.5,1,0]);a.action('placement-ready');if(a.mode!=='learn'||a.followEngine.started)fail('Created tutorial did not start with waiting ghost');
   a.endSession();
   const blank=syntheticTutorial();blank.title='Other saved recording';await saveTutorial(blank,draftVersion(await loadTutorial()));
   const library=await listTutorials();if(!library.some(t=>t.id===demo.id)||!library.some(t=>t.id===blank.id))fail('Creating a new project lost an existing one');
@@ -82,7 +83,7 @@ const assert=require('node:assert/strict');
  });
  require('node:fs').writeFileSync('/tmp/trail-new-hud.png',Buffer.from((await page.evaluate(()=>window.trailNewHud)).split(',')[1],'base64'));
  await page.reload();await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.locator('[data-route=library]').first().click();await page.waitForFunction(()=>document.querySelectorAll('.library-item').length===2);
- await page.screenshot({path:'/tmp/trail-library-new.png',fullPage:true});await page.locator('.library-item').filter({hasText:'Recorded movement test'}).getByRole('button',{name:'Follow tutorial'}).click();await page.waitForFunction(()=>document.querySelector('#launch-title').textContent.startsWith('Follow:'));
+ await page.screenshot({path:'/tmp/trail-library-new.png',fullPage:true});await page.locator('.library-item').filter({hasText:'Recorded movement test'}).getByRole('button',{name:'Open tutorial'}).click();await page.locator('#selected-follow').click();await page.waitForFunction(()=>document.querySelector('#launch-title').textContent==='Follow inside AR');
  await page.locator('[data-route=home]').click();await page.screenshot({path:'/tmp/trail-home-new.png',fullPage:true});
  await page.setViewportSize({width:375,height:950});await page.screenshot({path:'/tmp/trail-home-mobile.png',fullPage:true});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  // Upgrade the actual old IndexedDB shape in a fresh browser profile.

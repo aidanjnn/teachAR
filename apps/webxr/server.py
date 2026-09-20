@@ -236,12 +236,13 @@ class Handler(BaseHTTPRequestHandler):
                      "/narration.mjs":"narration.mjs","/narration-core.mjs":"narration-core.mjs","/camera-snapshot.mjs":"camera-snapshot.mjs","/tutorial-review.mjs":"tutorial-review.mjs","/tutorial":"tutorial.html","/tutorial-core.mjs":"tutorial-core.mjs","/tutorial-guide.mjs":"tutorial-guide.mjs","/tutorial-store.mjs":"tutorial-store.mjs",
                      "/hands":"hands.html","/hand-guide.mjs":"hand-guide.mjs","/motion-core.mjs":"motion-core.mjs",
                      "/ar":"ar.html","/ar.js":"ar.js","/ar-state.mjs":"ar-state.mjs","/ar.css":"ar.css",
-                     "/fluid-capture.mjs":"fluid-capture.mjs","/spatial-controls.mjs":"spatial-controls.mjs",
+                     "/workspace-assist.mjs":"workspace-assist.mjs","/live-voice.mjs":"live-voice.mjs","/fluid-capture.mjs":"fluid-capture.mjs","/spatial-controls.mjs":"spatial-controls.mjs",
                      "/holographic-hand.mjs":"holographic-hand.mjs","/experience-entry.mjs":"experience-entry.mjs",
                      "/assets/hands/left.glb":"assets/hands/left.glb","/assets/hands/right.glb":"assets/hands/right.glb",
                      "/vendor/GLTFLoader.js":"vendor/GLTFLoader.js","/vendor/SkeletonUtils.js":"vendor/SkeletonUtils.js","/vendor/BufferGeometryUtils.js":"vendor/BufferGeometryUtils.js",
                      "/vendor/three.module.js":"vendor/three.module.js","/vendor/three.core.js":"vendor/three.core.js",
-                     "/tutorial-coach.mjs":"tutorial-coach.mjs","/tutorial-coach-panel.mjs":"tutorial-coach-panel.mjs","/narration-labels.mjs":"narration-labels.mjs","/vendor/trail-coach.js":"vendor/trail-coach.js"}
+                     "/voice-actions.mjs":"voice-actions.mjs","/voice-commands.mjs":"voice-commands.mjs","/command-audio-worklet.js":"command-audio-worklet.js",
+                     "/tutorial-coach.mjs":"tutorial-coach.mjs","/tutorial-coach-panel.mjs":"tutorial-coach-panel.mjs","/narration-labels.mjs":"narration-labels.mjs","/instruction-voice.mjs":"instruction-voice.mjs","/vendor/trail-coach.js":"vendor/trail-coach.js"}
             files.update({f"/{name}":name for name in (
                 "telemetry.mjs", "telemetry-sentry.mjs", "telemetry-runtime.mjs",
                 "telemetry-panel.mjs", "telemetry-friction.mjs", "telemetry.css",

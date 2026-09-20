@@ -16,6 +16,9 @@ export interface CoachOptions {
   listenTimeoutMs?: number;
   liveStartTimeoutMs?: number;
   textDeadlineMs?: number;
+  continuous?: boolean;
+  actionContext?: () => string;
+  onAction?: (action: string, expectedContext: string) => Promise<{ok:boolean;message:string}> | {ok:boolean;message:string};
 }
 export interface CoachApi {
   readonly state: CoachState;
@@ -66,6 +69,8 @@ export function createCoach(options: CoachOptions): CoachApi {
   /** Revision the current learner turn was asked under; coach output is stamped with it, not with the latest state. */
   let turnRevision = state.stepRevision;
   let eventCounter = 0;
+  const delegations = new Map<string,string>();
+  const seenCalls = new Set<string>();
   const stateHandlers = new Set<(state: CoachState) => void>();
   const transcriptHandlers = new Set<(entry: TranscriptEntry) => void>();
   const answerHandlers = new Set<(answer: CoachAnswer) => void>();
@@ -73,7 +78,7 @@ export function createCoach(options: CoachOptions): CoachApi {
 
   const eventId = (prefix: string) => `${prefix}-${++eventCounter}`;
   const clearListenTimer = () => { if (listenTimer) { clearTimeout(listenTimer); listenTimer = null; } };
-  const armListenTimer = () => { clearListenTimer(); listenTimer = setTimeout(() => { dispatch({ type: 'listen-timeout' }); }, listenTimeoutMs); };
+  const armListenTimer = () => { clearListenTimer(); if(options.continuous)return; listenTimer = setTimeout(() => { dispatch({ type: 'listen-timeout' }); }, listenTimeoutMs); };
   /** Local backstop: the track is disabled regardless of whether the server accepted the mute event. */
   const setMicEnabled = (enabled: boolean) => { stream?.getAudioTracks().forEach(track => { track.enabled = enabled; }); };
   const send = (event: LiveClientEvent) => {
@@ -167,11 +172,33 @@ export function createCoach(options: CoachOptions): CoachApi {
     state = result.state;
     result.effects.forEach(runEffect);
     stateHandlers.forEach(handler => handler(state));
+    if(options.continuous&&state.mode==='live'&&state.contextSync==='idle'&&event.type!=='listen-toggled')dispatch({type:'listen-toggled'});
     return result.effects;
+  }
+  async function handleTool(event: Extract<LiveServerEvent,{type:'response.event'}>) {
+    const nested=event.event,item=nested.item as {type?:string;name?:string;call_id?:string;arguments?:string}|undefined;
+    if(nested.type!=='response.output_item.done'||item?.type!=='function_call'||!item.call_id||seenCalls.has(item.call_id))return;
+    seenCalls.add(item.call_id);if(seenCalls.size>256){dispatch({type:'live-closed'});return;}
+    let result={ok:false,message:'That request is no longer available. Please ask again.'};
+    const expected=event.delegation_id?delegations.get(event.delegation_id):undefined;
+    try{const args=JSON.parse(item.arguments||'{}');
+      if(item.name==='trail_action'&&typeof args.action==='string'&&Object.keys(args).length===1&&expected!==undefined&&expected===options.actionContext?.()&&options.onAction)
+        result=await options.onAction(args.action,expected);
+    }catch{result={ok:false,message:'I could not apply that action. Please use the button or ask again.'};}
+    if(disposed)return;
+    if(result.ok){outputGateClosed=false;turnRevision=state.stepRevision;setPlaybackMuted(false);}
+    send({type:'response.item.create',item:{type:'function_call_output',call_id:item.call_id,output:JSON.stringify(result)}});
+    send({type:'response.create'});
   }
   function handleLiveEvent(event: LiveServerEvent) {
     if (disposed) return;
     switch (event.type) {
+      case 'session.delegation.created':
+        delegations.set(event.delegation.id,options.actionContext?.()||'');
+        if(delegations.size>128)delegations.delete(delegations.keys().next().value!);
+        break;
+      case 'response.event':
+        void handleTool(event);break;
       case 'session.started':
         if (startTimer) { clearTimeout(startTimer); startTimer = null; }
         startedResolve?.();

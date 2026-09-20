@@ -1,3 +1,21 @@
+> Current UI/voice update: [assisted workspace and live voice](assisted-workspace-experience.md). The headset now uses streaming commands and general Repeat & practise; clip-command and task-specific Watch & do descriptions below document the earlier implementation/diagnostic path.
+
+## Simplified recording loop (2026-09-20)
+
+AR opens at Home. Choose Create or Library; restoring a recording or resetting XR coordinates must not open calibration automatically. Library selection exposes Play and Edit before placement.
+
+Create explains the workflow, captures one rest/save position, then places the workspace. Both hands are the default; single-hand overrides live in Options. In hold mode, move at least 3 cm, hold still for one second, then hold through a one-second circle. The saved take ends before the circle. Saving enters a ready state. Return to the configured rest position, hold briefly, and a three-second countdown starts the next take. Moving away cancels readiness. Save step and Finish tutorial are separate operations. Finish runs narration polishing automatically when configured; original recordings remain available.
+
+Spoken Save uses the most recent qualified stationary hold when available. Speech processing and replies finish before a new countdown. Common unambiguous commands bypass intent inference after transcription; other phrasing still uses the model. This command pipeline is clip-based, not OpenAI Realtime streaming.
+
+For folding, choose **Watch & do** in tutorial detail: watch each demonstration, perform it freely, then say Next. Guided mode retains local hand checkpoints. Neither mode confirms a correct physical fold from hand proximity.
+
+Placement is rigid translation and rotation, not object detection or task resizing. Use the same two recognizable landmarks in the original and new setup, preserving size and orientation. Workspace calibration currently requires landmarks 20–120 cm apart: use table landmarks around smaller paper rather than its corners. The status panel starts below the main panel and remains independently movable.
+
+Quest acceptance still required: Home after entry/reset; record two takes using the rest/countdown loop; inspect trimmed replay; Play versus Edit routing; test voice with the real headset microphone; compare Watch & do with guided folding. Synthetic browser tests do not establish worn-headset tracking quality.
+
+---
+
 # Fluid recording, movable controls and immersive library
 
 Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practice](web-practice-flow.md). The active runtime is `apps/webxr` on the WebXR product foundation.
@@ -6,8 +24,17 @@ Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practi
 
 - `/tutorial` → Enter always opens immersive **Home**, with Create and Library. Restored data remains available but a previous entry intent never starts replay automatically.
 - **Home**, Settings and Exit AR are visible on every headset screen. Home during recording offers save/discard/stay; saving waits for its completion. Opening settings or dragging a panel pauses active recording/practice.
-- Main panel: point at **Pinch + move**, pinch/hold, move, release. Timer: point/pinch its surface and move. These move presentation only. To relocate the motion itself, use tutorial placement controls.
+- Main panel: point at **Pinch + move**, pinch/hold, move, release. Timer: point/pinch its surface and move. Both have **Rotate** (hold and turn the hand/controller ray), **Resize** (hold and move the pointer outward/inward), and **Face me** (tap to face the current viewer). Rotation is relative to the initial grab around the panel center; it does not snap to the input orientation. Resize is bounded to 65–160% and survives screen transitions. Active grips highlight immediately; release never activates a tutorial button underneath.
+- Settings → **Bring panel here** repositions the main panel near the current view. **Reset panel layout** restores its size/location and puts the timer back on the calibrated workspace. Facing/rotation never alters the tutorial calibration. Lost input pose, focus, session or reference-space reset cancels manipulation. Controls do not auto-resume a paused recording or practice.
+- This is WebXR presentation manipulation with hands/controllers, not an OS-native window API. Panel layout is session-local. Grip comfort, wrist/ray rotation, readability and timing need a worn-Quest test. To relocate the recorded motion itself, use tutorial placement controls.
 - A small timer/status panel sits beside the calibrated workspace. It shows countdowns, recording time, actual save feedback, and practice/next-preview status. This position comes from user calibration, not automatic table detection. It can be moved independently.
+- Library opens a tutorial detail page with Edit / Follow. Entry always opens Home;
+  Follow then opens setup and workspace placement. Edit opens review first; placing
+  the workspace is requested only for spatial replay or additional recording.
+- Review exposes a direct Left / Right / Both chooser. Manual recordings inherit
+  the author's selected capture hands; legacy recordings still require an explicit
+  choice. Neutral button fills are the default in both themes; ink fill denotes
+  targeting or an actual selected choice.
 - Library has a three-card page, title/layout search, All/Ready/Draft filters and paging. Panel entrances animate for 220 ms; reduced-motion removes scale motion. It contains real local tutorials; no fake sample projects are inserted.
 - Search focuses a DOM input through Meta's supported system-keyboard integration. If unavailable, connected-keyboard search and card/filter browsing remain available. This needs real headset acceptance.
 - Short pitch-swept Web Audio cues accompany navigation, capture, pause, movement checkpoints and durable saves. Settings can mute them; visual status always remains. Save cues can be audible during continuous narration; test echo/bleed on Quest.

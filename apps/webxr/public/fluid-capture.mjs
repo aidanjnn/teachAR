@@ -3,8 +3,9 @@ import {distance} from './motion-core.mjs';
 // A deliberate still hold accepts a segment, never a physical-result verdict.
 export class HoldSegmenter {
  constructor(){this.reset();}
- reset(required=null){this.sides=required==='both'?['left','right']:required?[required]:null;this.origin=null;this.anchor=null;this.since=null;this.last=null;this.armed=false;this.progress=0;this.elapsed=0;}
- interrupt(){this.anchor=null;this.since=null;this.progress=0;this.last=null;}
+ reset(required=null){this.sides=required==='both'?['left','right']:required?[required]:null;this.origin=null;this.anchor=null;this.since=null;this.last=null;this.armed=false;this.progress=0;this.elapsed=0;this.candidate=null;}
+ interrupt(){this.anchor=null;this.since=null;this.progress=0;this.last=null;this.candidate=null;}
+ cutoff(time){return this.candidate&&time-this.candidate.observed<=6000?this.candidate.cutoff:null;}
  update(hands,time){
   if(!Number.isFinite(time))return false;
   if(!this.sides)this.sides=['left','right'].filter(s=>palm(hands?.[s]));
@@ -14,10 +15,12 @@ export class HoldSegmenter {
   const gap=this.last===null?0:time-this.last;
   if(gap<0||gap>200)this.interrupt();
   this.last=time;this.origin??=points;this.elapsed+=gap>=0&&gap<=200?gap:0;
-  if(points.some((p,i)=>distance(p,this.origin[i])>.08))this.armed=true;
-  if(!this.armed||this.elapsed<1200)return false;
+  if(points.some((p,i)=>distance(p,this.origin[i])>.03))this.armed=true;
+  if(!this.armed)return false;
   if(!this.anchor||points.some((p,i)=>distance(p,this.anchor[i])>.02)){this.anchor=points;this.since=time;this.progress=0;}
-  this.progress=Math.min(1,(time-this.since)/1400);
+  const held=time-this.since;
+  if(held>=1000)this.candidate={cutoff:this.since+1000,observed:time};
+  this.progress=Math.max(0,Math.min(1,(held-1000)/1000));
   return this.progress===1;
  }
 }

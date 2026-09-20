@@ -54,7 +54,7 @@ describe('fallback labels', () => {
   it('builds one reviewed label per segment from overlapping narration', () => {
     const result = fallbackLabels(request, { code: 'timeout', message: 'Label request timed out' });
     expect(LabelResultSchema.parse(result)).toEqual(result);
-    expect(result.provenance).toEqual({ labels: 'fallback', model: null, promptVersion: 'labels-v1' });
+    expect(result.provenance).toEqual({ labels: 'fallback', model: null, promptVersion: 'labels-v2-concise-instructions' });
     expect(result.failure?.code).toBe('timeout');
     expect(result.labels.map(label => label.title)).toEqual(['Step 1', 'Step 2', 'Step 3']);
     expect(result.labels[2]?.narrationSpanIds).toEqual(['span-0003', 'span-0004']);
@@ -71,7 +71,7 @@ describe('fallback labels', () => {
     const validated = validateLabelOutput(request, good);
     if (!validated.ok) throw new Error('expected ok');
     const result = modelLabels(validated.labels, 'gpt-4.1-mini');
-    expect(result.provenance).toEqual({ labels: 'model', model: 'gpt-4.1-mini', promptVersion: 'labels-v1' });
+    expect(result.provenance).toEqual({ labels: 'model', model: 'gpt-4.1-mini', promptVersion: 'labels-v2-concise-instructions' });
     expect(result.failure).toBeNull();
   });
 });

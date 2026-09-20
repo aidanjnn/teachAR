@@ -1,3 +1,4 @@
+import { VoiceIntentSchema, voiceIntentPrompt } from './voice-intent.js';
 import {
   COACH_TEXT_DEADLINE_MS, fallbackCoachAnswer,
   type CoachAnswer, type CoachContext, type CoachRequest, type CoachSessionRequest, type CoachSessionResponse,
@@ -17,7 +18,7 @@ export interface OpenAiProviderOptions {
 }
 export const LABEL_TIMEOUT_MS = 15_000;
 /** Client events the untrusted browser data channel may send. Context, instructions and session updates come only from the server. */
-export const BROWSER_CLIENT_EVENTS = ['session.input_audio.mute', 'session.input_audio.unmute', 'session.close'];
+export const BROWSER_CLIENT_EVENTS = ['session.input_audio.mute', 'session.input_audio.unmute', 'session.close', 'response.item.create', 'response.create'];
 
 export function isTimeoutError(error: unknown): boolean {
   return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
@@ -33,8 +34,10 @@ export function buildLiveSessionParams(
       audio: { output: { voice: models.liveVoice } },
       delegation: {
         type: 'responses',
-        // No tools are registered, so the backend cannot call anything; tool_choice is deliberately omitted.
-        responses: { model: models.liveBackendModel, instructions: backendInstructions(context), max_output_tokens: 200 },
+        responses: { model: models.liveBackendModel, instructions: backendInstructions(context), max_output_tokens: 200, parallel_tool_calls: false,
+          tools: [{ type: 'function', name: 'trail_action', description: 'Request a user explicitly spoken navigation or recording action. The headset validates availability and returns the actual result. Never infer completion from hand movement.', strict: true,
+            parameters: { type: 'object', properties: { action: { type: 'string', enum: ['pause','resume','replay','next','previous','save','record','finish','home','help','stop'] } }, required: ['action'], additionalProperties: false } }],
+        },
       },
       client: { data_channel: { allowed_client_events: BROWSER_CLIENT_EVENTS } },
       store: false,
@@ -49,6 +52,17 @@ export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider
   const coachTimeoutMs = options.coachTimeoutMs ?? COACH_TEXT_DEADLINE_MS - 1_000;
   return {
     name: 'openai',
+    async landmarks(input,signal){if(!options.gateway.landmarks)throw Error('Visual setup unavailable');return options.gateway.landmarks(input,signal);},
+    async speak(text, signal) {
+      if (!options.gateway.speech) throw new Error('Speech unavailable');
+      return options.gateway.speech(text, signal);
+    },
+    async interpretCommand(text, context, signal) {
+      const parsed = await options.gateway.parseJson({ model: options.textModel, ...voiceIntentPrompt(text, context), schema: VoiceIntentSchema, schemaName: 'trail_voice_intent', maxOutputTokens: 160, signal });
+      if (parsed.status !== 'ok') return { action: 'none', response: 'I did not catch that. Could you repeat the request?' };
+      const intent = VoiceIntentSchema.parse(parsed.parsed);
+      return intent.action === 'none' || context.allowed.includes(intent.action) ? intent : { action: 'none', response: 'That action is not available here. Say help for the available commands.' };
+    },
     async transcribe(input: TranscribeInput) {
       const raw = await options.gateway.transcribeVerbose({ bytes: input.bytes, mimeType: input.mimeType, model: options.transcribeModel, signal: input.signal });
       return alignTranscript({
