@@ -75,7 +75,7 @@ That second answer is the whole product in one line. The coach knows what it can
 
 ### What makes Trail different
 
-| | Video tutorial | Typical AR overlay | Trail |
+| Compare | Video tutorial | Typical AR overlay | Trail |
 | --- | --- | --- | --- |
 | Who sets the pace | The video | A timer or a tap | Your hands |
 | Where the lesson lives | Someone else's table | Anchors in one room | A mat you can put anywhere |
@@ -205,7 +205,7 @@ Twenty-one pull requests over the weekend, each with the same checklist: typeche
 
 ## Accomplishments that we're proud of
 
-| | |
+| Number | What it means |
 | --- | --- |
 | 25 | named joints per hand, 30 times a second, in mat coordinates |
 | 2 cm | maximum calibration error before Trail refuses to continue |
