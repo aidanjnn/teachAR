@@ -71,6 +71,8 @@ export function createCoach(options: CoachOptions): CoachApi {
   let eventCounter = 0;
   const delegations = new Map<string,string>();
   const seenCalls = new Set<string>();
+  /** The action context at the learner's last words. A delegation is bound to the utterance that caused it, not to whatever screen is showing when the backend gets round to it. */
+  let utteranceContext: string | null = null;
   const stateHandlers = new Set<(state: CoachState) => void>();
   const transcriptHandlers = new Set<(entry: TranscriptEntry) => void>();
   const answerHandlers = new Set<(answer: CoachAnswer) => void>();
@@ -194,7 +196,7 @@ export function createCoach(options: CoachOptions): CoachApi {
     if (disposed) return;
     switch (event.type) {
       case 'session.delegation.created':
-        delegations.set(event.delegation.id,options.actionContext?.()||'');
+        delegations.set(event.delegation.id,utteranceContext??options.actionContext?.()??'');
         if(delegations.size>128)delegations.delete(delegations.keys().next().value!);
         break;
       case 'response.event':
@@ -207,6 +209,7 @@ export function createCoach(options: CoachOptions): CoachApi {
         break;
       case 'session.input_transcript.delta':
         armListenTimer();
+        utteranceContext=options.actionContext?.()??null;
         // A new learner turn reopens the gate and fixes the revision its answer belongs to.
         turnRevision = state.stepRevision;
         // Only reopen once the server has acknowledged the current step; until then the model may still hold the old one.

@@ -462,4 +462,22 @@ describe('continuous live command tools',()=>{
   delegation('d2');local='step-2';tool('d2','c2');tool('missing','c3');await vi.advanceTimersByTimeAsync(0);expect(actions).toEqual(['pause']);
   const outputs=fake.sent.filter(e=>e.type==='response.item.create');expect(outputs).toHaveLength(3);expect(JSON.stringify(outputs.at(-1))).toContain('false');coach.dispose();
  });
+ it('binds a delegated action to the utterance that caused it, so a manual step change before the backend answers cancels it',async()=>{
+  const fake=fakeTransport();let local='step-1';const actions:string[]=[];
+  const coach=createCoach({context,continuous:true,actionContext:()=>local,onAction:action=>{actions.push(action);return {ok:true,message:'Done.'};},fetchImpl:okFetch(sessionOk),getUserMedia:async()=>stream,transportFactory:()=>fake.transport});
+  const connecting=coach.connect();await vi.advanceTimersByTimeAsync(0);fake.emit(started);await connecting;
+  const delegation=(id:string)=>fake.emit({type:'session.delegation.created',event_id:id,offset_ms:0,delegation:{id,target:'responses',type:'delegation'}});
+  const tool=(id:string,call:string)=>fake.emit({type:'response.event',event_id:call,delegation_id:id,event:{type:'response.output_item.done',item:{type:'function_call',name:'trail_action',call_id:call,arguments:'{"action":"next"}'}}});
+  // The learner says "next step" on step 1, then presses Next themselves before the delegation even exists.
+  fake.emit({type:'session.input_transcript.delta',event_id:'i1',delta:'next step',start_ms:0,end_ms:300});
+  local='step-2';
+  delegation('d1');tool('d1','c1');await vi.advanceTimersByTimeAsync(0);
+  expect(actions).toEqual([]);
+  expect(JSON.stringify(fake.sent.filter(e=>e.type==='response.item.create').at(-1))).toContain('false');
+  // A fresh utterance on the new step binds a fresh delegation, which executes.
+  fake.emit({type:'session.input_transcript.delta',event_id:'i2',delta:'next step',start_ms:400,end_ms:700});
+  delegation('d2');tool('d2','c2');await vi.advanceTimersByTimeAsync(0);
+  expect(actions).toEqual(['next']);
+  coach.dispose();
+ });
 });

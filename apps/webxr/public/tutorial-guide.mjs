@@ -619,6 +619,7 @@ export class TutorialGuide extends HandGuide {
       if(id==='removeCue'){this.cleanSave=!this.cleanSave;this.note=this.cleanSave?'Clean save on: hold the end pose for one second, then return both hands to their starting positions for one second.':'Clean save off. Save step keeps the full take.';this.speak(this.note);return;}
       if(id==='cue'){this.saveTask=this.finishAuthoring();return;}
       if(id==='primary') {
+        if(this.placementLost){this.reset();this.intent='create';this.mode='setup-new';this.note='Tracking space changed. Place the workspace again before recording.';return;}
         if(this.tutorial.steps.length>=MAX_STEPS&&this.replaceIndex==null){this.problem='Twelve-step limit reached. Download this tutorial.';return;}
         this.pending={kind:'record',until:performance.now()+3000,waitForVoice:!!this.voice?.busy};
         this.note='Recording both hands in 3 seconds. Get ready at the task.';this.speak(this.note);
@@ -644,7 +645,11 @@ export class TutorialGuide extends HandGuide {
       return;
     }
     if(this.mode==='capture'||this.mode==='capture-paused') {
-      if(id==='hand'){this.takeGeneration++;this.narrator?.cancel();this.frames=[];this.replaceIndex=null;this.mode='author';this.note='Unfinished take discarded. Saved steps are unchanged.';return;}
+      if(id==='hand'){
+        // After an origin reset the old registration is gone with the take: saved steps stay, recording waits for a fresh placement.
+        if(this.placementLost){this.reset();this.intent='create';this.mode='setup-new';this.note='Unfinished take discarded. Place the workspace again before recording.';return;}
+        this.takeGeneration++;this.narrator?.cancel();this.frames=[];this.replaceIndex=null;this.mode='author';this.note='Unfinished take discarded. Saved steps are unchanged.';return;
+      }
       if(id==='replay') {
         if(this.placementLost){this.problem='Save or discard this take, then place the workspace again.';return;}
         if(this.mode==='capture'){this.endpoint.interrupt();this.mode='capture-paused';this.segmenter.interrupt();this.narrator?.pause();this.log('record_pause',{reason:'user'});this.notify('pause','Recording paused');this.note='Paused. Return both tracked wrists to their recorded positions before resuming.';return;}
@@ -818,7 +823,8 @@ export class TutorialGuide extends HandGuide {
       if(this.followEngine.done&&this.problem?.startsWith('Reach the movement checkpoint'))this.problem=null;
     }else if(this.mode==='learn'&&this.watchOnly&&this.followStyle==='loop'){
       if(!this.gatePaused&&!this.voice?.busy){
-        if(this.player.time>=this.player.step.duration_ms){this.loopAt??=time;if(time-this.loopAt>=1200){this.player.replay();this.loopAt=null;this.loopSilent=true;}}
+        // The first pass lets the generated instruction finish, as Guided movement does; later loops are silent.
+        if(this.player.time>=this.player.step.duration_ms){if(this.audioPlayer?.instructionPending?.(this.player))this.loopAt=null;else{this.loopAt??=time;if(time-this.loopAt>=1200){this.player.replay();this.loopAt=null;this.loopSilent=true;}}}
         sample=this.player.tick(dt);
         this.loopMatch=nearestPracticePose(this.player.step,this.currentHands);
       }else {sample=this.player.tick(0);this.loopAt=null;this.loopMatch=null;}
