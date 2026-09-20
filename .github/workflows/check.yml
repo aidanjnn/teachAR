@@ -1,4 +1,4 @@
-# Hosted checks and local native validation: docs/ci.md
+# Hosted workspace and WebXR validation: docs/ci.md
 name: Check
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
         run: pnpm validate:fixtures
 
   browser:
-    name: Desktop browser tests
+    name: Desktop and WebXR browser tests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -58,11 +58,10 @@ jobs:
         run: pnpm test:e2e --reporter=github,html
         env:
           PLAYWRIGHT_HTML_OPEN: never
-      - name: Run isolated browser tutor reference tests
+      - name: Run isolated WebXR tutor tests
         run: |
-          python3 -m venv experiments/quest-browser/.venv
-          experiments/quest-browser/.venv/bin/python -m pip install -r experiments/quest-browser/requirements.txt
-          sh experiments/quest-browser/test-all.sh
+          pnpm setup:webxr
+          pnpm test:webxr
       - name: Upload browser report and failure traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ !cancelled() }}

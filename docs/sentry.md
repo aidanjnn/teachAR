@@ -30,7 +30,7 @@ Monitoring and Sentry AI-agent monitoring are outside this integration's scope.
 
 ### Where did the gesture go?
 
-The observer follows real runtime boundaries in [`ar.js`](../experiments/quest-browser/public/ar.js).
+The observer follows real runtime boundaries in [`ar.js`](../apps/webxr/public/ar.js).
 It distinguishes a missed hit, a preview-only rejection, a dispatch, an observed
 state change and UI render submission. A returned promise is insufficient to
 declare success. Logs share the actual emitted trace ID, and Replay retains the
@@ -43,11 +43,13 @@ the instrumentation path; it does not establish headset gesture accuracy.
 
 ### Where does a tutorial step need attention?
 
-The [step observer](../experiments/quest-browser/public/telemetry-friction.mjs)
-separates following time, voluntary pause/demo viewing, required-hand tracking
+The [step observer](../apps/webxr/public/telemetry-friction.mjs)
+separates following time, automatic step preview, waiting at the start,
+voluntary pause/demo viewing, required-hand tracking
 loss, application waiting, checkpoint waiting and unknown time. It counts
-attempts, repeats, explicit Watch demo requests and accepted user confirmations.
-Revisions and input sources stay separate. Repeated tracking interruptions can
+attempts, repeats and explicit Watch demo requests. Automatic movement checkpoints
+are distinct from interruptions and user confirmations; the retained explicit-confirm
+path is for the older guide flow. Revisions and input sources stay separate. Repeated tracking interruptions can
 prompt review of a particular step.
 
 This distinction matters: time spent watching the demonstration should not count
@@ -111,15 +113,16 @@ available. External telemetry and Replay each require explicit enablement.
 
 | Component | Repository evidence |
 | --- | --- |
-| Exact SDK dependency | `@sentry/browser@10.75.0` in [`apps/web/package.json`](../apps/web/package.json) and [`pnpm-lock.yaml`](../pnpm-lock.yaml) |
-| Local browser bundle | [`prepare-telemetry.mjs`](../experiments/quest-browser/prepare-telemetry.mjs) checks the installed version, bundles ESM using pinned `esbuild@0.28.2`, and copies the SDK license |
-| Startup wiring | [`start.sh`](../experiments/quest-browser/start.sh) runs vendor preparation; the tutorial loads local telemetry modules and initializes the SDK from public configuration |
-| Explicit public configuration | [Browser environment example](../experiments/quest-browser/.env.example), [`telemetry_config.py`](../experiments/quest-browser/telemetry_config.py), and `/api/telemetry/config`; no Sentry administration token required |
-| Runtime and privacy implementation | [`telemetry-runtime.mjs`](../experiments/quest-browser/public/telemetry-runtime.mjs), [`telemetry-sentry.mjs`](../experiments/quest-browser/public/telemetry-sentry.mjs), and [`telemetry-panel.mjs`](../experiments/quest-browser/public/telemetry-panel.mjs) |
-| Actual SDK regression | [`browser-sentry-payload.cjs`](../experiments/quest-browser/tests/browser-sentry-payload.cjs) checks Logs, Tracing, Replay, trace correlation, diagnostic content and sensitive-data exclusion using an in-memory transport |
+| Exact SDK dependency | `@sentry/browser@10.75.0` in [`apps/webxr/package.json`](../apps/webxr/package.json) and [`pnpm-lock.yaml`](../pnpm-lock.yaml) |
+| Local browser bundle | [`prepare-telemetry.mjs`](../apps/webxr/prepare-telemetry.mjs) checks the installed version, bundles ESM using pinned `esbuild@0.28.2`, and copies the SDK license |
+| Startup wiring | [`start.sh`](../apps/webxr/start.sh) runs vendor preparation; the tutorial loads local telemetry modules and initializes the SDK from public configuration |
+| Explicit public configuration | [Browser environment example](../apps/webxr/.env.example), [`telemetry_config.py`](../apps/webxr/telemetry_config.py), and `/api/telemetry/config`; no Sentry administration token required |
+| Runtime and privacy implementation | [`telemetry-runtime.mjs`](../apps/webxr/public/telemetry-runtime.mjs), [`telemetry-sentry.mjs`](../apps/webxr/public/telemetry-sentry.mjs), and [`telemetry-panel.mjs`](../apps/webxr/public/telemetry-panel.mjs) |
+| Actual SDK regression | [`browser-sentry-payload.cjs`](../apps/webxr/tests/browser-sentry-payload.cjs) checks Logs, Tracing, Replay, trace correlation, diagnostic content and sensitive-data exclusion using an in-memory transport |
 
-The dependency is shared through the existing workspace vendor-build convention;
-the instrumented application is `experiments/quest-browser`. This document does
+The WebXR package owns the dependency and bundles it locally;
+the instrumented application is `apps/webxr`. Both the Python development server
+and Fastify's tutor route provide the public browser configuration. This document does
 not claim instrumentation of the separate Vite dashboard, Fastify backend,
 Unity runtime or AI services. The detailed [setup guide](sentry-observability.md)
 covers environment variables, sampling and the connected local preview.
@@ -146,16 +149,20 @@ telemetry are included in this document.
 
 ## Verification and scope
 
-The scaffold audit reinstalled from the frozen lockfile, rebuilt the local SDK
-bundle and ran the prototype suite: **93 Node tests, 59 Python tests and 13
-browser workflows**. The browser suite uses temporary storage with provider
+Before the move to `apps/webxr`, the scaffold audit reinstalled from the frozen
+lockfile, rebuilt the local SDK bundle and passed **93 Node tests, 59 Python tests
+and 13 browser workflows**. After integrating the current WebXR foundation,
+validation passed **387 workspace tests, fixture validation, eight desktop workflows,
+143 WebXR Node tests, 61 Python tests and 20 WebXR browser workflows**; details are
+in [the activity log](codex-log.md). The browser suite uses temporary storage with provider
 credentials and external Sentry delivery disabled. Its real-SDK test checks
 payloads without sending them to Sentry.
 
 Separately, hosted Logs, Tracing and playable Replay were verified in the
 `trail-yf / trail-browser` project on September 20. That live check used the
 development release `trail-browser@32d3020-sentry-working`. The implementation
-is on the local `codex/sentry-observability` branch; it is not a deployment claim.
+is on `codex/sentry-observability`; the linked hosted events predate the package
+move and are evidence for that recorded development revision, not a new deployment.
 Headset tracking, physical-task success and human learning outcomes have not
 been established by these checks. See the [activity log](codex-log.md) for the
 dated implementation and validation record.

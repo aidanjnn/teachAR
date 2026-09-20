@@ -92,6 +92,27 @@ export const CoachStepSchema = z.strictObject({
 });
 export type CoachStep = z.infer<typeof CoachStepSchema>;
 
+/** Reviewed step text an author publishes so the coach can ground a browser tutorial that has no server recording. */
+export const MAX_COACH_GUIDE_TITLE_CHARS = 120;
+export const MAX_COACH_GUIDE_NOTES_CHARS = 500;
+export const CoachGuidePublishSchema = z.strictObject({
+  schemaVersion: z.literal(1),
+  /** The client's own tutorial id; republishing the same source bumps the server revision instead of minting a new guide. */
+  sourceId: IdSchema,
+  title: z.string().min(1).max(MAX_COACH_GUIDE_TITLE_CHARS),
+  layoutNotes: z.string().max(MAX_COACH_GUIDE_NOTES_CHARS).optional(),
+  steps: z.array(CoachStepSchema).min(1).max(MAX_COACH_STEPS),
+}).superRefine((guide, ctx) => uniqueIds(guide.steps, ctx, 'Step'));
+export type CoachGuidePublish = z.infer<typeof CoachGuidePublishSchema>;
+export const CoachGuideSchema = z.strictObject({
+  schemaVersion: z.literal(1), id: z.uuid(), sourceId: IdSchema, revision: z.number().int().min(1),
+  publishedAt: z.string().min(1).max(40),
+  title: z.string().min(1).max(MAX_COACH_GUIDE_TITLE_CHARS),
+  layoutNotes: z.string().max(MAX_COACH_GUIDE_NOTES_CHARS).optional(),
+  steps: z.array(CoachStepSchema).min(1).max(MAX_COACH_STEPS),
+}).superRefine((guide, ctx) => uniqueIds(guide.steps, ctx, 'Step'));
+export type CoachGuide = z.infer<typeof CoachGuideSchema>;
+
 export const CoachContextSchema = z.strictObject({
   tutorialId: IdSchema, tutorialRevision: Revision, runId: IdSchema, attemptId: IdSchema,
   title: z.string().min(1).max(120),

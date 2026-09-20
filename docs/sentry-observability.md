@@ -12,12 +12,12 @@ debugging story, read [Trail × Sentry](sentry.md).
 
 ## Run locally
 
-This implementation targets `experiments/quest-browser`, not the separate Vite
+This implementation targets `apps/webxr`, not the separate Vite
 dashboard or Unity runtime. From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
-cd experiments/quest-browser
+cd apps/webxr
 sh start.sh
 ```
 
@@ -29,7 +29,7 @@ unavailable SDK or failed transport must not interrupt recording or local guidan
 ## Enable a Sentry browser project
 
 Create/select a JavaScript browser project in Sentry and copy its **public DSN**.
-Set environment variables in the terminal that starts this Python server:
+Set environment variables in the terminal that starts the tutor's server:
 
 ```sh
 export SENTRY_ENABLED=true
@@ -42,7 +42,7 @@ sh start.sh
 ```
 
 For repeatable local setup, copy
-[`experiments/quest-browser/.env.example`](../experiments/quest-browser/.env.example)
+[`apps/webxr/.env.example`](../apps/webxr/.env.example)
 to `.env` in that directory, fill in the public DSN and set both enable flags to
 `true`, then run `. ./.env` before `sh start.sh`. The template defaults to local-only
 diagnostics. The copied `.env` is ignored by Git.
@@ -58,12 +58,17 @@ The Python prototype reads process environment variables, not the repository's
 and reload `/tutorial`. The existing background helper reuses running servers;
 it does not reload their environment.
 
+The Fastify server also serves `/api/telemetry/config` when running the tutor at
+its origin for the voice coach. Use the same public Sentry variables from the
+root environment example for that server. This configures the browser SDK; it
+does not instrument server requests or change pairing/voice authorization.
+
 For this Mac's connected development checkout, the public settings are saved in
-ignored `experiments/quest-browser/.runtime/sentry.env`. After stopping that
+ignored `apps/webxr/.runtime/sentry.env`. After stopping that
 checkout's server, restart it with:
 
 ```sh
-cd /Users/aidanjeon/.codex/worktrees/sentry-observability/trail/experiments/quest-browser
+cd /Users/aidanjeon/.codex/worktrees/sentry-observability/trail/apps/webxr
 . .runtime/sentry.env
 "$TRAIL_PYTHON" start-background.py
 ```
@@ -93,12 +98,16 @@ save succeeded. Persistence remains governed by the existing save lifecycle.
 Only actual headset observation can establish physical control usability.
 
 Step reports group by an opaque tutorial alias, revision, step and source. They
-separate following time, explicit user pause/watching a demonstration, required-hand tracking loss,
+separate following time, automatic preview, waiting at the start,
+explicit user pause/watching a demonstration, required-hand tracking loss,
 application waiting, checkpoint waiting and unknown time. Missing a hand that
 the step does not require must not count as a tracking interruption. Long gaps
 and hidden periods are not credited as uninterrupted activity. Repeats, requests
 to watch the demonstration, and accepted confirmations are explicit actions.
-Help counts describe that instrumented action, not all possible human assistance.
+The current practice flow advances through movement checkpoints without a user
+confirmation; confirmation counts apply to the retained older guide path. Reached
+checkpoints count separately from interruptions. Help counts describe the
+instrumented Watch action, not all possible human assistance.
 
 The report includes sample counts, ongoing versus ended attempts and provenance.
 Aliases and local aggregates are scoped to the current page session; they are not
@@ -148,7 +157,7 @@ does not establish headset or human learning performance.
 ## Verification
 
 ```sh
-cd experiments/quest-browser
+cd apps/webxr
 sh test-all.sh
 ```
 
@@ -185,11 +194,13 @@ labelled **Anonymous User**. The earlier test replay remains historical evidence
 the change applies to subsequent sessions. This is an observability-driven
 privacy correction, not a headset usability or learning-outcome improvement.
 
-The working release is `trail-browser@32d3020-sentry-working`, on uncommitted
-`codex/sentry-observability`. All 93 Node cases pass after the correction, and the
+The recorded release was `trail-browser@32d3020-sentry-working`, before the move
+from `experiments/quest-browser` to `apps/webxr`. All 93 Node cases passed after that correction, and the
 real-SDK privacy payload test passes with zero external requests. Prior Python,
 browser and workspace validation is recorded in [the activity log](codex-log.md).
-No new Quest, physical-task, learner or AI-provider acceptance is claimed.
+Current PR checks after reconciling the package move and newer practice flow are
+recorded separately in the activity log. No new Quest, physical-task, learner or
+AI-provider acceptance is claimed.
 
 Primary references: [custom tracing](https://docs.sentry.io/platforms/javascript/tracing/instrumentation/),
 [structured Logs](https://docs.sentry.io/platforms/javascript/logs/),
