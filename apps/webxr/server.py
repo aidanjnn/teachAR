@@ -12,6 +12,7 @@ from auto_checks import AutoChecks, loop as auto_loop
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
+from telemetry_config import public_config
 
 import cv2
 import numpy as np
@@ -203,6 +204,11 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path=="/api/health":
             return self.send(200,{"app":"trail-browser-prototype","source_id":SOURCE_ID})
+        if path=="/api/telemetry/config":
+            origin = self.headers.get("Origin")
+            if self.headers.get("Sec-Fetch-Site") not in (None, "same-origin", "none") or (origin and origin != f"http://{self.headers.get('Host')}"):
+                return self.send(403,{"error":"Local same-origin requests only."})
+            return self.send(200,public_config())
         if path=="/api/ai/status":
             with LOCK:
                 latest=dict(AI_LATEST) if AI_LATEST and AI_LATEST['revision']==STATE['revision'] else None
@@ -236,10 +242,14 @@ class Handler(BaseHTTPRequestHandler):
                      "/vendor/GLTFLoader.js":"vendor/GLTFLoader.js","/vendor/SkeletonUtils.js":"vendor/SkeletonUtils.js","/vendor/BufferGeometryUtils.js":"vendor/BufferGeometryUtils.js",
                      "/vendor/three.module.js":"vendor/three.module.js","/vendor/three.core.js":"vendor/three.core.js",
                      "/tutorial-coach.mjs":"tutorial-coach.mjs","/tutorial-coach-panel.mjs":"tutorial-coach-panel.mjs","/narration-labels.mjs":"narration-labels.mjs","/vendor/trail-coach.js":"vendor/trail-coach.js"}
+            files.update({f"/{name}":name for name in (
+                "telemetry.mjs", "telemetry-sentry.mjs", "telemetry-runtime.mjs",
+                "telemetry-panel.mjs", "telemetry-friction.mjs", "telemetry.css",
+                "vendor/sentry.mjs", "vendor/SENTRY-LICENSE.txt")})
             if path not in files:
                 return self.send(404,{"error":"Not found"})
             file = ROOT/"public"/files[path]
-            mime = "model/gltf-binary" if file.suffix==".glb" else "text/javascript" if file.suffix in (".js",".mjs") else "text/css" if file.suffix==".css" else "text/html"
+            mime = "model/gltf-binary" if file.suffix==".glb" else "text/javascript" if file.suffix in (".js",".mjs") else "text/css" if file.suffix==".css" else "text/plain" if file.suffix==".txt" else "text/html"
             self.send(200,file.read_bytes(),mime+"; charset=utf-8")
 
     def valid_host(self):

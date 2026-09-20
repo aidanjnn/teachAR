@@ -21,7 +21,8 @@ LEGO-style assemblies exercise the same engine with fresh recordings, rather
 than task-specific code or cached answers.
 
 [Web delivery plan][web-delivery] · [Implementation plan](docs/plan.md) ·
-[Four-person task split](docs/team-plan.md) · [Scaffold history](docs/scaffold.md)
+[Four-person task split](docs/team-plan.md) · [Scaffold history](docs/scaffold.md) ·
+[Sentry integration and sponsor evidence](docs/sentry.md)
 
 **OpenAI track:** [Judge brief and demo plan](docs/openai-track.md) ·
 [Concrete Codex improvements](docs/codex-impact.md) · [Development log](docs/codex-log.md).
