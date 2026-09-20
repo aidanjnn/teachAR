@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <!-- The hand-written UnityEngine stub. This is NOT Unity; see README.md. -->
+    <Compile Include="UnityEngineStub.cs" />
+    <!-- The actual shipped sources under test, not a second implementation. -->
+    <Compile Include="../../apps/quest/Assets/Trail/Presentation/GhostPresentation.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideController.cs" />
+    <!-- Exactly what those two need: no other MonoBehaviour is pulled in. -->
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideSession.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideTelemetry.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideTutorialAdapter.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Record/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Contracts/*.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+</Project>
