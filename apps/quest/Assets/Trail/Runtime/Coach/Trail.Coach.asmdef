@@ -1,0 +1,14 @@
+{
+  "name": "Trail.Coach",
+  "rootNamespace": "Trail.Runtime.Coach",
+  "references": ["Trail.Contracts", "Trail.Motion", "Trail.Runtime", "Trail.Guide"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

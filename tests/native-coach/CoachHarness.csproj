@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="CoachPure.csproj" />
+    <Compile Include="CoachScenarios.cs" />
+    <Compile Include="CoachJsonScenarios.cs" />
+    <Compile Include="SourceGuards.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+</Project>

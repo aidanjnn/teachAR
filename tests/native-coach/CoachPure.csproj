@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The pure native coach session layer, compiled with no Unity, Meta, contracts or motion reference at all.
+    The absence of those references is itself the purity proof: NativeVoiceCoach.cs is deliberately excluded
+    because it is a MonoBehaviour and cannot compile or run outside an installed Unity editor.
+  -->
+  <ItemGroup>
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Coach/CoachContext.cs" Link="CoachContext.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Coach/CoachWire.cs" Link="CoachWire.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Coach/CoachJson.cs" Link="CoachJson.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Coach/CoachSessionState.cs" Link="CoachSessionState.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Coach/CoachSession.cs" Link="CoachSession.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Coach/CoachTransport.cs" Link="CoachTransport.cs" />
+  </ItemGroup>
+</Project>
