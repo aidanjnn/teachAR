@@ -48,7 +48,7 @@ const assert=require('node:assert/strict');
       g.action('primary');if(g.mode!=='saving')fail('Audio was not awaited');await g.saveTask;await g.saveQueue;
       const step=g.tutorial.steps[0];if(!step?.narration)fail('Narration missing: '+step?.narration_issue);
       if(Math.abs(step.narration.duration_ms-step.duration_ms)>500)fail('Pause included in audio');
-      g.action('replay');g.action('primary');g.action('cue');await g.saveQueue;
+      g.action('replay');g.player.step.guide_hands='both';g.action('primary');g.action('cue');await g.saveTask;await g.saveQueue;
       if(!g.tutorial.completion)fail('Reviewed narrated tutorial did not finish');
       g.action('clear');tick();if(!playback.node)fail('Narration did not start with ghost');
       g.action('replay');tick();if(playback.node)fail('Narration continued while ghost paused');

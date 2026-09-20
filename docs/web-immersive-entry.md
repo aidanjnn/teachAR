@@ -11,7 +11,7 @@ This extends the browser UI and [preview-first practice flow](web-practice-flow.
 5. Follow uses the existing local library, workspace placement, demonstration preview, broad starting regions and ordered movement gates. Reaching a movement checkpoint starts the next preview automatically. It never verifies a physical outcome.
 6. Exit returns to the simple launcher. **Browser tools · review, import and backup** exposes the existing editor and recovery controls. Detailed text editing and file import/export still use browser UI.
 
-Camera/microphone adapters release resources on session end and reject late permission results. Hands-only cancels pending setup. Existing recording exit confirmation now also works through the real XR action dispatcher. Device permission prompts, simultaneous camera/mic/XR, and first-use audio need headset testing; software mocks do not prove browser/device support.
+Camera/microphone adapters release resources on session end and reject late permission results. Hands-only cancels pending setup. A browser permission prompt may temporarily take XR focus; its result stays bound to the same take/session generation and resumes preparation when it returns. Settings is unavailable while that prompt is pending, so navigation cannot strand setup. Existing recording exit confirmation now also works through the real XR action dispatcher. Device permission prompts, simultaneous camera/mic/XR, and first-use audio need headset testing; software mocks do not prove browser/device support.
 
 ## Hand rendering
 
