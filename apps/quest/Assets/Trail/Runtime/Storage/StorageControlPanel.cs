@@ -1,12 +1,17 @@
 using System;
 using Trail.Motion;
+using Trail.Runtime.Platform;
 using Trail.Runtime.Record;
 using UnityEngine;
 
 namespace Trail.Runtime.Storage
 {
-    public sealed class StorageControlPanel : MonoBehaviour
+    public sealed class StorageControlPanel : MonoBehaviour, IDiagnosticPanel
     {
+        // The learner-facing shell hides engineering panels unless Settings asks for them.
+        // Deactivating also unsubscribes through OnDisable, so a hidden panel observes nothing.
+        public void SetPanelVisible(bool visible) => gameObject.SetActive(visible);
+
         public NativeStorageFeature Storage;
         private TextMesh status;
         private readonly TextMesh[] buttons = new TextMesh[4];

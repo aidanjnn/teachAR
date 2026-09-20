@@ -1,5 +1,6 @@
 using System;
 using Trail.Motion;
+using Trail.Runtime.Platform;
 using Trail.Runtime.Record;
 using UnityEngine;
 
@@ -7,8 +8,12 @@ namespace Trail.Presentation
 {
     // World-space controls activate after a fresh index tip touches a label for 0.6 s, then withdraws.
     // The same public methods can be bound to a platform controller UI; controllers never provide capture poses.
-    public sealed class CaptureControlPanel : MonoBehaviour
+    public sealed class CaptureControlPanel : MonoBehaviour, IDiagnosticPanel
     {
+        // The learner-facing shell hides engineering panels unless Settings asks for them.
+        // Deactivating also unsubscribes through OnDisable, so a hidden panel observes nothing.
+        public void SetPanelVisible(bool visible) => gameObject.SetActive(visible);
+
         public CaptureReplaySession Session;
         public GhostPresentation Ghost;
         private TextMesh status;

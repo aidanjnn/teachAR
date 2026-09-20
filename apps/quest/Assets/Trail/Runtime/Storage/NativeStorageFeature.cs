@@ -16,6 +16,7 @@ namespace Trail.Runtime.Storage
         public int Order => 40;
         public string Status { get; private set; } = "Record locally, upload as author, review on desktop, then preload as learner.";
         public string SelectedTitle => library.Length == 0 ? "No ready guide" : library[selected].title;
+        public bool HasReadyGuides => library.Length > 0;
         public CaptureReplaySession Capture { get; private set; }
         private GuideController guide;
         private NativeApiConnection connection;

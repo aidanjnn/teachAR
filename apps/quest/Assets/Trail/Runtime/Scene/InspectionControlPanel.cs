@@ -1,13 +1,18 @@
 using Trail.Contracts;
 using Trail.Motion;
+using Trail.Runtime.Platform;
 using Trail.Runtime.Record;
 using UnityEngine;
 
 namespace Trail.Runtime.Scene
 {
     /// <summary>World-space native fingertip controls. No controller or synthetic input fallback.</summary>
-    public sealed class InspectionControlPanel : MonoBehaviour
+    public sealed class InspectionControlPanel : MonoBehaviour, IDiagnosticPanel
     {
+        // The learner-facing shell hides engineering panels unless Settings asks for them.
+        // Deactivating also unsubscribes through OnDisable, so a hidden panel observes nothing.
+        public void SetPanelVisible(bool visible) => gameObject.SetActive(visible);
+
         public SceneInspectionController Inspection;
         private TextMesh status;
         private readonly TextMesh[] buttons = new TextMesh[3];

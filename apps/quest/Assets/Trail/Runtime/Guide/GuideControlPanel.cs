@@ -1,13 +1,18 @@
 using System;
 using Trail.Motion;
+using Trail.Runtime.Platform;
 using Trail.Runtime.Record;
 using UnityEngine;
 
 namespace Trail.Runtime.Guide
 {
     // World-space touch controls. A controller interaction adapter may call the same public actions.
-    public sealed class GuideControlPanel : MonoBehaviour
+    public sealed class GuideControlPanel : MonoBehaviour, IDiagnosticPanel
     {
+        // The learner-facing shell hides engineering panels unless Settings asks for them.
+        // Deactivating also unsubscribes through OnDisable, so a hidden panel observes nothing.
+        public void SetPanelVisible(bool visible) => gameObject.SetActive(visible);
+
         public GuideController Guide;
         private TextMesh status;
         private readonly TextMesh[] buttons = new TextMesh[5];

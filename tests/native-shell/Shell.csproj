@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <!-- The actual shipped sources, not a second implementation. -->
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Shell/ShellInteraction.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Shell/ShellModel.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+</Project>
