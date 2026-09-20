@@ -50,6 +50,8 @@ namespace Trail.Runtime.Platform
                     feature.Initialize(Context);
                 }
                 rigRoot.SetActive(true);
+                Debug.Log("Trail XR composition: rootActive=" + gameObject.activeInHierarchy +
+                    " rigActive=" + rigRoot.activeInHierarchy + " cameraActive=" + Context.HeadCamera.isActiveAndEnabled);
                 Status = "OpenXR initialized; pair and calibrate before use";
             }
             catch (Exception failure)

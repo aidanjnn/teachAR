@@ -1005,3 +1005,59 @@ The user heard “Test sequence observed” from the local regression browser: t
 - Worked around it by removing the network from the path entirely. `PrivateTutorialCache` has no UnityEngine dependency, so `tests/device-seed` compiles the real cache and contract sources on the host, builds a ready tutorial through the actual `StoreReady` validation, reloads it through `Load`, and the result is pushed straight into the app's private storage. The seed comes from `fixtures/contracts`, whose recording is `source: "synthetic-fixture"`, so the runtime preloads it as a synthetic diagnostic and says so in the headset; it is not a human demonstration and teaches no physical task. Pushing a directory to that path silently creates an empty directory and errors, so files must be pushed individually.
 - **Unresolved and blocking: the headset renders black.** The app is the top resumed activity and the session reaches `FOCUSED`, yet `xrPassthroughLayerPauseFB` fires and `numLayers` drops to 0 after passthrough had correctly resumed with `textureOpacityFactor=1`. An earlier reading blamed focus loss; that was wrong and is corrected here. A single small red dot per eye renders with correct stereo disparity, unexplained; one hypothesis is that the three `TextMesh` panels assign the built-in `GUI/Text Shader` through `Font.material`, which does not render under this project's URP pipeline, but the dots are far too small for full-size magenta text quads and the hypothesis is unconfirmed. Diagnosis, log evidence, three ranked hypotheses and the exact commands are in [the native MVP handoff](native-mvp-handoff.md).
 - No calibration, ghost legibility, learner progression, frame time or voice behaviour is verified on hardware. The save-zone reducer is still not wired into `CaptureReplaySession`, `ICoachTransport` and `ICoachMicrophone` have no implementation, and no two-hand PlayMode test exists.
+
+### 2026-09-19 — Diagnose PR #19's black Quest view using the local Unity CLI
+
+- User reported one small red dot and an otherwise black headset view, and requested investigation of Hamza Ammar's PR #19 plus execution through the installed Unity CLI. Reviewed exact PR head `bdfb757e9062d3170597d018a32c0762378babb5` in isolated `codex/quest-black-screen-diagnosis`; preserved the dirty setup checkout and its open Unity project.
+- Found that the shell hides diagnostics during initialization, but `NativePairingPanel.SetPanelVisible(false)` disables its component's GameObject, which is the entire application root. Activating the rig child afterward cannot overcome the inactive ancestor. The intended target is the separate pairing canvas. Matched Meta XR 205 source and OpenXR/URP settings do not support treating missing passthrough enablement or pre-Awake field assignment as the leading cause.
+- Automated editor evidence: Unity 6000.3.24f1 ran a focused CLI probe against the unmodified PR pairing/shell classes. Root changed from active to inactive; final rig activation left `activeSelf=true`, `activeInHierarchy=false`, and the camera inactive. Control cases without pairing, or with canvas-only hiding after restoring the root, kept the camera/root active. Probe exited 0 with no C# compiler errors. Temporary diagnostic source was archived under ignored artifacts after execution; no production source changed.
+- [Detailed diagnosis](native-black-screen-diagnosis.md) records source locations, controls, local evidence, competing hypotheses and the smallest proposed correction. The handoff's earlier resume-then-pause log still needs timestamp/PID/APK attribution: exact reviewed startup disables the root before first rig activation, so the native pause sequence is not independently explained by this probe. Red dot source remains unconfirmed. ADB reported no connected device; no APK install, new headset test, live-provider test, publication or fix is claimed.
+
+### 2026-09-19 — Repair the black Quest view and verify on the headset
+
+- Fixed `NativePairingPanel` to toggle its owned canvas, reset pending input on
+  hide, and ignore input while hidden. The app root and runtime XR rig remain
+  active. Added a one-time startup log for root/rig/camera activation. The new
+  real shell/pairing composition test failed against the original setter and
+  passes with the correction. Full native validation: **55/55 EditMode and
+  9/9 PlayMode**, static scaffold **163 GUIDs**, and patch whitespace passed.
+- Device work exposed a separate packaging problem in this diagnostic worktree's
+  reused Library: the first APK had both the current loose scene and an old
+  packed `data.unity3d`, which the player loaded preferentially. A clean CLI
+  ARM64/IL2CPP build removed the stale archive. Batch builds now force-import/open
+  the disk scene, validate the runtime bootstrap structure, and reject mixed or
+  incomplete APK data layouts before producing success evidence. The clean build
+  and a final incremental build with all guards passed.
+- The installed APK's signing key differed. With explicit user authorization,
+  backed up internal preferences and external data, verified repeated snapshot
+  hashes, replaced the app and restored the data. Corrected shell-owned restored
+  cache permissions inside the unchanged private app-owned parent, and let Unity
+  regenerate its IL2CPP cache. The backup and old APK remain local and ignored.
+  Tutorial contents were preserved; no credentials or raw device media are
+  committed.
+- **Headset evidence:** Quest 3S / Android 14 build `3814840024700610`; corrected
+  startup logged `rootActive=True rigActive=True cameraActive=True` and resumed
+  passthrough. The wearer confirmed **“Yes, room and Trail menu are visible.”**
+  The final build has byte-identical native application code, metadata and scene
+  to the installed clean build; the confirmed view was left running.
+  [Validation record](validation.md) has exact source/APK identities and timings.
+  Calibration, guide preload, physical transfer, voice and prolonged use were
+  not exercised. Changes remain local in the isolated worktree; no commit or
+  publication was requested.
+
+### 2026-09-19 — Add the missing point-and-pinch menu input
+
+- The wearer clarified that their attempted clicks were hand pointing and
+  pinching. Inspection showed that the current menu only handled fingertip
+  touch/hold/withdraw; it never read a hand aim ray or pinch. Added a separate
+  Meta pointer adapter using the existing XR rig and vendor aim/pinch state.
+- Added visible rays, target cursors, cyan hover and an input hint, with hit
+  regions spanning the labels. Fresh pinch edges select enabled commands; held
+  pinches, tracking/focus recovery and simultaneous hands cannot produce repeat
+  or cross-route selections. Existing direct touch remains; recording and guide
+  progression logic are untouched.
+- Validation: **55/55 EditMode**, **12/12 PlayMode**, static scaffold **166 GUIDs**,
+  and local CLI Android ARM64/IL2CPP build passed. Installed as an in-place update;
+  device startup again reports root/rig/camera active and passthrough resumed.
+  [Validation evidence](validation.md) records APK/source identity and synthetic
+  versus device evidence. Actual wearer pinch/navigation confirmation is pending.

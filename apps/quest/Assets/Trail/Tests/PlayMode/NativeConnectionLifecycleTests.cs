@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Object = UnityEngine.Object;
 using Trail.Runtime.Platform;
+using Trail.Runtime.Shell;
 using UnityEngine.UI;
 using NUnit.Framework;
 using Trail.Runtime.Network;
@@ -72,6 +73,48 @@ namespace Trail.Tests
             Assert.IsFalse(server.IsFaulted);
         }
         [UnityTest]
+        public IEnumerator ShellHidesPairingWithoutDisablingApplicationOrCamera()
+        {
+            var root = new GameObject("shell composition test");
+            try
+            {
+                // Match bootstrap ownership and activation order without starting a native XR provider.
+                var rig = new GameObject("inactive rig"); rig.transform.SetParent(root.transform, false); rig.SetActive(false);
+                var tracking = new GameObject("tracking space"); tracking.transform.SetParent(rig.transform, false);
+                var eye = new GameObject("head camera"); eye.transform.SetParent(tracking.transform, false);
+                var camera = eye.AddComponent<Camera>();
+                var connection = root.AddComponent<NativeApiConnection>();
+                var context = new PlatformContext(root, tracking.transform, camera, connection);
+                var pairing = root.AddComponent<NativePairingPanel>(); pairing.Initialize(context);
+                var invalidations = 0; connection.SessionInvalidated += () => invalidations++;
+                var shell = root.AddComponent<TutorialExperienceController>(); shell.Initialize(context);
+                rig.SetActive(true);
+
+                var canvas = tracking.transform.Find("Native pairing setup").gameObject;
+                var shellPanel = tracking.transform.Find("Trail shell").gameObject;
+                Assert.IsTrue(root.activeSelf, "Hiding diagnostics must not deactivate the application root");
+                Assert.IsTrue(camera.isActiveAndEnabled, "Activating the rig must leave its camera active in the hierarchy");
+                Assert.IsTrue(shell.isActiveAndEnabled);
+                Assert.IsTrue(shellPanel.activeInHierarchy);
+                Assert.IsFalse(canvas.activeSelf, "Only the pairing canvas should start hidden");
+                Assert.AreEqual(0, invalidations, "Hiding a panel must not invalidate the shared connection");
+                yield return null;
+                Assert.AreEqual("Trail", shellPanel.transform.Find("Shell title").GetComponent<TextMesh>().text,
+                    "The visible shell must continue updating after composition");
+
+                pairing.SetPanelVisible(true);
+                Assert.IsTrue(canvas.activeInHierarchy);
+                pairing.SetPanelVisible(false);
+                Assert.IsFalse(canvas.activeInHierarchy);
+                Assert.IsTrue(root.activeInHierarchy);
+                Assert.IsTrue(camera.isActiveAndEnabled);
+                Assert.IsTrue(shellPanel.activeInHierarchy);
+                Assert.AreEqual(0, invalidations);
+            }
+            finally { Object.Destroy(root); }
+            yield return null;
+        }
+        [UnityTest]
         public IEnumerator HeadDirectedKeyboardEntersAndClearsRoleCode()
         {
             var root = new GameObject("pairing-ui-test");
@@ -79,20 +122,40 @@ namespace Trail.Tests
             var camera = cameraObject.AddComponent<Camera>();
             var connection = root.AddComponent<NativeApiConnection>();
             var panel = root.AddComponent<NativePairingPanel>();
-            panel.Initialize(new PlatformContext(root, root.transform, camera, connection));
-            yield return new WaitForSecondsRealtime(1.1f);
-            var keyboard = root.transform.Find("Native pairing setup/Pairing keyboard");
-            var edit = keyboard.Find("Key Edit code");
-            camera.transform.rotation = Quaternion.LookRotation(edit.position - camera.transform.position);
-            yield return new WaitForSecondsRealtime(1.05f);
-            var digit = keyboard.Find("Key 1");
-            camera.transform.rotation = Quaternion.LookRotation(digit.position - camera.transform.position);
-            yield return new WaitForSecondsRealtime(1.05f);
-            Assert.IsTrue(root.GetComponentsInChildren<Text>().Any(text => text.text.Contains("Editing code: • (1/8)")));
-            panel.SendMessage("OnApplicationPause", true);
-            Assert.IsTrue(root.GetComponentsInChildren<Text>().Any(text => text.text.Contains("Editing code:  (0/8)")));
-            Assert.AreEqual(ConnectionState.Unpaired, connection.State);
-            Object.Destroy(root); Object.Destroy(cameraObject);
+            try
+            {
+                panel.Initialize(new PlatformContext(root, root.transform, camera, connection));
+                yield return new WaitForSecondsRealtime(1.1f);
+                var canvas = root.transform.Find("Native pairing setup").gameObject;
+                var keyboard = canvas.transform.Find("Pairing keyboard");
+                var edit = keyboard.Find("Key Edit code");
+                camera.transform.rotation = Quaternion.LookRotation(edit.position - camera.transform.position);
+                yield return new WaitForSecondsRealtime(1.05f);
+                var digit = keyboard.Find("Key 1");
+                camera.transform.rotation = Quaternion.LookRotation(digit.position - camera.transform.position);
+                yield return new WaitForSecondsRealtime(1.05f);
+                Assert.IsTrue(root.GetComponentsInChildren<Text>().Any(text => text.text.Contains("Editing code: • (1/8)")));
+
+                panel.SetPanelVisible(false);
+                Assert.IsTrue(root.activeInHierarchy, "Hiding the keyboard must preserve its application's lifecycle");
+                Assert.IsFalse(canvas.activeInHierarchy);
+                Assert.IsTrue(canvas.GetComponentsInChildren<Text>(true).Any(text => text.text.Contains("Editing code:  (0/8)")),
+                    "Hiding clears the entered code and pending dwell");
+                // Keep aiming at the same digit long enough to activate it if hidden input were still live.
+                yield return new WaitForSecondsRealtime(1.05f);
+                Assert.IsTrue(canvas.GetComponentsInChildren<Text>(true).Any(text => text.text.Contains("Editing code:  (0/8)")),
+                    "Hidden controls must not accept head-directed input");
+
+                panel.SetPanelVisible(true);
+                Assert.IsTrue(canvas.activeInHierarchy);
+                yield return new WaitForSecondsRealtime(1.05f);
+                Assert.IsTrue(canvas.GetComponentsInChildren<Text>().Any(text => text.text.Contains("Editing code: • (1/8)")),
+                    "Showing the panel resets the old latch and allows a fresh dwell on the same key");
+                panel.SendMessage("OnApplicationPause", true);
+                Assert.IsTrue(root.GetComponentsInChildren<Text>().Any(text => text.text.Contains("Editing code:  (0/8)")));
+                Assert.AreEqual(ConnectionState.Unpaired, connection.State);
+            }
+            finally { Object.Destroy(root); Object.Destroy(cameraObject); }
             yield return null;
         }
         [UnityTest]

@@ -6,7 +6,8 @@
     "Trail.Motion",
     "Trail.Runtime",
     "Trail.Guide",
-    "Trail.Storage"
+    "Trail.Storage",
+    "Oculus.VR"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -45,6 +45,8 @@ namespace Trail.Runtime.Shell
         private HandObservationSource subscribed;
         private IDiagnosticPanel[] diagnostics = new IDiagnosticPanel[0];
         private bool diagnosticsApplied;
+        private NativeShellPointer pointer;
+        private int dispatchedFrame = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register() =>
@@ -72,6 +74,12 @@ namespace Trail.Runtime.Shell
             notice = Label(panel.transform, "Shell notice", new Vector3(0, .13f, 0), .006f);
             for (var i = 0; i < Capacity; i++)
                 labels[i] = Label(panel.transform, "Shell button " + i, new Vector3(0, .04f - i * .06f, 0), .009f);
+            var hint = Label(panel.transform, "Shell input hint", new Vector3(0, .075f, 0), .005f);
+            hint.text = "Point at an option and pinch to select";
+            pointer = panel.AddComponent<NativeShellPointer>();
+            pointer.Initialize(context.TrackingSpace, labels,
+                index => view != null && index < view.Entries.Count && view.Entries[index].Enabled,
+                index => { if (view != null && index < view.Entries.Count) Dispatch(view.Entries[index].Command); });
             ApplyDiagnostics();
         }
 
@@ -147,6 +155,8 @@ namespace Trail.Runtime.Shell
         private void Observe(ReferenceObservation observation)
         {
             if (view == null || subscribed == null || subscribed.TrackingSpace == null) return;
+            if (pointer != null && pointer.IsAimingAtMenu)
+            { touch = ShellInteraction.Cancel(touch); return; }
             // Only labels that actually exist can be touched; the view never exceeds the pool,
             // but clamping keeps a future longer route from indexing past it.
             var buttons = new ShellButton[Math.Min(view.Entries.Count, Capacity)];
@@ -174,11 +184,14 @@ namespace Trail.Runtime.Shell
 
         private void Dispatch(ShellCommand command)
         {
+            if (dispatchedFrame == Time.frameCount) return;
             var conditions = Conditions();
-            // Re-check against fresh conditions. A control is armed by holding and fired by
-            // withdrawing, so the world can change in between; a control that is no longer
+            // Re-check conditions when either touch or point-and-pinch confirms. State
+            // can change after the labels were rendered; a control that is no longer
             // offered must not act.
             if (!ShellModel.Describe(state, conditions).Entries.Any(e => e.Command == command && e.Enabled)) return;
+            dispatchedFrame = Time.frameCount;
+            if (pointer != null) pointer.Cancel();
             var next = ShellModel.Apply(state, command, conditions);
             // Changing route cancels any pending touch so a later withdrawal cannot land on
             // whichever control happens to occupy that slot on the next screen.

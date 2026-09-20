@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Trail.Runtime.Shell
 {
     // Pure world-space touch interaction. No clocks, timers, device APIs, callbacks or I/O.
-    // One confirm model for every Trail panel: touch a label, hold it, then withdraw.
+    // Direct-touch fallback: touch a label, hold it, then withdraw.
     // Capture used touch/hold/withdraw while guide and storage fired on dwell alone; three
     // panels with two contradictory rules is the inconsistency U1 exists to remove.
     public enum ShellTouch { Idle, Touching, Armed }

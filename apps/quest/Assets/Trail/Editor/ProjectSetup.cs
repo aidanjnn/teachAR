@@ -1,15 +1,18 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.SceneManagement;
 using UnityEditor.XR.Management;
 using UnityEditor.XR.Management.Metadata;
 using UnityEditor.XR.OpenXR.Features;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 using UnityEngine.XR.Management;
 using UnityEngine.XR.OpenXR;
 
@@ -167,6 +170,45 @@ namespace Trail.Editor
             if (!int.TryParse(raw, out var value) || value < 1) throw new BuildFailedException("Invalid " + name);
             return value;
         }
+        public static void ValidateStartupScene(Scene scene)
+        {
+            if (!scene.IsValid() || !scene.isLoaded)
+                throw new BuildFailedException("Trail startup scene must be loaded");
+            var roots = scene.GetRootGameObjects();
+            var bootstraps = roots.SelectMany(root => root.GetComponentsInChildren<Trail.Runtime.Platform.NativeBootstrap>(true)).ToArray();
+            if (bootstraps.Length != 1 || !bootstraps[0].isActiveAndEnabled)
+                throw new BuildFailedException("Trail startup scene requires exactly one active NativeBootstrap");
+            foreach (var root in roots)
+            {
+                if (root.GetComponentsInChildren<Camera>(true).Length != 0 ||
+                    root.GetComponentsInChildren<OVRCameraRig>(true).Length != 0 ||
+                    root.GetComponentsInChildren<OVRManager>(true).Length != 0)
+                    throw new BuildFailedException("NativeBootstrap must create the only Trail XR rig and cameras");
+                foreach (var transform in root.GetComponentsInChildren<Transform>(true))
+                    if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(transform.gameObject) != 0)
+                        throw new BuildFailedException("Trail startup scene contains a missing script");
+            }
+        }
+        public static void ValidateApkDataLayout(string path)
+        {
+            using (var stream = File.OpenRead(path))
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+            {
+                const string prefix = "assets/bin/Data/";
+                var packed = archive.GetEntry(prefix + "data.unity3d");
+                var scene = archive.GetEntry(prefix + "level0");
+                var globals = archive.GetEntry(prefix + "globalgamemanagers");
+                // A stale packed archive can take precedence over freshly built loose scene data.
+                if (packed != null && (scene != null || globals != null))
+                    throw new BuildFailedException("APK mixes packed and loose Unity player data; rebuild with a clean build cache");
+                if (packed != null)
+                {
+                    if (packed.Length == 0) throw new BuildFailedException("APK packed Unity player data is empty");
+                }
+                else if (scene == null || globals == null || scene.Length == 0 || globals.Length == 0)
+                    throw new BuildFailedException("APK is missing its Unity startup scene or player data");
+            }
+        }
         // GameCI forwards its documented inputs, not arbitrary TRAIL_* host variables.
         public static void BuildAndroidCi()
         {
@@ -182,6 +224,13 @@ namespace Trail.Editor
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
                 throw new BuildFailedException("Android Build Support/SDK/NDK/JDK is required");
             Apply();
+            // Batch mode can recover an old open scene from a reused Library. Load the
+            // checked-in scene explicitly so that recovery state cannot enter the APK.
+            if (Application.isBatchMode)
+            {
+                AssetDatabase.ImportAsset(ScenePath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+                ValidateStartupScene(EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single));
+            }
             if (!File.Exists("Packages/packages-lock.json")) throw new BuildFailedException("Unity has not resolved and written packages-lock.json");
             var output = Environment.GetEnvironmentVariable("TRAIL_APK_PATH");
             if (string.IsNullOrWhiteSpace(output) || !Path.IsPathRooted(output) || !output.EndsWith(".apk", StringComparison.OrdinalIgnoreCase))
@@ -208,26 +257,36 @@ namespace Trail.Editor
             }
             Debug.Log("Trail Android cleartext policy: insecureHttpOption=" + PlayerSettings.insecureHttpOption +
                 " (development=" + development + ")");
+            var options = development ? BuildOptions.Development : BuildOptions.None;
+            if (Environment.GetEnvironmentVariable("TRAIL_CLEAN_BUILD") == "1") options |= BuildOptions.CleanBuildCache;
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                 scenes = new[] { ScenePath }, locationPathName = output, target = BuildTarget.Android,
-                options = development ? BuildOptions.Development : BuildOptions.None
+                options = options
             });
             // Never leave a checkout configured to ship cleartext.
             if (development) PlayerSettings.insecureHttpOption = InsecureHttpOption.DevelopmentOnly;
             if (report.summary.result != BuildResult.Succeeded || report.summary.totalErrors != 0 || !File.Exists(output))
                 throw new BuildFailedException("Trail Android build failed; inspect Unity build report");
+            ValidateApkDataLayout(output);
             File.WriteAllText(Environment.GetEnvironmentVariable("TRAIL_BUILD_REPORT_PATH") ?? output + ".json",
                 JsonUtility.ToJson(new BuildEvidence { result = "Succeeded", editor = Application.unityVersion, platform = "Android", architecture = "ARM64", backend = "IL2CPP", development = development, bytes = new FileInfo(output).Length }));
         }
         [Serializable] private sealed class BuildEvidence { public string result; public string editor; public string platform; public string architecture; public string backend; public bool development; public long bytes; }
     }
-    public sealed class NativeBuildGuard : IPreprocessBuildWithReport
+    [BuildCallbackVersion(1)]
+    public sealed class NativeBuildGuard : IPreprocessBuildWithReport, IProcessSceneWithReport
     {
         public int callbackOrder => int.MaxValue;
         public void OnPreprocessBuild(BuildReport report)
         {
             if (report.summary.platform == BuildTarget.Android) ProjectSetup.ValidateAndroidConfiguration();
             ProjectSetup.SanitizeDevelopmentTools();
+        }
+        public void OnProcessScene(Scene scene, BuildReport report)
+        {
+            // A null report is Unity entering Play Mode, not packaging a player.
+            if (report != null && report.summary.platform == BuildTarget.Android)
+                ProjectSetup.ValidateStartupScene(scene);
         }
     }
 }

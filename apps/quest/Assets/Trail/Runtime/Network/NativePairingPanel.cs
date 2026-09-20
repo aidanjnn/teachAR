@@ -13,7 +13,13 @@ namespace Trail.Runtime.Network
         // typing an eight-digit code is not an acceptable entry path. The shell keeps this
         // hidden until Settings asks for it, and a tethered development build pairs itself
         // from a USB handoff instead. See DevelopmentPairing.
-        public void SetPanelVisible(bool visible) => gameObject.SetActive(visible);
+        public void SetPanelVisible(bool visible)
+        {
+            // This component lives on the application root, which also owns the XR rig.
+            // Hide only the canvas so diagnostics cannot shut down the whole experience.
+            if (panel != null) panel.gameObject.SetActive(visible);
+            if (!visible) ResetInput();
+        }
 
         private sealed class Key { public RectTransform Rect; public Image Image; public Action Press; }
         private readonly List<Key> keys = new List<Key>();
@@ -118,7 +124,7 @@ namespace Trail.Runtime.Network
         }
         private void Update()
         {
-            if (context == null) return;
+            if (context == null || panel == null || !panel.gameObject.activeInHierarchy) return;
             if (!placed) { if (Time.unscaledTime >= placeAfter) Place(); else return; }
             var ray = context.HeadCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
             Key current = null;

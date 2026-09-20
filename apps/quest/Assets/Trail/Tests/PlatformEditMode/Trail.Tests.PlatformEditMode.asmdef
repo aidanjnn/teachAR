@@ -3,6 +3,7 @@
   "rootNamespace": "Trail.Tests.PlatformEditMode",
   "references": [
     "Trail.Editor",
+    "Trail.Runtime",
     "Unity.XR.OpenXR",
     "Unity.XR.Hands"
   ],

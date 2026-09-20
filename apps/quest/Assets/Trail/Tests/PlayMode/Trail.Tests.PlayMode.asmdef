@@ -3,6 +3,7 @@
   "rootNamespace": "Trail.Tests",
   "references": [
     "Trail.Runtime",
+    "Trail.Shell",
     "UnityEngine.UI"
   ],
   "optionalUnityReferences": [
