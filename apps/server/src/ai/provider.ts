@@ -1,3 +1,4 @@
+import type { VoiceIntent, VoiceIntentContext } from './voice-intent.js';
 import type {
   CoachAnswer, CoachRequest, CoachSessionRequest, CoachSessionResponse, LabelRequest, LabelResult, TranscriptResult, VoiceUnavailable,
 } from '@trail/contracts';
@@ -24,6 +25,8 @@ export interface LiveControlChannel {
 
 export interface AiProvider {
   readonly name: 'mock' | 'openai';
+  speak?(text: string, signal: AbortSignal): Promise<Uint8Array>;
+  interpretCommand?(text: string, context: VoiceIntentContext, signal: AbortSignal): Promise<VoiceIntent>;
   transcribe(input: TranscribeInput): Promise<TranscriptResult>;
   label(request: LabelRequest, signal: AbortSignal): Promise<LabelResult>;
   coachText(request: CoachRequest, signal: AbortSignal): Promise<CoachAnswer>;

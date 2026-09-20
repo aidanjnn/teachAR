@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trail · Ghost hand test</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/ar.css">
+<body><main>
+<p><a href="/tutorial">New: two-hand tutorial recorder →</a></p>
+<span class="eyebrow">TRAIL / GHOST HAND LAB</span><h1>Record a hand. Follow its ghost.</h1>
+<p>Keep goose at A and square at C. Start the fox in an empty spot 25–50 cm from B; demonstrate moving it to B. Use the same hand for recording and following.</p>
+<div id="notice" role="status">Loading headset controls…</div>
+<section class="panel">
+<p><button id="enter" disabled>Enter hand guidance · free</button></p><p><strong>Put down the controllers and use hand tracking.</strong> In AR: Mark START, Mark END at B, Start recording, then Finish recording and Watch ghost or Follow. Use your other hand to point and pinch the controls. Marking has a four-second countdown. Recording starts immediately and lasts until you choose Finish recording. Pause/Resume recording lets you take breaks; paused time is excluded. Return your wrist to the paused ghost before resuming.</p><h2>Optional: camera for the final image check</h2>
+<button id="camera-start">Enable camera</button>
+<select id="devices" aria-label="Camera"><option value="">Outward-facing camera</option></select>
+<p id="camera-status">Open this page inside Quest Browser. Close the old camera-sender tab.</p>
+<video id="video" autoplay playsinline muted></video>
+<p>Enable the camera <strong>before entering AR</strong> if you want the final paid placement check. The hand-guidance test works without it.</p>
+<p id="readiness">Checking your saved reference…</p>
+<label><input id="speech" type="checkbox" checked> Speak new corrections and test instructions</label>
+
+<p class="muted">The ghost is a recorded joint skeleton, anchored to this workspace for this XR session. Correction compares your wrist with the current path segment, not your grip. Red means off path, amber means tracking lost or near the edge. An arrow points back toward the ghost. No AI calls are made for motion guidance.</p>
+<p id="budget"></p>
+</section>
+<section class="panel"><h2>Feedback preview / headset fallback</h2>
+<p>This preview only shows controls. Real recording requires Quest hand tracking in an immersive session. Choose Follow, match the first ghost wrist, then move sideways to test the warning and return to the path.</p>
+<canvas id="hud-preview" width="1080" height="560" aria-label="Feedback and check controls"></canvas>
+<p id="trial">Start the test in AR, or use the controls above in this browser window.</p>
+</section>
+<details class="panel"><summary>Reference setup — only if needed</summary>
+<p>Your saved reference is reused. To replace it: put goose at A, fox at B, square at C; capture a reference; mark two opposite corners around each toy in order: goose, fox, square. Exclude the written labels from the boxes.</p>
+<button id="save-reference">Capture correct arrangement</button>
+<canvas id="reference" width="960" height="720" aria-label="Reference: mark goose then fox then square"></canvas>
+<p id="mark-help">No new reference captured.</p>
+<button id="undo">Undo box</button> <button id="save-boxes" disabled>Save three boxes</button>
+</details>
+<p><button id="export-motion">Download last recording + log</button></p><p><a href="/lab">Laptop diagnostics</a> · <button id="stop" class="secondary">Stop camera + paid checks</button></p>
+</main><script type="module" src="/ar.js"></script></body></html>

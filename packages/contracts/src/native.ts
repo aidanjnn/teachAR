@@ -1,3 +1,4 @@
+// Legacy import compatibility only. The WebXR tutor uses its own browser format.
 import { z } from 'zod';
 import { PoseSchema, Vec3Schema, RecordingSchema, type Recording, type JointName } from './recording.js';
 import { HashSchema, IdSchema, RevisionSchema } from './common.js';

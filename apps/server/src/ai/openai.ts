@@ -1,3 +1,4 @@
+import { VoiceIntentSchema, voiceIntentPrompt } from './voice-intent.js';
 import {
   COACH_TEXT_DEADLINE_MS, fallbackCoachAnswer,
   type CoachAnswer, type CoachContext, type CoachRequest, type CoachSessionRequest, type CoachSessionResponse,
@@ -49,6 +50,16 @@ export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider
   const coachTimeoutMs = options.coachTimeoutMs ?? COACH_TEXT_DEADLINE_MS - 1_000;
   return {
     name: 'openai',
+    async speak(text, signal) {
+      if (!options.gateway.speech) throw new Error('Speech unavailable');
+      return options.gateway.speech(text, signal);
+    },
+    async interpretCommand(text, context, signal) {
+      const parsed = await options.gateway.parseJson({ model: options.textModel, ...voiceIntentPrompt(text, context), schema: VoiceIntentSchema, schemaName: 'trail_voice_intent', maxOutputTokens: 160, signal });
+      if (parsed.status !== 'ok') return { action: 'none', response: 'I did not catch that. Could you repeat the request?' };
+      const intent = VoiceIntentSchema.parse(parsed.parsed);
+      return intent.action === 'none' || context.allowed.includes(intent.action) ? intent : { action: 'none', response: 'That action is not available here. Say help for the available commands.' };
+    },
     async transcribe(input: TranscribeInput) {
       const raw = await options.gateway.transcribeVerbose({ bytes: input.bytes, mimeType: input.mimeType, model: options.transcribeModel, signal: input.signal });
       return alignTranscript({

@@ -42,7 +42,7 @@ element('#app').innerHTML = `
 
     <section class="panel" aria-labelledby="narration-heading">
       <h2 id="narration-heading">1. Narration</h2>
-      <p class="lede">Records your microphone on a monotonic clock and reports the offset from the recording epoch, like the native headset recorder will. This page is a desktop diagnostic.</p>
+      <p class="lede">Records your microphone on a monotonic clock and reports the offset from the recording epoch. This page is a desktop diagnostic.</p>
       <div class="row">
         <button id="record" class="primary" type="button">Record</button>
         <button id="stop" type="button" disabled>Stop</button>

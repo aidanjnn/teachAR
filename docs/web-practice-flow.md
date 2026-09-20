@@ -2,7 +2,7 @@
 
 **Presentation update:** [Immersive entry and continuous hand surfaces](web-immersive-entry.md) supersede this document’s procedural-hand description and browser-first entry instructions. Movement rules below remain in effect.
 
-This change builds on the UI/UX base in PR #23. The active headset runtime remains `experiments/quest-browser` (Quest Browser/WebXR). The original strict follower remains the default for legacy consumers; the contextual tutor opts into the new relaxed practice loop. No recording schema migration or Unity change is required.
+This change builds on the UI/UX base in PR #23. The active headset runtime remains `apps/webxr` (Quest Browser/WebXR). The original strict follower remains the default for legacy consumers; the contextual tutor opts into the new relaxed practice loop. No recording schema migration or Unity change is required.
 
 ## User flow
 
