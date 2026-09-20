@@ -18,7 +18,13 @@ namespace Trail.Runtime.Network
             // This component lives on the application root, which also owns the XR rig.
             // Hide only the canvas so diagnostics cannot shut down the whole experience.
             if (panel != null) panel.gameObject.SetActive(visible);
+            enabled = visible;
             if (!visible) ResetInput();
+            else
+            {
+                if (hovered != null) hovered.Image.color = Idle;
+                hovered = null; dwell = 0; latched = false;
+            }
         }
 
         private sealed class Key { public RectTransform Rect; public Image Image; public Action Press; }

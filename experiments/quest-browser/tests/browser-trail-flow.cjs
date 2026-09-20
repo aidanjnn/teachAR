@@ -52,7 +52,7 @@ const assert=require('node:assert/strict');
   a.action('primary');if(a.mode!=='review-step'||a.tutorial.steps.length!==1)fail('New capture did not open review: '+a.problem);
   const saved=a.tutorial.steps[0];a.action('hand');t=a.pending.until;atick();a.action('discard-confirm');a.action('discard-take');
   if(a.tutorial.steps[0]!==saved)fail('New replacement discard erased original');
-  a.action('hand');a.action('primary');if(a.mode!=='saved'||!a.tutorial.completion)fail('Approve did not finish and save: '+a.problem);
+  a.action('hand');a.action('primary');if(a.mode!=='saving-tutorial')fail('Approval must await durable save');await a.finishTask;if(a.mode!=='saved'||!a.tutorial.completion)fail('Approve did not finish and save: '+a.problem);
   a.action('start-follow');if(a.mode!=='learn'||a.followEngine.started)fail('Created tutorial did not start with waiting ghost');
   a.endSession();
   const blank=syntheticTutorial();blank.title='Other saved recording';await saveTutorial(blank,draftVersion(await loadTutorial()));

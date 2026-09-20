@@ -23,6 +23,8 @@ export function tutorialView(g){
  case 'saving':v.title='Saving your recording…';v.text='Keep the session open while narration finishes.';break;
  case 'review-step':v.tag=`CREATE · REVIEW ${g.player.index+1} / ${g.tutorial.steps.length}`;v.title='Review your recording';v.text=g.player.step.instruction;v.detail=g.player.step.narration_issue?'Narration needs repair. Open More options.':'Inspect the start and ending before approving this recording.';b('primary','Approve & save');b('replay','Replay recording');b('hand','Record replacement');b('review-options','More options');break;
  case 'review-options':v.tag='CREATE · REVIEW OPTIONS';v.title='Refine this recording';v.text='Detailed trimming and instruction edits are available on the review page after exiting AR.';b('verify','Reference photo · 3s');b('cue','Mark guide line');b('removeCue',g.player.step.narration_issue?'Use text instruction':'Clear guide line');b('guide-hands',`Guide: ${g.player.step.guide_hands||'recorded'} hands`);b('review-back','Back to review');break;
+ case 'saving-tutorial':v.title='Saving your tutorial…';v.text='Keep this page open until local storage confirms the save.';break;
+ case 'save-failed':v.title='Tutorial has not been saved';v.text='Your recordings are still in memory. Retry, or exit AR and export before closing this page.';b('retry-save','Retry save');break;
  case 'saved':v.tag='CREATE · SAVED';v.title='Ready to follow';v.text=`${g.tutorial.title} · ${g.tutorial.steps.length} recordings. Saved on this device; no download required.`;b('start-follow','Follow this tutorial');b('author-back','Add another recording');b('home','Back home');break;
  case 'learn':{
   v.tag=`FOLLOW · ${g.player.index+1} / ${g.tutorial.steps.length}`;v.text=g.player.step.instruction;

@@ -28,6 +28,7 @@ namespace Trail.Tests.EditMode
             ExplicitChangeCancelAndNewTutorial(); EndpointHoldReturnTrimsTheReturn(); OrdinaryMotionDoesNotSave();
             NarrationTrimsOnTheSameBoundary(); DwellResetsOnPauseLossAndOrigin(); PausedTimeNeverCountsAsTakeTime();
             DiscardedReplacementKeepsPreviousTake(); ExplicitStopKeepsTheFullTake(); ResumeRequiresReturnToPausedPose();
+            DurationLimitKeepsASaveableTake(); TrimPreservesTrailingMarkers();
         }
 
         public static void PalmAndValueValidation()
@@ -180,7 +181,7 @@ namespace Trail.Tests.EditMode
                 if (palm.HasValue && Vector3.Distance(palm.Value, HomeLeft) < .08f) homeFrames++;
             }
             Check(homeFrames == 0, "the return gesture is trimmed off the end");
-            Check(take.Recording.DurationMs == frames[frames.Length - 1].TMs, "duration matches the trimmed motion");
+            Check(take.Recording.DurationMs == take.Trim.EndMsExclusive - take.Trim.StartMs, "duration preserves the kept timeline between samples");
             Check(r.State.EndpointCandidateMs == null && r.State.TakeMs == 0, "committing clears the take evidence");
         }
 
@@ -266,7 +267,7 @@ namespace Trail.Tests.EditMode
             // Rebased by the shared boundary, never snapped to zero: snapping would shift motion
             // against its narration by up to one sample period.
             Check(middle.Recording.Frames[0].TMs == 20, "trimmed motion is rebased by the boundary, not snapped");
-            Check(middle.Recording.DurationMs == 980, "trimmed motion covers the kept interval");
+            Check(middle.Recording.DurationMs == 1000, "trimmed motion covers the kept interval");
             Near(middle.Narration.AudioStartOffsetMs, 0, .001, "narration is rebased with the motion");
             Near(middle.Narration.DurationMs, 1000, .001, "narration covers the same kept interval");
             Near(middle.NarrationSource.SourceStartMs, 500, .001, "source clip starts at the shared boundary");
@@ -473,6 +474,39 @@ namespace Trail.Tests.EditMode
             r.Advance(r.Policy.SaveZoneArmMs + 40);
             return r;
         }
+        public static void DurationLimitKeepsASaveableTake()
+        {
+            var r = Ready(); r.Act(RecordingAction.StartTake);
+            r.Hold(StartLeft, StartRight, 123000);
+            Check(r.State.Phase == RecordingPhase.Reviewing && r.Ledger.Takes.Count == 1,
+                "duration limit stops admission and saves exactly one take for review");
+            var saved = r.Ledger.Takes[0];
+            Check(saved.TrimReason == "duration-limit" && saved.Recording.DurationMs <= 120000,
+                "bounded stop has explicit provenance and valid duration");
+            r.Hold(StartLeft, StartRight, 500);
+            Check(r.Ledger.Takes.Count == 1, "samples after limit cannot commit twice");
+            var ledger = new TakeLedger(Workspace(), "synthetic-fixture");
+            Check(ledger.AppendFrame(0, Hand(StartLeft), Hand(StartRight)), "first frame accepted");
+            Check(ledger.AppendFrame(120000, Hand(EndLeft), Hand(EndRight)), "maximum legal timestamp accepted");
+            var full = ledger.Commit(null, null, "explicit-stop", "full-maximum");
+            Check(full.Recording.DurationMs == 120000 && full.Recording.Frames.Length == 2 && full.Trim == null,
+                "full save retains the final timestamp without inventing an out-of-bounds trim");
+        }
+
+        public static void TrimPreservesTrailingMarkers()
+        {
+            var recording = SyntheticRecording(120);
+            recording.DurationMs = 100;
+            recording.Markers = new[] { new StepMarker { Id = "tail", TMs = 90, Kind = "step-end", Source = "operator-control" } };
+            recording = ContractJson.ParseRecording(ContractJson.SerializeRecording(recording));
+            foreach (var trim in new[] { new TakeTrim(0, 100), null })
+            {
+                var saved = TakeTrimmer.Trim(recording, trim, "trailing-marker").Recording;
+                Check(saved.DurationMs == 100 && saved.Markers.Length == 1 && saved.Markers[0].TMs == 90,
+                    "retained marker between last pose and end stays within the saved duration");
+            }
+        }
+
         private static Recorder Ready()
         {
             var r = Choosing();

@@ -17,3 +17,8 @@ routing rules and the unified touch/hold/withdraw confirm model. It proves nothi
 about native tracking, world-space layout, legibility on a headset, Unity import,
 Android/IL2CPP compilation or whether a learner can actually use the panel.
 `TutorialExperienceController` is a MonoBehaviour and is NOT covered here.
+
+The guide-confirmation regression runs the actual `GuideSession`/`GuideReducer` with
+a left-only user-confirmed step. Losing the right hand that armed Confirm must not
+complete it; reacquiring, holding again and visibly withdrawing still works. The
+shell also cancels invalid/nonfinite owner samples and prevents hand takeover.

@@ -1,8 +1,12 @@
 # Native MVP integration — handoff
 
-Branch `codex/native-mvp-integration`. Written 2026-09-19 at the point where the app
-compiles, builds, installs and runs on a Quest 3S but **renders black**. Read the open
-issues first: issue 1 is what blocks a demo.
+Branch `codex/native-mvp-integration`. Originally written 2026-09-19 while the
+Quest 3S view was black. **That rendering defect is now repaired:** the wearer
+confirmed the room and Trail menu are visible. See the
+[diagnosis](native-black-screen-diagnosis.md) and [validation record](validation.md)
+for the root-deactivation fix, build-cache recovery and exact tested APKs.
+Point-and-pinch menu input is implemented; actual wearer confirmation is pending.
+The remaining capture, calibration, progression and voice gaps below still apply.
 
 ## How to reproduce the current state
 
@@ -32,7 +36,11 @@ done
 `adb push` of a *directory* into that path silently creates an empty directory and then
 fails with `failed to read copy response: EOF`. Push the files individually.
 
-## Open issue 1 — the headset renders black (BLOCKING)
+## Resolved issue 1 — black headset view (original investigation)
+
+The observations and hypotheses below describe the original failing build.
+The subsequent repair and wearer-confirmed recovery are recorded in
+[validation.md](validation.md); they supersede this section's original diagnosis.
 
 The app starts, composes cleanly, reaches `XR_SESSION_STATE_FOCUSED`, and is the
 `topResumedActivity`. Hand tracking is granted and active. There are no `E Unity`
@@ -73,7 +81,16 @@ foreach (var camera in rigRoot.GetComponentsInChildren<Camera>(true))
 rigRoot.SetActive(true);
 ```
 
-Hypotheses, in the order worth testing:
+**Subsequent PR #19 review finding:** `NativePairingPanel` lives on the application
+root, but its new `SetPanelVisible(false)` called `gameObject.SetActive(false)`.
+The shell calls that during initialization, disabling the root and its rig. The
+PR #19 correction changes visibility to the pairing canvas
+and disables only the panel's input component. A regression test checks the actual
+root/camera activation and connection lifetime. The subsequent corrected APK
+resumed passthrough and the wearer confirmed the room and menu were visible.
+The hypotheses below predate that finding and device confirmation.
+
+Hypotheses recorded at handoff:
 
 1. **`OVRManager` / `OVRPassthroughLayer` added while the GameObject is inactive.**
    Their `Awake`/`OnEnable` run only at `SetActive(true)`, after `isInsightPassthroughEnabled`

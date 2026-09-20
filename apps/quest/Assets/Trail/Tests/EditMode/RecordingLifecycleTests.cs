@@ -14,6 +14,8 @@ namespace Trail.Tests.EditMode
         [Test] public void PausedTimeIsNeverPartOfTheTake() => RecordingFixtureAssertions.PausedTimeNeverCountsAsTakeTime();
         [Test] public void DiscardedReplacementPreservesThePreviousTake() => RecordingFixtureAssertions.DiscardedReplacementKeepsPreviousTake();
         [Test] public void ExplicitStopRemainsAvailable() => RecordingFixtureAssertions.ExplicitStopKeepsTheFullTake();
+        [Test] public void DurationLimitKeepsASaveableTake() => RecordingFixtureAssertions.DurationLimitKeepsASaveableTake();
+        [Test] public void TrimPreservesTrailingMarkers() => RecordingFixtureAssertions.TrimPreservesTrailingMarkers();
         [Test] public void ResumeRequiresReturningToThePausedPose() => RecordingFixtureAssertions.ResumeRequiresReturnToPausedPose();
     }
 }
