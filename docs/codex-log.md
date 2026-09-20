@@ -1,5 +1,33 @@
 # Trail Codex development log
 
+## OpenAI track reading guide — September 20, 2026
+
+Start with the [judge brief and demo plan](openai-track.md), then the
+[three concrete Codex improvements](codex-impact.md). The full history below
+records how the product evolved; the initial scaffold is an early milestone,
+not the final scope of Codex's contribution.
+
+**Evidence snapshot inspected for this summary:** main at
+[`dfaf572`](https://github.com/aidanjnn/trail/tree/dfaf572a0c4bb1eb0ce15a14605649306fa550fe),
+verified against GitHub during preparation on September 20. It contains the
+WebXR tutor and paired GPT-Live coach. Historical statements such as “API not
+implemented” or native-only plans apply to their dated snapshots, not the newer
+browser implementation. Source links remain pinned as main advances.
+
+| Judging criterion | Strongest selected evidence | Boundary |
+| --- | --- | --- |
+| OpenAI API powers the experience | Reviewed tutorial/current-step context feeds GPT-Live; transcription and structured label drafting support authoring. See the [API map](openai-track.md#what-the-api-contributes). | Implementation and recorded desktop provider evidence; the final Quest speech-and-hands rehearsal still needs its own record. |
+| Codex improves the result | Reproduced false movement completion and repaired it with observed-motion checks and regression coverage. See [case 1](codex-impact.md#1-stationary-hands-could-finish-a-movement). | Freshly reproduced the old synthetic failure; repair passes 12 tests, inspected main passes 32 focused movement/coach tests. |
+| Codex supports iteration | Cancelled voice startup cannot resume later; hand-asset failures retain visible joint outlines. See [cases 2 and 3](codex-impact.md). | Current coach unit regressions rerun; hand-rendering browser results attributed to their original work record. |
+
+The team reports using Codex for implementation and supplied product direction,
+constraints, review feedback and physical observations. These examples show the
+specific work Codex performed without inventing code percentages or time savings.
+The proposed live-demo sequence and feature ideas are recommendations, not
+completed features or measured user outcomes.
+
+## Historical introduction — initial scaffold
+
 This log records how we used **OpenAI Codex to build Trail**, for our OpenAI / Codex track submission. It covers research, product decisions, implementation, debugging, testing, design exploration, and delivery—not just generated code.
 
 **Last backfilled:** September 19, 2026. Times below are EDT (America/Toronto).
@@ -15,7 +43,7 @@ The team supplied the product goal, hardware clarification, quality expectations
 
 ## Activity timeline
 
-All entries below occurred on **2026-09-19**. Task letters refer to the source register at the end.
+This original timeline table covers **2026-09-19**. Later dated entries record subsequent work. Task letters refer to the source register below.
 
 | Time | Request and Codex contribution | Result and evidence |
 | --- | --- | --- |
@@ -59,7 +87,7 @@ Earlier checks below are historical results from task E and the linked CI runs. 
 
 | Evidence category | Recorded result | Scope |
 | --- | --- | --- |
-| Clean installation | Passed `pnpm install --offline --frozen-lockfile` in a temporary source copy without existing dependencies, builds, environment file, or runtime data. Initial network installation also succeeded. | Node 22.23.1 / pnpm 11.3.0; recorded in [scaffold validation](scaffold.md#original-bootstrap-validation-historical). |
+| Clean installation | Passed `pnpm install --offline --frozen-lockfile` in a temporary source copy without existing dependencies, builds, environment file, or runtime data. Initial network installation also succeeded. | Node 22.23.1 / pnpm 11.3.0; recorded in [scaffold validation at its original revision](https://github.com/aidanjnn/trail/blob/3b1b1d214f50d054b2d6be55d977fd289492a3bc/docs/scaffold.md#validation). |
 | Automated application checks | Passed `pnpm check`: strict typecheck, **27 unit/API tests**, and production build. | Recording boundaries, rigid transforms, shared-package architecture, server configuration, health/storage failure, and static serving. |
 | Synthetic fixture | Passed `pnpm validate:fixtures`: **61 frames / 2,000 ms**. | [Synthetic fixture](../fixtures/synthetic-reach.v1.json); not a real person's recording. |
 | Desktop browser | Passed `pnpm test:e2e`: **3 Chromium tests**. Development startup/proxy/watchers also ran; desktop/mobile screenshots were inspected. | Replay/tracking gaps/reset, failed health request/recovery, and narrow-screen keyboard controls. Task E records Chromium 153.0.8010.12. |
@@ -107,6 +135,9 @@ Append a dated entry after each substantive Codex session. Keep historical resul
 - Validation: commands and results; distinguish automated, desktop fixture,
   live provider, and headset/human evidence. Identify the tested revision.
 - Remaining limits / next step:
+- Before / after: the concrete behavior or decision Codex improved.
+- Judge-visible proof: one inspectable diff, regression, screenshot, or demo moment.
+- Attribution: distinguish the user, Codex, external review and device observer.
 ```
 
 ### 2026-09-19 11:33 EDT — GPT Live plan revision and ongoing activity logging
@@ -1394,6 +1425,24 @@ or personal recording was used. Restarted only task-owned port4345 (PID21379); h
 good. Quest disconnected during update; USB forwarding and author pairing could not be
 restored, and new physical microphone/echo tests remain pending reconnect.
 
+### 2026-09-20 — Curate OpenAI track evidence and verify the Codex improvement story
+
+- **User goal / input:** Strengthen the Codex log and supporting documentation for the supplied OpenAI judging criteria; suggest improvements to the demo. The user reports using GPT-Live and Codex for implementation. No product feature, publication or submission was requested in this turn.
+- **Source reconciliation:** GitHub main and the local remote reference both resolved to `dfaf572a0c4bb1eb0ce15a14605649306fa550fe` during this audit. Inspected its WebXR tutor, paired coach, provider configuration, prompts, SDK calls, vision adapter, regression tests and published activity history. Preserved this older Unity setup checkout and its unrelated uncommitted work. New documents use immutable links to the newer implementation rather than implying it is present in this checkout.
+- **Documentation result:** Added [OpenAI track brief and demo plan](openai-track.md) and [Codex impact case studies](codex-impact.md); linked them from README and added the reading guide above. The brief includes an API architecture diagram, a three-minute rehearsal script, prioritized ideas and an evidence checklist. Case studies connect false movement completion, cancelled coach startup and invisible hand assets to specific repairs. Preserved dated log entries, clarified the scope of the original timeline, expanded the future-entry template and repaired an old scaffold-evidence link by pinning its original commit.
+- **Concrete before / after:** Exported the pre-repair follower at `32d3020714436dd9d19439c57ee1e05db0256d20` and the existing regression from repair `957b89447bad972e50299f162cb318146f1bde6c` into an isolated temporary directory. The stationary-midpoint test failed as expected: index 2 instead of 1. A direct replay of the 41-frame, 1.6-second, 18 cm synthetic movement with five seconds of stationary learner samples confirmed `done: true` before the repair and `done: false` at the repair and inspected main snapshots. This is reproducible automated evidence of a Codex-assisted product improvement.
+- **Fresh automated validation:** Node 22.23.1 passed all 12 follower tests at `957b894`, then all 32 existing follower, practice-regression and coach tests at `dfaf572` with none skipped. Tests and runtime source were exported unchanged; no application repair was made in this documentation task. The intentionally failing pre-repair test is separate from the passing repaired-code checks. Documentation checks validated links/anchors, immutable source references, balanced fences, whitespace and preservation of previous dated history and unrelated README content.
+- **Provider evidence, attributed:** The [earlier browser voice record](https://github.com/aidanjnn/trail/blob/8b95701cddca9b06dec5009983854c0f5aeeb6f3/docs/codex-log.md#2026-09-20--webxr-voice-gpt-live-coach-and-whisper-labels-in-the-quest-browser-tutor) reports a real OpenAI desktop session/sideband connection in 1.7 seconds, acknowledged step context, typed replies and synthetic narration drafting. That run used a fake microphone and heard no spoken audio. It proves narrower provider paths, not spoken-answer latency or simultaneous Quest speech and tracking. The new brief keeps those distinctions and describes the inspected coach as Ask-triggered.
+- **Official API sources:** Read OpenAI's [GPT-Live overview](https://developers.openai.com/api/docs/guides/live), [visual delegation](https://developers.openai.com/api/docs/guides/live-delegation#add-images-and-visual-context) and [Responses image guide](https://developers.openai.com/api/docs/guides/images-vision). Verified the repository calls `client.live.create` and keeps image assessment in a separate Responses path; did not relabel GPT-Live as the Realtime API or claim that Live directly receives images.
+- **Remaining evidence / recommendation:** Prioritize a short physical task with an audible, unscripted, tutorial-grounded exchange on the actual headset, then show the verified Codex before/after case. Three clean rehearsals, a non-builder attempt and measured useful-speech latency are proposed evidence to collect. Fresh visual coaching is an optional extension after the core works. No new provider requests, microphone/camera capture, headset/human trial, full workspace/browser suite, commit, push or submission occurred.
+
+### 2026-09-20 — Prepare the OpenAI track documentation PR
+
+- **Request:** Commit and push the documentation to a new branch and create a PR. Created an isolated `codex/openai-track-evidence` branch from freshly fetched main `f5182af7a4c0fa7bf3fe76132e045ea4ec649358`; preserved the original checkout and all unrelated changes.
+- **Scope:** Ported only the judge brief, Codex case studies, README navigation and this task's activity-log changes. Retained every existing dated main-log entry. Adjusted checkout-specific wording for publication and linked the coach case to the published integration record. No application, dependency or test source changed.
+- **Validation:** Reran the 32 existing follower, practice-regression and coach tests against the current main base; all passed with none skipped. The earlier before/after results remain pinned to their original source revisions. Documentation validation checked 96 local link occurrences and 21 new immutable source references, balanced code fences, patch whitespace and preservation of historical entries. All new targets resolve; five pre-existing historical link occurrences still refer to retired native files or a replaced plan heading and are unchanged. Full application/browser suites and live provider/headset trials are outside this documentation-only change.
+
+
 
 ### 2026-09-20 — Browser Sentry interaction tracing, diagnostic replay and step observations
 
@@ -1453,6 +1502,12 @@ Preserved remote `47017b3` and main `4e38d2e` voice-coach updates while retainin
 ### 2026-09-20 — Simplify headset creation, placement and voice feedback
 
 Fixed XR-origin reset routing that opened calibration before tutorial selection. Added Create onboarding, default both hands with optional overrides, a stationary-second plus one-second save circle, trimmed step saves and rest-position-triggered three-second next-take countdowns. Separated Save step from Finish tutorial; retained automatic narration polishing. Added explicit Watch & do for tasks where exact hand following is unsuitable. Status defaults below the main panel; microphone activity uses a compact icon. Common spoken commands skip intent inference after transcription; arbitrary wording keeps the model fallback. Hologram rendering still consumes raw tracking without changing detection. Physical object registration, task resizing and occluded-hand grading remain unsupported. Final integration and validation results follow below.
+### 2026-09-20 — Catch OpenAI evidence PR #34 up with main
+
+- **Scope:** Merged main `4e38d2e` into PR #34 from `c97dc8a` in an isolated checkout. Retained the OpenAI/Codex brief, case studies, README links and both activity histories alongside the newly merged voice demo hardening. No runtime, dependency or test difference from the new base.
+- **Validation:** All 31 focused follower, practice-regression and coach tests passed on the reconciled tree. Checked 94 local documentation links and 16 immutable file references; no new missing targets and balanced fences. Four historical native-file link occurrences remain unchanged from the PR head. History preservation and patch whitespace checks passed. Full application/browser gates are not rerun for this documentation-only PR.
+- **Evidence boundary:** Automated checks only; no new provider or headset/human validation. The original dirty checkout and existing PR worktree were preserved.
+
 ### 2026-09-20 — Catch Sentry PR #33 up with main
 
 - **Scope:** Merged main `4e38d2e` into PR #33 from `82c0dcb` in an isolated checkout. Kept the public telemetry configuration route alongside the coach greeting setup. Preserved diagnostic session/visibility observations together with main's epoch-tagged narration cleanup and voice hardening. Retained both activity histories and exact dependencies.
@@ -1468,3 +1523,8 @@ Fixed XR-origin reset routing that opened calibration before tutorial selection.
 Final validation for simplified flow: preserved remote a0b1ae0 (including Sentry). Typechecks/builds and 408 shared/API tests passed; fixtures and eight desktop E2E workflows passed; the full WebXR suite passed 155 Node cases, 61 Python cases and all 26 synthetic browser workflows. Legacy review tests now explicitly exercise optional/manual review while new authoring tests cover default-both, pre-circle motion/audio trimming, next-take countdown and Home/reset recovery. Spatial checks use updated world matrices and verify UI transforms leave calibration unchanged. Actual AR canvases and desktop/mobile layouts inspected.
 
 Task-owned server restarted as PID26511 on port4345; USB reverse 4321/4345 restored, Quest author paired, health passes. One bounded live-provider probe used synthetic speech in the connected Quest browser: native fetch worked, a separate in-memory guide moved back one step, and reply audio decoded. It did not open the microphone, play audible speech or modify personal recordings. Worn-headset gesture/microphone/performance acceptance remains pending. Command pipeline remains clip-based; no automatic object registration or hidden-hand grading is claimed.
+### 2026-09-20 — Catch OpenAI evidence up after Sentry merges
+
+- **Scope:** Merged main `4f2f4d5` (Sentry PR #33) into documentation PR #34 from `73c9c25`. Retained both branches' complete dated activity entries and all README navigation. The resulting PR still changes only README and the three OpenAI/Codex documentation files.
+- **Validation:** All 31 focused follower, practice-regression and coach tests passed. Checked 97 local documentation links and 16 immutable file references, balanced fences, preserved histories and patch whitespace; no new broken paths. Existing historical native-file links remain unchanged. Application/browser gates are not rerun for this documentation-only diff.
+- **Evidence boundary:** Automated checks only. No new provider, hosted Sentry or headset/human evidence; the original dirty checkout remains untouched.
