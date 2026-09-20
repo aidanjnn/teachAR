@@ -15,7 +15,7 @@ Movement matching is guidance, not proof of assembly or hidden object state.
 
 ## 2. Existing foundation
 
-The source baseline is PR #24 head `8c83d2b20e3e8177b52eda61ef440dd58f227aad`,
+The source baseline is PR #24 head `44de6fdcaa5b1c65cca82aa1b44b194a54d44a01`,
 which includes PR #23 `a10b9f75790c8039d3a81b2ca80a26bf406fadb7` and
 PR #17 `40514f519a8db6b9fac3c47e223ecdc2ba474cc2`.
 
@@ -25,6 +25,10 @@ connects the real DOM/XR UI, in-headset trimming, settings and durable-save
 feedback. PR #24 adds preview-first practice, automatic movement-only
 transitions and smoother procedural hands. See [the UI base](web-ui-base.md),
 [practice flow](web-practice-flow.md) and [feature inventory](web-delivery.md).
+
+The reviewed upstream repairs require explicit hand selection and complete
+required-hand coverage, await durable tutorial saves, protect unfinished takes,
+reconcile review edits with live guidance, and preserve short movement excursions.
 
 This migration preserves the complete stack and formats while moving
 `experiments/quest-browser` into `apps/webxr`, making it the root development
@@ -174,7 +178,7 @@ pnpm test:webxr
 
 `pnpm check` covers TypeScript/API tests and builds, including verified WebXR
 assets. `pnpm test:webxr` covers Node motion/format tests, Python server tests and
-ten synthetic Chromium workflows on a private temporary server with provider
+eleven synthetic Chromium workflows on a private temporary server with provider
 credentials disabled. [CI](ci.md) runs the same applicable checks. Use focused
 checks for smaller changes and reuse unchanged passing evidence.
 

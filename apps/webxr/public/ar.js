@@ -12,7 +12,7 @@ const handsMode=tutorialMode||location.pathname==='/hands';
 const feedbackAudio=new FeedbackAudio();
 const narrator=tutorialMode?new NarrationRecorder({onStatus:message=>{document.getElementById('microphone-status').textContent=message;}}):null;
 const narrationPlayer=tutorialMode?new NarrationPlayback({onError:message=>tell(message)}):null;
-const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>action('exit'),snapshot:tutorialSnapshot,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take)feedbackAudio.play(event);}}):null;
+const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>closeAR(),snapshot:tutorialSnapshot,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take)feedbackAudio.play(event);}}):null;
 
 const $=id=>document.getElementById(id);
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
@@ -137,9 +137,13 @@ async function setAuto(enabled) {
   trialRunning=enabled;
   await poll();
 }
+async function closeAR() {
+  pauseOnLeave(); await session?.end(); tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');
+}
 async function action(id) {
   if (id==='exit') {
-    pauseOnLeave(); await session?.end(); tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.'); return;
+    if(tutorialMode){guide.action(id);update();}else await closeAR();
+    return;
   }
   if(handsMode && id!=='check'){if(id!=='verify')pendingCheck=0;guide.action(id);update();return;}
   if (busy || !status || performance.now()-statusAt>4000) return;
@@ -365,7 +369,7 @@ $('speech').onchange=()=>{if(!$('speech').checked)window.speechSynthesis?.cancel
 hud.onclick=event=>{if(tutorialMode&&!session){tell('This is a preview. Enter AR on Quest to use these controls.');return;}const r=hud.getBoundingClientRect();const id=(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)((event.clientX-r.left)/r.width,1-(event.clientY-r.top)/r.height);if(id)void action(id);};
 document.addEventListener('visibilitychange',()=>{if(!visible()){pauseOnLeave();guide?.hide();if(!session)stopCamera();}});
 window.addEventListener('pagehide',()=>{feedbackAudio.close();pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();});
-window.addEventListener('beforeunload',event=>{if(tutorialMode&&['capture','capture-paused','saving'].includes(guide.mode)){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(tutorialMode&&(['capture','capture-paused','saving','saving-tutorial'].includes(guide.mode)||['saving','failed'].includes(guide.saveStatus))){event.preventDefault();event.returnValue='';}});
 // A separate timer keeps the non-immersive setup and fallback usable.
 setInterval(()=>{service(performance.now());update();},200);
 try {xrSupported=!!navigator.xr && await navigator.xr.isSessionSupported('immersive-ar');}

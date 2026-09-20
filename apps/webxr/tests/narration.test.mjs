@@ -4,7 +4,7 @@ import {AUDIO_RATE,encodeNarration,decodeNarration,validateNarration,trimNarrati
 import {newTutorial,prepareStep,finishTutorial,validateTutorial,learningReadiness,trimStep} from '../public/tutorial-core.mjs';
 const tone=(seconds=2)=>Float32Array.from({length:seconds*AUDIO_RATE},(_,i)=>Math.sin(i*.1)*.3);
 const hand=()=>Array.from({length:25},()=>({p:[0,0,0],q:[0,0,0,1]}));
-const draft=()=>({...newTutorial(),setup:'Cloth flat; collar facing away.',calibration_span_m:.4,steps:[prepareStep(Array.from({length:51},(_,i)=>({t:i*40,left:hand(),right:hand()})),'Fold the left side inward.')]});
+const draft=()=>({...newTutorial(),setup:'Cloth flat; collar facing away.',calibration_span_m:.4,steps:[{guide_hands:'both',...prepareStep(Array.from({length:51},(_,i)=>({t:i*40,left:hand(),right:hand()})),'Fold the left side inward.')}]});
 test('narration round-trips PCM and derives duration from bytes rather than import claims',()=>{
   const voice=encodeNarration(tone());voice.duration_ms=999999;
   const valid=validateNarration(voice,2000),samples=decodeNarration(valid);

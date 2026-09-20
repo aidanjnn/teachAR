@@ -45,7 +45,7 @@ actionlint
 
 The browser job prepares the WebXR Python environment and verified Three.js assets
 with `pnpm setup:webxr`, then runs `pnpm test:webxr`. This covers Node/Python tests
-and ten synthetic Chromium workflows on an owned temporary server. Provider
+and eleven synthetic Chromium workflows on an owned temporary server. Provider
 credentials are disabled and runtime data is temporary. No live tutor is reused.
 
 The quality job builds WebXR assets alongside shared packages and the desktop/API.
