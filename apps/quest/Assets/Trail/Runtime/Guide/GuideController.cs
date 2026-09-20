@@ -19,6 +19,8 @@ namespace Trail.Runtime.Guide
         public string Status { get; private set; } = "Preload a reviewed tutorial to guide.";
         public string LastCompletion { get; private set; } = "";
         public string ExpertSource => recording?.Source ?? "not loaded";
+        // Learner-facing stage derived from the reducer's phase. Display only: it never advances a step.
+        public string PhaseLabel => Label(Session == null ? GuidePhase.Preload : Session.State.Phase);
         public event Action<GuideEvent> Telemetry;
         public event Action<GuideTransition> Transitioned;
         private CaptureReplaySession subscribed;
@@ -31,7 +33,8 @@ namespace Trail.Runtime.Guide
         private GuidePhase? publishedPhase;
         private int publishedRevision = -1;
         private readonly Queue<GuideAction> actions = new Queue<GuideAction>();
-        private List<int> cueFrames;
+        private readonly List<GhostGuideHand> ghostHands = new List<GhostGuideHand>(2);
+        private List<int>[] cueFrames;
         private void OnEnable() => Bind();
         public void Bind()
         {
@@ -58,7 +61,7 @@ namespace Trail.Runtime.Guide
             if (definition.Steps.Any(s => s.Targets.Any(t => t.Gesture != GuideGesture.Any)))
                 throw new NotSupportedException("Pinch/open matcher needs a device-validated gesture adapter. Review this tutorial with gesture any.");
             if (Session != null) Session.Transitioned -= OnTransition;
-            Ghost.ClearGuideFrame(); actions.Clear(); LastCompletion = ""; publishedPhase = null; publishedRevision = -1;
+            Ghost.ClearGuideFrame(); actions.Clear(); cueFrames = null; LastCompletion = ""; publishedPhase = null; publishedRevision = -1;
             tutorial = loadedTutorial; recording = loadedRecording; replay = new MotionReplay(recording);
             Session = new GuideSession(definition, Guid.NewGuid().ToString("N"));
             telemetry = new GuideTelemetry(pairedSessionId, Clock());
@@ -130,31 +133,59 @@ namespace Trail.Runtime.Guide
                 var positionMs = startMs + Math.Max(0, now - demoStartedMs);
                 if (positionMs >= endMs && state.StepRevision == demoRevision)
                     Session.Dispatch(new GuideInput(GuideAction.DemonstrationFinished, now));
-                else Ghost.ShowGuideFrame(replay.Sample(positionMs), step.Targets[0].CheckpointPose, step.Targets[0].Side);
+                else ShowStep(step, replay.Sample(positionMs), null);
             }
-            else if (state.Phase == GuidePhase.WaitingStart)
-                Ghost.ShowGuideFrame(recording.Frames[step.StartFrame], step.Targets[0].CheckpointPose, step.Targets[0].Side);
-            else if (state.Phase == GuidePhase.Guiding || state.Phase == GuidePhase.Holding)
-            {
-                // Bounded visual lookahead; never feeds back into observations or gates.
-                var index = cueFrames[Math.Min(cueFrames.Count - 1, state.CueProgress[0] + 2)];
-                Ghost.ShowGuideFrame(recording.Frames[index], step.Targets[0].CheckpointPose, step.Targets[0].Side);
-            }
+            else if (state.Phase == GuidePhase.WaitingStart) ShowStep(step, recording.Frames[step.StartFrame], null);
+            else if (state.Phase == GuidePhase.Guiding || state.Phase == GuidePhase.Holding) ShowStep(step, null, state.CueProgress);
             else Ghost.ClearGuideFrame();
             if (now - lastSnapshotMs >= 100) { lastSnapshotMs = now; Publish(telemetry.SnapshotEvent(Session, now)); }
         }
+        // One ghost frame per required hand: a shared demonstration frame, or each hand's own cue frame.
+        // Presentation only; the reducer alone decides progression from fresh observations.
+        private void ShowStep(TutorialStep step, MotionFrame shared, IReadOnlyList<int> cueProgress)
+        {
+            ghostHands.Clear();
+            for (var i = 0; i < step.Targets.Length; i++)
+            {
+                var target = step.Targets[i];
+                ghostHands.Add(new GhostGuideHand(target.Side, cueProgress == null ? shared : recording.Frames[CueFrame(step, cueProgress, i)],
+                    target.CheckpointPose, target.PositionToleranceM));
+            }
+            Ghost.ShowGuideHands(ghostHands);
+        }
+        // Bounded visual lookahead; never feeds back into observations or gates. A hand the demonstration
+        // never tracked falls back to the start frame, where it stays hidden rather than inventing motion.
+        private int CueFrame(TutorialStep step, IReadOnlyList<int> cueProgress, int target)
+        {
+            var frames = cueFrames == null || target >= cueFrames.Length ? null : cueFrames[target];
+            return frames == null || frames.Count == 0 ? step.StartFrame : frames[Math.Min(frames.Count - 1, cueProgress[target] + 2)];
+        }
+        private static string Label(GuidePhase phase)
+        {
+            switch (phase)
+            {
+                case GuidePhase.Showing: return "Watch";
+                case GuidePhase.WaitingStart: return "Get ready";
+                case GuidePhase.Guiding: case GuidePhase.Holding: return "Your turn";
+                case GuidePhase.TrackingLost: return "Reacquiring";
+                case GuidePhase.Paused: return "Paused";
+                case GuidePhase.Complete: return "Check result";
+                case GuidePhase.Calibrate: return "Calibrate";
+                default: return "Preload";
+            }
+        }
         private void OnTransition(GuideTransition transition)
         {
-            Status = transition.State.Notice;
+            Status = Label(transition.State.Phase) + " • " + transition.State.Notice;
             foreach (var effect in transition.Effects)
             {
                 if (effect.Kind == GuideEffectKind.StopFeedback) Ghost.ClearGuideFrame();
                 if (effect.Kind == GuideEffectKind.ShowDemonstration)
                 {
                     Capture.StopReplay(); demoStartedMs = Clock(); demoRevision = transition.State.StepRevision;
-                    var step = tutorial.Steps[transition.State.StepIndex]; var useLeftHand = step.Targets[0].Side == "left";
-                    cueFrames = Enumerable.Range(step.StartFrame, step.EndFrameExclusive - step.StartFrame)
-                        .Where(i => (useLeftHand ? recording.Frames[i].Hands.Left : recording.Frames[i].Hands.Right).Status == "valid").ToList();
+                    var step = tutorial.Steps[transition.State.StepIndex];
+                    cueFrames = step.Targets.Select(target => Enumerable.Range(step.StartFrame, step.EndFrameExclusive - step.StartFrame)
+                        .Where(i => (target.Side == "left" ? recording.Frames[i].Hands.Left : recording.Frames[i].Hands.Right).Status == "valid").ToList()).ToArray();
                 }
                 if (effect.Kind == GuideEffectKind.MovementCheckpointReached || effect.Kind == GuideEffectKind.UserConfirmed)
                     {
