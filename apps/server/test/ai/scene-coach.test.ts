@@ -66,6 +66,14 @@ describe('omni scene coach gateway', () => {
     const slow = createOmniSceneCoach({ apiKey: 'k', baseUrl: 'https://gateway.example/v1', model: 'm', voice: 'v', fetchImpl: (async (_url, init) => { if (init?.signal?.aborted) throw new DOMException('aborted', 'AbortError'); return sse([]); }) as typeof fetch });
     await expect(slow.advise({ context, question: 'q', image, reference: null, source: 'quest-camera' }, aborted.signal)).rejects.toMatchObject({ status: 503, message: 'OMNI request timed out' });
   });
+  it('cancels an oversized single-JSON answer while reading it, before decoding', async () => {
+    let delivered = 0, cancelled = false;
+    const chunk = new Uint8Array(1024 * 1024).fill(0x41);
+    const stream = new ReadableStream<Uint8Array>({ pull(controller) { if (delivered >= 20) { controller.close(); return; } delivered++; controller.enqueue(chunk); }, cancel() { cancelled = true; } });
+    await expect(readCompletionStream(new Response(stream, { status: 200, headers: { 'content-type': 'application/json' } }))).rejects.toMatchObject({ message: 'OMNI response too large' });
+    expect(cancelled).toBe(true);
+    expect(delivered).toBeLessThanOrEqual(10);
+  });
   it('parses partial lines across chunks and stops at [DONE]', async () => {
     const chunks = ['data: {"choices":[{"delta":{"con', 'tent":"Hel"}}]}\n\ndata: {"choices":[{"delta":{"content":"lo"}}]}\n\ndata: [DONE]\n\ndata: {"choices":[{"delta":{"content":" ignored"}}]}\n'];
     const stream = new ReadableStream<Uint8Array>({ start(controller) { for (const chunk of chunks) controller.enqueue(new TextEncoder().encode(chunk)); controller.close(); } });

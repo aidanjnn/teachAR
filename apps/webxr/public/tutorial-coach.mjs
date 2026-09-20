@@ -140,7 +140,9 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   return {
     get state(){return snapshot();},get active(){return !!api;},
     // Cheap reads for the per-frame headset panel and the speech gate; no copy.
-    get mode(){return state.mode;},get listenRequested(){return state.listenRequested;},get currentStep(){return currentStep;},get caption(){return state.caption;},get captionAgeMs(){return captionAt?Date.now()-captionAt:Infinity;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
+    get mode(){return state.mode;},get listenRequested(){return state.listenRequested;},get currentStep(){return currentStep;},
+    // Run and attempt identity: a Repeat or a restart changes it, and answers requested under the old identity are stale.
+    get identity(){return api?{runId,attemptId}:null;},get caption(){return state.caption;},get captionAgeMs(){return captionAt?Date.now()-captionAt:Infinity;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
     start,stop,onStep,onAttempt,ask,askText,pair,contextFor,announce,
     onCaption(h){captionHandlers.add(h);return()=>captionHandlers.delete(h);},
     onState(h){stateHandlers.add(h);return()=>stateHandlers.delete(h);},

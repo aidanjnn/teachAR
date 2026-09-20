@@ -23,9 +23,9 @@ export function createSceneCoach({guide,coach,snapshot,hasCamera=()=>true,fetchI
     const why=reason();if(why){tell(why);return null;}
     // Inside AR the player names the step; on the flat page it is the step the coach was started or last updated on.
     const step=guide.player?.step||coach.currentStep;if(!step){tell('Open a step before asking the coach to look.');return null;}
-    const gen=++generation,epoch=guide.epoch??0,tutorialId=guide.tutorial?.id,stepId=step.id;
-    // A late answer for another step, epoch or tutorial is dropped; the learner may have moved on.
-    const current=()=>gen===generation&&guide.epoch===epoch&&guide.tutorial?.id===tutorialId&&(guide.player?.step||coach.currentStep)?.id===stepId;
+    const gen=++generation,epoch=guide.epoch??0,tutorialId=guide.tutorial?.id,stepId=step.id,identity=JSON.stringify(coach.identity??null);
+    // A late answer for another step, epoch, tutorial, attempt or coach run is dropped: Repeat, a restarted coach or a stopped coach all end the request.
+    const current=()=>gen===generation&&!!coach.active&&JSON.stringify(coach.identity??null)===identity&&guide.epoch===epoch&&guide.tutorial?.id===tutorialId&&(guide.player?.step||coach.currentStep)?.id===stepId;
     state.busy=true;state.error=null;state.message='Looking at your table…';emit();
     try{
       const shot=await snapshot();const image=strip(shot?.image);

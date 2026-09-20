@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { SceneAdviceRequestSchema, SceneAdviceResponseSchema, type SceneImage } from '@trail/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest, RouteShorthandOptions } from 'fastify';
-import { GUARDED_LINE, SceneCoachError, violatesAdviceRules, type SceneCoachProvider } from '../ai/scene-coach.js';
+import { GUARDED_LINE, MAX_TRANSCRIPT_CHARS, SceneCoachError, violatesAdviceRules, type SceneCoachProvider } from '../ai/scene-coach.js';
 import type { PairingAuthority, PairingRole } from '../auth/pairing.js';
 import { groundContext, type CoachTutorialLookup } from './voice.js';
 
@@ -75,7 +75,8 @@ export async function registerSceneCoachRoutes(app: FastifyInstance, provider: S
       // Only a request that reaches the model counts against spacing and the allowance.
       attempts++; nextAt = Date.now() + SPACING_MS;
       const advice = await provider.advise({ context: grounded.context, question: body.question, image, reference, source: body.source }, AbortSignal.timeout(DEADLINE_MS));
-      const guarded = violatesAdviceRules(advice.transcript);
+      // Judge the whole spoken answer, not a caption-sized prefix: a claim after the cut would otherwise reach the learner as audio.
+      const guarded = violatesAdviceRules(advice.transcript) || advice.transcript.length > MAX_TRANSCRIPT_CHARS;
       return SceneAdviceResponseSchema.parse({
         schemaVersion: 1, requestId: body.requestId,
         tutorialId: grounded.context.tutorialId, tutorialRevision: grounded.context.tutorialRevision,

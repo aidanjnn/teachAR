@@ -76,8 +76,11 @@ const assert=require('node:assert/strict');
     await page.waitForFunction(()=>!document.querySelector('#coach-look').disabled,null,{timeout:20000});
     const stepBefore=await page.evaluate(()=>window.trailCoach.state.tutorialId&&document.querySelector('#tutorial-title').value);
     await page.fill('#coach-question','Is my paper placed right?');
+    const lookStarted=Date.now();
     await page.click('#coach-look');
     await page.waitForFunction(()=>[...document.querySelectorAll('#coach-log li[data-role=coach]')].some(li=>li.textContent.includes('Turn the sheet')),null,{timeout:20000});
+    // Everything except the model: capture, encode, upload, caption. The mocked route answers at once.
+    console.log(`look round trip without the model: ${Date.now()-lookStarted} ms`);
     assert.equal(sceneBodies.length,1,'one scene request per press');
     assert.equal(sceneBodies[0].question,'Is my paper placed right?');
     assert.equal(sceneBodies[0].context.tutorialId,guideId,'scene advice is grounded on the published guide, not browser text');

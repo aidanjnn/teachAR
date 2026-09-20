@@ -7,10 +7,10 @@ const JPEG='data:image/jpeg;base64,'+Buffer.alloc(96,9).toString('base64');
 function harness({ok=true,status=200,body=null,coachActive=true,camera=true,delay=0}={}){
   const announced=[],told=[],spoken=[],requests=[];
   const guide={epoch:3,tutorial:{id:'t1'},player:{step:{id:'s1',reference:{image:JPEG}}},mode:'learn'};
-  const coach={get active(){return coachActive;},contextFor:(step,epoch)=>({tutorialId:'g1',tutorialRevision:1,runId:'r',attemptId:'a',title:'T',steps:[{id:'s1',title:'A',instruction:'Do A.'}],currentStepId:step.id,stepRevision:epoch}),announce:(text,source)=>announced.push([text,source])};
+  const coach={get active(){return coachActive;},identity:{runId:'r',attemptId:'a'},contextFor:(step,epoch)=>({tutorialId:'g1',tutorialRevision:1,runId:'r',attemptId:'a',title:'T',steps:[{id:'s1',title:'A',instruction:'Do A.'}],currentStepId:step.id,stepRevision:epoch}),announce:(text,source)=>announced.push([text,source])};
   const fetchImpl=async(url,init)=>{requests.push({url,body:JSON.parse(init.body)});if(delay)await new Promise(r=>setTimeout(r,delay));return {ok,status,json:async()=>body||{schemaVersion:1,transcript:'Turn the sheet so the marked corner is nearest you.',audio:null,provenance:'model',stepId:'s1',epoch:3}};};
   const scene=createSceneCoach({guide,coach,snapshot:async()=>({image:JPEG,capture:{request_age_ms:120.6}}),hasCamera:()=>camera,fetchImpl,tell:m=>told.push(m),speakFallback:m=>spoken.push(m),audioContextFactory:()=>{throw Error('no audio in node');}});
-  return {scene,guide,announced,told,spoken,requests};
+  return {scene,guide,coach,announced,told,spoken,requests,setCoachActive:v=>{coachActive=v;}};
 }
 
 test('sends the fresh frame, the reference photo and the grounded context, then captions and speaks the answer',async()=>{
@@ -46,6 +46,28 @@ test('drops an answer that arrives after the step or epoch changed, and surfaces
   const refused=harness({ok:false,status:503,body:{error:'scene_unavailable',message:'Scene coaching is not configured on this server.'}});
   assert.equal(await refused.scene.look(),null);
   assert.equal(refused.told.at(-1),'Scene coaching is not configured on this server.');assert.equal(refused.scene.busy,false);
+});
+
+test('a Repeat, a restarted coach or a stopped coach before the answer arrives drops it',async()=>{
+  const same=harness({delay:20});
+  await same.scene.look();
+  assert.equal(same.announced.length,1,'sanity: an unchanged identity announces the answer');
+  const attempt=harness({delay:20});
+  const pendingAttempt=attempt.scene.look();
+  await new Promise(r=>setTimeout(r,2));
+  attempt.coach.identity={runId:'r',attemptId:'b'};
+  assert.equal(await pendingAttempt,null);
+  assert.equal(attempt.announced.length,0,'Repeat starts a new attempt, so the old answer is stale');assert.equal(attempt.spoken.length,0);
+  const restarted=harness({delay:20});
+  const pendingRestart=restarted.scene.look();
+  await new Promise(r=>setTimeout(r,2));
+  restarted.coach.identity={runId:'r2',attemptId:'a'};
+  assert.equal(await pendingRestart,null);assert.equal(restarted.announced.length,0,'a restarted coach makes the old answer stale');
+  const stopped=harness({delay:20});
+  const pendingStop=stopped.scene.look();
+  await new Promise(r=>setTimeout(r,2));
+  stopped.setCoachActive(false);
+  assert.equal(await pendingStop,null);assert.equal(stopped.announced.length,0,'a stopped coach makes the old answer stale');
 });
 
 test('the tutor voice fallback counts as speaking until it finishes, and the request timer never aborts a newer look',async()=>{

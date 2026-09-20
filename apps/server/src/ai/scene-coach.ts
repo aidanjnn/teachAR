@@ -30,7 +30,8 @@ export class SceneCoachError extends Error {
 }
 
 export const GUARDED_LINE = "I can't judge that from one picture. Check the physical result yourself; the system only verifies the hand movement.";
-const MAX_TRANSCRIPT_CHARS = 600;
+/** Longest spoken answer the route accepts as advice; the model was asked for two sentences, so more means it ignored the brief. */
+export const MAX_TRANSCRIPT_CHARS = 600;
 const MAX_STREAM_BYTES = 8 * 1024 * 1024;
 const PCM_SAMPLE_RATE = 24_000;
 
@@ -157,7 +158,8 @@ export function createOmniSceneCoach(options: OmniOptions): SceneCoachProvider {
       // Status only; the body may echo our images or carry gateway text we never log, so it is dropped unread.
       if (!response.ok) { await response.body?.cancel().catch(() => undefined); throw new SceneCoachError(`OMNI gateway answered ${response.status}`, response.status); }
       const streamed = await readCompletionStream(response);
-      const transcript = (streamed.transcript || streamed.text).replace(/\s+/g, ' ').trim().slice(0, MAX_TRANSCRIPT_CHARS);
+      // The complete transcript goes back untruncated so the route can judge every sentence the audio contains.
+      const transcript = (streamed.transcript || streamed.text).replace(/\s+/g, ' ').trim();
       if (!transcript) throw new SceneCoachError('OMNI returned no answer', 503);
       const pcm = Buffer.concat(streamed.pcm);
       return { transcript, audio: pcm.length ? { format: 'wav', dataBase64: pcmToWav(pcm).toString('base64') } : null, model: options.model };

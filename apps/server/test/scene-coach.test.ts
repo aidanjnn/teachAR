@@ -70,6 +70,19 @@ describe('POST /api/scene-coach', () => {
       expect(inputs[0]!.reference).not.toBeNull();
     } finally { await app.close(); }
   });
+  it('judges the whole spoken answer: a claim after the caption cut, or an overlong answer, is guarded and its audio dropped', async () => {
+    const audio = { format: 'wav' as const, dataBase64: Buffer.alloc(200, 3).toString('base64') };
+    const late = fakeProvider('The paper is on the table. '.repeat(24) + 'Step completed, you are done.', audio);
+    const overlong = fakeProvider('Move the sheet a little toward you and keep the marked corner nearest. '.repeat(10), audio);
+    for (const { provider } of [late, overlong]) {
+      const app = await createApp(readConfig({ DATA_DIR: await temp() }), { sceneCoach: provider });
+      try {
+        const response = await app.inject({ method: 'POST', url: '/api/scene-coach', headers: json, payload: await request(await jpeg()) });
+        expect(response.statusCode).toBe(200);
+        expect(response.json()).toMatchObject({ transcript: GUARDED_LINE, audio: null, provenance: 'guarded' });
+      } finally { await app.close(); }
+    }
+  });
   it('replaces completion claims with the guarded line and drops the audio', async () => {
     const { provider } = fakeProvider('Step completed, you are done.', { format: 'wav', dataBase64: Buffer.alloc(200, 3).toString('base64') });
     const app = await createApp(readConfig({ DATA_DIR: await temp() }), { sceneCoach: provider });
