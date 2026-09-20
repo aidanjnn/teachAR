@@ -4,7 +4,7 @@ Desktop and mock evidence cannot prove that microphone, WebRTC audio and an imme
 work together on the headset. The coach runs in the headset's own browser tab: Start coach is pressed on
 the Quest Browser page (cast to the laptop for the audience), before Enter the experience. This list is the remaining human observation. Tick items on the actual
 Quest 3S; a missing device is not a pass. Record results (commit, Horizon OS build, Quest Browser
-version, what was heard) in `docs/validation.md`.
+version, what was heard) the way `docs/device-check.md` asks, in a new `docs/validation.md`.
 
 ## Before you touch the headset
 
@@ -48,8 +48,9 @@ version, what was heard) in `docs/validation.md`.
   spoken from the headset, and the panel's detail line shows `Coach: …` for about 12 s, unless
   tracking is lost, the recording has a gap or the checkpoint is reached, which win.
 - [ ] Complete the movement so the tutor advances to step 2, then immediately Ask coach again and
-  ask "What now?" → the answer is step 2's instruction, not step 1's. If you asked while the old
-  answer was still playing, the old answer went quiet and did not resume.
+  ask "What now?" → the label reads `Ask queued…` until the server acknowledges the step, then
+  `Listening…`; the answer is step 2's instruction, not step 1's. If you asked while the old answer
+  was still playing, the old answer went quiet at the step change and stayed quiet until you spoke.
 - [ ] Lift the headset slightly so hands are lost for a second, then continue → the coach did not
   reset; a follow-up question still answers for the current step.
 - [ ] Ask coach while the tutor is reading a step aloud → the browser voice pauses; after the coach
@@ -61,12 +62,14 @@ version, what was heard) in `docs/validation.md`.
 
 ## Recovery
 
-- [ ] Take the headset off for 20 s, put it back on, Ask coach → still answers; after exiting AR the
-  card's badge still reads `live`.
-- [ ] Exit AR, press Stop coach on the card, then Start coach again → greeting again, a fresh session.
-- [ ] Stop the laptop server while the coach is live → Ask coach shows a problem line in AR
-  ("Could not reach the server…" or the live error), the badge drops to `text`; the tutor keeps
-  guiding; restart the server and press Start coach → live again.
+- [ ] Take the headset off for 20 s, put it back on, Ask coach → still answers about the current
+  step. Exiting AR stops the coach on purpose; the card's badge returns to `idle`.
+- [ ] Exit AR (the coach stops with the session), press Start coach again → greeting again, a fresh
+  session; Enter the experience keeps it.
+- [ ] Stop the laptop server while the coach is live → Ask coach still answers about the current
+  step (the audio runs headset ↔ OpenAI); the next step change cannot reach the server, the coach
+  drops to text and the AR detail line says so; hand guidance continues. Restart the server, exit
+  AR, Start coach → live again.
 - [ ] Turn the headset's Wi-Fi off during an answer → the badge drops to `text`; no crash; hand
   guidance continues without the coach.
 

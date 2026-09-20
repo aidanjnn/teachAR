@@ -21,12 +21,19 @@ const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:(
 const $=id=>document.getElementById(id);
 // The voice coach owns its own microphone stream and is started from the page before AR, so the XR entry click stays synchronous.
 // Coach problems must be readable inside AR too, so they also land on the guide's detail line.
-const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell:message=>{tell(message);if(guide)guide.problem=message;}}):null;
+const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell:message=>{tell(message);if(guide&&['learn','learn-options'].includes(guide.mode))guide.problem=message;}}):null;
 if(guide&&coach)guide.coach=coach;
-// Step text spoken while the coach is taking a question or answering is held and read once the coach is quiet, never dropped.
-let pendingSpeech=null,heldSpeechTimer=null;
+// Speech requested while the coach is taking a question or answering is held (last three lines) and read together once the coach is quiet.
+// Each line is tagged with the guide epoch it was spoken for; Stop, leaving AR and any guide invalidation drop it.
+let heldSpeech=[],heldSpeechTimer=null;
 const coachBusy=()=>!!coach&&(coach.mode==='listening'||coach.captionAgeMs<1500);
-function releaseHeldSpeech(){clearTimeout(heldSpeechTimer);heldSpeechTimer=null;if(!pendingSpeech)return;if(coachBusy()){heldSpeechTimer=setTimeout(releaseHeldSpeech,500);return;}const held=pendingSpeech;pendingSpeech=null;speak(held);}
+function dropHeldSpeech(){heldSpeech=[];clearTimeout(heldSpeechTimer);heldSpeechTimer=null;}
+function releaseHeldSpeech(){
+  clearTimeout(heldSpeechTimer);heldSpeechTimer=null;heldSpeech=heldSpeech.filter(h=>h.epoch===guide?.epoch);
+  if(!heldSpeech.length||!session)return dropHeldSpeech();
+  if(coachBusy()){heldSpeechTimer=setTimeout(releaseHeldSpeech,500);return;}
+  const held=heldSpeech.map(h=>h.text).join(' ');heldSpeech=[];speak(held);
+}
 coach?.onState(()=>releaseHeldSpeech());
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
 const capture=document.createElement('canvas'), captureCtx=capture.getContext('2d');
@@ -55,7 +62,7 @@ function visible() { return session ? session.visibilityState==='visible' : !doc
 function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('notice').textContent=message; }
 function speak(message) {
   // One voice at a time: while the coach is taking a question or answering, step text waits its turn.
-  if (coachBusy()) { pendingSpeech=message; if(!heldSpeechTimer)heldSpeechTimer=setTimeout(releaseHeldSpeech,500); return; }
+  if (coachBusy()) { if(heldSpeech.length>=3)heldSpeech.shift();heldSpeech.push({text:message,epoch:guide?.epoch}); if(!heldSpeechTimer)heldSpeechTimer=setTimeout(releaseHeldSpeech,500); return; }
   if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return;
   speechSynthesis.cancel(); const utterance=new SpeechSynthesisUtterance(message);
   utterance.rate=1; speechSynthesis.speak(utterance);
@@ -72,7 +79,7 @@ function pauseOnLeave() {
   if (status?.token) fetch('/api/ai/auto',{method:'POST',keepalive:true,
     headers:{'Content-Type':'application/json','X-Tester-Token':status.token},body:'{"enabled":false}'}).catch(()=>{});
   if (status?.automatic) status.automatic.enabled=false;
-  window.speechSynthesis?.cancel();
+  window.speechSynthesis?.cancel();dropHeldSpeech();
 }
 function stopCamera() {
   cameraGeneration++; stream?.getTracks().forEach(t=>t.stop()); stream=null;
@@ -319,7 +326,7 @@ async function enterAR() {
     const requested=navigator.xr.requestSession('immersive-ar',handsMode?{requiredFeatures:['hand-tracking']}:{optionalFeatures:['hand-tracking']});
     busy=true;speak(tutorialMode?'Welcome to Trail. Choose Create or Follow.':'Starting the headset test. Look at the toys and labels.');
     const active=await requested; session=active;
-    active.addEventListener('end',()=>{libraryInput?.remove();libraryInput=null;spatial?.reset();session=null;captureSetup?.cancel();guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
+    active.addEventListener('end',()=>{dropHeldSpeech();libraryInput?.remove();libraryInput=null;spatial?.reset();session=null;captureSetup?.cancel();guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
     active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){spatial?.cancel();pauseOnLeave();guide?.hide();}});
     if(tutorialMode){
       libraryInput=document.createElement('input');libraryInput.type='search';libraryInput.maxLength=80;libraryInput.setAttribute('aria-label','Search tutorials in AR');libraryInput.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;';document.body.append(libraryInput);

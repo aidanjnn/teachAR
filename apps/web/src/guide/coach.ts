@@ -37,8 +37,6 @@ function newId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-/** After a step change, playback returns once the model has been silent this long and the server holds the new step. */
-const QUIET_MS = 1_500;
 /** Echo cancellation matters most on a headset whose speakers sit next to its microphone. */
 const MIC_CONSTRAINTS: MediaStreamConstraints = { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } };
 
@@ -68,9 +66,6 @@ export function createCoach(options: CoachOptions): CoachApi {
   /** Revision the current learner turn was asked under; coach output is stamped with it, not with the latest state. */
   let turnRevision = state.stepRevision;
   let eventCounter = 0;
-  /** When the model last produced speech; playback is only reopened after a step change once it has gone quiet. */
-  let lastOutputAt = 0;
-  let reopenTimer: ReturnType<typeof setTimeout> | null = null;
   const stateHandlers = new Set<(state: CoachState) => void>();
   const transcriptHandlers = new Set<(entry: TranscriptEntry) => void>();
   const answerHandlers = new Set<(answer: CoachAnswer) => void>();
@@ -90,28 +85,35 @@ export function createCoach(options: CoachOptions): CoachApi {
   };
   const stopStream = () => { stream?.getTracks().forEach(track => track.stop()); stream = null; };
   const deleteSession = (id: string) => { void fetchImpl(`/api/live/sessions/${encodeURIComponent(id)}`, { method: 'DELETE', keepalive: true }).catch(() => undefined); };
-  /** A step change mutes whatever the model was saying about the old step. Once the server has the new step and the model is quiet, playback comes back on its own. */
-  function reopenGateWhenQuiet() {
-    if (reopenTimer) { clearTimeout(reopenTimer); reopenTimer = null; }
-    if (disposed || !outputGateClosed || state.contextSync !== 'idle') return;
-    const quietMs = Date.now() - lastOutputAt;
-    if (quietMs >= QUIET_MS) { outputGateClosed = false; setPlaybackMuted(false); return; }
-    reopenTimer = setTimeout(() => { reopenTimer = null; reopenGateWhenQuiet(); }, QUIET_MS - quietMs + 50);
+  /** Errors from the SDK wrap ours in `cause`; the chain is short and the most specific reason sits inside. */
+  function causes(error: unknown): { name?: string; message?: string; code?: string; status?: number; detail?: string }[] {
+    const chain: { name?: string; message?: string; code?: string; status?: number; detail?: string; cause?: unknown }[] = [];
+    let current: unknown = error;
+    for (let depth = 0; depth < 4 && current && typeof current === 'object'; depth++) { chain.push(current as typeof chain[number]); current = (current as { cause?: unknown }).cause; }
+    return chain;
   }
   function describeStartFailure(error: unknown): LiveError {
-    const name = (error as { name?: string })?.name ?? '';
-    const message = (error as { message?: string })?.message ?? '';
-    if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(name)) return { code: 'microphone_denied', message: 'Microphone permission was refused; the coach answers in text only.' };
-    if (name === 'NotFoundError' || name === 'NotReadableError') return { code: 'microphone_unavailable', message: 'No usable microphone was found; the coach answers in text only.' };
-    const refused = /Live session refused \((\d+)\)/.exec(message);
-    if (refused) return { code: 'live_refused', message: `The server refused a live session (${refused[1]}); text answers remain.` };
-    if (/did not start in time/.test(message)) return { code: 'live_timeout', message: 'The live session did not start in time; the network may block WebRTC audio. Text answers remain.' };
+    for (const failure of causes(error)) {
+      const name = failure.name ?? '', message = failure.message ?? '';
+      if (failure.code === 'live_refused') return { code: 'live_refused', message: `The server refused a live session (${failure.status})${failure.detail ? `: ${failure.detail.replace(/\.+$/, '')}` : ''}. Text answers remain.` };
+      if (failure.code === 'live_timeout') return { code: 'live_timeout', message: 'The live session did not start in time; the network may block WebRTC audio. Text answers remain.' };
+      if (failure.code === 'live_closed') return { code: 'live_closed', message: 'The live session closed before it started; text answers remain.' };
+      if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(name)) return { code: 'microphone_denied', message: 'Microphone permission was refused; the coach answers in text only.' };
+      if (name === 'NotFoundError' || name === 'NotReadableError') return { code: 'microphone_unavailable', message: 'No usable microphone was found; the coach answers in text only.' };
+      // A plain http:// address that is not localhost has no navigator.mediaDevices at all.
+      if (name === 'TypeError' && /mediaDevices|getUserMedia/.test(message)) return { code: 'microphone_unavailable', message: 'The microphone needs a secure origin: open the page on localhost over USB or over HTTPS. Text answers remain.' };
+    }
+    const message = (error as { message?: string } | null)?.message ?? '';
     return { code: 'live_start_failed', message: message || 'The live session could not start; text answers remain.' };
+  }
+  /** Spoken only once the browser's media path is up; the server owns the text and says it at most once per session. */
+  function requestGreeting() {
+    if (!liveSessionId) return;
+    void fetchImpl(`/api/live/sessions/${encodeURIComponent(liveSessionId)}/greeting`, { method: 'POST', signal: AbortSignal.timeout(3_000) }).catch(() => undefined);
   }
   const setPlaybackMuted = (muted: boolean) => { if (options.audioSink) options.audioSink.muted = muted; };
   function releaseLive() {
     clearListenTimer();
-    if (reopenTimer) { clearTimeout(reopenTimer); reopenTimer = null; }
     if (startTimer) { clearTimeout(startTimer); startTimer = null; }
     // Settle a still-pending connect() so callers never hang when the session ends before session.started.
     startedReject?.(new Error('Live session ended before it started'));
@@ -161,11 +163,9 @@ export function createCoach(options: CoachOptions): CoachApi {
   }
   function dispatch(event: CoachEvent): CoachEffect[] {
     if (disposed) return [];
-    const wasPending = state.contextSync === 'pending';
     const result = reduceCoach(state, event);
     state = result.state;
     result.effects.forEach(runEffect);
-    if (event.type === 'context-synced' && wasPending && state.contextSync === 'idle') reopenGateWhenQuiet();
     stateHandlers.forEach(handler => handler(state));
     return result.effects;
   }
@@ -187,7 +187,6 @@ export function createCoach(options: CoachOptions): CoachApi {
         transcriptHandlers.forEach(handler => handler({ role: 'learner', delta: event.delta, stepRevision: turnRevision, stale: false }));
         break;
       case 'session.output_transcript.delta':
-        lastOutputAt = Date.now();
         transcriptHandlers.forEach(handler => handler({ role: 'coach', delta: event.delta, stepRevision: turnRevision, stale: outputGateClosed }));
         break;
       case 'session.closed':
@@ -218,7 +217,7 @@ export function createCoach(options: CoachOptions): CoachApi {
         const started = new Promise<void>((resolve, reject) => {
           startedResolve = resolve;
           startedReject = reject;
-          startTimer = setTimeout(() => reject(new Error('Live session did not start in time')), liveStartTimeoutMs);
+          startTimer = setTimeout(() => reject(Object.assign(new Error('Live session did not start in time'), { code: 'live_timeout' })), liveStartTimeoutMs);
         });
         outputGateClosed = false;
         setPlaybackMuted(false);
@@ -228,7 +227,11 @@ export function createCoach(options: CoachOptions): CoachApi {
           localStream: acquired,
           timeoutMs: liveStartTimeoutMs,
           onEvent: handleLiveEvent,
-          onClosed: () => { dispatch({ type: 'live-closed' }); },
+          // The SDK reports a failed setup as a close before connect() rejects; during startup the catch below owns reporting and cleanup, so the session id survives until it is deleted.
+          onClosed: () => {
+            if ((state as CoachState).mode === 'connecting') { startedReject?.(Object.assign(new Error('Live session closed before it started'), { code: 'live_closed' })); return; }
+            dispatch({ type: 'live-closed' });
+          },
           onRemoteStream: remote => {
             if (disposed || transport !== active || !options.audioSink) return;
             options.audioSink.srcObject = remote;
@@ -239,7 +242,10 @@ export function createCoach(options: CoachOptions): CoachApi {
               method: 'POST', headers: { 'content-type': 'application/json' }, signal,
               body: JSON.stringify({ schemaVersion: 1, sdp: offer, context }),
             });
-            if (!response.ok) throw new Error(`Live session refused (${response.status})`);
+            if (!response.ok) {
+              const body = (await response.json().catch(() => ({}))) as { message?: unknown };
+              throw Object.assign(new Error(`Live session refused (${response.status})`), { code: 'live_refused', status: response.status, detail: typeof body.message === 'string' ? body.message : undefined });
+            }
             const session = CoachSessionResponseSchema.parse(await response.json());
             liveSessionId = session.sessionId;
             return session.sdp;
@@ -248,6 +254,7 @@ export function createCoach(options: CoachOptions): CoachApi {
         await started;
         if (disposed) { releaseLive(); return state.mode; }
         dispatch({ type: 'live-ready' });
+        requestGreeting();
       } catch (error) {
         // The server may already have created and billed a session; never leave it orphaned for 30 minutes.
         if (liveSessionId) { deleteSession(liveSessionId); liveSessionId = null; }
@@ -257,7 +264,8 @@ export function createCoach(options: CoachOptions): CoachApi {
         if ((state as CoachState).mode === 'connecting') {
           const failure = describeStartFailure(error);
           errorHandlers.forEach(handler => handler(failure));
-          dispatch({ type: 'live-failed' });
+          // A session the provider closed during startup ended live, and callers read that from liveClosed; every other cause is a plain start failure.
+          dispatch(failure.code === 'live_closed' ? { type: 'live-closed' } : { type: 'live-failed' });
         }
       }
       return state.mode;

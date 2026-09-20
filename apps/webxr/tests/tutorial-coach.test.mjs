@@ -173,5 +173,11 @@ test('live transcript deltas grow one caption per coach turn, even with the lear
     now+=3_000;
     say('coach','Next');
     assert.equal(coach.caption,'Next','a pause longer than the turn gap starts a fresh caption');
+    // A question that arrives well after the coach's last words starts a fresh caption for the answer, even inside the gap.
+    now+=1_000;say('learner','and then');now+=500;say('coach','Lift');
+    assert.equal(coach.caption,'Lift','a new learner turn starts a fresh caption');
+    api._handlers.state.forEach(h=>h({mode:'live',listenRequested:true}));
+    assert.equal(coach.listenRequested,true,'a queued Ask is visible to the headset panel');
+    assert.equal(coach.state.listenRequested,true);
   }finally{Date.now=realNow;}
 });

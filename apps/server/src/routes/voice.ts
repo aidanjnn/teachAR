@@ -33,7 +33,7 @@ const SessionIdParam = z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
 export type CoachTutorialLookup = (tutorialId: string) => Promise<CoachTutorialSource | null>;
 
 export interface VoiceRouteOptions {
-  /** Spoken once when a live session opens; omitted for the mock provider and when OPENAI_LIVE_GREETING=off. */
+  /** Spoken once per session when the browser reports its media path is up; omitted for the mock provider and when OPENAI_LIVE_GREETING=off. */
   greeting?: string;
   /** When present, narration/labels need an author token and coaching needs a learner or author token on this session. */
   auth?: PairingAuthority;
@@ -183,11 +183,13 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
             }),
           ]);
         } catch {
-          try { control.close(); } catch { /* already closed */ }
+          // The provider session already exists: end it as soon as the channel can carry the close, within the same deadline.
+          void withinDeadline(control.ready, CONTROL_READY_TIMEOUT_MS)
+            .then(() => { try { control.send({ type: 'session.close', event_id: 'close-abandoned' }); } catch { /* already gone */ } }, () => undefined)
+            .finally(() => { try { control.close(); } catch { /* already closed */ } });
           return unavailable(reply, 503, { error: 'live_unavailable', message: 'The live coach control channel did not become ready.' });
         }
         sessions.register(result.sessionId, grounded.context, control);
-        if (options.greeting) sessions.greet(result.sessionId, options.greeting);
       } finally {
         reply.raw.off('close', onClose);
       }
@@ -200,6 +202,15 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
       if (!params.success || !parsed.success) return unavailable(reply, 400, { error: 'invalid_request', message: 'Step update failed validation.' });
       const result = sessions.updateStep(params.data.id, parsed.data);
       if (!result.ok) return unavailable(reply, result.status, result.body);
+      return reply.code(204).header('Cache-Control', 'no-store').send();
+    });
+
+    // The browser asks for the greeting once its media path is up, so the model never speaks into a peer connection that is still negotiating.
+    voice.post('/api/live/sessions/:id/greeting', learnerOrAuthor, async (request, reply) => {
+      const params = SessionIdParam.safeParse(request.params);
+      if (!params.success) return unavailable(reply, 400, { error: 'invalid_request', message: 'Invalid session ID.' });
+      if (!sessions.has(params.data.id)) return unavailable(reply, 404, { error: 'unknown_session', message: 'No open live session with that ID.' });
+      if (options.greeting) sessions.greet(params.data.id, options.greeting);
       return reply.code(204).header('Cache-Control', 'no-store').send();
     });
 

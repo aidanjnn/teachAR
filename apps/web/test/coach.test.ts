@@ -10,14 +10,18 @@ const context: CoachContext = {
 };
 const stream = { getAudioTracks: () => [], getTracks: () => [] } as unknown as MediaStream;
 
-function fakeTransport(behaviour: { fail?: boolean } = {}) {
+function fakeTransport(behaviour: { fail?: boolean; closeBeforeReject?: 'refusal' | 'answer' } = {}) {
   const sent: LiveClientEvent[] = [];
   let handlers: LiveConnectOptions | null = null;
+  // The pinned SDK reports a failed setup as a close before connect() rejects, wrapping the original error as `cause`.
+  const sdkFailure = (message: string, cause: unknown) => Object.assign(new Error(message), { name: 'WebRTCError', code: 'setup_failed', cause });
   const transport: LiveTransport = {
     async connect(options) {
       handlers = options;
       if (behaviour.fail) throw new Error('refused');
-      await options.exchangeSdp('v=0 offer', new AbortController().signal);
+      try { await options.exchangeSdp('v=0 offer', new AbortController().signal); }
+      catch (error) { if (behaviour.closeBeforeReject === 'refusal') { options.onClosed(); throw sdkFailure('WebRTC setup failed', error); } throw error; }
+      if (behaviour.closeBeforeReject === 'answer') { options.onClosed(); throw sdkFailure('Failed to apply the remote description', new Error('InvalidStateError')); }
     },
     send(event) { sent.push(event); },
     close() { /* no-op */ },
@@ -352,33 +356,60 @@ describe('coach text path', () => {
     expect((await pending)?.source).toBe('fallback');
   });
 
-  it('reopens playback after a step change once the server has the new step and the model has gone quiet', async () => {
+  it('keeps old-step output muted and stale after the ack until the learner speaks, even when the step changed before the first delta', async () => {
     const sink = { muted: false, srcObject: null as MediaStream | null, play: async () => undefined } as unknown as HTMLAudioElement;
     const fake = fakeTransport();
     const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake.transport, audioSink: sink });
-    const seen: string[] = [];
-    coach.onTranscript(entry => seen.push(`${entry.stale ? 'stale' : 'live'}:${entry.delta}`));
+    const seen: { stale: boolean; delta: string; stepRevision: number }[] = [];
+    coach.onTranscript(entry => seen.push({ stale: entry.stale, delta: entry.delta, stepRevision: entry.stepRevision }));
     const connecting = coach.connect();
     await vi.advanceTimersByTimeAsync(0);
     fake.emit(started);
     await connecting;
-    // The model is mid-sentence when the learner moves on: its old words stay muted after the ack until it pauses.
-    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'old step', start_ms: 0, end_ms: 100 });
+    // Ask on step 1, then move on before the model has said a word. The ack only proves the server holds step 2.
+    fake.emit({ type: 'session.input_transcript.delta', event_id: 'i1', delta: 'what now', start_ms: 0, end_ms: 100 });
     coach.setStep('s2', 1);
-    expect(sink.muted).toBe(true);
     await vi.advanceTimersByTimeAsync(0);
     expect(coach.state.contextSync).toBe('idle');
     expect(sink.muted).toBe(true);
-    await vi.advanceTimersByTimeAsync(1_600);
-    expect(sink.muted).toBe(false);
-    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o2', delta: 'new step words', start_ms: 200, end_ms: 300 });
-    expect(seen.at(-1)).toBe('live:new step words');
-    // A step change while the model is silent reopens right after the ack.
-    coach.setStep('s1', 2);
+    // The delayed step-1 answer lands after the ack and after a long silence: still muted, still stale, still stamped with its own revision.
+    await vi.advanceTimersByTimeAsync(5_000);
+    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'old step answer', start_ms: 100, end_ms: 200 });
     expect(sink.muted).toBe(true);
-    await vi.advanceTimersByTimeAsync(2_000);
+    expect(seen.at(-1)).toEqual({ stale: true, delta: 'old step answer', stepRevision: 0 });
+    // Only the learner's next words reopen playback, and they fix the revision the next answer belongs to.
+    fake.emit({ type: 'session.input_transcript.delta', event_id: 'i2', delta: 'and now', start_ms: 300, end_ms: 400 });
     expect(sink.muted).toBe(false);
+    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o2', delta: 'new step answer', start_ms: 500, end_ms: 600 });
+    expect(seen.at(-1)).toEqual({ stale: false, delta: 'new step answer', stepRevision: 1 });
     coach.dispose();
+  });
+  it('reports a startup failure and deletes the created session even when the SDK closes before connect() rejects', async () => {
+    // The POST is refused: the SDK closes, then rejects with the refusal wrapped as cause. The server's reason survives.
+    const refusedFetch = okFetch({ error: 'stale_tutorial', message: 'Tutorial revision 3 is not current.' }, 409);
+    const refused = fakeTransport({ closeBeforeReject: 'refusal' });
+    const a = createCoach({ context, fetchImpl: refusedFetch, getUserMedia: async () => stream, transportFactory: () => refused.transport });
+    const errors: { code: string; message: string }[] = [];
+    a.onLiveError(error => errors.push(error));
+    expect(await a.connect()).toBe('text');
+    expect(errors).toEqual([{ code: 'live_refused', message: 'The server refused a live session (409): Tutorial revision 3 is not current. Text answers remain.' }]);
+    expect(refusedFetch.calls.some(call => call.init?.method === 'DELETE')).toBe(false);
+    // The answer cannot be applied after the session exists: the close arrives first, the session is still deleted and the failure named.
+    const fetchImpl = okFetch(sessionOk);
+    const broken = fakeTransport({ closeBeforeReject: 'answer' });
+    const b = createCoach({ context, fetchImpl, getUserMedia: async () => stream, transportFactory: () => broken.transport });
+    const codes: string[] = [];
+    b.onLiveError(error => codes.push(error.code));
+    expect(await b.connect()).toBe('text');
+    expect(codes).toEqual(['live_start_failed']);
+    expect(fetchImpl.calls.find(call => call.init?.method === 'DELETE')?.url).toBe('/api/live/sessions/live_1');
+  });
+  it('names a non-secure origin when navigator.mediaDevices is missing', async () => {
+    const insecure = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => { throw new TypeError("Cannot read properties of undefined (reading 'getUserMedia')"); }, transportFactory: () => fakeTransport().transport });
+    const errors: string[] = [];
+    insecure.onLiveError(error => errors.push(`${error.code}: ${error.message}`));
+    expect(await insecure.connect()).toBe('text');
+    expect(errors[0]).toMatch(/^microphone_unavailable: The microphone needs a secure origin/);
   });
   it('explains why live start failed and deletes a session the server already created', async () => {
     const errors: string[] = [];
@@ -402,15 +433,18 @@ describe('coach text path', () => {
     const deleted = fetchImpl.calls.find(call => call.init?.method === 'DELETE');
     expect(deleted?.url).toBe('/api/live/sessions/live_1');
   });
-  it('asks the microphone for echo cancellation, noise suppression and gain control', async () => {
+  it('asks the microphone for echo cancellation, noise suppression and gain control, and requests the greeting only once live', async () => {
     let constraints: MediaStreamConstraints | null = null;
     const fake = fakeTransport();
-    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async received => { constraints = received; return stream; }, transportFactory: () => fake.transport });
+    const fetchImpl = okFetch(sessionOk);
+    const coach = createCoach({ context, fetchImpl, getUserMedia: async received => { constraints = received; return stream; }, transportFactory: () => fake.transport });
     const connecting = coach.connect();
     await vi.advanceTimersByTimeAsync(0);
+    expect(fetchImpl.calls.some(call => call.url.endsWith('/greeting'))).toBe(false);
     fake.emit(started);
     await connecting;
     expect(constraints).toEqual({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    expect(fetchImpl.calls.filter(call => call.url === '/api/live/sessions/live_1/greeting' && call.init?.method === 'POST')).toHaveLength(1);
     coach.dispose();
   });
 });

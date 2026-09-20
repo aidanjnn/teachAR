@@ -1,9 +1,10 @@
 // Desktop-page controls for the voice coach. Start here, before entering AR; the headset panel only exposes Ask.
+import {CAPTION_GAP_MS,LEARNER_TURN_MS} from './tutorial-coach.mjs';
 export function mountCoachPanel(guide,coach,{tell}){
   const $=id=>document.getElementById(id);
   const log=$('coach-log'),mode=$('coach-mode'),status=$('coach-status'),pairForm=$('coach-pair');
-  // One line per voice per turn. Deltas keep appending to that voice's current line until it pauses; the other voice never splits it.
-  const TURN_GAP_MS=2500,current={learner:null,coach:null};
+  // One line per voice per turn. Deltas keep appending to that voice's current line until it pauses; a straggling learner word never splits it.
+  const current={learner:null,coach:null};
   function line(role,text){
     const li=document.createElement('li');li.dataset.role=role;li.textContent=`${role==='coach'?'Coach':'You'}: ${text}`;log.append(li);
     while(log.children.length>40)log.firstChild.remove();log.scrollTop=log.scrollHeight;return li;
@@ -15,7 +16,7 @@ export function mountCoachPanel(guide,coach,{tell}){
     else if(state.pairing==='paired')bits.push(`Paired as ${state.role}.`);
     else if(state.pairing==='none')bits.push('Server without pairing: coaching from the steps in this browser.');
     if(state.mode==='connecting')bits.push('Connecting…');
-    else if(state.mode==='live')bits.push('Live voice ready. Press Ask, or choose Ask coach inside AR, then speak.');
+    else if(state.mode==='live')bits.push(state.listenRequested?'Ask queued: the microphone opens as soon as the step update is acknowledged.':'Live voice ready. Press Ask, or choose Ask coach inside AR, then speak.');
     else if(state.mode==='listening')bits.push('Listening…');
     else if(state.mode==='text')bits.push('Text answers only; live voice is not available from this server.');
     if(state.mode!=='idle'&&state.grounded===false)bits.push(`Answers use this browser's step text, not server-reviewed text${state.reason?` (${state.reason})`:''}.`);
@@ -28,7 +29,9 @@ export function mountCoachPanel(guide,coach,{tell}){
   coach.onCaption(entry=>{
     const text=String(entry.delta||'');if(!text)return;
     const now=Date.now(),turn=current[entry.role];
-    if(turn&&!entry.source&&now-turn.at<TURN_GAP_MS&&turn.el.isConnected){turn.el.textContent+=text;turn.at=now;return;}
+    // A learner line well after the coach's last words starts the next exchange, so the following answer gets its own line below the question.
+    if(entry.role==='learner'&&current.coach&&now-current.coach.at>=LEARNER_TURN_MS)current.coach=null;
+    if(turn&&!entry.source&&now-turn.at<CAPTION_GAP_MS&&turn.el.isConnected){turn.el.textContent+=text;turn.at=now;return;}
     current[entry.role]={el:line(entry.role,text),at:now};
   });
   $('coach-start').onclick=async()=>{
