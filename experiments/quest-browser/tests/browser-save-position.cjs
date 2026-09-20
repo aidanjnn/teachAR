@@ -37,7 +37,7 @@ const assert=require('node:assert/strict');
    const saved=g.tutorial.steps[take];if(saved.frames.at(-1).left[0].p[2]>-.19)fail('Return movement leaked into ghost');
    if(saved.duration_ms>end+40)fail('Saved past the final action hold');
    if(JSON.stringify(g.tutorial.save_position)!==home)fail('Save position changed after take');
-   g.action('primary');await g.saveQueue;if(g.mode!=='saved')fail('Approve did not finish tutorial');
+   for(let i=0;i<3;i++)g.action('guide-hands');g.action('primary');await g.saveTask;await g.saveQueue;if(g.mode!=='saved')fail('Approve did not finish tutorial');
    if(take===0)g.action('author-back');
   }
   g.draw(hud.getContext('2d'),t,'');window.savePositionHud=hud.toDataURL();

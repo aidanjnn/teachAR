@@ -39,6 +39,12 @@ For another local port: `PORT=4331 sh start.sh`, then `adb reverse tcp:4331 tcp:
 
 Tutorials are stored in this browser origin's IndexedDB, not automatically synchronized to another device, port or Unity. Export/import is a recovery/transfer tool. Camera reference caches and the paid-attempt budget are private local runtime files. No personal recordings, images, audio, credentials, logs, model weights or environments are included in Git.
 
+Before approving each recording, choose **Required hands: Left, Right or Both** to match the action. Tracking coverage never chooses the hands for you. Every required palm must be present throughout the retained clip, with sample gaps no longer than 200 ms; otherwise review identifies the gap for trimming or re-recording. A hand that is not part of the action can be explicitly excluded.
+
+**Approve & save** stays pending until local storage succeeds. On failure the headset keeps the recording open, displays the error and offers **Retry local save**; retry approval afterward to finish the tutorial. For a stale-tab conflict, export your work and reload as instructed. Exit AR for the JSON export control before closing the page.
+
+Existing v3 files with missing or automatic (`recorded`) hand selection remain importable, but their approval/completion is cleared for explicit hand review. Previously finished clips with required-hand gaps reopen as drafts too. Motion and media are preserved. This tightens readiness using the existing `guide_hands` values; it does not change the prototype JSON shape or native formats.
+
 ## Software regression suite
 
 After the setup above, from the repository root:
@@ -49,7 +55,7 @@ cd experiments/quest-browser
 sh test-all.sh
 ```
 
-The suite runs Node and Python unit tests plus nine browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
+The suite runs Node and Python unit tests plus ten browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
 
 Hosted CI runs this suite alongside the existing repository checks. Neither these tests nor `pnpm check` establish headset tracking accuracy or Unity readiness. The latest packaging result is in [the activity log](../../docs/codex-log.md).
 
