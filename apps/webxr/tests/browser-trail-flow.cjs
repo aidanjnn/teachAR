@@ -62,7 +62,8 @@ const assert=require('node:assert/strict');
   // New contextual authoring, including pause and safe replacement discard.
   const a=new TutorialGuide({speak:()=>{},exit:()=>{}});a.attach(new THREE.Scene());a.persist=()=>Promise.resolve();a.begin('home');a.sample=()=>data[a.hand];
   const atick=(dt=40)=>{t+=dt;a.tick({},session,{},t);};
-  a.action('create');a.action('toggle-fluid');a.action('change-save-position');if(a.mode!=='save-home')fail('Create must begin with save-position setup');
+  a.action('create');a.action('create-continue');a.stepByStep=false;a.action('toggle-fluid');a.action('change-save-position'); // Exercise legacy manual review mode.
+if(a.mode!=='save-home')fail('Create must begin with save-position setup');
   a.action('set-save-position');t=a.pending.until;data={left:hand([0,1,.3]),right:hand([.4,1,.3])};for(let i=0;i<25;i++)atick();a.action('setup-ready');
   const amark=p=>{data.right=hand(p);a.action('primary');t=a.pending.until-380;for(let i=0;i<20;i++)atick(20);};
   amark([0,1,0]);amark([.5,1,0]);a.action('placement-ready');

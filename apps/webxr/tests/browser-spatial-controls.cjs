@@ -43,7 +43,7 @@ const assert=require('node:assert/strict');
    ray=aim(grip(panel,'move'));check(spatial.start(source,ray),'Move grip missed');spatial.move(source,null);spatial.move(source,pose(new T.Vector3(9,9,9)));check(!spatial.drag&&panel.position.length()===0,'Tracking loss jumped the panel');
    // Independent timer rotation/size persists until Reset or workspace change.
    g.start=[0,1,0];g.end=[.5,1,0];g.setWorkspace();g.mode='author';spatial.tick(50,viewer);
-   const workspace=JSON.stringify(g.workspace),matrix=g.space.matrixWorld.toArray().join();
+   scene.updateMatrixWorld(true);const workspace=JSON.stringify(g.workspace),matrix=g.space.matrixWorld.toArray().join();
    ray=aim(grip(spatial.timer,'rotate'));check(spatial.start(source,ray),'Timer rotation missed');spatial.move(source,pose(ray.transform.position,turn.clone().multiply(ray.transform.orientation)));spatial.end(source);
    const timerRotation=spatial.timer.quaternion.clone();spatial.tick(100,viewer);check(spatial.timer.quaternion.angleTo(timerRotation)<1e-6,'Timer rotation overwritten');
    ray=aim(grip(spatial.timer,'resize'));check(spatial.start(source,ray),'Timer resize missed');

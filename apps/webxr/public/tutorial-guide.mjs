@@ -574,7 +574,7 @@ export class TutorialGuide extends HandGuide {
       if(id==='primary'){
         if(this.player.step.narration_issue){this.problem='Narration failed. Re-record this step or choose Use text instruction.';return;}
         const ready=guidanceReadiness(this.player.step);
-        if(!ready.ready){this.problem=ready.message;if(!['left','right','both'].includes(this.player.step.guide_hands)){this.handsReturn='review-step';this.mode='choose-hands';}return;}
+        if(!ready.ready){this.problem=ready.message;return;}
         this.player.step.reviewed=true;this.log('step_reviewed',{step_id:this.player.step.id});this.changed();
         if(this.player.index<this.tutorial.steps.length-1){this.player.index++;this.player.replay();this.showStep();}
         else if(this.ux)this.saveTask=this.finishAuthoring();

@@ -1,3 +1,18 @@
+## Current headset rehearsal (2026-09-20)
+
+1. Exit AR and reload the same Quest origin; do not change host/port if it contains your recordings. Enter the experience. Home must show Create and Library, without asking for marks.
+2. Create → walkthrough → optional media → set one rest position → mark two recognizable workspace landmarks 20–120 cm apart. Both hands are the default. Single-hand overrides are in Options.
+3. Record an action. Hold stationary for one second; the one-second circle then fills and saves the movement before that circle. Wait for durable Step saved. Return to the rest rings to trigger a three-second countdown for the next take. Buttons and spoken Save remain available.
+4. Finish tutorial separately. Automatic instruction polishing uses the original recorded narration and retains originals on failure.
+5. Home → Library → choose a tutorial → Play or Edit. Play requests placement for that selected tutorial. Watch & do replays the demonstration and lets the learner say Next; Guided movement uses hand checkpoints. Neither verifies the physical fold.
+6. Enable voice using the microphone symbol. Test Pause, Resume, Save it now, Replay and Go back please in their applicable modes. The symbol shows input activity. Help retains examples and status. Provider errors remain available in Voice setup.
+
+Explicit short commands now skip intent-model inference after transcription; natural alternatives still use the model. The command path remains utterance → transcription → command → spoken acknowledgement. It is not a streaming Realtime session. Existing live coach remains separate and owns the microphone exclusively while used. Future Realtime integration must preserve local allowed actions, context epochs, recording/audio ownership and physical-verification boundaries.
+
+Hologram meshes do not alter tracked joint samples. Occluded or missing joints can hide a mesh; tests preserve that behavior instead of fabricating joints. Worn-headset tracking, lighting, acoustic echo and comfort still require rehearsal.
+
+---
+
 # Headset voice controls and origami demo
 
 For polished tutorial narration (recorded explanation → reviewed instruction → saved AI speech), see [instruction voice](polished-instruction-voice.md).

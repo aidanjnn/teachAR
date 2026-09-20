@@ -78,8 +78,8 @@ const assert=require('node:assert/strict');
 
       const invalid=await reviewing(),step=invalid.player.step;
       step.guide_hands='recorded';step.frames[10].left=null;
-      invalid.action('primary');check(!step.reviewed&&invalid.problem.includes('Choose required hands'),'Automatic hand selection was approved');
-      check(invalid.mode==='choose-hands','Legacy hand choice should open visible options');invalid.action('hands-left');invalid.action('primary');
+      invalid.action('primary');check(!step.reviewed&&invalid.problem.includes('Required left hand is missing'),'Default-both tracking gap was approved');
+      check(invalid.mode==='review-step','Tracking gap should remain in review');invalid.action('choose-hands');invalid.action('hands-left');invalid.action('primary');
       check(!step.reviewed&&invalid.problem.includes('Required left hand is missing'),'Tracking gap was approved');
       check(invalid.mode==='review-step'&&!invalid.tutorial.completion,'Unfollowable recording escaped review');await invalid.saveQueue;invalid.endSession();
 

@@ -35,7 +35,7 @@ export function applyVoiceCommand(g,command,{saveCutoff}={}){
   if(follow){if(g.watchOnly?g.player.paused:g.gatePaused)g.action('replay');return done('Guidance resumed.');}
  }
  if(command==='save'&&capture){
-  if(g.stepByStep){if(!g.saveCurrentStep(saveCutoff))return {ok:false,message:g.problem};return done('Step saved. Return to the rest position for the next step.');}
+  if(g.stepByStep){if(!g.saveCurrentStep(saveCutoff))return {ok:false,message:g.problem};return done('Saving step. Return to the rest position for the next step.');}
   if(g.fluidCapture){if(!g.sealFluidSegment(false,'finish'))return {ok:false,message:g.problem};return done('Saving step.');}
   g.action('primary');return g.problem?{ok:false,message:g.problem}:done('Saving step for review.');
  }
