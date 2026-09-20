@@ -1,13 +1,30 @@
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { createVisionApp } from '../../vision/src/app.js';
 import { readConfig as readVisionConfig } from '../../vision/src/config.js';
 import { probeVision } from '../src/vision/client.js';
+import { readVisionJson } from '../src/vision/response.js';
 import { readConfig } from '../src/config.js';
 
 const token = 'synthetic-service-token-for-tests-0001';
 const apps: FastifyInstance[] = [];
 afterEach(async () => { await Promise.all(apps.splice(0).map(app => app.close())); });
+it('bounds streamed vision bytes and cancels overflow before releasing the reader', async () => {
+  const cancel = vi.fn();
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) { controller.enqueue(new TextEncoder().encode('{"x":')); controller.enqueue(new TextEncoder().encode('123}')); },
+    cancel,
+  });
+  await expect(readVisionJson(new Response(body), 8)).rejects.toMatchObject({ code: 'invalid-assessment', status: 502 });
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(body.locked).toBe(false);
+  await expect(readVisionJson(new Response('{"x":12}'), 8)).resolves.toEqual({ x: 12 });
+});
+it.each(['{"x":1,"x":2}', '{broken'])('rejects invalid vision JSON and releases its stream: %s', async text => {
+  const response = new Response(text);
+  await expect(readVisionJson(response, 32 * 1024)).rejects.toThrow();
+  expect(response.body?.locked).toBe(false);
+});
 it('probes the separately listening vision service and detects auth failure/outage', async () => {
   const vision = createVisionApp(readVisionConfig({ VISION_SERVICE_TOKEN: token }));
   apps.push(vision);

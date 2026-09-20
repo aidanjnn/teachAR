@@ -5,7 +5,8 @@ import {
   type InspectionStart, type VisionInspectionInput,
 } from '@trail/contracts';
 import type { VisionConnection } from './client.js';
-import { InspectionError, inspectVision } from './inspection-client.js';
+import { inspectVision } from './inspection-client.js';
+import { InspectionError } from './response.js';
 
 export interface ReviewedInspectionReferences {
   references: VisionInspectionInput['references']; approvedStep: VisionInspectionInput['approvedStep'];

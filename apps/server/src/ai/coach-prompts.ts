@@ -1,18 +1,10 @@
 import { z } from 'zod';
-import { CoachAnswerSchema, MAX_ANSWER_CHARS, type CoachAnswer, type CoachContext, type CoachRequest, type CoachStep } from '@trail/contracts';
+import { CoachAnswerSchema, currentCoachStep, MAX_ANSWER_CHARS, type CoachAnswer, type CoachContext, type CoachRequest } from '@trail/contracts';
 
-export const COACH_PROMPT_VERSION = 'coach-v1';
 export const NOT_IN_TUTORIAL = "I don't have that in this tutorial. Watch the ghost hand for the movement.";
 
-export function currentStep(context: CoachContext): { step: CoachStep; index: number } {
-  const index = context.steps.findIndex(step => step.id === context.currentStepId);
-  const step = context.steps[index];
-  if (!step) throw new Error('Coach context has no current step');
-  return { step, index };
-}
-
 function tutorialBlock(context: CoachContext): string {
-  const { step, index } = currentStep(context);
+  const { step, index } = currentCoachStep(context);
   const lines = [
     `# Tutorial: ${context.title}`,
     ...context.steps.map((item, i) => `${i + 1}. ${item.title} — ${item.instruction}`),
@@ -69,12 +61,6 @@ function envelope(request: CoachRequest) {
     schemaVersion: 1 as const, requestId: request.requestId, runId: context.runId, tutorialId: context.tutorialId,
     tutorialRevision: context.tutorialRevision, stepId: context.currentStepId, stepRevision: context.stepRevision, attemptId: context.attemptId,
   };
-}
-
-export function fallbackAnswer(request: CoachRequest): CoachAnswer {
-  const { step } = currentStep(request.context);
-  const answer = `${step.title}. ${step.instruction}`.slice(0, MAX_ANSWER_CHARS);
-  return CoachAnswerSchema.parse({ ...envelope(request), answer, grounded: true, source: 'fallback', model: null });
 }
 
 /** Returns null when the model output is unusable so the caller falls back. */

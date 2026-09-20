@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CoachAnswerSchema, CoachContextSchema, CoachRequestSchema, CoachSessionRequestSchema, HealthSchema,
-  LabelRequestSchema, LabelResultSchema, LabelSegmentsSchema, NarrationCaptureSchema, TranscriptResultSchema, describeStepChange,
+  LabelRequestSchema, LabelResultSchema, LabelSegmentsSchema, LiveStepUpdateSchema, NarrationCaptureSchema, TranscriptResultSchema, describeStepChange, fallbackCoachAnswer,
 } from '../src/index.js';
 import transcriptRaw from '../../../fixtures/narration-transcript.v1.json';
 import segmentsRaw from '../../../fixtures/label-segments.v1.json';
@@ -56,10 +56,16 @@ describe('voice contracts', () => {
     expect(CoachContextSchema.parse(context).currentStepId).toBe('seg-1');
     expect(CoachContextSchema.safeParse({ ...context, currentStepId: 'seg-9' }).success).toBe(false);
     expect(CoachContextSchema.safeParse({ ...context, steps: [context.steps[0], context.steps[0]] }).success).toBe(false);
-    expect(CoachContextSchema.safeParse({ ...context, steps: Array.from({ length: 17 }, (_, i) => ({ id: `s${i}`, title: 't', instruction: 'i' })), currentStepId: 's0' }).success).toBe(false);
+    expect(CoachContextSchema.safeParse({ ...context, steps: Array.from({ length: 129 }, (_, i) => ({ id: `s${i}`, title: 't', instruction: 'i' })), currentStepId: 's0' }).success).toBe(false);
     expect(CoachContextSchema.safeParse({ ...context, steps: [{ ...context.steps[0], title: 'x'.repeat(61) }] }).success).toBe(false);
   });
 
+  it('builds a fallback answer from the current step with every identifier copied', () => {
+    expect(fallbackCoachAnswer({ requestId: 'req-1', context: { ...context, tutorialRevision: 3, attemptId: 'att-2', currentStepId: 'seg-2', stepRevision: 1 } })).toEqual({
+      schemaVersion: 1, requestId: 'req-1', runId: 'run-1', tutorialId: 'tut-1', tutorialRevision: 3, stepId: 'seg-2', stepRevision: 1,
+      attemptId: 'att-2', answer: 'Insert the support. Drop the support into the base.', grounded: true, source: 'fallback', model: null,
+    });
+  });
   it('bounds coach requests and answers', () => {
     expect(CoachRequestSchema.safeParse({ schemaVersion: 1, requestId: 'req-1', context, question: 'What now?' }).success).toBe(true);
     expect(CoachRequestSchema.safeParse({ schemaVersion: 1, requestId: 'req-1', context, question: 'x'.repeat(501) }).success).toBe(false);
@@ -80,6 +86,12 @@ describe('voice contracts', () => {
     expect(NarrationCaptureSchema.safeParse(capture).success).toBe(true);
     expect(NarrationCaptureSchema.safeParse({ ...capture, mimeType: 'audio/flac' }).success).toBe(false);
     expect(NarrationCaptureSchema.safeParse({ ...capture, sizeBytes: 0 }).success).toBe(false);
+  });
+
+  it('requires a generation on live step updates', () => {
+    expect(LiveStepUpdateSchema.safeParse({ schemaVersion: 1, generation: 3, currentStepId: 's1', stepRevision: 2 }).success).toBe(true);
+    expect(LiveStepUpdateSchema.safeParse({ schemaVersion: 1, currentStepId: 's1', stepRevision: 2 }).success).toBe(false);
+    expect(LiveStepUpdateSchema.safeParse({ schemaVersion: 1, generation: -1, currentStepId: 's1', stepRevision: 2 }).success).toBe(false);
   });
 
   it('describes a step change for the coach in one shared sentence', () => {

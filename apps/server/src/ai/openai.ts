@@ -1,11 +1,11 @@
 import {
-  COACH_TEXT_DEADLINE_MS,
+  COACH_TEXT_DEADLINE_MS, fallbackCoachAnswer,
   type CoachAnswer, type CoachContext, type CoachRequest, type CoachSessionRequest, type CoachSessionResponse,
   type LabelFailure, type LabelRequest, type LabelResult, type VoiceUnavailable,
 } from '@trail/contracts';
 import type { LiveCreateParams } from 'openai/resources/live/live';
 import { alignTranscript } from './align.js';
-import { CoachModelOutputSchema, backendInstructions, coachTextPrompt, fallbackAnswer, frontendInstructions, modelAnswer } from './coach-prompts.js';
+import { CoachModelOutputSchema, backendInstructions, coachTextPrompt, frontendInstructions, modelAnswer } from './coach-prompts.js';
 import { LabelModelOutputSchema, buildLabelPrompt, fallbackLabels, modelLabels, validateLabelOutput } from './labels.js';
 import type { OpenAiGateway } from './openai-gateway.js';
 import type { AiProvider, TranscribeInput } from './provider.js';
@@ -16,8 +16,8 @@ export interface OpenAiProviderOptions {
   labelTimeoutMs?: number; coachTimeoutMs?: number;
 }
 export const LABEL_TIMEOUT_MS = 15_000;
-/** Client events the untrusted browser data channel may send. Instructions and session updates never come from the browser. */
-export const BROWSER_CLIENT_EVENTS = ['session.input_audio.mute', 'session.input_audio.unmute', 'session.thinking.append', 'session.close'];
+/** Client events the untrusted browser data channel may send. Context, instructions and session updates come only from the server. */
+export const BROWSER_CLIENT_EVENTS = ['session.input_audio.mute', 'session.input_audio.unmute', 'session.close'];
 
 export function isTimeoutError(error: unknown): boolean {
   return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
@@ -67,7 +67,7 @@ export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider
         if (parsed.status === 'incomplete') return fail('incomplete', `The model stopped early (${parsed.reason})`);
         if (parsed.status === 'unparsed') return fail('invalid_output', 'The model returned no parsable labels');
         const validated = validateLabelOutput(request, parsed.parsed);
-        return validated.ok ? modelLabels(request, validated.labels, options.textModel) : fallbackLabels(request, validated.failure);
+        return validated.ok ? modelLabels(validated.labels, options.textModel) : fallbackLabels(request, validated.failure);
       } catch (error) {
         return isTimeoutError(error) ? fail('timeout', `Labeling exceeded ${labelTimeoutMs} ms`) : fail('provider_unavailable', 'The labeling provider failed');
       }
@@ -78,10 +78,10 @@ export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider
           model: options.textModel, ...coachTextPrompt(request), schema: CoachModelOutputSchema, schemaName: 'coach_answer',
           maxOutputTokens: 200, signal: AbortSignal.any([signal, AbortSignal.timeout(coachTimeoutMs)]),
         });
-        if (parsed.status !== 'ok') return fallbackAnswer(request);
-        return modelAnswer(request, parsed.parsed, options.textModel) ?? fallbackAnswer(request);
+        if (parsed.status !== 'ok') return fallbackCoachAnswer(request);
+        return modelAnswer(request, parsed.parsed, options.textModel) ?? fallbackCoachAnswer(request);
       } catch {
-        return fallbackAnswer(request);
+        return fallbackCoachAnswer(request);
       }
     },
     async createLiveSession(request: CoachSessionRequest, signal: AbortSignal): Promise<CoachSessionResponse | VoiceUnavailable> {
@@ -90,6 +90,13 @@ export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider
         return { schemaVersion: 1, sessionId: result.session.id, sdp: result.transport.sdp, liveModel: options.liveModel };
       } catch {
         return { error: 'live_unavailable', message: 'The live coach could not start. Text answers remain available.' };
+      }
+    },
+    openLiveControl(sessionId) {
+      try {
+        return options.gateway.openSideband(sessionId);
+      } catch {
+        return null;
       }
     },
   };

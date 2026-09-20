@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { InspectionCancelSchema, InspectionUploadSchema, parseContractJson } from '@trail/contracts';
 import { InspectionCoordinator } from './coordinator.js';
-import { InspectionError } from './inspection-client.js';
+import { InspectionError } from './response.js';
 
 export interface InspectionRoutesOptions {
   authorizeLearner(request: FastifyRequest): { sessionId: string };

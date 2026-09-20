@@ -1,7 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { TranscriptResultSchema, type TranscriptResult } from '@trail/contracts';
+import { TranscriptResultSchema, fallbackCoachAnswer, type TranscriptResult } from '@trail/contracts';
 import { alignTranscript } from './align.js';
-import { fallbackAnswer } from './coach-prompts.js';
 import { fallbackLabels } from './labels.js';
 import type { AiProvider, TranscribeInput } from './provider.js';
 
@@ -28,9 +27,10 @@ export function createMockProvider(options: MockProviderOptions): AiProvider {
       });
     },
     async label(request) { return fallbackLabels(request, null); },
-    async coachText(request) { return fallbackAnswer(request); },
+    async coachText(request) { return fallbackCoachAnswer(request); },
     async createLiveSession() {
       return { error: 'live_unavailable', message: 'The live voice coach needs AI_PROVIDER=openai on the server.' };
     },
+    openLiveControl() { return null; },
   };
 }

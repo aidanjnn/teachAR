@@ -6,7 +6,8 @@ export const MAX_NARRATION_BYTES = 20 * 1024 * 1024;
 export const MAX_TRANSCRIPT_SPANS = 2_000;
 export const MAX_TRANSCRIPT_MS = MAX_RECORDING_DURATION_MS + 10_000;
 export const MAX_LABEL_SEGMENTS = 64;
-export const MAX_COACH_STEPS = 16;
+/** Matches the tutorial contract so the coach always sees the whole approved step list. */
+export const MAX_COACH_STEPS = 128;
 export const MAX_TITLE_CHARS = 60;
 export const MAX_INSTRUCTION_CHARS = 240;
 export const MAX_ANSWER_CHARS = 600;
@@ -105,11 +106,16 @@ export const CoachContextSchema = z.strictObject({
 });
 export type CoachContext = z.infer<typeof CoachContextSchema>;
 
-/** Plain-language context pushed to the coach when the learner's step or attempt changes. Shared by server and clients. */
-export function describeStepChange(context: CoachContext): string {
+export function currentCoachStep(context: CoachContext): { step: CoachStep; index: number } {
   const index = context.steps.findIndex(step => step.id === context.currentStepId);
   const step = context.steps[index];
   if (!step) throw new Error('Coach context has no current step');
+  return { step, index };
+}
+
+/** Plain-language context pushed to the coach when the learner's step or attempt changes. Shared by server and clients. */
+export function describeStepChange(context: CoachContext): string {
+  const { step, index } = currentCoachStep(context);
   return `The learner is now on step ${index + 1} of ${context.steps.length}: "${step.title}". Instruction: ${step.instruction} Questions about earlier steps are stale; answer for this step.`;
 }
 
@@ -126,6 +132,19 @@ export const CoachAnswerSchema = z.strictObject({
 });
 export type CoachAnswer = z.infer<typeof CoachAnswerSchema>;
 
+/** Identical approved-step fallback for server failures and an unreachable backend. */
+export function fallbackCoachAnswer(request: Pick<CoachRequest, 'requestId' | 'context'>): CoachAnswer {
+  const { context, requestId } = request;
+  const { step } = currentCoachStep(context);
+  return CoachAnswerSchema.parse({
+    schemaVersion: 1, requestId, runId: context.runId, tutorialId: context.tutorialId,
+    tutorialRevision: context.tutorialRevision, stepId: context.currentStepId,
+    stepRevision: context.stepRevision, attemptId: context.attemptId,
+    answer: `${step.title}. ${step.instruction}`.slice(0, MAX_ANSWER_CHARS),
+    grounded: true, source: 'fallback', model: null,
+  });
+}
+
 export const CoachSessionRequestSchema = z.strictObject({
   schemaVersion: z.literal(1), sdp: z.string().min(1).max(MAX_SDP_CHARS), context: CoachContextSchema,
 });
@@ -137,10 +156,22 @@ export const CoachSessionResponseSchema = z.strictObject({
 export type CoachSessionResponse = z.infer<typeof CoachSessionResponseSchema>;
 
 export const VoiceUnavailableSchema = z.strictObject({
-  error: z.enum(['live_unavailable', 'provider_unavailable', 'payload_too_large', 'unsupported_media_type', 'invalid_request']),
+  error: z.enum([
+    'live_unavailable', 'provider_unavailable', 'payload_too_large', 'unsupported_media_type', 'invalid_request',
+    'unauthorized', 'forbidden', 'unknown_tutorial', 'stale_tutorial', 'unknown_session', 'stale_update',
+  ]),
   message: z.string().min(1).max(300),
 });
 export type VoiceUnavailable = z.infer<typeof VoiceUnavailableSchema>;
+
+/** Client report that the learner moved to another step or attempt in an open live session; the server pushes the context. */
+export const LiveStepUpdateSchema = z.strictObject({
+  schemaVersion: z.literal(1),
+  /** Client-side counter that increases on every step or attempt change; the server rejects older updates. */
+  generation: Revision,
+  currentStepId: IdSchema, stepRevision: Revision, attemptId: IdSchema.optional(),
+});
+export type LiveStepUpdate = z.infer<typeof LiveStepUpdateSchema>;
 
 export const NarrationCaptureSchema = z.strictObject({
   mimeType: AudioMimeTypeSchema,

@@ -22,6 +22,7 @@ function stub(overrides: Partial<AiProvider>): AiProvider {
     label: async () => { throw new Error('boom'); },
     coachText: async () => { throw new Error('boom'); },
     createLiveSession: async () => ({ schemaVersion: 1, sessionId: 'live_1', sdp: 'v=0 answer', liveModel: 'gpt-live-1' }),
+    openLiveControl: () => ({ ready: Promise.resolve(), send: () => undefined, close: () => undefined, onClose: () => undefined, onError: () => undefined }),
     ...overrides,
   };
 }

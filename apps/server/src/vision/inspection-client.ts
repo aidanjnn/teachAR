@@ -1,23 +1,7 @@
-import { parseContractJson, VisionFailureSchema, VisionInspectionResultSchema, type VisionInspectionInput, type VisionInspectionResult } from '@trail/contracts';
-import { z } from 'zod';
+import { VisionFailureSchema, VisionInspectionResultSchema, type VisionInspectionInput, type VisionInspectionResult } from '@trail/contracts';
+import { InspectionError, readVisionJson } from './response.js';
 import type { VisionConnection } from './client.js';
 
-export class InspectionError extends Error {
-  constructor(public readonly code: 'invalid-input' | 'invalid-image' | 'busy' | 'conflict' | 'cancelled' | 'deadline' | 'provider-unavailable' | 'invalid-assessment' | 'stale', public readonly status = 400) { super(code); }
-}
-async function boundedJson(response: Response): Promise<unknown> {
-  if (!response.body) throw new InspectionError('provider-unavailable', 503);
-  const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let length = 0;
-  try {
-    while (true) {
-      const next = await reader.read(); if (next.done) break;
-      length += next.value.length;
-      if (length > 32 * 1024) throw new InspectionError('invalid-assessment', 502);
-      chunks.push(next.value);
-    }
-    return parseContractJson(z.unknown(), Buffer.concat(chunks).toString('utf8'));
-  } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
-}
 /** No retry: a crash/timeout must not silently inspect the old image again. */
 export async function inspectVision(connection: VisionConnection | null, input: VisionInspectionInput, signal: AbortSignal): Promise<VisionInspectionResult> {
   if (!connection) throw new InspectionError('provider-unavailable', 503);
@@ -29,7 +13,7 @@ export async function inspectVision(connection: VisionConnection | null, input: 
       method: 'POST', headers: { authorization: `Bearer ${connection.token}`, 'content-type': 'application/json' },
       body: JSON.stringify(input), redirect: 'error', signal,
     });
-    const raw = await boundedJson(response);
+    const raw = await readVisionJson(response, 32 * 1024);
     if (!response.ok) {
       const error = VisionFailureSchema.safeParse(raw);
       throw new InspectionError(error.success ? error.data.error : 'provider-unavailable', response.status);

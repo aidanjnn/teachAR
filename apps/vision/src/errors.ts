@@ -1,6 +1,7 @@
+import type { VisionFailure } from '@trail/contracts';
 /** Never forward decoder/provider messages: they may contain images, prompts or credentials. */
 export class VisionError extends Error {
-  constructor(public readonly code: 'invalid-input' | 'invalid-image' | 'busy' | 'conflict' | 'cancelled' | 'deadline' | 'provider-unavailable' | 'invalid-assessment' | 'stale', public readonly status = 400) {
+  constructor(public readonly code: VisionFailure['error'], public readonly status = 400) {
     super(code);
   }
 }

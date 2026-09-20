@@ -1,5 +1,5 @@
 import {
-  CoachAnswerSchema, CoachSessionResponseSchema, describeStepChange, type CoachAnswer, type CoachContext, type CoachStep,
+  COACH_TEXT_DEADLINE_MS, CoachAnswerSchema, CoachSessionResponseSchema, fallbackCoachAnswer, type CoachAnswer, type CoachContext,
 } from '@trail/contracts';
 import { initialCoachState, reduceCoach, type CoachEffect, type CoachEvent, type CoachState } from './coach-state.js';
 import { createWebRtcLiveTransport, type LiveClientEvent, type LiveServerEvent, type LiveTransport } from './live-transport.js';
@@ -33,11 +33,6 @@ export interface CoachApi {
   onLiveError(handler: (error: LiveError) => void): () => void;
 }
 
-function stepOf(context: CoachContext): CoachStep {
-  const step = context.steps.find(item => item.id === context.currentStepId);
-  if (!step) throw new Error('Coach context has no current step');
-  return step;
-}
 function newId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -49,7 +44,7 @@ export function createCoach(options: CoachOptions): CoachApi {
   const transportFactory = options.transportFactory ?? createWebRtcLiveTransport;
   const listenTimeoutMs = options.listenTimeoutMs ?? 10_000;
   const liveStartTimeoutMs = options.liveStartTimeoutMs ?? 15_000;
-  const textDeadlineMs = options.textDeadlineMs ?? 5_000;
+  const textDeadlineMs = options.textDeadlineMs ?? COACH_TEXT_DEADLINE_MS;
   let context: CoachContext = { ...options.context };
   let state = initialCoachState({
     runId: context.runId, tutorialId: context.tutorialId, tutorialRevision: context.tutorialRevision,
@@ -57,6 +52,7 @@ export function createCoach(options: CoachOptions): CoachApi {
   });
   let disposed = false;
   let transport: LiveTransport | null = null;
+  let liveSessionId: string | null = null;
   let stream: MediaStream | null = null;
   let listenTimer: ReturnType<typeof setTimeout> | null = null;
   let startTimer: ReturnType<typeof setTimeout> | null = null;
@@ -95,6 +91,7 @@ export function createCoach(options: CoachOptions): CoachApi {
     startedReject = null;
     const active = transport;
     transport = null;
+    liveSessionId = null;
     active?.close();
     stopStream();
     // The audio element outlives this coach; never leave it muted for the next session.
@@ -106,12 +103,33 @@ export function createCoach(options: CoachOptions): CoachApi {
     switch (effect.type) {
       case 'mute': clearListenTimer(); setMicEnabled(false); send({ type: 'session.input_audio.mute', event_id: eventId('mute') }); break;
       case 'unmute': setMicEnabled(true); send({ type: 'session.input_audio.unmute', event_id: eventId('unmute') }); armListenTimer(); break;
-      case 'send-step-context': send({ type: 'session.thinking.append', event_id: eventId('ctx'), delegation_id: null, content: describeStepChange(context) }); break;
+      case 'send-step-context': reportStep(); break;
       case 'release-live': releaseLive(); break;
       case 'invalidate-live-output': outputGateClosed = true; setPlaybackMuted(true); break;
       case 'emit-answer': answerHandlers.forEach(handler => handler(effect.answer)); break;
       case 'drop-answer': break;
     }
+  }
+  /** The server composes and pushes step context over its trusted channel; the browser only names the step and waits for the ack. */
+  function reportStep() {
+    const generation = state.contextGeneration;
+    if (!liveSessionId) { dispatch({ type: 'context-sync-failed', generation }); return; }
+    const sessionId = liveSessionId;
+    void fetchImpl(`/api/live/sessions/${encodeURIComponent(sessionId)}/step`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(3_000),
+      body: JSON.stringify({ schemaVersion: 1, generation, currentStepId: context.currentStepId, stepRevision: context.stepRevision, attemptId: context.attemptId }),
+    }).then(response => {
+      if (response.ok) { dispatch({ type: 'context-synced', generation }); return; }
+      failSync(generation, { code: 'step_context_rejected', message: `Server refused the step update (${response.status}); live coaching stopped.` });
+    }, () => {
+      failSync(generation, { code: 'step_context_failed', message: 'Could not reach the server to update the coach step; live coaching stopped.' });
+    });
+  }
+  /** A late answer for an older generation is noise once a newer update is in flight; only the current one can end live coaching. */
+  function failSync(generation: number, error: LiveError) {
+    if (disposed || generation !== state.contextGeneration) return;
+    errorHandlers.forEach(handler => handler(error));
+    dispatch({ type: 'context-sync-failed', generation });
   }
   function dispatch(event: CoachEvent): CoachEffect[] {
     if (disposed) return [];
@@ -134,7 +152,8 @@ export function createCoach(options: CoachOptions): CoachApi {
         armListenTimer();
         // A new learner turn reopens the gate and fixes the revision its answer belongs to.
         turnRevision = state.stepRevision;
-        if (outputGateClosed) { outputGateClosed = false; setPlaybackMuted(false); }
+        // Only reopen once the server has acknowledged the current step; until then the model may still hold the old one.
+        if (outputGateClosed && state.contextSync === 'idle') { outputGateClosed = false; setPlaybackMuted(false); }
         transcriptHandlers.forEach(handler => handler({ role: 'learner', delta: event.delta, stepRevision: turnRevision, stale: false }));
         break;
       case 'session.output_transcript.delta':
@@ -149,14 +168,6 @@ export function createCoach(options: CoachOptions): CoachApi {
       default:
         break;
     }
-  }
-  function localFallback(requestId: string): CoachAnswer {
-    const step = stepOf(context);
-    return CoachAnswerSchema.parse({
-      schemaVersion: 1, requestId, runId: context.runId, tutorialId: context.tutorialId, tutorialRevision: context.tutorialRevision,
-      stepId: context.currentStepId, stepRevision: context.stepRevision, attemptId: context.attemptId,
-      answer: `${step.title}. ${step.instruction}`.slice(0, 600), grounded: true, source: 'fallback', model: null,
-    });
   }
 
   return {
@@ -198,7 +209,9 @@ export function createCoach(options: CoachOptions): CoachApi {
               body: JSON.stringify({ schemaVersion: 1, sdp: offer, context }),
             });
             if (!response.ok) throw new Error(`Live session refused (${response.status})`);
-            return CoachSessionResponseSchema.parse(await response.json()).sdp;
+            const session = CoachSessionResponseSchema.parse(await response.json());
+            liveSessionId = session.sessionId;
+            return session.sdp;
           },
         });
         await started;
@@ -215,17 +228,18 @@ export function createCoach(options: CoachOptions): CoachApi {
     ask() { dispatch({ type: 'listen-toggled' }); },
     async askText(question) {
       const requestId = newId();
+      const requestContext = context;
       dispatch({ type: 'text-asked', requestId });
       let answer: CoachAnswer;
       try {
         const response = await fetchImpl('/api/coach', {
           method: 'POST', headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(textDeadlineMs),
-          body: JSON.stringify({ schemaVersion: 1, requestId, context, question }),
+          body: JSON.stringify({ schemaVersion: 1, requestId, context: requestContext, question }),
         });
         if (!response.ok) throw new Error(`Coach refused (${response.status})`);
         answer = CoachAnswerSchema.parse(await response.json());
       } catch {
-        answer = localFallback(requestId);
+        answer = fallbackCoachAnswer({ requestId, context: requestContext });
       }
       const effects = dispatch({ type: 'answer-received', answer });
       return effects.some(effect => effect.type === 'emit-answer') ? answer : null;
@@ -247,6 +261,9 @@ export function createCoach(options: CoachOptions): CoachApi {
       answerHandlers.clear();
       errorHandlers.clear();
       if (transport) { try { transport.send({ type: 'session.close', event_id: eventId('close') }); } catch { /* already closed */ } }
+      if (liveSessionId) {
+        void fetchImpl(`/api/live/sessions/${encodeURIComponent(liveSessionId)}`, { method: 'DELETE', keepalive: true }).catch(() => undefined);
+      }
       releaseLive();
     },
     onState(handler) { stateHandlers.add(handler); return () => { stateHandlers.delete(handler); }; },
