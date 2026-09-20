@@ -105,6 +105,20 @@ describe('POST /api/coach', () => {
 });
 
 describe('POST /api/live/sessions', () => {
+  it('speaks the greeting only when the browser asks for it, once per session', async () => {
+    const sent: { type: string }[] = [];
+    const control = { ready: Promise.resolve(), send: (event: { type: string }) => { sent.push(event); }, close: () => undefined, onClose: () => undefined, onError: () => undefined };
+    const live = await createApp(readConfig({ DATA_DIR: await temp(), AI_PROVIDER: 'openai', OPENAI_API_KEY: 'sk-secret-value' }), { provider: stub({ openLiveControl: () => control }) });
+    try {
+      expect((await live.inject({ method: 'POST', url: '/api/live/sessions', headers: json, payload: { schemaVersion: 1, sdp: 'v=0 offer', context } })).statusCode).toBe(201);
+      // Nothing is said before the browser reports that its media path is up.
+      expect(sent.filter(event => event.type === 'session.commentary.append')).toHaveLength(0);
+      expect((await live.inject({ method: 'POST', url: '/api/live/sessions/live_1/greeting' })).statusCode).toBe(204);
+      expect((await live.inject({ method: 'POST', url: '/api/live/sessions/live_1/greeting' })).statusCode).toBe(204);
+      expect(sent.filter(event => event.type === 'session.commentary.append')).toHaveLength(1);
+      expect((await live.inject({ method: 'POST', url: '/api/live/sessions/live_missing/greeting' })).statusCode).toBe(404);
+    } finally { await live.close(); }
+  });
   it('is unavailable in mock mode and returns the SDP answer from a live provider', async () => {
     const app = await mockApp();
     try {

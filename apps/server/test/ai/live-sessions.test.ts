@@ -85,4 +85,21 @@ describe('LiveSessionRegistry', () => {
     vi.advanceTimersByTime(5_000);
     expect(h.closed()).toBe(1);
   });
+
+  it('greets through the control channel once and reports when no channel exists', () => {
+    const registry = new LiveSessionRegistry();
+    const a = control();
+    registry.register('live_g', context, a.channel);
+    expect(registry.greet('live_g', 'Coach ready.')).toBe(true);
+    expect(a.sent.at(-1)).toMatchObject({ type: 'session.commentary.append', content: 'Coach ready.' });
+    // Once per session: a repeated request is a no-op.
+    expect(registry.greet('live_g', 'Coach ready.')).toBe(false);
+    expect(a.sent.filter(event => event.type === 'session.commentary.append')).toHaveLength(1);
+    expect(registry.has('live_g')).toBe(true);
+    expect(registry.has('missing')).toBe(false);
+    registry.register('live_n', context, null);
+    expect(registry.greet('live_n', 'Coach ready.')).toBe(false);
+    expect(registry.greet('missing', 'Coach ready.')).toBe(false);
+    registry.closeAll();
+  });
 });

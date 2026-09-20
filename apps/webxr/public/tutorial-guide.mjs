@@ -290,6 +290,7 @@ export class TutorialGuide extends HandGuide {
       this.player.time=id.includes('start')?range[0]:range[1];return true;
     }
     if(id==='panel-place'){this.onRepositionPanel?.();return true;}
+    // Ask always reaches the coach; readiness is shown on the button label, and the runtime ignores a press it cannot honour.
     if(id==='coach-ask'){this.coach?.ask();return true;}
     if(id==='retry-save'){if(this.saveStatus==='failed')this.persist();return true;}
     if(id==='home'){
@@ -390,7 +391,7 @@ export class TutorialGuide extends HandGuide {
     if(this.wasHidden)return;
     if(this.ux&&this.mode==='learn')this.gatePaused=true;
     this.log('tutorial_interrupted',{mode:this.mode,step_id:this.player?.step?.id||null});
-    this.epoch++;this.photoEpoch=(this.photoEpoch||0)+1;this.photoTarget=null;this.currentHands=null;this.wasHidden=true;this.coach?.onAttempt();
+    this.epoch++;this.photoEpoch=(this.photoEpoch||0)+1;this.photoTarget=null;this.currentHands=null;this.wasHidden=true;
     if (this.mode==='capture'){this.mode='capture-paused';this.narrator?.pause();}
     this.audioPlayer?.stop();
     if (this.player) this.player.paused=true;
