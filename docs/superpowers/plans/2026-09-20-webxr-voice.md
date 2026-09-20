@@ -35,13 +35,13 @@
 - Produces: `POST /api/coach-guides` (author) -> `{ id, revision }`; `GET /api/coach-guides/:id` (learner or author) -> `CoachGuide`.
 - Contract: `CoachGuidePublishSchema = strictObject({ schemaVersion: literal(1), sourceId: Id, title: string 1..120, layoutNotes: string ..500 optional, steps: array(CoachStepSchema) 1..MAX_COACH_STEPS })`; `CoachGuideSchema = publish fields minus sourceId plus { id, revision, sourceId, publishedAt }`.
 
-- [ ] **Step 1: Failing tests.** In `coach-guides.test.ts`: publish returns uuid id and revision 1; republishing the same `sourceId` returns the same id and revision 2; `get` of an unknown id is null; a store recovered from disk returns the published guide; the file is written atomically (no `.tmp` left); route tests through `createApp` with a `PairingAuthority`: 401 without token, 403 for a learner posting, 200 for an author, learner can `GET`, body over 64 KiB is 413, invalid body is 400; `resolveTutorial` inside `createApp` returns the coach guide for `POST /api/coach` when the repository has no tutorial (answer text equals the current step's instruction in mock mode).
-- [ ] **Step 2: Run the file to see it fail:** `pnpm vitest run apps/server/test/coach-guides.test.ts`.
-- [ ] **Step 3: Implement the store.** JSON file per guide under `join(dataDir, 'coach-guides')`, `mkdir -p`, write to `<id>.json.tmp` then `rename`. Index by `sourceId` in memory, rebuilt in `recover()`. Validate with `CoachGuideSchema.parse` on read.
-- [ ] **Step 4: Implement the routes** with the same `onRequest: auth.require([...])` pattern as `storage/routes.ts`. Register in `createApp` only when `options.auth` is present.
-- [ ] **Step 5: Compose `resolveTutorial`:** repository first; on null, `store.get(id)` mapped through `asCoachSource` (status `'ready'`).
-- [ ] **Step 6: Run the test file green, then `pnpm --filter @trail/server typecheck`.**
-- [ ] **Step 7: Commit:** `feat(server): store published coach guides for grounded coaching`.
+- [x] **Step 1: Failing tests.** In `coach-guides.test.ts`: publish returns uuid id and revision 1; republishing the same `sourceId` returns the same id and revision 2; `get` of an unknown id is null; a store recovered from disk returns the published guide; the file is written atomically (no `.tmp` left); route tests through `createApp` with a `PairingAuthority`: 401 without token, 403 for a learner posting, 200 for an author, learner can `GET`, body over 64 KiB is 413, invalid body is 400; `resolveTutorial` inside `createApp` returns the coach guide for `POST /api/coach` when the repository has no tutorial (answer text equals the current step's instruction in mock mode).
+- [x] **Step 2: Run the file to see it fail:** `pnpm vitest run apps/server/test/coach-guides.test.ts`.
+- [x] **Step 3: Implement the store.** JSON file per guide under `join(dataDir, 'coach-guides')`, `mkdir -p`, write to `<id>.json.tmp` then `rename`. Index by `sourceId` in memory, rebuilt in `recover()`. Validate with `CoachGuideSchema.parse` on read.
+- [x] **Step 4: Implement the routes** with the same `onRequest: auth.require([...])` pattern as `storage/routes.ts`. Register in `createApp` only when `options.auth` is present.
+- [x] **Step 5: Compose `resolveTutorial`:** repository first; on null, `store.get(id)` mapped through `asCoachSource` (status `'ready'`).
+- [x] **Step 6: Run the test file green, then `pnpm --filter @trail/server typecheck`.**
+- [x] **Step 7: Commit:** `feat(server): store published coach guides for grounded coaching`.
 
 ### Task 2: Serve the tutor from Fastify
 

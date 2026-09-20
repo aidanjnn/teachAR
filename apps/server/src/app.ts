@@ -5,6 +5,8 @@ import { SpectatorRelay } from './sessions/relay.js';
 import { PairingAuthority, registerPairingRoutes } from './auth/pairing.js';
 import { TutorialRepository } from './storage/repository.js';
 import { registerStorageRoutes } from './storage/routes.js';
+import { CoachGuideStore } from './storage/coach-guides.js';
+import { registerCoachGuideRoutes } from './routes/coach-guides.js';
 import { probeVision } from './vision/client.js';
 import Fastify, { LogController } from 'fastify';
 import fastifyStatic from '@fastify/static';
@@ -66,6 +68,17 @@ export async function createApp(
         throw error;
       }
     };
+    // Browser tutorials publish their reviewed step text here; the coach grounds on it when no server recording exists.
+    const coachGuides = new CoachGuideStore(config.dataDir);
+    await coachGuides.recover();
+    const primary = resolveTutorial;
+    resolveTutorial = async id => {
+      const stored = await primary(id);
+      if (stored) return stored;
+      const guide = await coachGuides.get(id);
+      return guide ? coachGuides.asCoachSource(guide) : null;
+    };
+    await registerCoachGuideRoutes(app, coachGuides, options.auth);
     relay.bindTutorials(repository);
     await registerStorageRoutes(app, repository, options.auth);
     const references = new ReferenceStore(repository);
