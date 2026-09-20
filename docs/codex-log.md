@@ -1586,3 +1586,9 @@ existing no-delegation policy for all tutorial questions and banned waiting fill
 actions still require the registered tool path. The supplied measurements predate
 action tools, so removing all delegation would break that path. No new latency
 claim: 14 focused provider/prompt tests and server build passed.
+
+### 2026-09-20 — Local spoken controls from the live transcript
+
+- **Request / source:** After PR #36 landed, the user asked for spoken commands to act without the backend hop. Measured earlier today: a delegated command takes 2 to 4 s (Zain's Quest probe 4.2 s from the start of the utterance) while a direct answer takes about 0.6 s.
+- **Change (`codex/local-voice-commands`):** `apps/webxr/public/local-commands.mjs` normalizes learner transcript deltas into one utterance and matches exact phrases against the current screen's allowed actions; `live-voice.mjs` applies a match through the same `applyVoiceCommand` path as the tool, as soon as the sentence ends or the learner pauses 600 ms, and treats a matching delegated tool call within 8 s as an echo to confirm rather than apply. Questions that merely contain a command word never match. The frontend prompt tells the model those exact phrases are handled by the headset and to keep tool confirmations to three words. Other phrasings still take the delegated path.
+- **Evidence:** Node tests for normalization, matching, timing and the live-voice integration (local apply, idempotent echo, stale context, stutter); prompt test; full gate rerun. No provider call and no headset run: the headset check is the same as PR #36's rehearsal with "next step" and "go back" spoken during Follow.

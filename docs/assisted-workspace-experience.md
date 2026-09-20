@@ -61,6 +61,14 @@ coach runtime. It remains listening until stopped, hidden, disconnected or the
 10-minute client limit. The compact microphone indicator uses local RMS input;
 there is no per-utterance audio upload pipeline for these live commands.
 
+Exact short controls ("save it now", "go back", "next step", "pause", "resume", "replay",
+"finish", "record", "home", "help", "stop listening") are matched locally from the live transcript
+in `local-commands.mjs` and applied by the headset as soon as the sentence ends or the learner
+pauses, gated by the same per-screen allowed list; no model turn and no tool call is involved,
+so they land in the time it takes to transcribe them. The model is told to leave those phrases
+alone; if it delegates one anyway, the matching tool call is confirmed once and never applied
+twice. Any other phrasing takes the delegated path below.
+
 `trail_action` is the only registered function tool. The live model delegates
 explicit app-control requests to the configured Responses backend, which asks
 for the action. The browser consumes completed function-call events, deduplicates

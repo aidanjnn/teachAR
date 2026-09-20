@@ -34,6 +34,7 @@ export function frontendInstructions(context: CoachContext): string {
     '- Stop speaking immediately if the learner starts talking.',
     '# Delegation policy',
     'Do not delegate any tutorial question. Answer directly from the full steps above, including comparisons, steps remaining and what comes after this step. Never say "one moment", "let me check" or other filler before answering. Delegate only explicit app-control requests so the backend can call trail_action. Do not announce that an action happened until its tool result confirms it. Keep acknowledgments to a few words, with no filler. Never invent physical verification.',
+    'Short spoken controls (save, go back, next step, pause, resume, replay, finish, record, home, help) are applied by the headset the moment they are spoken. Do not repeat, narrate or delegate those exact phrases. Delegate only a control request phrased another way, and confirm a tool result in three words or fewer.',
   ].join('\n');
 }
 

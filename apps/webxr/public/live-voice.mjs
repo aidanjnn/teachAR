@@ -1,5 +1,10 @@
 import {createTutorCoach} from './tutorial-coach.mjs';
 import {voiceContext,voiceIntentContext,applyVoiceCommand} from './voice-actions.mjs';
+import {TranscriptCommandMatcher} from './local-commands.mjs';
+// An exact command repeated within this window is the transcript stuttering, not a second request.
+const LOCAL_REPEAT_MS=1500;
+// The model also hears the command and may still delegate it; for this long a matching tool call is confirmed, never applied twice.
+const TOOL_ECHO_MS=8000;
 // One persistent WebRTC microphone. Buttons and gesture capture never depend on it.
 export class LiveVoiceControls {
  constructor(guide,{audioSink,getUserMedia,tell=()=>{},visible=()=>true,runtime}={}){
@@ -12,14 +17,30 @@ export class LiveVoiceControls {
    const analyser=context.createAnalyser();analyser.fftSize=256;const source=context.createMediaStreamSource(stream);source.connect(analyser);const data=new Float32Array(analyser.fftSize);
    this.meterTimer=setInterval(()=>{analyser.getFloatTimeDomainData(data);this.inputLevel=this.active&&this.visible()?Math.sqrt(data.reduce((n,v)=>n+v*v,0)/data.length):0;},80);return stream;
   };
+  this.recent=null;
   this.coach=createTutorCoach({runtime,audioSink,getUserMedia:measuredMedia,continuous:true,tell,
    actionContext:()=>voiceContext(guide),onAction:(action,expected)=>{
-    if(!this.active||!this.visible()||expected!==voiceContext(guide)||!voiceIntentContext(guide).allowed.includes(action))return {ok:false,message:'The view changed or that action is unavailable. Please ask again.'};
-    if(action==='stop'){setTimeout(()=>this.stop(),300);return {ok:true,message:'Voice off.'};}
-    const result=applyVoiceCommand(guide,action,{saveCutoff:guide.segmenter?.cutoff(guide.recordElapsed)});this.message=result.message;guide.notify(result.ok?'open':'error',result.message);return result;
+    if(!this.active||!this.visible())return {ok:false,message:'The view changed or that action is unavailable. Please ask again.'};
+    // The headset already applied this exact command from the transcript: confirm it, never apply it twice.
+    if(this.recent&&this.recent.action===action&&Date.now()-this.recent.at<TOOL_ECHO_MS)return {ok:this.recent.result.ok,message:this.recent.result.message};
+    if(expected!==voiceContext(guide)||!voiceIntentContext(guide).allowed.includes(action))return {ok:false,message:'The view changed or that action is unavailable. Please ask again.'};
+    return this.execute(action);
    }});
+  // Exact spoken controls act straight from the live transcript, in the time it takes to transcribe them.
+  this.matcher=new TranscriptCommandMatcher({allowed:()=>this.active&&this.visible()?voiceIntentContext(guide).allowed:[],onCommand:action=>this.applyLocal(action)});
+  this.coach.onCaption(entry=>{if(entry.source)return;if(entry.role==='learner')this.matcher.push(entry.delta);else this.matcher.reset();});
   this.coach.onState(s=>{this.state=s.mode==='listening'?'listening':s.mode;this.active=['connecting','live','listening'].includes(s.mode);if(s.error)this.message=s.error;if(['idle','text'].includes(s.mode)){clearInterval(this.meterTimer);void this.meterContext?.close().catch(()=>{});this.meterContext=null;}});
 
+ }
+ execute(action){
+  if(action==='stop'){setTimeout(()=>this.stop(),300);return {ok:true,message:'Voice off.'};}
+  const result=applyVoiceCommand(this.guide,action,{saveCutoff:this.guide.segmenter?.cutoff(this.guide.recordElapsed)});this.message=result.message;this.guide.notify(result.ok?'open':'error',result.message);return result;
+ }
+ applyLocal(action){
+  if(!this.active||!this.visible()||!voiceIntentContext(this.guide).allowed.includes(action))return null;
+  const now=Date.now();
+  if(this.recent&&this.recent.action===action&&now-this.recent.at<LOCAL_REPEAT_MS)return null;
+  const result=this.execute(action);this.recent={action,at:now,result};return result;
  }
  context(){const g=this.guide,mode=['voice','voice-help'].includes(g.mode)?g.voiceReturn:g.mode;const authoring=!g.tutorial.completion||['home','library','loading-library','create-intro','saved','author','capture','capture-paused','step-ready'].includes(mode);return {authoring,key:[g.tutorial.id,authoring?'controls':g.tutorial.revision].join('|')};}
  observe(){if(this.requested&&this.visible()&&this.state!=='connecting'&&this.context().key!==this.contextKey)return this.start();}
@@ -41,5 +62,5 @@ export class LiveVoiceControls {
   // stop the stream altogether rather than silently leaving a microphone open.
   if(!this.visible())this.stop('Voice paused while the experience is hidden.');
  }
- stop(message='Voice off'){this.requested=false;this.generation++;clearTimeout(this.timer);clearInterval(this.meterTimer);void this.meterContext?.close().catch(()=>{});this.meterContext=null;this.coach.stop();this.active=false;this.state='off';this.busy=false;this.inputLevel=0;this.message=message;}
+ stop(message='Voice off'){this.requested=false;this.generation++;this.matcher?.reset();this.recent=null;clearTimeout(this.timer);clearInterval(this.meterTimer);void this.meterContext?.close().catch(()=>{});this.meterContext=null;this.coach.stop();this.active=false;this.state='off';this.busy=false;this.inputLevel=0;this.message=message;}
 }
