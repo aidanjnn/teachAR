@@ -4,11 +4,9 @@ Date: 2026-09-19. Branch: `codex/voice-ai`. Plan tickets: TRAIL-09 (narration
 capture) and TRAIL-10 (semantic labels, contextual voice help), software portions.
 Owner: voice/AI. Coordinated touch points with integration are listed in section 9.
 
-**Status note after the Unity + Meta XR decision (same day):** the contracts and server
-pieces below are unchanged targets. The browser coach, narration recorder and Voice Lab
-are desktop diagnostics that validate the server protocol with a real GPT-Live session;
-the Unity client (TRAIL-16) reuses `POST /api/live/sessions` through a native WebRTC
-adapter, and headset audio is verified only on the APK.
+**Current status:** the server contracts/adapters and Voice Lab remain available
+for WebXR integration. The native client plan is retired. The primary tutor still
+needs an explicit approved-context/format adapter; see [the current plan](../../plan.md).
 
 ## 1. Purpose
 
@@ -271,7 +269,7 @@ microphone concurrency. Section 10 lists the manual procedure.
 
 ## 10. Manual verification
 
-Mock mode (no key): `pnpm dev`, open `http://localhost:5173/voice-lab.html`, record
+Mock mode (no key): `pnpm dev:desktop`, open `http://localhost:5173/voice-lab.html`, record
 five seconds, play it back, transcribe (fixture transcript appears), generate
 labels (provenance `fallback`), ask the coach a question (mode `text`, answer is
 the step text), change step, ask again.

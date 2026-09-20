@@ -1,6 +1,6 @@
 # Fluid recording, movable controls and immersive library
 
-Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practice](web-practice-flow.md). User-directed browser delivery; no Unity changes.
+Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practice](web-practice-flow.md). The active runtime is `apps/webxr` on the WebXR product foundation.
 
 ## Implemented user flow
 
@@ -28,7 +28,7 @@ Narration finishes asynchronously per segment while the next take begins. At mos
 
 ### Browser format change
 
-The existing browser v3 format accepts optional step `acceptance: "hold" | "finish" | null`. `reviewed` remains false for continuous captures: a deliberate recording hold is author acceptance, not replay review. Completion reports `expert-accepted; physical result unverified` when any step was not replay-reviewed. Imported values are validated; required-hand tracking/timestamp gaps and narration issues still block readiness. Gapped continuous segments remain drafts needing repair. Edits to layout, guide hands, cues/photos, narration, step order or trimmed motion invalidate acceptance and require review again. Old recordings remain readable; old clients do not understand this acceptance field and may require review. Native wire contracts are unchanged.
+The existing browser v3 format accepts optional step `acceptance: "hold" | "finish" | null`. `reviewed` remains false for continuous captures: a deliberate recording hold is author acceptance, not replay review. Completion reports `expert-accepted; physical result unverified` when any step was not replay-reviewed. Imported values are validated; required-hand tracking/timestamp gaps and narration issues still block readiness. Gapped continuous segments remain drafts needing repair. Edits to layout, guide hands, cues/photos, narration, step order or trimmed motion invalidate acceptance and require review again. Old recordings remain readable; old clients do not understand this acceptance field and may require review. Shared API wire contracts are unchanged.
 
 ## Quest boundary limitation
 

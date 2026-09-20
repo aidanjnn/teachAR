@@ -21,23 +21,16 @@ by the authenticated vision service test. Recording v1 fixtures are unchanged.
 
 ## TRAIL-03 contract corpus
 
-`contracts/` contains synthetic recording/tutorial/guide/native/scene/inspection
-and upload examples, plus `corpus.json` valid/invalid mutations consumed by both
-Zod and the actual C# parser. `joint-map.json` freezes named OpenXR mapping;
-`transforms.json` has independently specified translated/rotated expected poses.
-No image bytes, real recording or headset observation is included. Camera source
-labels in synthetic manifest examples describe a hypothetical protocol case.
+`contracts/` contains synthetic shared API recording/tutorial/guide/scene/inspection
+fixtures and the retained legacy capture metadata corpus. `corpus.json` lists
+valid/invalid cases consumed by Zod; `transforms.json` contains independently
+specified expected values. Legacy joint mapping tests protect imports only.
 
-Run `pnpm exec vitest run packages/contracts/test` and, with a .NET 8 SDK,
-`DOTNET=/path/to/dotnet pnpm --filter @trail/contracts test:native`. Regenerate
-synthetic examples with `pnpm exec tsx packages/contracts/tools/generate-fixtures.ts`.
-See [contract versions and native validation limits](../docs/contracts.md).
+Run `pnpm validate:fixtures` and the contract tests through `pnpm check`.
+Regenerate deliberately with `pnpm exec tsx packages/contracts/tools/generate-fixtures.ts`.
+See [data contracts and compatibility](../docs/contracts.md).
 
-Authoring envelopes in `contracts/` cover tutorial jobs/finalization, reviewed
-references, image-upload metadata, connected/disconnected spectators, label
-batches and native exact-byte chunks. Their golden valid/invalid cases run through
-both Zod and generated C# parsers. `reference-image-upload.json` deliberately
-contains synthetic placeholder bytes for wire-shape validation, not a decodable
-image; the server's decode gate is tested separately. `recording-byte-chunk.json`
-encodes the synthetic recording only. Compatibility notes are in
-[authoring transport compatibility](../docs/contracts.md#authoring-transport-compatibility-pr-11).
+Browser `trail.tutorial.prototype.v3` is tested separately in
+[`apps/webxr/tests`](../apps/webxr/tests). Do not submit browser JSON as a shared
+API recording. All automated fixtures use synthetic media/observations and do
+not establish headset, provider or physical-task evidence.

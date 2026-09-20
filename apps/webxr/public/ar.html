@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trail · Headset test</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/ar.css">
+<body><main><p><a class="button" href="/hands">Ghost hand recording + live guidance</a></p>
+<span class="eyebrow">TRAIL / HEADSET TEST</span><h1>Swap. See the correction. Restore.</h1>
+<p>Goose → A · Fox → B · Square → C. Leave the lettered tissues in place.</p>
+<div id="notice" role="status">Loading headset controls…</div>
+<section class="panel">
+<h2>1. Start the outward camera</h2>
+<button id="camera-start">Enable camera</button>
+<select id="devices" aria-label="Camera"><option value="">Outward-facing camera</option></select>
+<p id="camera-status">Open this page inside Quest Browser. Close the old camera-sender tab.</p>
+<video id="video" autoplay playsinline muted></video>
+<h2>2. Enter AR and look at the table</h2>
+<p id="readiness">Checking your saved reference…</p>
+<label><input id="speech" type="checkbox" checked> Speak new corrections and test instructions</label>
+<p><button id="enter" disabled>Enter AR · start paid checks every 10s</button></p>
+<p class="muted">The panel follows your view; the lower view stays clear for the table. Automatic checks need no clicks. Point a controller and press its trigger—or point and pinch—to use the AR buttons. Exit AR pauses automatic checks. AI inspects snapshots; results take a few seconds.</p>
+<p id="budget"></p>
+</section>
+<section class="panel"><h2>Feedback preview / headset fallback</h2>
+<p>Use this browser panel if immersive AR is unavailable. This preview is not an immersive session.</p>
+<canvas id="hud-preview" width="1080" height="560" aria-label="Feedback and check controls"></canvas>
+<p id="trial">Start the test in AR, or use the controls above in this browser window.</p>
+</section>
+<details class="panel"><summary>Reference setup — only if needed</summary>
+<p>Your saved reference is reused. To replace it: put goose at A, fox at B, square at C; capture a reference; mark two opposite corners around each toy in order: goose, fox, square. Exclude the written labels from the boxes.</p>
+<button id="save-reference">Capture correct arrangement</button>
+<canvas id="reference" width="960" height="720" aria-label="Reference: mark goose then fox then square"></canvas>
+<p id="mark-help">No new reference captured.</p>
+<button id="undo">Undo box</button> <button id="save-boxes" disabled>Save three boxes</button>
+</details>
+<p><a href="/lab">Laptop diagnostics</a> · <button id="stop" class="secondary">Stop camera + paid checks</button></p>
+</main><script type="module" src="/ar.js"></script></body></html>

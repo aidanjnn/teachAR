@@ -5,6 +5,8 @@ import { SpectatorRelay } from './sessions/relay.js';
 import { PairingAuthority, registerPairingRoutes } from './auth/pairing.js';
 import { TutorialRepository } from './storage/repository.js';
 import { registerStorageRoutes } from './storage/routes.js';
+import { CoachGuideStore } from './storage/coach-guides.js';
+import { registerCoachGuideRoutes } from './routes/coach-guides.js';
 import { probeVision } from './vision/client.js';
 import Fastify, { LogController } from 'fastify';
 import fastifyStatic from '@fastify/static';
@@ -33,7 +35,7 @@ async function storageWritable(dataDir: string): Promise<boolean> {
 
 export async function createApp(
   config: ServerConfig,
-  options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
+  options: { webRoot?: string; tutorRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
 ) {
   let resolveTutorial = options.resolveTutorial;
   const https = config.tls ? { cert: await readFile(config.tls.certFile), key: await readFile(config.tls.keyFile) } : null;
@@ -66,6 +68,17 @@ export async function createApp(
         throw error;
       }
     };
+    // Browser tutorials publish their reviewed step text here; the coach grounds on it when no server recording exists.
+    const coachGuides = new CoachGuideStore(config.dataDir);
+    await coachGuides.recover();
+    const primary = resolveTutorial;
+    resolveTutorial = async id => {
+      const stored = await primary(id);
+      if (stored) return stored;
+      const guide = await coachGuides.get(id);
+      return guide ? coachGuides.asCoachSource(guide) : null;
+    };
+    await registerCoachGuideRoutes(app, coachGuides, options.auth);
     relay.bindTutorials(repository);
     await registerStorageRoutes(app, repository, options.auth);
     const references = new ReferenceStore(repository);
@@ -96,8 +109,14 @@ export async function createApp(
     ...(options.auth ? { auth: options.auth } : {}),
     ...(resolveTutorial ? { resolveTutorial } : {}),
   });
-  if (options.webRoot) {
-    await app.register(fastifyStatic, { root: options.webRoot, dotfiles: 'deny' });
+  // The desktop build wins on collisions; the browser tutor's files fill in behind it so both share this origin.
+  const roots = [options.webRoot, options.tutorRoot].filter((root): root is string => Boolean(root));
+  if (roots.length) {
+    await app.register(fastifyStatic, { root: roots, dotfiles: 'deny' });
+  }
+  if (options.tutorRoot) {
+    // The tutor's documented entry is /tutorial and its scripts key off that exact pathname, so serve the page there without redirecting.
+    app.get('/tutorial', async (_request, reply) => reply.sendFile('tutorial.html'));
   }
   return app;
 }

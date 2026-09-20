@@ -1,5 +1,7 @@
 # PR #29 review and fixes
 
+Historical review of the pre-main catchup revision; source links below now point to the promoted `apps/webxr` tree. This is not validation of later commits.
+
 Reviewed [PR #29](https://github.com/aidanjnn/trail/pull/29), **feat(xr): add continuous capture and movable workspace UI**, on 20 September 2026. Scope: the complete 25-file merge-base diff from actual base `codex/immersive-entry-holograms` at `7843bfbb848ed19688b9d48791c83a6f838e4b26` to head `0d026d1ca2565a497f23cc61ae8806ebde149aa7`, plus immediate consumers and tests. No existing GitHub reviews/comments were present. Repairs were prepared on isolated `codex/pr29-review-fixes` for the existing PR branch `codex/fluid-workspace-ux`. The user subsequently requested commit and push; no GitHub review was posted.
 
 Reviewed head verdict: **Request changes — 76/100**. Repaired worktree verdict: **Approve for scoped code readiness — 91/100**. All six findings below are fixed in the accompanying changes. These judgments do not certify Quest behavior or physical task success; approval applies to the repairs, not the original reviewed head.
@@ -13,7 +15,7 @@ Reviewed head verdict: **Request changes — 76/100**. Repaired worktree verdict
 5. **P2 — Dragging during the recording countdown leaves capture armed.** Original `ar.js:254` pauses only an already active capture or practice session. Start recording → drag the panel before the countdown ends still starts recording while the user moves the control. Manipulation handling now lives on the guide, cancels pending capture/calibration/photo countdowns, and pauses capture, practice and replay audio without changing calibration. The regression uses the actual spatial handle raycast.
 6. **P2 — Continuous capture clears narration startup failures.** Original `tutorial-guide.mjs:86–95` does not carry `takeNarrationIssue` into the accepted step and clears the issue when there is no recorder take. Resuming motion after a microphone startup error can silently turn the segment into an accepted hands-only recording. Startup errors now remain on the affected draft, invalidate acceptance, and reset only for the next take.
 
-Implementation: [guide lifecycle](../experiments/quest-browser/public/tutorial-guide.mjs), [desktop review](../experiments/quest-browser/public/tutorial-review.mjs), [XR wiring](../experiments/quest-browser/public/ar.js). Regressions: [browser-fluid-recovery.cjs](../experiments/quest-browser/tests/browser-fluid-recovery.cjs).
+Implementation: [guide lifecycle](../apps/webxr/public/tutorial-guide.mjs), [desktop review](../apps/webxr/public/tutorial-review.mjs), [XR wiring](../apps/webxr/public/ar.js). Regressions: [browser-fluid-recovery.cjs](../apps/webxr/tests/browser-fluid-recovery.cjs).
 
 ## Review score
 

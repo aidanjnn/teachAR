@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="GuideDomain.csproj" />
-    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideSession.cs" />
-    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideTutorialAdapter.cs" />
-    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Guide/GuideTelemetry.cs" />
-  </ItemGroup>
-</Project>

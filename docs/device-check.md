@@ -1,51 +1,38 @@
-# Device setup gate — pending
+# Quest Browser acceptance checklist
 
-The hardware is confirmed: **Meta Quest 3S with controllers**. No live headset
-checks are recorded for the current scaffold. The selected target is now a
-standalone Unity + Meta XR Android app. Source project files are prepared; Unity
-is not installed, and package resolution/import/compile/setup remain unverified.
+This is an unexecuted checklist for the WebXR foundation. Start with
+[setup](../apps/webxr/README.md); software tests do not complete these items.
 
-## Native setup evidence to collect
+Record revision (and dirty worktree changes), Quest model, OS/browser versions,
+server origin/port, input permissions, scenario, observed results and timings in
+`docs/validation.md` when real evidence exists. Never commit personal media.
 
-- Exact Horizon OS, app ID/version, commit/APK hash, Unity editor patch and
-  OpenXR/Core/Interaction/MRUK/WebRTC package versions.
-- Editor activation and Android SDK/NDK/OpenJDK readiness; ARM64/IL2CPP build,
-  developer mode, authorized `adb devices`, APK install and launch.
-- One OpenXR provider/rig, passthrough, real hand skeleton and named 26→25 map;
-  left/right poses and orientation checked against canonical fixtures.
-- Native pairing/authenticated API, microphone and headset-camera permission
-  grant/deny/retry, MRUK fresh frame timestamps/readback, duplex audio.
-- Same APK concurrently running recorded ghost replay, hands, camera, voice and
-  the intended spectator path; Editor/simulator tests are separate evidence.
-- Independent two-user mat calibration, held-out mark, tracking loss, recenter,
-  removal, app suspension/restart and safe local recovery.
-- Transfer the same tutorial, objects and starting layout to another room/table;
-  record table height, mat orientation, held-out error and actual learner result.
-- Bounded MRUK scene probe: current room/surface geometry, permission denial, stale
-  or absent data, origin/world-lock consistency and frame cost; mark synthetic
-  fallback separately. Record whether scene-assisted setup is enabled or deferred.
-- Tracking and fresh visual coaching under changed backgrounds/lighting; explicit
-  starting-layout confirmation and recovery from an intentionally misplaced part.
+1. Start `pnpm dev`, authorize USB debugging and run `pnpm quest:open`. Confirm
+   the tutor loads and real tracked hands are available in AR.
+2. Create a fresh safe task with multiple steps. Place the workspace and save
+   position. Record, pause/resume, finish manually and by return gesture. Inspect
+   automatic trimming; approve only after review.
+3. Save, exit AR, reload, replay, export/import and reopen from the library.
+   Confirm narration/photo behavior separately when enabled. Storage errors
+   must never appear as successful saves.
+4. A learner independently places the tutorial in another location at original
+   scale with the same object geometry/layout. Watch the initial demonstration without following. Verify ready waits for
+   starting hands, then practice follows ordered learner movement and automatically
+   previews the next step. Move off path and try stationary overlapping regions.
+5. Hide an active hand, stall/focus away, pause, repeat and re-enter AR. No stale
+   sample completes movement. Re-entry requires current placement. Discard late
+   camera/audio results from previous attempts.
+6. Disconnect optional backend/AI after loading. Continue local guidance and
+   confirm unavailable assistance is explicit. This does not test cold offline launch.
+7. Repeat three times, then observe a non-builder without step-by-step coaching.
+   The final “Movements finished” message must leave physical results unverified;
+   automatic transitions must not create learner confirmations. Record actual
+   task completion separately.
+8. For later coach integration, test real voice interruption and concurrent
+   microphone, camera and hands. Confirm current source-labelled frames, changing
+   feedback for wrong/obscured views, cancellation and stale-result rejection.
+   Record live provider and latency evidence separately.
 
-- Fresh Quest camera → main API → separate vision backend → image-capable model
-  → GPT Live → audible headset feedback, with matched request/observation IDs.
-  Correct/wrong/obscured/adjusted views must change the response appropriately.
-- Vision process timeout/crash/restart and cancelled/late result rejection; voice
-  remains available, visual status is explicit, and local guide recovery works.
-
-## Proposed data connection
-
-Keep the existing Fastify scaffold bound to loopback. After native networking is
-implemented, use `adb reverse tcp:3001 tcp:3001` with an explicitly scoped native
-development loopback endpoint/security policy. Off USB use authenticated HTTPS/WSS.
-The API's native bearer authentication and browser cookie/Origin policy must be
-implemented before exposure. A missing Origin is not native authentication.
-
-The existing Vite/Three.js page may still be used as a desktop/browser diagnostic.
-It does not install or exercise the native app. A browser capability query does
-not establish native capture, audio, camera or physical-transfer readiness.
-
-Follow [the Unity setup plan](plan.md#unity-migration-sequence-owned-by-integration-and-xr).
-Record observed hardware results in `docs/validation.md` only when they exist,
-including tested revision/software, scenario, measurements and remaining issues.
-No Unity installation, APK build or device test was performed by the plan update.
+Remaining product limits: palm gates do not verify grasp/contact/finger quality,
+workspace placement does not retarget differently sized objects, passthrough is
+not camera access, and a successful run is not general assembly verification.
