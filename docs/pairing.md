@@ -1,4 +1,6 @@
-# Pairing and native transport
+# Shared API pairing and transport
+
+This describes the retained Fastify service. The primary WebXR tutor remains a separate loopback app until its explicit backend adapter is implemented.
 
 `createPairingAuthority` in `apps/server/src/auth/pairing.ts` owns one ephemeral
 demo session. `registerPairingRoutes(app, authority)` installs pairing/session/code
@@ -41,9 +43,8 @@ browser GET often omits Origin and scripts cannot set this forbidden header: use
 POST read aliases for protected desktop reads. Never weaken this policy just to
 make a browser GET succeed. Ambiguous cookie plus bearer credentials are rejected.
 
-Native credentials are memory-only. `NativeApiConnection` clears credentials and
-aborts requests on pause/focus loss/disable; callback generations prevent stale
-responses from applying to a later pairing. An unauthorized response invalidates
-all in-flight callbacks and clears the session. Configure HTTPS normally. A development
-APK may explicitly enable the `adb reverse` loopback exception; release builds
-reject it. Loaded local guidance remains independent of these network states.
+The WebXR tutor's local development server does not use this paired API yet.
+Future integration must use the browser cookie/Origin path and validated approved
+step context. The legacy `client: "native"` bearer protocol remains supported
+for API compatibility and automated relay tests; it does not imply an installed
+headset application. Keep authentication and role checks intact during adaptation.

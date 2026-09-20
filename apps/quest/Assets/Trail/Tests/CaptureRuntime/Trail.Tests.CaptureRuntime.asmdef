@@ -1,6 +1,0 @@
-{
-  "name": "Trail.Tests.CaptureRuntime",
-  "references": ["Trail.Contracts", "Trail.Motion", "Trail.Runtime", "Trail.XR", "Unity.XR.Hands"],
-  "optionalUnityReferences": ["TestAssemblies"],
-  "noEngineReferences": false
-}
