@@ -242,12 +242,15 @@ describe('coach startup and output gating', () => {
     expect(sink.muted).toBe(true);
     fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'old step words', start_ms: 100, end_ms: 200 });
     expect(seen.at(-1)).toBe('stale:old step words');
+    expect(coach.state.listenRequested).toBe(true);
     gate.release?.();
     await vi.advanceTimersByTimeAsync(0);
     expect(coach.state.contextSync).toBe('idle');
-    coach.ask();
+    // The Ask pressed during the update was kept: the mic opens the moment the server acknowledges.
     expect(coach.state.mode).toBe('listening');
+    expect(track.enabled).toBe(true);
     coach.ask();
+    expect(coach.state.mode).toBe('live');
     gate.status = 503;
     coach.setStep('s1', 2);
     gate.release?.();
@@ -347,5 +350,67 @@ describe('coach text path', () => {
     const pending = slow.askText('Help');
     await vi.advanceTimersByTimeAsync(60);
     expect((await pending)?.source).toBe('fallback');
+  });
+
+  it('reopens playback after a step change once the server has the new step and the model has gone quiet', async () => {
+    const sink = { muted: false, srcObject: null as MediaStream | null, play: async () => undefined } as unknown as HTMLAudioElement;
+    const fake = fakeTransport();
+    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => stream, transportFactory: () => fake.transport, audioSink: sink });
+    const seen: string[] = [];
+    coach.onTranscript(entry => seen.push(`${entry.stale ? 'stale' : 'live'}:${entry.delta}`));
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    // The model is mid-sentence when the learner moves on: its old words stay muted after the ack until it pauses.
+    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o1', delta: 'old step', start_ms: 0, end_ms: 100 });
+    coach.setStep('s2', 1);
+    expect(sink.muted).toBe(true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(coach.state.contextSync).toBe('idle');
+    expect(sink.muted).toBe(true);
+    await vi.advanceTimersByTimeAsync(1_600);
+    expect(sink.muted).toBe(false);
+    fake.emit({ type: 'session.output_transcript.delta', event_id: 'o2', delta: 'new step words', start_ms: 200, end_ms: 300 });
+    expect(seen.at(-1)).toBe('live:new step words');
+    // A step change while the model is silent reopens right after the ack.
+    coach.setStep('s1', 2);
+    expect(sink.muted).toBe(true);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(sink.muted).toBe(false);
+    coach.dispose();
+  });
+  it('explains why live start failed and deletes a session the server already created', async () => {
+    const errors: string[] = [];
+    const denied = Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' });
+    const noMic = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async () => { throw denied; }, transportFactory: () => fakeTransport().transport });
+    noMic.onLiveError(error => errors.push(error.code));
+    expect(await noMic.connect()).toBe('text');
+    expect(errors).toEqual(['microphone_denied']);
+
+    const fetchImpl = okFetch(sessionOk);
+    const fake = fakeTransport();
+    const timedOut = createCoach({ context, fetchImpl, getUserMedia: async () => stream, transportFactory: () => fake.transport, liveStartTimeoutMs: 1_000 });
+    const codes: string[] = [];
+    timedOut.onLiveError(error => codes.push(error.code));
+    const connecting = timedOut.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    // session.started never arrives (for example, UDP is blocked and the media path never comes up).
+    await vi.advanceTimersByTimeAsync(1_001);
+    expect(await connecting).toBe('text');
+    expect(codes).toEqual(['live_timeout']);
+    const deleted = fetchImpl.calls.find(call => call.init?.method === 'DELETE');
+    expect(deleted?.url).toBe('/api/live/sessions/live_1');
+  });
+  it('asks the microphone for echo cancellation, noise suppression and gain control', async () => {
+    let constraints: MediaStreamConstraints | null = null;
+    const fake = fakeTransport();
+    const coach = createCoach({ context, fetchImpl: okFetch(sessionOk), getUserMedia: async received => { constraints = received; return stream; }, transportFactory: () => fake.transport });
+    const connecting = coach.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    fake.emit(started);
+    await connecting;
+    expect(constraints).toEqual({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    coach.dispose();
   });
 });

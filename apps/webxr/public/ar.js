@@ -19,8 +19,14 @@ const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:(
 
 const $=id=>document.getElementById(id);
 // The voice coach owns its own microphone stream and is started from the page before AR, so the XR entry click stays synchronous.
-const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell}):null;
+// Coach problems must be readable inside AR too, so they also land on the guide's detail line.
+const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell:message=>{tell(message);if(guide)guide.problem=message;}}):null;
 if(guide&&coach)guide.coach=coach;
+// Step text spoken while the coach is taking a question or answering is held and read once the coach is quiet, never dropped.
+let pendingSpeech=null,heldSpeechTimer=null;
+const coachBusy=()=>!!coach&&(coach.mode==='listening'||coach.captionAgeMs<1500);
+function releaseHeldSpeech(){clearTimeout(heldSpeechTimer);heldSpeechTimer=null;if(!pendingSpeech)return;if(coachBusy()){heldSpeechTimer=setTimeout(releaseHeldSpeech,500);return;}const held=pendingSpeech;pendingSpeech=null;speak(held);}
+coach?.onState(()=>releaseHeldSpeech());
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
 const capture=document.createElement('canvas'), captureCtx=capture.getContext('2d');
 let stream=null, cameraGeneration=0, uploading=false, lastVideo=-1, lastUpload=-Infinity;
@@ -46,8 +52,8 @@ async function tutorialSnapshot() {
 function visible() { return session ? session.visibilityState==='visible' : !document.hidden; }
 function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('notice').textContent=message; }
 function speak(message) {
-  // One voice at a time: while the coach is taking a question and answering, step text is not read aloud by the browser.
-  if (coach&&coach.mode==='listening') return;
+  // One voice at a time: while the coach is taking a question or answering, step text waits its turn.
+  if (coachBusy()) { pendingSpeech=message; if(!heldSpeechTimer)heldSpeechTimer=setTimeout(releaseHeldSpeech,500); return; }
   if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return;
   speechSynthesis.cancel(); const utterance=new SpeechSynthesisUtterance(message);
   utterance.rate=1; speechSynthesis.speak(utterance);

@@ -37,6 +37,11 @@ function newId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+/** After a step change, playback returns once the model has been silent this long and the server holds the new step. */
+const QUIET_MS = 1_500;
+/** Echo cancellation matters most on a headset whose speakers sit next to its microphone. */
+const MIC_CONSTRAINTS: MediaStreamConstraints = { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } };
+
 /** Runs the coach reducer against GPT-Live over WebRTC, falling back to text answers. Never touches guide progression. */
 export function createCoach(options: CoachOptions): CoachApi {
   const fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
@@ -63,6 +68,9 @@ export function createCoach(options: CoachOptions): CoachApi {
   /** Revision the current learner turn was asked under; coach output is stamped with it, not with the latest state. */
   let turnRevision = state.stepRevision;
   let eventCounter = 0;
+  /** When the model last produced speech; playback is only reopened after a step change once it has gone quiet. */
+  let lastOutputAt = 0;
+  let reopenTimer: ReturnType<typeof setTimeout> | null = null;
   const stateHandlers = new Set<(state: CoachState) => void>();
   const transcriptHandlers = new Set<(entry: TranscriptEntry) => void>();
   const answerHandlers = new Set<(answer: CoachAnswer) => void>();
@@ -81,9 +89,29 @@ export function createCoach(options: CoachOptions): CoachApi {
     }
   };
   const stopStream = () => { stream?.getTracks().forEach(track => track.stop()); stream = null; };
+  const deleteSession = (id: string) => { void fetchImpl(`/api/live/sessions/${encodeURIComponent(id)}`, { method: 'DELETE', keepalive: true }).catch(() => undefined); };
+  /** A step change mutes whatever the model was saying about the old step. Once the server has the new step and the model is quiet, playback comes back on its own. */
+  function reopenGateWhenQuiet() {
+    if (reopenTimer) { clearTimeout(reopenTimer); reopenTimer = null; }
+    if (disposed || !outputGateClosed || state.contextSync !== 'idle') return;
+    const quietMs = Date.now() - lastOutputAt;
+    if (quietMs >= QUIET_MS) { outputGateClosed = false; setPlaybackMuted(false); return; }
+    reopenTimer = setTimeout(() => { reopenTimer = null; reopenGateWhenQuiet(); }, QUIET_MS - quietMs + 50);
+  }
+  function describeStartFailure(error: unknown): LiveError {
+    const name = (error as { name?: string })?.name ?? '';
+    const message = (error as { message?: string })?.message ?? '';
+    if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(name)) return { code: 'microphone_denied', message: 'Microphone permission was refused; the coach answers in text only.' };
+    if (name === 'NotFoundError' || name === 'NotReadableError') return { code: 'microphone_unavailable', message: 'No usable microphone was found; the coach answers in text only.' };
+    const refused = /Live session refused \((\d+)\)/.exec(message);
+    if (refused) return { code: 'live_refused', message: `The server refused a live session (${refused[1]}); text answers remain.` };
+    if (/did not start in time/.test(message)) return { code: 'live_timeout', message: 'The live session did not start in time; the network may block WebRTC audio. Text answers remain.' };
+    return { code: 'live_start_failed', message: message || 'The live session could not start; text answers remain.' };
+  }
   const setPlaybackMuted = (muted: boolean) => { if (options.audioSink) options.audioSink.muted = muted; };
   function releaseLive() {
     clearListenTimer();
+    if (reopenTimer) { clearTimeout(reopenTimer); reopenTimer = null; }
     if (startTimer) { clearTimeout(startTimer); startTimer = null; }
     // Settle a still-pending connect() so callers never hang when the session ends before session.started.
     startedReject?.(new Error('Live session ended before it started'));
@@ -133,9 +161,11 @@ export function createCoach(options: CoachOptions): CoachApi {
   }
   function dispatch(event: CoachEvent): CoachEffect[] {
     if (disposed) return [];
+    const wasPending = state.contextSync === 'pending';
     const result = reduceCoach(state, event);
     state = result.state;
     result.effects.forEach(runEffect);
+    if (event.type === 'context-synced' && wasPending && state.contextSync === 'idle') reopenGateWhenQuiet();
     stateHandlers.forEach(handler => handler(state));
     return result.effects;
   }
@@ -157,6 +187,7 @@ export function createCoach(options: CoachOptions): CoachApi {
         transcriptHandlers.forEach(handler => handler({ role: 'learner', delta: event.delta, stepRevision: turnRevision, stale: false }));
         break;
       case 'session.output_transcript.delta':
+        lastOutputAt = Date.now();
         transcriptHandlers.forEach(handler => handler({ role: 'coach', delta: event.delta, stepRevision: turnRevision, stale: outputGateClosed }));
         break;
       case 'session.closed':
@@ -177,7 +208,7 @@ export function createCoach(options: CoachOptions): CoachApi {
       if (disposed || state.mode !== 'idle') return state.mode;
       dispatch({ type: 'connect-started' });
       try {
-        const acquired = await getUserMedia({ audio: true });
+        const acquired = await getUserMedia(MIC_CONSTRAINTS);
         // Silence the microphone before it ever reaches the peer connection; only Ask by voice enables it.
         acquired.getAudioTracks().forEach(track => { track.enabled = false; });
         if (disposed) { acquired.getTracks().forEach(track => track.stop()); return state.mode; }
@@ -217,11 +248,17 @@ export function createCoach(options: CoachOptions): CoachApi {
         await started;
         if (disposed) { releaseLive(); return state.mode; }
         dispatch({ type: 'live-ready' });
-      } catch {
+      } catch (error) {
+        // The server may already have created and billed a session; never leave it orphaned for 30 minutes.
+        if (liveSessionId) { deleteSession(liveSessionId); liveSessionId = null; }
         if (disposed) { releaseLive(); return state.mode; }
         // If the session already closed while we waited, live-closed has run; do not report a second failure.
         // (Cast: dispatch() mutates `state` inside a closure, which TypeScript's narrowing cannot see.)
-        if ((state as CoachState).mode === 'connecting') dispatch({ type: 'live-failed' });
+        if ((state as CoachState).mode === 'connecting') {
+          const failure = describeStartFailure(error);
+          errorHandlers.forEach(handler => handler(failure));
+          dispatch({ type: 'live-failed' });
+        }
       }
       return state.mode;
     },
@@ -261,9 +298,7 @@ export function createCoach(options: CoachOptions): CoachApi {
       answerHandlers.clear();
       errorHandlers.clear();
       if (transport) { try { transport.send({ type: 'session.close', event_id: eventId('close') }); } catch { /* already closed */ } }
-      if (liveSessionId) {
-        void fetchImpl(`/api/live/sessions/${encodeURIComponent(liveSessionId)}`, { method: 'DELETE', keepalive: true }).catch(() => undefined);
-      }
+      if (liveSessionId) { deleteSession(liveSessionId); liveSessionId = null; }
       releaseLive();
     },
     onState(handler) { stateHandlers.add(handler); return () => { stateHandlers.delete(handler); }; },

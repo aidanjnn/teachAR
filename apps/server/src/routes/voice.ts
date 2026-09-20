@@ -33,6 +33,8 @@ const SessionIdParam = z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
 export type CoachTutorialLookup = (tutorialId: string) => Promise<CoachTutorialSource | null>;
 
 export interface VoiceRouteOptions {
+  /** Spoken once when a live session opens; omitted for the mock provider and when OPENAI_LIVE_GREETING=off. */
+  greeting?: string;
   /** When present, narration/labels need an author token and coaching needs a learner or author token on this session. */
   auth?: PairingAuthority;
   /** When present, the client's step text is replaced by the stored tutorial; unknown or stale tutorials are rejected. */
@@ -172,12 +174,20 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
         const control = provider.openLiveControl(result.sessionId);
         if (!control) return unavailable(reply, 503, { error: 'live_unavailable', message: 'The live coach control channel could not be opened.' });
         try {
-          await withinDeadline(control.ready, CONTROL_READY_TIMEOUT_MS);
+          // A browser that already gave up must not leave a registered, billed session behind.
+          await Promise.race([
+            withinDeadline(control.ready, CONTROL_READY_TIMEOUT_MS),
+            new Promise<never>((_, reject) => {
+              if (clientGone.signal.aborted) { reject(new Error('client gone')); return; }
+              clientGone.signal.addEventListener('abort', () => reject(new Error('client gone')), { once: true });
+            }),
+          ]);
         } catch {
           try { control.close(); } catch { /* already closed */ }
           return unavailable(reply, 503, { error: 'live_unavailable', message: 'The live coach control channel did not become ready.' });
         }
         sessions.register(result.sessionId, grounded.context, control);
+        if (options.greeting) sessions.greet(result.sessionId, options.greeting);
       } finally {
         reply.raw.off('close', onClose);
       }

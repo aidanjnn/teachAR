@@ -159,16 +159,19 @@ test('a mapping the server no longer knows is dropped and the guide republished;
   assert.equal(stateDown.reason,'server_unavailable');assert.notEqual(stateDown.pairing,'unpaired');assert.equal(down.calls.createCoach.length,0);
 });
 
-test('live transcript deltas grow one caption per coach turn',async()=>{
-  const {runtime,fetchImpl,calls}=fakeRuntime();
-  const coach=createTutorCoach({runtime,fetchImpl,storage:memoryStorage()});
-  await coach.start(tutorial(),tutorial().steps[0],0);
-  // Drive the transcript handler the runtime would call.
-  const api=coachApi(calls);
-  api._handlers.transcript.forEach(h=>h({role:'learner',delta:'what now',stepRevision:0,stale:false}));
-  for(const piece of ['Lower',' the',' record','.'])api._handlers.transcript.forEach(h=>h({role:'coach',delta:piece,stepRevision:0,stale:false}));
-  assert.equal(coach.caption,'Lower the record.');
-  api._handlers.transcript.forEach(h=>h({role:'learner',delta:'ok',stepRevision:0,stale:false}));
-  api._handlers.transcript.forEach(h=>h({role:'coach',delta:'Next',stepRevision:0,stale:false}));
-  assert.equal(coach.caption,'Next');
+test('live transcript deltas grow one caption per coach turn, even with the learner\'s words interleaved',async()=>{
+  const realNow=Date.now;let now=1_000_000;Date.now=()=>now;
+  try{
+    const {runtime,fetchImpl,calls}=fakeRuntime();
+    const coach=createTutorCoach({runtime,fetchImpl,storage:memoryStorage()});
+    await coach.start(tutorial(),tutorial().steps[0],0);
+    const api=coachApi(calls);
+    const say=(role,delta)=>api._handlers.transcript.forEach(h=>h({role,delta,stepRevision:0,stale:false}));
+    say('learner','what now');
+    say('coach','Lower');say('coach',' the');say('learner','uh huh');say('coach',' record');say('coach','.');
+    assert.equal(coach.caption,'Lower the record.','a learner delta mid-turn does not split the coach caption');
+    now+=3_000;
+    say('coach','Next');
+    assert.equal(coach.caption,'Next','a pause longer than the turn gap starts a fresh caption');
+  }finally{Date.now=realNow;}
 });

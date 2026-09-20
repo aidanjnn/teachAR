@@ -56,6 +56,14 @@ export class LiveSessionRegistry {
     return { ok: true, context, pushed: true };
   }
 
+  /** Asks the model to say one short line now. Used once at session start; the text is server-owned and never client-supplied. */
+  greet(sessionId: string, content: string): boolean {
+    const record = this.sessions.get(sessionId);
+    if (!record?.control) return false;
+    try { record.control.send({ type: 'session.commentary.append', event_id: `greet-${++this.counter}`, delegation_id: null, content }); return true; }
+    catch { return false; }
+  }
+
   /** The provider ended the session; nothing to send, just stop tracking it. */
   private forget(sessionId: string) {
     const record = this.sessions.get(sessionId);

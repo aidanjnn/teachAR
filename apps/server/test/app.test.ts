@@ -55,7 +55,7 @@ describe('local scaffold server', () => {
     expect(live.providers.ai).toBe('openai');
     expect(live.openai).toEqual({
       apiKey: 'sk-test-key', transcribeModel: 'whisper-1', textModel: 'gpt-4.1-mini-2025-04-14',
-      liveModel: 'gpt-live-1', liveBackendModel: 'gpt-5.6-luna', liveVoice: 'cedar',
+      liveModel: 'gpt-live-1', liveBackendModel: 'gpt-5.6-luna', liveVoice: 'cedar', liveGreeting: true,
     });
     let message = '';
     try { readConfig({ AI_PROVIDER: 'openai', OPENAI_API_KEY: '   ' }); } catch (error) { message = String(error); }

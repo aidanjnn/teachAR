@@ -2,10 +2,11 @@
 export function mountCoachPanel(guide,coach,{tell}){
   const $=id=>document.getElementById(id);
   const log=$('coach-log'),mode=$('coach-mode'),status=$('coach-status'),pairForm=$('coach-pair');
-  let lastRole=null,lastItem=null;
+  // One line per voice per turn. Deltas keep appending to that voice's current line until it pauses; the other voice never splits it.
+  const TURN_GAP_MS=2500,current={learner:null,coach:null};
   function line(role,text){
     const li=document.createElement('li');li.dataset.role=role;li.textContent=`${role==='coach'?'Coach':'You'}: ${text}`;log.append(li);
-    while(log.children.length>40)log.firstChild.remove();lastRole=role;lastItem=li;log.scrollTop=log.scrollHeight;
+    while(log.children.length>40)log.firstChild.remove();log.scrollTop=log.scrollHeight;return li;
   }
   function describe(state){
     mode.textContent=state.mode;mode.dataset.mode=state.mode;
@@ -26,8 +27,9 @@ export function mountCoachPanel(guide,coach,{tell}){
   coach.onState(describe);
   coach.onCaption(entry=>{
     const text=String(entry.delta||'');if(!text)return;
-    if(entry.role===lastRole&&lastItem&&!entry.source){lastItem.textContent+=text;return;}
-    line(entry.role,text);
+    const now=Date.now(),turn=current[entry.role];
+    if(turn&&!entry.source&&now-turn.at<TURN_GAP_MS&&turn.el.isConnected){turn.el.textContent+=text;turn.at=now;return;}
+    current[entry.role]={el:line(entry.role,text),at:now};
   });
   $('coach-start').onclick=async()=>{
     const tutorial=guide.tutorial;
@@ -45,7 +47,7 @@ export function mountCoachPanel(guide,coach,{tell}){
   $('coach-ask').onclick=()=>coach.ask();
   $('coach-ask-text').onclick=async()=>{
     const question=$('coach-question').value.trim();if(!question)return;
-    lastRole=null;line('learner',question);$('coach-question').value='';
+    current.learner=null;current.coach=null;line('learner',question);$('coach-question').value='';
     const answer=await coach.askText(question);if(!answer)tell('Start the coach before asking.');
   };
   $('coach-question').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();$('coach-ask-text').click();}};

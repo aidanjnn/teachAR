@@ -2,6 +2,7 @@
 // The coach only ever hears reviewed step text through the paired server; it never advances a step.
 export const GUIDE_MAP_KEY='trail-coach-guides';
 const MAX_TITLE=60,MAX_INSTRUCTION=240,MAX_NOTES=500,MAX_TUTORIAL_TITLE=120;
+export const CAPTION_GAP_MS=2500;
 const uuid=()=>globalThis.crypto.randomUUID();
 const clip=(text,max)=>String(text??'').trim().slice(0,max);
 
@@ -42,14 +43,19 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   const stateHandlers=new Set(),captionHandlers=new Set();
   const snapshot=()=>({...state});
   const emit=()=>{for(const h of stateHandlers)h(snapshot());};
-  // Live transcripts arrive as deltas: keep one growing caption per coach turn. A learner turn or a whole text answer starts a new one.
+  // Live transcripts arrive as deltas, and the learner's own words can interleave with them. One coach turn keeps growing
+  // while its deltas keep coming; a pause longer than a couple of seconds or a whole text answer starts a new caption.
   const caption=entry=>{
     const text=String(entry.delta||'');
-    if(entry.role==='coach'){state.caption=captionStreaming&&!entry.source?state.caption+text:text;captionStreaming=!entry.source;captionAt=Date.now();}
-    else captionStreaming=false;
+    if(entry.role==='coach'){const now=Date.now();const continues=captionStreaming&&!entry.source&&now-captionAt<CAPTION_GAP_MS;state.caption=continues?state.caption+text:text;captionStreaming=!entry.source;captionAt=now;}
     for(const h of captionHandlers)h(entry);
   };
-  async function load(){if(!loaded)loaded=await import('/vendor/trail-coach.js');return loaded;}
+  async function load(){
+    if(loaded)return loaded;
+    try{loaded=await import('/vendor/trail-coach.js');}
+    catch{throw Error('Voice coach bundle not built. Run pnpm --filter @trail/web build:tutor-coach and reload.');}
+    return loaded;
+  }
 
   // The browser's mapping is a hint; the server is the truth. A wiped server or a republish from another device must not leave the coach ungrounded while the badge says otherwise.
   async function verifyGuide(id){
