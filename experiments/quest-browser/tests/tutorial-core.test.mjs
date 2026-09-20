@@ -104,3 +104,12 @@ test('tutorial save position round-trips independently of step poses and rejects
  for(const position of [{...input.save_position,space:'world'},{...input.save_position,left:[NaN,0,0]},{...input.save_position,right:[0,0]}])assert.throws(()=>validateTutorial({...input,save_position:position}));
  delete input.save_position;assert.equal(validateTutorial(input).save_position,null);
 });
+
+test('step titles are optional, bounded and survive import and trim',()=>{
+  const input=tutorial();input.steps[0].title='Seat the cap';
+  const parsed=validateTutorial(input);assert.equal(parsed.steps[0].title,'Seat the cap');
+  assert.equal(validateTutorial(tutorial()).steps[0].title,'');
+  const trimmed=trimStep(parsed.steps[0],0,parsed.steps[0].duration_ms);assert.equal(trimmed.title,'Seat the cap');
+  const long=tutorial();long.steps[0].title='x'.repeat(61);assert.throws(()=>validateTutorial(long),/Step title/);
+  const wrong=tutorial();wrong.steps[0].title=7;assert.throws(()=>validateTutorial(wrong),/Step title/);
+});

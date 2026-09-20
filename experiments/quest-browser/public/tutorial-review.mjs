@@ -47,7 +47,7 @@ export function mountReview(guide,{isActive,tell}){
     for(const f of step.frames)for(const side of ['left','right'])for(const j of f[side]||[])if(j)bounds.expandByPoint(new THREE.Vector3(...j.p));
     const center=bounds.getCenter(new THREE.Vector3()),size=Math.max(.4,bounds.getSize(new THREE.Vector3()).length());
     camera.position.copy(center).add(new THREE.Vector3(0,size*.8,size*1.2));camera.lookAt(center);
-    $('step-instruction').value=step.instruction;$('trim-start').value=0;$('trim-end').value=(step.duration_ms/1000).toFixed(3);
+    $('step-title').value=step.title||'';$('step-instruction').value=step.instruction;$('trim-start').value=0;$('trim-end').value=(step.duration_ms/1000).toFixed(3);
     $('narration-summary').textContent=step.narration_issue?`Narration needs repair: ${step.narration_issue}`:step.narration?`Recorded narration: ${(step.narration.duration_ms/1000).toFixed(1)} seconds. Listen with the ghost before approving. Timing is approximate.`:'No recorded narration. This step uses written instructions.';
     $('remove-narration').disabled=!step.narration&&!step.narration_issue;
     $('guide-hands').value=step.guide_hands||'recorded';
@@ -66,7 +66,7 @@ export function mountReview(guide,{isActive,tell}){
     const list=$('step-list');list.replaceChildren();
     steps.forEach((step,i)=>{
       const button=document.createElement('button');button.type='button';button.className='secondary';button.dataset.step=String(i);
-      button.textContent=`${i+1}. ${step.instruction||'Untitled'} · ${(step.duration_ms/1000).toFixed(1)}s · ${step.reviewed?'reviewed':'needs review'}`;
+      button.textContent=`${i+1}. ${step.title||step.instruction||'Untitled'} · ${(step.duration_ms/1000).toFixed(1)}s · ${step.reviewed?'reviewed':'needs review'}`;
       button.onclick=()=>select(i);list.append(button);
     });
     selected=Math.max(0,Math.min(selected,steps.length-1));
@@ -103,13 +103,14 @@ export function mountReview(guide,{isActive,tell}){
   });
   $('save-step-edits').onclick=()=>void report(async()=>{
     const next=structuredClone(guide.tutorial),step=next.steps[selected];if(!step)return;
-    step.guide_hands=$('guide-hands').value;step.instruction=$('step-instruction').value;step.reviewed=$('reviewed').checked;
+    step.guide_hands=$('guide-hands').value;step.title=$('step-title').value;step.instruction=$('step-instruction').value;step.reviewed=$('reviewed').checked;
     if(step.narration_issue&&step.reviewed)throw Error('Re-record or remove failed narration before approving this step.');
     next.title=$('tutorial-title').value||'Tabletop practice';next.revision++;
     await replace(validateTutorial(next));status('Instruction and expert review saved. Physical correctness remains unverified.');
   });
   $('guide-hands').onchange=()=>{$('reviewed').checked=false;};
   $('step-instruction').oninput=()=>{$('reviewed').checked=false;};
+  $('step-title').oninput=()=>{$('reviewed').checked=false;};
   $('remove-narration').onclick=()=>void report(async()=>{
     if(!confirm('Remove narration and use the written instruction? Review this step again before finishing.'))return;
     const next=structuredClone(guide.tutorial),step=next.steps[selected];step.narration=null;step.narration_issue=null;step.reviewed=false;next.revision++;

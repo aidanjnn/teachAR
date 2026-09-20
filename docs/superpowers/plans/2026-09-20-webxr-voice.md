@@ -77,11 +77,11 @@
 - Modify: `experiments/quest-browser/public/tutorial.html` (title field)
 - Test: `experiments/quest-browser/tests/tutorial-core.test.mjs`
 
-- [ ] **Step 1: Failing test:** a tutorial with `steps[0].title = 'Seat the cap'` round-trips through `validateTutorial`; a 200-character title is rejected; a missing title becomes `''`.
-- [ ] **Step 2: Implement** with the existing `boundedText(value, 60, 'Step title')` helper.
-- [ ] **Step 3: Review editor:** add `#step-title` input, save through the same clone -> validate -> replace path as instruction edits.
-- [ ] **Step 4: `node --test experiments/quest-browser/tests/tutorial-core.test.mjs` green.**
-- [ ] **Step 5: Commit:** `feat(web): add reviewed step titles to the browser tutorial`.
+- [x] **Step 1: Failing test:** a tutorial with `steps[0].title = 'Seat the cap'` round-trips through `validateTutorial`; a 200-character title is rejected; a missing title becomes `''`.
+- [x] **Step 2: Implement** with the existing `boundedText(value, 60, 'Step title')` helper.
+- [x] **Step 3: Review editor:** add `#step-title` input, save through the same clone -> validate -> replace path as instruction edits.
+- [x] **Step 4: `node --test experiments/quest-browser/tests/tutorial-core.test.mjs` green.**
+- [x] **Step 5: Commit:** `feat(web): add reviewed step titles to the browser tutorial`.
 
 ### Task 5: Tutor coach adapter
 

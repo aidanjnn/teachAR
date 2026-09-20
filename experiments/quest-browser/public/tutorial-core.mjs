@@ -22,7 +22,7 @@ function cleanHand(joints){
     return {p:[...j.p],q:[...j.q],...(j.radius===undefined?{}:{radius:j.radius})};
   });
 }
-export function prepareStep(frames,instruction=''){
+export function prepareStep(frames,instruction='',title=''){
   if(!Array.isArray(frames)||frames.length<20||frames.length>MAX_FRAMES)throw Error('Record at least one second, and no more than three minutes per step.');
   let last=-Infinity;
   const normalized=frames.map(f=>{
@@ -40,7 +40,7 @@ export function prepareStep(frames,instruction=''){
   };
   const quality={left_tracked_fraction:coverage('left'),right_tracked_fraction:coverage('right'),left_max_gap_ms:gap('left'),right_max_gap_ms:gap('right')};
   if(Math.max(quality.left_tracked_fraction,quality.right_tracked_fraction)<.8)throw Error('Neither hand was tracked reliably. Re-record this step.');
-  return {id:uid(),instruction:boundedText(instruction,240,'Instruction'),duration_ms,frames:normalized,quality,
+  return {id:uid(),title:boundedText(title,60,'Step title'),instruction:boundedText(instruction,240,'Instruction'),duration_ms,frames:normalized,quality,
     reference:null,narration:null,narration_issue:null,cues:[],reviewed:false,verification:{kind:'manual',status:'unverified'}};
 }
 export function newTutorial(title='Untitled tutorial'){
@@ -103,7 +103,7 @@ export function validateTutorial(input){
   const steps=input.steps.map(s=>{
     if(!record(s))throw Error('Invalid tutorial step.');
     total+=s.frames?.length||0;if(total>MAX_TOTAL_FRAMES)throw Error('Tutorial exceeds total motion sample limit.');
-    const step=prepareStep(s.frames,s.instruction);
+    const step=prepareStep(s.frames,s.instruction,s.title??'');
     step.id=id(s.id,uid);if(ids.has(step.id))throw Error('Duplicate step IDs.');ids.add(step.id);
     // Derived duration/quality and verification claims are never trusted on import.
     if(s.guide_hands!==undefined&&!['recorded','left','right','both'].includes(s.guide_hands))throw Error('Invalid guiding hands.');
@@ -125,7 +125,7 @@ export function parseTutorialJSON(text){
 }
 export function trimStep(step,startMs,endMs){
   if(!finite(startMs,0,step.duration_ms)||!finite(endMs,0,step.duration_ms)||endMs<=startMs)throw Error('Choose a valid trim range.');
-  const result=prepareStep(step.frames.filter(f=>f.t>=startMs&&f.t<=endMs),step.instruction);
+  const result=prepareStep(step.frames.filter(f=>f.t>=startMs&&f.t<=endMs),step.instruction,step.title||'');
   // A changed endpoint invalidates its photo; every trim invalidates review.
   const first=step.frames.find(f=>f.t>=startMs),last=step.frames.findLast(f=>f.t<=endMs);
   const narration=trimNarration(step.narration,first.t,last.t);
