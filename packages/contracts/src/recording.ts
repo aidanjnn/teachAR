@@ -89,7 +89,7 @@ export type Recording = z.infer<typeof RecordingSchema>;
 export const HealthSchema = z.strictObject({
   status: z.enum(['ok', 'degraded']),
   buildId: z.string().min(1).max(128),
-  providers: z.strictObject({ ai: z.enum(['mock', 'openai']), haptics: z.literal('mock') }),
+  providers: z.strictObject({ ai: z.enum(['mock', 'openai']), haptics: z.literal('mock'), scene: z.enum(['off', 'omni']).default('off') }),
   storage: z.strictObject({ writable: z.boolean() }),
 });
 export type Health = z.infer<typeof HealthSchema>;

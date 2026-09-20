@@ -360,6 +360,30 @@ hosting requires HTTPS and a deliberate authenticated deployment path. Browser
 storage is origin-specific: changing device, host name or port does not carry
 the library with it. Use explicit export/import for backup or transfer.
 
+### Run for the Huawei OMNI Live track
+
+Look & advise adds vision to the coach: one fresh camera frame, the expert's reference photo for
+the step, the approved step text and a spoken or typed question go to an OMNI multimodal model
+(Qwen3.5-Omni through the yibuapi OpenAI-compatible gateway) in one call, and the answer comes back
+as speech with a caption. It is advice: it never advances a step or confirms a physical result.
+
+1. In the root `.env` set `SCENE_COACH=omni` and `OMNI_API_KEY=<your yibuapi key>`. Defaults:
+   `OMNI_BASE_URL=https://yibuapi.com/v1`, `OMNI_MODEL=qwen3.5-omni-flash`, `OMNI_VOICE=Cherry`.
+   The key stays in the server process; the headset never sees it.
+2. `pnpm build`, then `node scripts/omni-smoke.mjs` sends a synthetic frame through the gateway and
+   prints the transcript, whether audio came back and the round trip. Do this before any demo.
+3. Start the paired API as above (`pnpm start:server` with `ALLOW_USB_LOOPBACK=true
+   PAIRING_ORIGINS=http://localhost:3001`), `adb reverse tcp:3001 tcp:3001`, open
+   `http://localhost:3001/tutorial` in Quest Browser, expand **Browser tools**, enable the camera,
+   pair, Start coach, then **Look & advise** on the card or on the practice panel inside AR.
+4. `curl -s http://127.0.0.1:3001/api/health` shows `"scene":"omni"` when the route is live.
+
+Without the key the route answers 503 and the buttons explain what is missing. The laptop webcam
+works the same way at `http://127.0.0.1:3001/tutorial` (source `workspace-webcam`). Frames are
+bounded to 1024 px, older than 3 s refused, one request in flight, and answers that claim
+completion, verification or measurements are replaced by a fixed line. Camera frames and audio are
+never stored or logged. See `docs/omni-live-track-research.md` for the plan and its limits.
+
 ### Run the browser regression suite
 
 After setup, from the repository root:

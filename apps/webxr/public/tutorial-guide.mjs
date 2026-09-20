@@ -292,6 +292,8 @@ export class TutorialGuide extends HandGuide {
     if(id==='panel-place'){this.onRepositionPanel?.();return true;}
     // Ask always reaches the coach; readiness is shown on the button label, and the runtime ignores a press it cannot honour.
     if(id==='coach-ask'){this.coach?.ask();return true;}
+    // Look & advise is advice from a fresh camera frame; it never moves the step.
+    if(id==='coach-look'){void this.sceneCoach?.look();return true;}
     if(id==='retry-save'){if(this.saveStatus==='failed')this.persist();return true;}
     if(id==='home'){
       this.narrator?.cancel();this.audioPlayer?.stop();this.reset();this.mode='home';return true;
@@ -401,7 +403,7 @@ export class TutorialGuide extends HandGuide {
     if (this.leftGhost) this.leftGhost.ghost.visible=false;
     if (this.photoPanel) this.photoPanel.visible=false;
   }
-  endSession() { this.hide();this.log('tutorial_session_end'); this.reset();this.narrator?.disable();this.coach?.stop();this.activeSession=false;this.onChange?.(); }
+  endSession() { this.hide();this.log('tutorial_session_end'); this.reset();this.narrator?.disable();this.sceneCoach?.stop();this.coach?.stop();this.activeSession=false;this.onChange?.(); }
   exportData() { return {...this.tutorial, events:this.events}; }
   exportDiagnostics(){
     const allowed=['tutorial_session_start','tutorial_session_end','tutorial_interrupted','record_start','record_pause','record_resume','record_tracking','record_saved','record_rejected','step_reviewed','fold_line_saved','photo_saved','photo_rejected','learning_start','movement_step_completed','step_self_confirmed','playback_interrupted','playback_rate'];

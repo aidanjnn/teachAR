@@ -1,6 +1,6 @@
 // Desktop-page controls for the voice coach. Start here, before entering AR; the headset panel only exposes Ask.
 import {CAPTION_GAP_MS,LEARNER_TURN_MS} from './tutorial-coach.mjs';
-export function mountCoachPanel(guide,coach,{tell}){
+export function mountCoachPanel(guide,coach,{tell,sceneCoach=null}){
   const $=id=>document.getElementById(id);
   const log=$('coach-log'),mode=$('coach-mode'),status=$('coach-status'),pairForm=$('coach-pair');
   // One line per voice per turn. Deltas keep appending to that voice's current line until it pauses; a straggling learner word never splits it.
@@ -24,7 +24,11 @@ export function mountCoachPanel(guide,coach,{tell}){
     status.textContent=bits.join(' ');
     pairForm.hidden=state.pairing!=='unpaired';
     for(const id of ['coach-ask','coach-ask-text','coach-stop'])$(id).disabled=!coach.active;
+    refreshLook();
   }
+  // Look & advise needs the coach (grounding) and a camera stream; the button says which is missing.
+  function refreshLook(){const look=$('coach-look');if(!look)return;const why=sceneCoach?sceneCoach.reason:'Scene coaching is not available on this page.';look.disabled=!!why||!!sceneCoach?.busy;look.title=why||'Send a fresh camera frame and the step\'s reference photo to the scene coach.';look.textContent=sceneCoach?.busy?'Looking…':'Look & advise';}
+  sceneCoach?.onState(refreshLook);setInterval(refreshLook,1000);
   coach.onState(describe);
   coach.onCaption(entry=>{
     const text=String(entry.delta||'');if(!text)return;
@@ -48,19 +52,20 @@ export function mountCoachPanel(guide,coach,{tell}){
     if(result.ok){$('coach-code').value='';status.textContent=`Paired as ${result.role}. Start the coach.`;}else tell(result.message);
   };
   $('coach-ask').onclick=()=>coach.ask();
+  $('coach-look').onclick=()=>{const question=$('coach-question').value.trim();void sceneCoach?.look(question||undefined);};
   $('coach-ask-text').onclick=async()=>{
     const question=$('coach-question').value.trim();if(!question)return;
     current.learner=null;current.coach=null;line('learner',question);$('coach-question').value='';
     const answer=await coach.askText(question);if(!answer)tell('Start the coach before asking.');
   };
   $('coach-question').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();$('coach-ask-text').click();}};
-  $('coach-stop').onclick=()=>coach.stop();
+  $('coach-stop').onclick=()=>{sceneCoach?.stop();coach.stop();};
   // A coach started for one tutorial must not keep answering after the expert swaps or edits it: the published guide no longer matches.
   const previous=guide.onChange;
   guide.onChange=()=>{
     previous?.();
     if(coach.active&&(guide.tutorial.id!==coach.tutorialId||guide.tutorial.revision!==coach.tutorialRevision)){
-      coach.stop();status.textContent='Coach stopped because the tutorial changed. Start it again for the current steps.';
+      sceneCoach?.stop();coach.stop();status.textContent='Coach stopped because the tutorial changed. Start it again for the current steps.';
     }
   };
   describe(coach.state);

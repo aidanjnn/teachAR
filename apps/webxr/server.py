@@ -241,7 +241,7 @@ class Handler(BaseHTTPRequestHandler):
                      "/assets/hands/left.glb":"assets/hands/left.glb","/assets/hands/right.glb":"assets/hands/right.glb",
                      "/vendor/GLTFLoader.js":"vendor/GLTFLoader.js","/vendor/SkeletonUtils.js":"vendor/SkeletonUtils.js","/vendor/BufferGeometryUtils.js":"vendor/BufferGeometryUtils.js",
                      "/vendor/three.module.js":"vendor/three.module.js","/vendor/three.core.js":"vendor/three.core.js",
-                     "/tutorial-coach.mjs":"tutorial-coach.mjs","/tutorial-coach-panel.mjs":"tutorial-coach-panel.mjs","/narration-labels.mjs":"narration-labels.mjs","/vendor/trail-coach.js":"vendor/trail-coach.js"}
+                     "/tutorial-coach.mjs":"tutorial-coach.mjs","/scene-coach.mjs":"scene-coach.mjs","/tutorial-coach-panel.mjs":"tutorial-coach-panel.mjs","/narration-labels.mjs":"narration-labels.mjs","/vendor/trail-coach.js":"vendor/trail-coach.js"}
             files.update({f"/{name}":name for name in (
                 "telemetry.mjs", "telemetry-sentry.mjs", "telemetry-runtime.mjs",
                 "telemetry-panel.mjs", "telemetry-friction.mjs", "telemetry.css",

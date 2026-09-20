@@ -14,6 +14,7 @@ import {createRuntimeObserver} from './telemetry-runtime.mjs';
 import {mountDiagnostics} from './telemetry-panel.mjs';
 import {initializeSentry} from './telemetry-sentry.mjs';
 import {createTutorCoach} from '/tutorial-coach.mjs';
+import {createSceneCoach} from '/scene-coach.mjs';
 import {mountCoachPanel} from '/tutorial-coach-panel.mjs';
 const tutorialMode=['/','/tutorial','/tutorial.html'].includes(location.pathname);
 const handsMode=tutorialMode||location.pathname==='/hands';
@@ -38,10 +39,13 @@ const $=id=>document.getElementById(id);
 // Coach problems must be readable inside AR too, so they also land on the guide's detail line.
 const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell:message=>{tell(message);if(guide&&['learn','learn-options'].includes(guide.mode))guide.problem=message;}}):null;
 if(guide&&coach)guide.coach=coach;
+// Look & advise: one fresh frame to the server's scene coach, grounded through the voice coach's published guide. Advice only.
+const sceneCoach=tutorialMode?createSceneCoach({guide,coach,snapshot:tutorialSnapshot,hasCamera:()=>!!stream&&visible(),tell:message=>{tell(message);if(guide&&['learn','learn-options'].includes(guide.mode))guide.problem=message;},speakFallback:message=>speakNow(message)}):null;
+if(guide&&sceneCoach)guide.sceneCoach=sceneCoach;
 // Speech requested while the coach is taking a question or answering is held (last three lines) and read together once the coach is quiet.
 // Each line is tagged with the guide epoch it was spoken for; Stop, leaving AR and any guide invalidation drop it.
 let heldSpeech=[],heldSpeechTimer=null;
-const coachBusy=()=>!!coach&&(coach.mode==='listening'||coach.captionAgeMs<1500);
+const coachBusy=()=>(!!coach&&(coach.mode==='listening'||coach.captionAgeMs<1500))||!!sceneCoach?.speaking;
 function dropHeldSpeech(){heldSpeech=[];clearTimeout(heldSpeechTimer);heldSpeechTimer=null;}
 function releaseHeldSpeech(){
   clearTimeout(heldSpeechTimer);heldSpeechTimer=null;heldSpeech=heldSpeech.filter(h=>h.epoch===guide?.epoch);
@@ -78,9 +82,14 @@ function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('
 function speak(message) {
   // One voice at a time: while the coach is taking a question or answering, step text waits its turn.
   if (coachBusy()) { if(heldSpeech.length>=3)heldSpeech.shift();heldSpeech.push({text:message,epoch:guide?.epoch}); if(!heldSpeechTimer)heldSpeechTimer=setTimeout(releaseHeldSpeech,500); return; }
-  if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return;
+  speakNow(message);
+}
+// The coach's own text answers bypass the hold: they are the voice the learner is waiting for.
+function speakNow(message) {
+  if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return Promise.resolve();
   speechSynthesis.cancel(); const utterance=new SpeechSynthesisUtterance(message);
-  utterance.rate=1; speechSynthesis.speak(utterance);
+  utterance.rate=1;
+  return new Promise(resolve=>{utterance.onend=()=>resolve();utterance.onerror=()=>resolve();speechSynthesis.speak(utterance);});
 }
 async function api(path, body, timeout=5000) {
   const response=await fetch(path,{method:body===undefined?'GET':'POST',
@@ -427,7 +436,7 @@ $('reference').onclick=event=>{
 $('undo').onclick=()=>{firstCorner=null;boxes.pop();drawReference();};
 $('save-boxes').onclick=async()=>{try{await api('/api/boxes',{boxes,revision:referenceRevision});trial=null;await poll();tell('Reference ready. Enter AR to test.');}catch(e){tell(e.message);}};
 $('camera-start').onclick=()=>startCamera();$('devices').onchange=startCamera;$('enter').onclick=enterAR;
-$('stop').onclick=async()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();coach?.stop();await session?.end();};
+$('stop').onclick=async()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();sceneCoach?.stop();coach?.stop();await session?.end();};
 if(tutorialMode){
   document.addEventListener('pointerdown',()=>{feedbackAudio.enabled=guide.appearance.sound;void feedbackAudio.unlock();},{passive:true});
   $('microphone-enable').onclick=async()=>{try{await narrator.enable();narrationPlayer.unlock();}catch(e){tell(e.message);}};
@@ -446,7 +455,7 @@ hud.addEventListener('pointermove',event=>{if(!observation||session)return;const
 hud.addEventListener('pointerleave',()=>{if(!session)observation?.target(null,'desktop');});
 document.addEventListener('visibilitychange',()=>{if(!visible()){pauseOnLeave();guide?.hide();observation?.suspend('hidden');if(!session)stopCamera();}observation?.observe({active:!!session,visible:visible()});});
 window.addEventListener('pagehide',event=>{
-  feedbackAudio.close();pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();coach?.stop();observation?.suspend('session_ended');observation?.observe({active:false,visible:false});
+  feedbackAudio.close();pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();sceneCoach?.stop();coach?.stop();observation?.suspend('session_ended');observation?.observe({active:false,visible:false});
   if(!event.persisted){telemetryDisposed=true;observation?.close();try{diagnostics?.dispose();void sentryConnection?.close();}catch{}}
 });
 window.addEventListener('beforeunload',event=>{if(tutorialMode&&(guide.hasUnfinishedTake()||guide.segmentJobs.size||['saving','saving-tutorial'].includes(guide.mode)||['saving','failed'].includes(guide.saveStatus))){event.preventDefault();event.returnValue='';}});
@@ -457,7 +466,7 @@ catch {xrSupported=false;}
 tell(xrSupported?(tutorialMode?'Enter the experience to create or follow a tutorial.':handsMode?'Ready. Put down controllers and choose Enter hand guidance. Camera is optional.':'Quest AR is available. Enable camera to begin.'):'Open this page on Quest for immersive AR. Desktop preview remains available.');
 if(tutorialMode){await guide.restore();$('tutorial-title').value=guide.tutorial.title;$('tutorial-instructions').value=guide.tutorial.steps.map(s=>s.instruction).join('\n');}
 // The coach panel mounts last so its onChange hook wraps the review and shell hooks instead of being replaced by them.
-if(tutorialMode){mountReview(guide,{isActive:()=>!!session,tell});mountTutorialShell(guide,{isActive:()=>!!session,tell});mountCoachPanel(guide,coach,{tell});window.trailCoach=coach;}
+if(tutorialMode){mountReview(guide,{isActive:()=>!!session,tell});mountTutorialShell(guide,{isActive:()=>!!session,tell});mountCoachPanel(guide,coach,{tell,sceneCoach});window.trailCoach=coach;window.trailSceneCoach=sceneCoach;}
 await poll();update();
 
 if(handsMode){

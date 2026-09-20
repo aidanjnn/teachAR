@@ -38,7 +38,7 @@ function writeMap(storage,map){try{storage?.setItem(GUIDE_MAP_KEY,JSON.stringify
  * it is loaded lazily from /vendor/trail-coach.js unless injected, so tests never touch the network or a microphone.
  */
 export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(input,init),storage=globalThis.localStorage,audioSink=null,tell=()=>{}}={}){
-  let api=null,loaded=runtime,attemptId=null,epoch=0,captionAt=0,startGeneration=0,captionStreaming=false;
+  let api=null,loaded=runtime,attemptId=null,runId=null,epoch=0,captionAt=0,startGeneration=0,captionStreaming=false,activeTutorial=null,guideRef=null,currentStep=null;
   const state={mode:'idle',listenRequested:false,pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:'',tutorialId:null,tutorialRevision:null};
   const stateHandlers=new Set(),captionHandlers=new Set();
   const snapshot=()=>({...state});
@@ -109,7 +109,8 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
     const guide=session.status==='no-pairing'?{id:tutorial.id,revision:tutorial.revision,grounded:false,reason:'no-pairing'}:await ensureGuide(tutorial);
     if(cancelled())return snapshot();
     state.grounded=guide.grounded;state.reason=guide.reason;
-    const context=coachContextFor(tutorial,guide,{runId:uuid(),attemptId,stepId:step.id,epoch});
+    runId=uuid();activeTutorial=tutorial;guideRef=guide;currentStep=step;
+    const context=coachContextFor(tutorial,guide,{runId,attemptId,stepId:step.id,epoch});
     const created=rt.createCoach({context,fetchImpl,...(audioSink?{audioSink}:{})});
     api=created;
     created.onState(s=>{if(api!==created)return;state.mode=s.mode;state.listenRequested=!!s.listenRequested;emit();});
@@ -122,11 +123,15 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
     if(api===created&&!cancelled()){state.mode=mode;emit();}
     return snapshot();
   }
-  function onStep(step,currentEpoch){epoch=currentEpoch;api?.setStep(step.id,Math.max(0,Math.floor(currentEpoch||0)));}
+  function onStep(step,currentEpoch){epoch=currentEpoch;currentStep=step;api?.setStep(step.id,Math.max(0,Math.floor(currentEpoch||0)));}
+  // The scene coach reuses this grounded identity (published guide id and revision) so both coaches answer from the same reviewed text.
+  function contextFor(step,currentEpoch=epoch){if(!api||!activeTutorial||!guideRef)throw Error('Start the coach first.');return coachContextFor(activeTutorial,guideRef,{runId,attemptId,stepId:step.id,epoch:currentEpoch});}
+  // A whole answer from another source (the scene coach) lands in the same caption and transcript as spoken answers.
+  function announce(text,source='scene'){caption({role:'coach',delta:String(text||''),stepRevision:epoch,stale:false,source});}
   function onAttempt(){if(!api)return;attemptId=uuid();api.setAttempt(attemptId);}
   function ask(){api?.ask();}
   function askText(question){return api?api.askText(question):Promise.resolve(null);}
-  function stop(){startGeneration++;if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}state.tutorialId=null;state.tutorialRevision=null;captionAt=0;captionStreaming=false;state.listenRequested=false;if(state.mode!=='idle'){state.mode='idle';emit();}}
+  function stop(){startGeneration++;if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}state.tutorialId=null;state.tutorialRevision=null;activeTutorial=null;guideRef=null;currentStep=null;captionAt=0;captionStreaming=false;state.listenRequested=false;if(state.mode!=='idle'){state.mode='idle';emit();}}
   async function pair(code){
     const rt=await load();const result=await rt.pairBrowser(code,fetchImpl);
     if(result.ok){state.pairing='paired';state.role=result.role;state.reason=null;state.error=null;}else state.error=result.message;
@@ -135,8 +140,10 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   return {
     get state(){return snapshot();},get active(){return !!api;},
     // Cheap reads for the per-frame headset panel and the speech gate; no copy.
-    get mode(){return state.mode;},get listenRequested(){return state.listenRequested;},get caption(){return state.caption;},get captionAgeMs(){return captionAt?Date.now()-captionAt:Infinity;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
-    start,stop,onStep,onAttempt,ask,askText,pair,
+    get mode(){return state.mode;},get listenRequested(){return state.listenRequested;},get currentStep(){return currentStep;},
+    // Run and attempt identity: a Repeat or a restart changes it, and answers requested under the old identity are stale.
+    get identity(){return api?{runId,attemptId}:null;},get caption(){return state.caption;},get captionAgeMs(){return captionAt?Date.now()-captionAt:Infinity;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
+    start,stop,onStep,onAttempt,ask,askText,pair,contextFor,announce,
     onCaption(h){captionHandlers.add(h);return()=>captionHandlers.delete(h);},
     onState(h){stateHandlers.add(h);return()=>stateHandlers.delete(h);},
   };
