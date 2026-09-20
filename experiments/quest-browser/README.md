@@ -41,6 +41,8 @@ Tutorials are stored in this browser origin's IndexedDB, not automatically synch
 
 Before approving each recording, choose **Required hands: Left, Right or Both** to match the action. Tracking coverage never chooses the hands for you. Every required palm must be present throughout the retained clip, with sample gaps no longer than 200 ms; otherwise review identifies the gap for trimming or re-recording. A hand that is not part of the action can be explicitly excluded.
 
+Following requires both target proximity and observed motion in the recorded direction between checkpoints. Holding still inside overlapping palm zones cannot advance a movement gate. Pausing or losing fresh tracking clears partial motion and hold evidence; repeat the approach from the previous checkpoint after recovery. These prototype thresholds still need Quest tuning and do not verify the physical result.
+
 **Approve & save** stays pending until local storage succeeds. On failure the headset keeps the recording open, displays the error and offers **Retry local save**; retry approval afterward to finish the tutorial. For a stale-tab conflict, export your work and reload as instructed. Exit AR for the JSON export control before closing the page.
 
 Existing v3 files with missing or automatic (`recorded`) hand selection remain importable, but their approval/completion is cleared for explicit hand review. Previously finished clips with required-hand gaps reopen as drafts too. Motion and media are preserved. This tightens readiness using the existing `guide_hands` values; it does not change the prototype JSON shape or native formats.
