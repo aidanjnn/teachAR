@@ -63,12 +63,12 @@ export function mountReview(guide,{isActive,tell}){
     const tutorial=guide.tutorial,steps=tutorial.steps;
     $('tutorial-provenance').textContent=tutorial.source==='synthetic-fixture'?'SYNTHETIC SOFTWARE FIXTURE — not a person performing a task.':'Recorded tutorial. Software has not verified the physical result.';
     $('tutorial-readiness').textContent=learningReadiness(tutorial).message;
-    $('authoring-status').textContent=tutorial.completion?'FINISHED · expert reviewed; physical result unverified':`DRAFT · ${authoringReadiness(tutorial).message}`;
+    $('authoring-status').textContent=tutorial.completion?`FINISHED · ${tutorial.completion.kind}`:`DRAFT · ${authoringReadiness(tutorial).message}`;
     $('review-save-status').textContent=guide.savedMessage;
     const list=$('step-list');list.replaceChildren();
     steps.forEach((step,i)=>{
       const button=document.createElement('button');button.type='button';button.className='secondary';button.dataset.step=String(i);
-      button.textContent=`${i+1}. ${step.title||step.instruction||'Untitled'} · ${(step.duration_ms/1000).toFixed(1)}s · ${step.reviewed?'reviewed':'needs review'}`;
+      button.textContent=`${i+1}. ${step.title||step.instruction||'Untitled'} · ${(step.duration_ms/1000).toFixed(1)}s · ${step.reviewed?'reviewed':step.acceptance?'accepted during capture':'needs review'}`;
       button.onclick=()=>select(i);list.append(button);
     });
     selected=Math.max(0,Math.min(selected,steps.length-1));
@@ -81,7 +81,7 @@ export function mountReview(guide,{isActive,tell}){
   }
   $('save-tutorial-details').onclick=()=>void report(async()=>{
     const next=structuredClone(guide.tutorial);next.title=$('tutorial-title').value;
-    if(next.setup!==$('tutorial-setup').value)next.steps.forEach(s=>s.reviewed=false);
+    if(next.setup!==$('tutorial-setup').value)next.steps.forEach(s=>{s.reviewed=false;s.acceptance=null;});
     next.setup=$('tutorial-setup').value;next.revision++;
     await replace(next);status('Starting layout and title saved. Tutorial is a draft until finished again.');
   });
@@ -105,7 +105,7 @@ export function mountReview(guide,{isActive,tell}){
   });
   $('save-step-edits').onclick=()=>void report(async()=>{
     const next=structuredClone(guide.tutorial),step=next.steps[selected];if(!step)return;
-    step.guide_hands=$('guide-hands').value;step.title=$('step-title').value;step.instruction=$('step-instruction').value;step.reviewed=$('reviewed').checked;
+    step.guide_hands=$('guide-hands').value;step.title=$('step-title').value;step.instruction=$('step-instruction').value;step.reviewed=$('reviewed').checked;step.acceptance=null;
     if(step.narration_issue&&step.reviewed)throw Error('Re-record or remove failed narration before approving this step.');
     const guidance=guidanceReadiness(step);if(step.reviewed&&!guidance.ready)throw Error(guidance.message);
     next.title=$('tutorial-title').value||'Tabletop practice';next.revision++;
@@ -142,7 +142,7 @@ export function mountReview(guide,{isActive,tell}){
         apply.onclick=()=>void report(async()=>{
           if(!current(proposal.stepId))throw Error('This recording changed after the draft was made. Draft again before applying.');
           const next=structuredClone(guide.tutorial),step=next.steps.find(s=>s.id===proposal.stepId);if(!step)throw Error('That step no longer exists.');
-          step.title=proposal.title.slice(0,60);step.instruction=proposal.instruction.slice(0,240);step.reviewed=false;next.revision++;
+          step.title=proposal.title.slice(0,60);step.instruction=proposal.instruction.slice(0,240);step.reviewed=false;step.acceptance=null;next.revision++;
           await replace(validateTutorial(next));select(next.steps.indexOf(step));status('Drafted text applied. Review the step before finishing.');apply.disabled=true;apply.textContent='Applied';
         });
         row.append(title,instruction,meta,apply);host.append(row);
@@ -155,7 +155,7 @@ export function mountReview(guide,{isActive,tell}){
   });
   $('remove-narration').onclick=()=>void report(async()=>{
     if(!confirm('Remove narration and use the written instruction? Review this step again before finishing.'))return;
-    const next=structuredClone(guide.tutorial),step=next.steps[selected];step.narration=null;step.narration_issue=null;step.reviewed=false;next.revision++;
+    const next=structuredClone(guide.tutorial),step=next.steps[selected];step.narration=null;step.narration_issue=null;step.reviewed=false;step.acceptance=null;next.revision++;
     await replace(next);status('Narration removed. Review the written instruction and motion again.');
   });
   $('trim-step').onclick=()=>void report(async()=>{
@@ -171,7 +171,7 @@ export function mountReview(guide,{isActive,tell}){
   for(const [button,delta] of [['move-step-up',-1],['move-step-down',1]])$(button).onclick=()=>void report(async()=>{
     const next=structuredClone(guide.tutorial),destination=selected+delta;if(destination<0||destination>=next.steps.length)return;
     [next.steps[selected],next.steps[destination]]=[next.steps[destination],next.steps[selected]];
-    next.steps.forEach(s=>s.reviewed=false);next.revision++;selected=destination;await replace(next);status('Step order changed. Review all steps in their new order.');
+    next.steps.forEach(s=>{s.reviewed=false;s.acceptance=null;});next.revision++;selected=destination;await replace(next);status('Step order changed. Review all steps in their new order.');
   });
   $('preview-play').onclick=()=>{voice.unlock();if(player)player.paused=!player.paused;};
   $('preview-replay').onclick=()=>{voice.unlock();player?.replay();};

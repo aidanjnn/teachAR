@@ -72,3 +72,6 @@ body.tutorial-page{background:var(--trail-ground);color:var(--trail-ink);font:40
 html:has(.tutorial-page){background:var(--trail-ground)}
 .tutorial-page{min-height:100vh}
 .tutorial-page .experience-launch #enter{width:auto;max-width:100%;border-radius:999px;font-size:20px;font-weight:500;padding:18px 30px}
+
+.boundary-note { max-width: 540px; color: var(--trail-muted); font-size: 14px; text-align: left; }
+.boundary-note summary { cursor: pointer; text-align: center; }

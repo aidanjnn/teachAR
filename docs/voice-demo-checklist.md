@@ -39,8 +39,8 @@ version, what was heard) in `docs/validation.md`.
 ## Inside AR
 
 - [ ] Press **Enter the experience** (coach still `live` on the card) → passthrough appears and the
-  in-headset home offers Create and Follow. The coach keeps its session across the XR entry.
-- [ ] Follow → open the demo tutorial from the immersive library, place the workspace, watch step 1
+  in-headset Home offers Create and Library. The coach keeps its session across the XR entry.
+- [ ] Library → the demo tutorial's card → Ready · place tutorial → place the workspace, watch step 1
   and start practice → the practice panel shows Ask coach as a button. Its label reads
   `Coach: text only` if voice is unavailable and `Coach connecting…` while starting; press it anyway
   and nothing else changes. The coach is not talking on its own.
@@ -54,6 +54,8 @@ version, what was heard) in `docs/validation.md`.
   reset; a follow-up question still answers for the current step.
 - [ ] Ask coach while the tutor is reading a step aloud → the browser voice pauses; after the coach
   finishes, the held step text is read.
+- [ ] Pinch and drag the panel handle mid-practice → practice pauses; the coach still answers an Ask
+  and the panel's Home button does not stop the coach session.
 - [ ] Say a long question of about 12 words → the whole question is transcribed (the mic window
   re-arms while you speak) and the answer follows.
 
@@ -73,7 +75,7 @@ version, what was heard) in `docs/validation.md`.
 1. Headset page cast to the laptop: "Everything the coach hears comes through our server. The key
    never leaves it." Expand Browser tools, press Start coach, allow the microphone. Wait for
    "Coach ready." That line is the audio check.
-2. Put the headset on the judge or the presenter. Enter the experience, Follow, open the tutorial.
+2. Put the headset on the judge or the presenter. Enter the experience, Library, open the tutorial.
    "The ghost hand shows the move; the headset decides when you have made it."
 3. First move done, chime. Pinch Ask coach: "What do I do now?" Let the answer play.
 4. Ask: "I'm done, is it correct?" The refusal is the point: "It cannot see the parts and will never

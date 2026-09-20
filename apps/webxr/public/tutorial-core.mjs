@@ -110,6 +110,7 @@ export function validateTutorial(input){
     if(s.guide_hands!==undefined&&!['recorded','left','right','both'].includes(s.guide_hands))throw Error('Invalid guiding hands.');
     step.guide_hands=s.guide_hands||'recorded';
     step.reference=validateReference(s.reference);step.cues=validateCues(s.cues);step.reviewed=s.reviewed===true&&input.schema!=='trail.tutorial.prototype.v1'&&step.guide_hands!=='recorded';
+    if(s.acceptance!=null&&!['hold','finish'].includes(s.acceptance))throw Error('Invalid step acceptance.');step.acceptance=s.acceptance||null;
     step.narration=validateNarration(s.narration,step.duration_ms);step.narration_issue=s.narration_issue?boundedText(s.narration_issue,240,'Narration issue'):null;
     return step;
   });
@@ -117,7 +118,7 @@ export function validateTutorial(input){
     calibration_span_m:input.calibration_span_m??null,save_position:validateSavePosition(input.save_position),steps,source:input.source==='synthetic-fixture'?'synthetic-fixture':'live-capture',setup:boundedText(input.setup??'',2000,'Starting layout')};
   const completed=input.completion;
   if(input.schema===SCHEMA&&record(completed)&&completed.revision===result.revision&&typeof completed.finished_at==='string'&&completed.finished_at.length<=40&&Number.isFinite(Date.parse(completed.finished_at))&&authoringReadiness(result).ready)
-    result.completion={revision:result.revision,finished_at:completed.finished_at,kind:'expert-reviewed; physical result unverified'};
+    result.completion={revision:result.revision,finished_at:completed.finished_at,kind:steps.some(s=>!s.reviewed)?'expert-accepted; physical result unverified':'expert-reviewed; physical result unverified'};
   return result;
 }
 export function parseTutorialJSON(text){
@@ -141,16 +142,16 @@ export function authoringReadiness(tutorial){
     const guidance=guidanceReadiness(step);
     if(!guidance.ready)return {ready:false,message:`Step ${i+1}: ${guidance.message}`};
   }
-  const index=tutorial.steps.findIndex(s=>!s.reviewed);
-  return index>=0?{ready:false,message:`Review step ${index+1} before finishing.`}:{ready:true,message:'All steps reviewed. Finish tutorial to make it ready for learning.'};
+  const index=tutorial.steps.findIndex(s=>!s.reviewed&&!['hold','finish'].includes(s.acceptance));
+  return index>=0?{ready:false,message:`Review step ${index+1} before finishing.`}:{ready:true,message:'All steps accepted. Finish tutorial to make it ready for learning.'};
 }
 export function finishTutorial(input){
   const next=validateTutorial(input),ready=authoringReadiness(next);if(!ready.ready)throw Error(ready.message);
-  next.revision++;next.completion={revision:next.revision,finished_at:new Date().toISOString(),kind:'expert-reviewed; physical result unverified'};return next;
+  next.revision++;next.completion={revision:next.revision,finished_at:new Date().toISOString(),kind:next.steps.some(s=>!s.reviewed)?'expert-accepted; physical result unverified':'expert-reviewed; physical result unverified'};return next;
 }
 export function learningReadiness(tutorial){
   const ready=authoringReadiness(tutorial);if(!ready.ready)return ready;
-  return tutorial.completion?.revision===tutorial.revision?{ready:true,message:'Finished tutorial ready. Physical correctness remains unverified.'}:{ready:false,message:'All steps reviewed. Choose Finish tutorial before learning.'};
+  return tutorial.completion?.revision===tutorial.revision?{ready:true,message:'Finished tutorial ready. Physical correctness remains unverified.'}:{ready:false,message:'All steps accepted. Choose Finish tutorial before learning.'};
 }
 // Playback is illustrative. It never judges movement or automatically completes a step.
 export class TutorialPlayer{
