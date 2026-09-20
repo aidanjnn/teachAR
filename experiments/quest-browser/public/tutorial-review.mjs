@@ -119,7 +119,7 @@ export function mountReview(guide,{isActive,tell}){
     $('draft-from-narration').disabled=true;$('draft-status').textContent=`Transcribing ${narrated} narrated step${narrated===1?'':'s'}…`;
     const host=$('narration-proposals');host.replaceChildren();
     try{
-      const proposals=await draftFromNarration(guide.tutorial);
+      const proposals=await draftFromNarration(guide.tutorial).catch(e=>{$('draft-status').textContent=e.message;throw e;});
       const drafted=proposals.filter(p=>!p.error).length;
       $('draft-status').textContent=drafted?`${drafted} draft${drafted===1?'':'s'} ready. Read each one, then Apply the ones that match what you did.`:'Nothing could be drafted. The messages below say why.';
       for(const proposal of proposals){

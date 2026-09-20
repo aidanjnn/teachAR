@@ -7,10 +7,12 @@ test.describe.configure({ mode: 'default' });
 /** Seeds a finished two-step tutorial as the page's current draft through the tutor's own modules. */
 async function seedTutorial(page: import('@playwright/test').Page): Promise<string[]> {
   return page.evaluate(async () => {
-    const core = await import('/tutorial-core.mjs') as {
+    // Module paths are served by the tutor at runtime; keep them out of literal imports so the tools typecheck does not resolve them.
+    const modules = { core: '/tutorial-core.mjs', store: '/tutorial-store.mjs' };
+    const core = await import(modules.core) as {
       newTutorial: (title: string) => any; prepareStep: (frames: unknown[], instruction: string, title: string) => any; finishTutorial: (tutorial: any) => any;
     };
-    const store = await import('/tutorial-store.mjs') as { saveTutorial: (t: any, expected: unknown) => Promise<void>; loadTutorial: () => Promise<any>; draftVersion: (t: any) => unknown };
+    const store = await import(modules.store) as { saveTutorial: (t: any, expected: unknown) => Promise<void>; loadTutorial: () => Promise<any>; draftVersion: (t: any) => unknown };
     const hand = (x: number) => Array.from({ length: 25 }, () => ({ p: [x, 0, 0], q: [0, 0, 0, 1] }));
     const frames = () => Array.from({ length: 40 }, (_, i) => ({ t: i * 40, left: hand(0.1 + i * 0.002), right: hand(0.3) }));
     const tutorial = core.newTutorial('Coach smoke');
@@ -52,7 +54,7 @@ test('pairs the browser tutor, publishes a coach guide and coaches from server-s
   await expect(page.locator('#coach-log li').last()).toContainText('Slide the base to the centre.');
 
   // A step change reaches the coach through the same hook the guide calls from showStep.
-  await page.evaluate(id => (window as unknown as { trailCoach: { onStep: (step: { id: string }, epoch: number) => void } }).trailCoach.onStep({ id }, 3), stepIds[1]);
+  await page.evaluate(id => (window as unknown as { trailCoach: { onStep: (step: { id: string }, epoch: number) => void } }).trailCoach.onStep({ id }, 3), stepIds[1]!);
   await page.getByLabel('Type a question').fill('and now');
   await page.getByRole('button', { name: 'Ask by text' }).click();
   await expect(page.locator('#coach-log li').last()).toContainText('Drop the support into the base.');
