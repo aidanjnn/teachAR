@@ -1141,3 +1141,21 @@ The user heard “Test sequence observed” from the local regression browser: t
   ARM64/IL2CPP release build. Inspected staged scope and patch whitespace.
 - This is a local commit only. No push, PR publication, headset installation or
   additional device/provider validation was requested or performed.
+
+### 2026-09-19 — Prepare stacked PR delivery above #19
+
+- User requested pushing the fixes and opening a stacked PR against PR #19.
+  Verified that #19 remains open with head `codex/native-mvp-integration` at
+  `f0c9797`; the follow-up branch has shared history and only the review fixes
+  plus their delivery log above that base.
+- Fresh publication checks on implementation commit `13e15ad` passed:
+  `pnpm check` (352 tests, typechecks, builds and 167 static GUID checks),
+  `pnpm validate:fixtures`, and all 7 Chromium workflows with synthetic inputs
+  and mock providers (`E2E_PORT=43119 pnpm test:e2e`).
+- Reused the preceding 60/60 EditMode, 17/17 PlayMode, 250 focused C# assertions
+  and clean Android ARM64/IL2CPP release-build evidence because the native
+  implementation/test inputs are unchanged. Rechecked the result reports and
+  APK hash. This follow-up commit changes documentation only.
+- Delivery targets a separate PR based on `codex/native-mvp-integration`, with
+  the parent dependency and missing headset/live-provider evidence disclosed.
+  No merge, deployment or headset installation is part of this delivery.
