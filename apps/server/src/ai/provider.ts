@@ -17,7 +17,7 @@ export interface TranscribeInput {
 export interface LiveControlChannel {
   /** Resolves once the socket is open; rejects if it errors or closes first. */
   readonly ready: Promise<void>;
-  send(event: { type: 'session.thinking.append'; event_id: string; delegation_id: null; content: string } | { type: 'session.close'; event_id: string }): void;
+  send(event: { type: 'session.thinking.append' | 'session.commentary.append'; event_id: string; delegation_id: null; content: string } | { type: 'session.close'; event_id: string }): void;
   close(): void;
   onClose(handler: () => void): void;
   onError(handler: (error: Error) => void): void;

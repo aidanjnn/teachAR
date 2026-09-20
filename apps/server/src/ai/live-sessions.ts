@@ -9,6 +9,8 @@ export interface LiveSessionRecord {
   createdAt: number;
   control: LiveControlChannel | null;
   expiry: ReturnType<typeof setTimeout> | null;
+  /** The one spoken greeting has been requested; later requests are no-ops. */
+  greeted: boolean;
 }
 export type StepUpdateResult = { ok: true; context: CoachContext; pushed: boolean } | { ok: false; status: number; body: VoiceUnavailable };
 
@@ -31,7 +33,7 @@ export class LiveSessionRegistry {
     // Every session ends after ttlMs even if no request arrives; this runtime adapter may own a timer (the pure reducers may not).
     const expiry = setTimeout(() => { this.close(sessionId); }, this.ttl);
     expiry.unref?.();
-    this.sessions.set(sessionId, { sessionId, context, generation: 0, createdAt: this.now(), control, expiry });
+    this.sessions.set(sessionId, { sessionId, context, generation: 0, createdAt: this.now(), control, expiry, greeted: false });
     control?.onClose(() => { this.forget(sessionId); });
     control?.onError(() => { this.close(sessionId); });
   }
@@ -54,6 +56,17 @@ export class LiveSessionRegistry {
     record.generation = update.generation;
     record.control?.send({ type: 'session.thinking.append', event_id: `ctx-${++this.counter}`, delegation_id: null, content: describeStepChange(context) });
     return { ok: true, context, pushed: true };
+  }
+
+  has(sessionId: string): boolean { return this.sessions.has(sessionId); }
+
+  /** Asks the model to say one short line now, at most once per session; the text is server-owned and never client-supplied. */
+  greet(sessionId: string, content: string): boolean {
+    const record = this.sessions.get(sessionId);
+    if (!record?.control || record.greeted) return false;
+    record.greeted = true;
+    try { record.control.send({ type: 'session.commentary.append', event_id: `greet-${++this.counter}`, delegation_id: null, content }); return true; }
+    catch { return false; }
   }
 
   /** The provider ended the session; nothing to send, just stop tracking it. */

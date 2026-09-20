@@ -20,11 +20,23 @@ const narrationPlayer=tutorialMode?new NarrationPlayback({onError:message=>tell(
 const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>closeAR(),snapshot:tutorialSnapshot,media:tutorialMode?{enable:()=>captureSetup.enable(),cancel:()=>captureSetup.cancel()}:null,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take||event.kind==='saved')feedbackAudio.play(event);}}):null;
 
 const $=id=>document.getElementById(id);
-// Voice is opted into from AR; paid command clips and live coaching have separate, exclusive listening modes.
-const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell}):null;
+// Voice commands and live coaching are explicitly enabled and use exclusive listening modes.
+// Coach problems must be readable inside AR too, so they also land on the guide's detail line.
+const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell:message=>{tell(message);if(guide&&['learn','learn-options'].includes(guide.mode))guide.problem=message;}}):null;
 const voice=tutorialMode?new VoiceCommands(guide,{tell,getUserMedia:constraints=>narrator?.ready?Promise.resolve(narrator.stream.clone()):navigator.mediaDevices.getUserMedia(constraints),canListen:()=>!!session&&session.visibilityState==='visible'&&!coach?.active&&!globalThis.speechSynthesis?.speaking}):null;
 if(guide&&coach){guide.coach=coach;guide.voice=voice;}
-coach?.onState(state=>{if(state.mode==='connecting')voice?.stop('Voice commands paused for the coach.');});
+// Speech requested while the coach is taking a question or answering is held (last three lines) and read together once the coach is quiet.
+// Each line is tagged with the guide epoch it was spoken for; Stop, leaving AR and any guide invalidation drop it.
+let heldSpeech=[],heldSpeechTimer=null;
+const coachBusy=()=>!!coach&&(coach.mode==='listening'||coach.captionAgeMs<1500);
+function dropHeldSpeech(){heldSpeech=[];clearTimeout(heldSpeechTimer);heldSpeechTimer=null;}
+function releaseHeldSpeech(){
+  clearTimeout(heldSpeechTimer);heldSpeechTimer=null;heldSpeech=heldSpeech.filter(h=>h.epoch===guide?.epoch);
+  if(!heldSpeech.length||!session)return dropHeldSpeech();
+  if(coachBusy()){heldSpeechTimer=setTimeout(releaseHeldSpeech,500);return;}
+  const held=heldSpeech.map(h=>h.text).join(' ');heldSpeech=[];speak(held);
+}
+coach?.onState(state=>{if(state.mode==='connecting')voice?.stop('Voice commands paused for the coach.');releaseHeldSpeech();});
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
 const capture=document.createElement('canvas'), captureCtx=capture.getContext('2d');
 let stream=null, cameraGeneration=0, uploading=false, lastVideo=-1, lastUpload=-Infinity;
@@ -51,8 +63,8 @@ async function tutorialSnapshot() {
 function visible() { return session ? session.visibilityState==='visible' : !document.hidden; }
 function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('notice').textContent=message; }
 function speak(message,commandReply=false) {
-  // One voice at a time: while the coach is taking a question and answering, step text is not read aloud by the browser.
-  if (coach&&['live','listening','connecting'].includes(coach.mode)) return;
+  // One voice at a time: while the coach is taking a question or answering, step text waits its turn.
+  if (coachBusy()) { if(heldSpeech.length>=3)heldSpeech.shift();heldSpeech.push({text:message,epoch:guide?.epoch}); if(!heldSpeechTimer)heldSpeechTimer=setTimeout(releaseHeldSpeech,500); return; }
   voice?.muteFor(1400);
   if ((!commandReply&&!$('speech').checked) || !('speechSynthesis' in window) || !visible()) return;
   speechSynthesis.cancel(); const utterance=new SpeechSynthesisUtterance(message);
@@ -70,7 +82,7 @@ function pauseOnLeave() {
   if (status?.token) fetch('/api/ai/auto',{method:'POST',keepalive:true,
     headers:{'Content-Type':'application/json','X-Tester-Token':status.token},body:'{"enabled":false}'}).catch(()=>{});
   if (status?.automatic) status.automatic.enabled=false;
-  window.speechSynthesis?.cancel();
+  window.speechSynthesis?.cancel();dropHeldSpeech();
 }
 function stopCamera() {
   cameraGeneration++; stream?.getTracks().forEach(t=>t.stop()); stream=null;
@@ -317,7 +329,7 @@ async function enterAR() {
     const requested=navigator.xr.requestSession('immersive-ar',handsMode?{requiredFeatures:['hand-tracking']}:{optionalFeatures:['hand-tracking']});
     busy=true;speak(tutorialMode?'Welcome to Trail. Choose Create or Follow.':'Starting the headset test. Look at the toys and labels.');
     const active=await requested; session=active;
-    active.addEventListener('end',()=>{voice?.stop();libraryInput?.remove();libraryInput=null;spatial?.reset();session=null;captureSetup?.cancel();guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
+    active.addEventListener('end',()=>{voice?.stop();dropHeldSpeech();libraryInput?.remove();libraryInput=null;spatial?.reset();session=null;captureSetup?.cancel();guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
     active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){spatial?.cancel();voice?.muteFor(1500);pauseOnLeave();guide?.hide();}});
     if(tutorialMode){
       libraryInput=document.createElement('input');libraryInput.type='search';libraryInput.maxLength=80;libraryInput.setAttribute('aria-label','Search tutorials in AR');libraryInput.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;';document.body.append(libraryInput);
