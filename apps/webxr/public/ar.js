@@ -301,7 +301,7 @@ function initRenderer() {
   for(let i=0;i<2;i++) {
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,0,-2)]),
       new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8,depthTest:false}));
-    line.visible=false;line.renderOrder=11;scene.add(line);rayLines.push(line);
+    const dot=new THREE.Mesh(new THREE.SphereGeometry(.006,10,8),new THREE.MeshBasicMaterial({color:0xb5f0db,depthTest:false,depthWrite:false}));dot.renderOrder=15;line.add(dot);line.userData.hitDot=dot;line.visible=false;line.renderOrder=11;scene.add(line);rayLines.push(line);
   }
   renderer.setAnimationLoop((time,frame)=>{
     if(!frame || !session)return;
@@ -315,12 +315,16 @@ function initRenderer() {
     }
     head.position.copy(pose.transform.position);head.quaternion.copy(pose.transform.orientation);head.updateMatrixWorld(true);
     hover='';rayLines.forEach(l=>l.visible=false);
-    let i=0;
+    let i=0,hoverControl=null;
     for(const source of session.inputSources) {
       const target=frame.getPose(source.targetRaySpace,reference);if(!target){spatial?.move(source,null);continue;}
-      spatial?.move(source,target);const hit=hitFromPose(target); if(hit)hover=hit;
-      const line=rayLines[i++];if(line){line.visible=true;line.position.copy(target.transform.position);line.quaternion.copy(target.transform.orientation);}
+      spatial?.move(source,target);const grip=spatial?.pick(target),hit=hitFromPose(target); if(hit)hover=hit;
+      if(grip)hoverControl=spatial.controls.find(c=>c.mesh===grip.object)||null;
+      const distance=grip?.distance??raycaster.intersectObject(panel,false)[0]?.distance??2;
+      const line=rayLines[i++];if(line){line.visible=true;line.position.copy(target.transform.position);line.quaternion.copy(target.transform.orientation);line.geometry.attributes.position.setZ(1,-distance);line.geometry.attributes.position.needsUpdate=true;line.geometry.computeBoundingSphere();line.userData.hitDot.visible=!!grip||!!hit;line.userData.hitDot.position.z=-distance;}
+
     }
+    if(spatial){spatial.hoverControl=hoverControl;spatial.paintControls();}
     observation?.target(hover||null,'webxr');
     if(spatial?.drag&&!Array.from(session.inputSources).includes(spatial.drag.source))spatial.cancel();
     guide?.tick(frame,session,reference,time);voice?.observe();
@@ -342,7 +346,9 @@ function hitFromPose(pose) {
   const origin=new THREE.Vector3().copy(pose.transform.position);
   const rotation=new THREE.Quaternion().copy(pose.transform.orientation);
   raycaster.set(origin,direction.clone().applyQuaternion(rotation));
-  const hit=raycaster.intersectObject(panel)[0];return hit?.uv?(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)(hit.uv.x,hit.uv.y):null;
+  panel.updateWorldMatrix(true,true);
+  if(spatial?.pick(pose))return null;
+  const hit=raycaster.intersectObject(panel,false)[0];return hit?.uv?(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)(hit.uv.x,hit.uv.y):null;
 }
 async function enterAR() {
   if (session || busy) return;

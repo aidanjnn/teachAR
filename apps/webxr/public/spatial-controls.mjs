@@ -21,14 +21,14 @@ export class SpatialControls {
   this.paintControls();
  }
  addControl(object,mode,label,x,y,width){
-  const canvas=document.createElement('canvas');canvas.width=Math.round(width/.046*88);canvas.height=88;
+  const canvas=document.createElement('canvas');canvas.width=Math.round(width/.070*88);canvas.height=88;
   const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
   // Recovery grips remain targetable even if the user turns the panel away.
-  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,.046),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthTest:false,depthWrite:false,toneMapped:false}));
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,.070),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthTest:false,depthWrite:false,toneMapped:false}));
   mesh.position.set(x,y,.002);mesh.renderOrder=14;object.add(mesh);this.controls.push({mesh,object,mode,label,canvas});return mesh;
  }
  paintControls(){
-  const theme=this.guide.appearance?.theme||'charcoal',active=this.drag?.control;
+  const theme=this.guide.appearance?.theme||'charcoal',active=this.drag?.control||this.hoverControl;
   if(this.paintedTheme===theme&&this.paintedActive===active)return;
   this.paintedTheme=theme;this.paintedActive=active;
   const p=THEMES[theme]||THEMES.charcoal;
@@ -39,9 +39,14 @@ export class SpatialControls {
   }
  }
  rayFrom(pose){this.ray.set(new THREE.Vector3().copy(pose.transform.position),new THREE.Vector3(0,0,-1).applyQuaternion(new THREE.Quaternion().copy(pose.transform.orientation)));}
+ pick(pose){
+  this.scene.updateMatrixWorld(true);this.rayFrom(pose);
+  const controls=this.controls.filter(c=>c.object.visible);
+  return this.ray.intersectObjects([...controls.map(c=>c.mesh),...(this.timer.visible?[this.timer]:[])],false)[0]||null;
+ }
  start(source,pose){
-  if(this.drag)return false;this.suppressed.delete(source);this.scene.updateMatrixWorld(true);this.rayFrom(pose);
-  const controls=this.controls.filter(c=>c.object.visible),hit=this.ray.intersectObjects([...controls.map(c=>c.mesh),...(this.timer.visible?[this.timer]:[])],false)[0];if(!hit)return false;
+  if(this.drag)return false;this.suppressed.delete(source);
+  const controls=this.controls.filter(c=>c.object.visible),hit=this.pick(pose);if(!hit)return false;
   const control=controls.find(c=>c.mesh===hit.object),object=control?.object||this.timer,mode=control?.mode||'move';
   this.suppressed.add(source);this.guide.onManipulation?.();
   if(object===this.timer)this.timerMoved=true;

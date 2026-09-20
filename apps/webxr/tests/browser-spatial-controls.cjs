@@ -15,6 +15,11 @@ const assert=require('node:assert/strict');
    const pose=(p,q=new T.Quaternion())=>({transform:{position:p,orientation:q}}),viewer=pose(new T.Vector3(0,1,2));spatial.tick(0,viewer);
    const grip=(object,mode)=>spatial.controls.find(c=>c.object===object&&c.mode===mode).mesh;
    const aim=(mesh)=>{scene.updateMatrixWorld(true);const point=mesh.getWorldPosition(new T.Vector3()),q=mesh.getWorldQuaternion(new T.Quaternion());return pose(point.add(new T.Vector3(0,0,1).applyQuaternion(q)),q);};
+   // Run the actual app's hit function: child grip UVs must never select panel buttons.
+   const sourceText=await (await fetch('/ar.js')).text(),hitFunction=sourceText.match(/function hitFromPose\(pose\) \{[\s\S]*?\n\}/)[0];
+   const hit=new Function('THREE','panel','spatial','guide','tutorialButton',`const raycaster=new THREE.Raycaster(),direction=new THREE.Vector3(0,0,-1),tutorialMode=true,handsMode=false;${hitFunction};return hitFromPose;`)(T,panel,spatial,g,()=> 'button');
+   for(const mode of ['move','rotate','resize','face']){const target=aim(grip(panel,mode));check(spatial.pick(target)?.object===grip(panel,mode),'Grip preview disagrees with grab');check(hit(target)===null,'Grip selected an unrelated menu button');}
+   check(hit(aim(panel))==='button','Panel center no longer selects menu');
    // From an already rotated panel, rotate relative to the grab without translation
    // or an initial snap; yaw crossing pi uses quaternion composition.
    panel.position.set(.1,.2,-.3);panel.rotation.set(.2,3.05,.1);let ray=aim(grip(panel,'rotate'));

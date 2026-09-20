@@ -1586,3 +1586,15 @@ existing no-delegation policy for all tutorial questions and banned waiting fill
 actions still require the registered tool path. The supplied measurements predate
 action tools, so removing all delegation would break that path. No new latency
 claim: 14 focused provider/prompt tests and server build passed.
+
+### Spatial grip selection repair
+
+A Quest screenshot showed an unrelated Library highlight while aiming near grips.
+The panel raycast recursively included child grips and interpreted their UVs as
+menu coordinates. Menu targeting now excludes children and gives spatial grips
+priority. Grip preview and grab use the same picker; handles are taller (7 cm),
+highlight on hover, and rays end at a visible target dot instead of extending
+through the interface. The spatial browser regression executes the actual app
+hit function for each grip, checks no menu dispatch, and retains transformed
+rotation/resize, release suppression and capture-pause checks. Passed locally;
+wearer accuracy still needs confirmation.
