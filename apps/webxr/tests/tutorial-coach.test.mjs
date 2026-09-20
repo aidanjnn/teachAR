@@ -8,11 +8,14 @@ const tutorial=(revision=3)=>({id:'tut_1',revision,title:'Record player',setup:'
 ]});
 const memoryStorage=()=>{const m=new Map();return {getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>m.set(k,String(v)),removeItem:k=>m.delete(k)};};
 
+let lastApi=null;
+const coachApi=()=>lastApi;
 function fakeRuntime({session={status:'paired',role:'author',sessionId:'sess'},publish={status:200,body:{id:'11111111-1111-4111-8111-111111111111',revision:1}},connectMode='text'}={}){
   const calls={createCoach:[],setStep:[],setAttempt:[],dispose:0,ask:0,askText:[],fetch:[]};
   const fetchImpl=async(url,init={})=>{
     calls.fetch.push({url,init});
     if(url==='/api/coach-guides')return {ok:publish.status<400,status:publish.status,json:async()=>publish.body};
+    if(/^\/api\/coach-guides\/[^/]+\/query$/.test(url))return {ok:true,status:200,json:async()=>({id:publish.body.id,revision:publish.body.revision})};
     throw Error('unexpected fetch '+url);
   };
   const runtime={
@@ -21,7 +24,7 @@ function fakeRuntime({session={status:'paired',role:'author',sessionId:'sess'},p
     createCoach:options=>{
       calls.createCoach.push(options);
       const handlers={state:new Set(),transcript:new Set(),answer:new Set(),error:new Set()};
-      return {
+      return lastApi={
         context:options.context,state:{mode:'idle'},
         connect:async()=>{handlers.state.forEach(h=>h({mode:connectMode}));return connectMode;},
         ask:()=>{calls.ask++;},
@@ -136,4 +139,36 @@ test('a newer start supersedes a pending one and only the newer coach survives',
   releaseFirst();await stale;await fresh;
   assert.equal(calls.createCoach.length,1,'only the newer start created a coach');
   assert.equal(calls.createCoach[0].context.currentStepId,'s2');assert.equal(coach.tutorialRevision,4);
+});
+
+test('a mapping the server no longer knows is dropped and the guide republished; a server error is not a pairing problem',async()=>{
+  const storage=memoryStorage();storage.setItem(GUIDE_MAP_KEY,JSON.stringify({tut_1:{revision:3,id:'dead-dead',guideRevision:1}}));
+  const calls=[];let publishes=0;
+  const fetchImpl=async(url,init={})=>{calls.push(url);
+    if(url==='/api/coach-guides/dead-dead/query')return {ok:false,status:404,json:async()=>({error:'unknown_guide'})};
+    if(url==='/api/coach-guides'){publishes++;return {ok:true,status:200,json:async()=>({id:'22222222-2222-4222-8222-222222222222',revision:1})};}
+    throw Error('unexpected '+url);};
+  const {runtime}=fakeRuntime();
+  const coach=createTutorCoach({runtime,fetchImpl,storage});
+  const state=await coach.start(tutorial(),tutorial().steps[0],0);
+  assert.equal(publishes,1);assert.equal(state.grounded,true);
+  assert.equal(JSON.parse(storage.getItem(GUIDE_MAP_KEY)).tut_1.id,'22222222-2222-4222-8222-222222222222');
+  const down=fakeRuntime({session:{status:'unavailable',message:'The server answered 503.'}});
+  const coachDown=createTutorCoach({runtime:down.runtime,fetchImpl:down.fetchImpl,storage:memoryStorage()});
+  const stateDown=await coachDown.start(tutorial(),tutorial().steps[0],0);
+  assert.equal(stateDown.reason,'server_unavailable');assert.notEqual(stateDown.pairing,'unpaired');assert.equal(down.calls.createCoach.length,0);
+});
+
+test('live transcript deltas grow one caption per coach turn',async()=>{
+  const {runtime,fetchImpl,calls}=fakeRuntime();
+  const coach=createTutorCoach({runtime,fetchImpl,storage:memoryStorage()});
+  await coach.start(tutorial(),tutorial().steps[0],0);
+  // Drive the transcript handler the runtime would call.
+  const api=coachApi(calls);
+  api._handlers.transcript.forEach(h=>h({role:'learner',delta:'what now',stepRevision:0,stale:false}));
+  for(const piece of ['Lower',' the',' record','.'])api._handlers.transcript.forEach(h=>h({role:'coach',delta:piece,stepRevision:0,stale:false}));
+  assert.equal(coach.caption,'Lower the record.');
+  api._handlers.transcript.forEach(h=>h({role:'learner',delta:'ok',stepRevision:0,stale:false}));
+  api._handlers.transcript.forEach(h=>h({role:'coach',delta:'Next',stepRevision:0,stale:false}));
+  assert.equal(coach.caption,'Next');
 });

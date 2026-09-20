@@ -57,3 +57,10 @@ test('a label result without this step reports the server failure',async()=>{
   const [proposal]=await draftFromNarration({...tutorial(),steps:[tutorial().steps[0]]},{fetchImpl});
   assert.equal(proposal.error,'Model declined.');assert.equal(proposal.transcriptText,'hello');
 });
+
+test('narration longer than two minutes is refused before any request',async()=>{
+  const long={id:'tut',title:'t',setup:'',steps:[{id:'s1',title:'',instruction:'',narration:{audio:narration().audio,duration_ms:150000}}]};
+  const {fetchImpl,calls}=fetchStub([]);
+  const [proposal]=await draftFromNarration(long,{fetchImpl});
+  assert.match(proposal.error,/two minutes/);assert.equal(calls.length,0);
+});

@@ -2,6 +2,7 @@
 // Whisper transcribes the step's WAV, then the label route writes text for that one segment. The expert still reviews.
 const WAV_PREFIX='data:audio/wav;base64,';
 const MAX_TASK_CONTEXT=500;
+const MAX_DRAFT_MS=120_000;
 
 export function wavBytesFromDataUrl(dataUrl){
   if(typeof dataUrl!=='string'||!dataUrl.startsWith(WAV_PREFIX))throw Error('Narration is not a local WAV.');
@@ -19,6 +20,8 @@ async function readError(response,fallback){
 async function draftStep(tutorial,step,fetchImpl){
   const bytes=wavBytesFromDataUrl(step.narration.audio);
   const duration=Math.max(1,Math.round(step.narration.duration_ms||0));
+  // The transcription route accepts at most two minutes of narration per request.
+  if(duration>MAX_DRAFT_MS)return {stepId:step.id,error:'Narration longer than two minutes cannot be drafted. Trim the step first.'};
   const transcribed=await fetchImpl('/api/voice/transcriptions',{method:'POST',credentials:'same-origin',
     headers:{'content-type':'audio/wav','x-audio-start-offset-ms':'0','x-audio-duration-ms':String(duration)},body:bytes});
   if(transcribed.status===401||transcribed.status===403)throw new DraftError('Pair this browser as the author before drafting from narration.',{fatal:true,status:transcribed.status});

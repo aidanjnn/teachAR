@@ -37,21 +37,44 @@ function writeMap(storage,map){try{storage?.setItem(GUIDE_MAP_KEY,JSON.stringify
  * it is loaded lazily from /vendor/trail-coach.js unless injected, so tests never touch the network or a microphone.
  */
 export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(input,init),storage=globalThis.localStorage,audioSink=null,tell=()=>{}}={}){
-  let api=null,loaded=runtime,attemptId=null,epoch=0,captionAt=0,startGeneration=0;
+  let api=null,loaded=runtime,attemptId=null,epoch=0,captionAt=0,startGeneration=0,captionStreaming=false;
   const state={mode:'idle',pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:'',tutorialId:null,tutorialRevision:null};
   const stateHandlers=new Set(),captionHandlers=new Set();
   const snapshot=()=>({...state});
   const emit=()=>{for(const h of stateHandlers)h(snapshot());};
-  const caption=entry=>{if(entry.role==='coach'){state.caption=String(entry.delta||'');captionAt=Date.now();}for(const h of captionHandlers)h(entry);emit();};
+  // Live transcripts arrive as deltas: keep one growing caption per coach turn. A learner turn or a whole text answer starts a new one.
+  const caption=entry=>{
+    const text=String(entry.delta||'');
+    if(entry.role==='coach'){state.caption=captionStreaming&&!entry.source?state.caption+text:text;captionStreaming=!entry.source;captionAt=Date.now();}
+    else captionStreaming=false;
+    for(const h of captionHandlers)h(entry);
+  };
   async function load(){if(!loaded)loaded=await import('/vendor/trail-coach.js');return loaded;}
 
+  // The browser's mapping is a hint; the server is the truth. A wiped server or a republish from another device must not leave the coach ungrounded while the badge says otherwise.
+  async function verifyGuide(id){
+    try{
+      const response=await fetchImpl(`/api/coach-guides/${encodeURIComponent(id)}/query`,{method:'POST',credentials:'same-origin'});
+      if(response.status===404)return {state:'missing'};
+      if(!response.ok)return {state:'unknown'};
+      const body=await response.json();return {state:'ok',id:body.id,revision:body.revision};
+    }catch{return {state:'unknown'};}
+  }
   async function ensureGuide(tutorial){
     const map=readMap(storage),known=map[tutorial.id];
-    if(known&&known.revision===tutorial.revision&&known.id)return {id:known.id,revision:known.guideRevision,grounded:true,reason:null};
+    if(known&&known.revision===tutorial.revision&&known.id){
+      const check=await verifyGuide(known.id);
+      if(check.state==='ok'){if(check.revision!==known.guideRevision){map[tutorial.id]={...known,guideRevision:check.revision};writeMap(storage,map);}return {id:check.id,revision:check.revision,grounded:true,reason:null};}
+      if(check.state==='unknown')return {id:known.id,revision:known.guideRevision,grounded:true,reason:'guide_unverified'};
+      delete map[tutorial.id];writeMap(storage,map);
+    }
     let response;
     try{
       response=await fetchImpl('/api/coach-guides',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify(publishBody(tutorial))});
-    }catch{return {id:tutorial.id,revision:tutorial.revision,grounded:false,reason:'publish_failed'};}
+    }catch{
+      if(known?.id)return {id:known.id,revision:known.guideRevision,grounded:true,reason:'publish_failed_earlier_revision'};
+      return {id:tutorial.id,revision:tutorial.revision,grounded:false,reason:'publish_failed'};
+    }
     if(response.ok){
       const body=await response.json();
       map[tutorial.id]={revision:tutorial.revision,id:body.id,guideRevision:body.revision};writeMap(storage,map);
@@ -72,6 +95,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
     const session=await rt.sessionState(fetchImpl);
     if(cancelled())return snapshot();
     if(session.status==='unpaired'){state.pairing='unpaired';state.role=null;state.reason='unpaired';state.error=session.message||null;emit();return snapshot();}
+    if(session.status==='unavailable'){state.pairing='unknown';state.reason='server_unavailable';state.error=session.message||'The server is not answering.';emit();return snapshot();}
     state.pairing=session.status==='paired'?'paired':'none';state.role=session.role||null;state.error=null;
     epoch=currentEpoch;attemptId=uuid();state.tutorialId=tutorial.id;state.tutorialRevision=tutorial.revision;state.caption='';
     const guide=session.status==='no-pairing'?{id:tutorial.id,revision:tutorial.revision,grounded:false,reason:'no-pairing'}:await ensureGuide(tutorial);

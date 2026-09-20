@@ -18,6 +18,7 @@ const assert=require('node:assert/strict');
         assert.equal(body.schemaVersion,1);assert.equal(body.steps.length,2);assert.ok(body.steps.every(s=>s.title&&s.instruction),'published steps carry title and instruction');
         return json(200,{id:guideId,revision:1});
       }
+      if(/^\/api\/coach-guides\/[^/]+\/query$/.test(url.pathname)&&method==='POST')return json(200,{id:guideId,revision:1});
       if(url.pathname==='/api/live/sessions'&&method==='POST')return json(503,{error:'live_unavailable',message:'mock server'});
       if(url.pathname==='/api/coach'&&method==='POST'){
         const body=request.postDataJSON();coachBodies.push(body);const c=body.context;

@@ -10,18 +10,20 @@ export type { CoachMode, CoachState } from './guide/coach-state.js';
 export type PairingStatus =
   | { status: 'no-pairing' }
   | { status: 'unpaired'; message: string }
+  | { status: 'unavailable'; message: string }
   | { status: 'paired'; role: string; sessionId: string };
 
-/** POST /api/session: 404 means the server runs without pairing, 401/403 means this browser must pair first. */
+/** POST /api/session: 404 means the server runs without pairing, 401/403 means this browser must pair first, anything else is a server problem, not a pairing one. */
 export async function sessionState(fetchImpl: typeof fetch = (input, init) => fetch(input, init)): Promise<PairingStatus> {
   let response: Response;
   try {
     response = await fetchImpl('/api/session', { method: 'POST', credentials: 'same-origin' });
   } catch {
-    return { status: 'unpaired', message: 'The server did not answer.' };
+    return { status: 'unavailable', message: 'The server did not answer.' };
   }
   if (response.status === 404) return { status: 'no-pairing' };
-  if (!response.ok) return { status: 'unpaired', message: 'Pair this browser with the server first.' };
+  if (response.status === 401 || response.status === 403) return { status: 'unpaired', message: 'Pair this browser with the server first.' };
+  if (!response.ok) return { status: 'unavailable', message: `The server answered ${response.status}.` };
   const body = (await response.json().catch(() => ({}))) as { role?: unknown; sessionId?: unknown };
   if (typeof body.role !== 'string' || typeof body.sessionId !== 'string') return { status: 'unpaired', message: 'The server session was unreadable.' };
   return { status: 'paired', role: body.role, sessionId: body.sessionId };

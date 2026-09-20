@@ -24,6 +24,12 @@ console.log(`Prepared verified Three.js ${manifest.version} and MIT license from
 const coach=resolve(root,'public/vendor/trail-coach.js');
 if(process.env.TRAIL_REBUILD_COACH==='1'||!(await readFile(coach).then(()=>true,()=>false))){
  const {execFileSync}=await import('node:child_process');
- execFileSync('pnpm',['--filter','@trail/web','build:tutor-coach'],{cwd:resolve(root,'../..'),stdio:'inherit'});
+ // The bundle imports the shared contracts, so build those first. Hand guidance does not need the coach; a failed bundle must not stop the tutor.
+ try{
+  execFileSync('pnpm',['build:shared'],{cwd:resolve(root,'../..'),stdio:'inherit'});
+  execFileSync('pnpm',['--filter','@trail/web','build:tutor-coach'],{cwd:resolve(root,'../..'),stdio:'inherit'});
+ }catch(error){
+  console.warn(`Coach bundle not built (${error.message.split('\n')[0]}). Hand guidance works without it; run pnpm --filter @trail/web build:tutor-coach to enable the voice coach.`);
+ }
 }
-console.log('Coach bundle ready at public/vendor/trail-coach.js.');
+console.log(await readFile(coach).then(()=>'Coach bundle ready at public/vendor/trail-coach.js.',()=>'Coach bundle absent; the voice coach card will report it.'));

@@ -44,8 +44,8 @@ async function tutorialSnapshot() {
 function visible() { return session ? session.visibilityState==='visible' : !document.hidden; }
 function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('notice').textContent=message; }
 function speak(message) {
-  // One voice at a time: while the live coach can speak, step text is not read aloud by the browser.
-  if (coach&&['live','listening'].includes(coach.mode)) return;
+  // One voice at a time: while the coach is taking a question and answering, step text is not read aloud by the browser.
+  if (coach&&coach.mode==='listening') return;
   if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return;
   speechSynthesis.cancel(); const utterance=new SpeechSynthesisUtterance(message);
   utterance.rate=1; speechSynthesis.speak(utterance);

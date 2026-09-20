@@ -37,6 +37,7 @@ export function mountCoachPanel(guide,coach,{tell}){
     catch(e){tell(e.message);}
     finally{$('coach-start').disabled=false;}
   };
+  pairForm.onsubmit=event=>{event.preventDefault();$('coach-pair-button').click();};
   $('coach-pair-button').onclick=async()=>{
     const result=await coach.pair($('coach-code').value);
     if(result.ok){$('coach-code').value='';status.textContent=`Paired as ${result.role}. Start the coach.`;}else tell(result.message);

@@ -136,7 +136,8 @@ export function mountReview(guide,{isActive,tell}){
         const title=document.createElement('p');title.textContent=`Title: ${proposal.title}`;
         const instruction=document.createElement('p');instruction.textContent=`Instruction: ${proposal.instruction}`;
         const meta=document.createElement('p');meta.className='quiet';meta.textContent=`Heard: "${proposal.transcriptText}" · ${proposal.provenance==='model'?`written by ${proposal.model||'the label model'}`:'fallback wording from the transcript'}${proposal.transcriptSource==='fixture'?' · mock transcript':''}${proposal.needsReview?' · flagged for review':''}`;
-        const apply=document.createElement('button');apply.type='button';apply.textContent='Apply to this step';apply.dataset.tutorialEdit='';
+        // Not a data-tutorial-edit control: renderList would re-enable it and undo the Applied state; report() already refuses edits inside AR.
+        const apply=document.createElement('button');apply.type='button';apply.textContent='Apply to this step';
         if(!current(proposal.stepId)){apply.disabled=true;apply.textContent='Recording changed since drafting';}
         apply.onclick=()=>void report(async()=>{
           if(!current(proposal.stepId))throw Error('This recording changed after the draft was made. Draft again before applying.');
