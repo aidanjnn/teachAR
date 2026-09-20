@@ -15,7 +15,7 @@ Movement matching is guidance, not proof of assembly or hidden object state.
 
 ## 2. Existing foundation
 
-The source baseline is PR #24 head `44de6fdcaa5b1c65cca82aa1b44b194a54d44a01`,
+The source baseline is PR #24 head `2566e5948cf6be4974cea4ccf171df907fdca28a`,
 which includes PR #23 `a10b9f75790c8039d3a81b2ca80a26bf406fadb7` and
 PR #17 `40514f519a8db6b9fac3c47e223ecdc2ba474cc2`.
 
