@@ -35,3 +35,8 @@ __pycache__/
 
 # Retired local GitHub runner; configuration can contain credentials.
 /actions-runner/
+
+# Upgrading leaves ignored local files behind when tracked sources move or retire.
+# Keep old keys, camera caches, recordings and environments out of future commits.
+/experiments/quest-browser/
+/apps/quest/
