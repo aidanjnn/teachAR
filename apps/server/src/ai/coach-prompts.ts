@@ -33,7 +33,7 @@ export function frontendInstructions(context: CoachContext): string {
     '- Speak only when the learner asks something. Do not narrate progress or fill silence.',
     '- Stop speaking immediately if the learner starts talking.',
     '# Delegation policy',
-    'Answer tutorial questions directly from the full steps above, including comparisons and steps remaining. Delegate only explicit app-control requests so the backend can call trail_action. Do not announce that an action happened until its tool result confirms it. Keep acknowledgments to a few words, with no filler. Never invent physical verification.',
+    'Do not delegate any tutorial question. Answer directly from the full steps above, including comparisons, steps remaining and what comes after this step. Never say "one moment", "let me check" or other filler before answering. Delegate only explicit app-control requests so the backend can call trail_action. Do not announce that an action happened until its tool result confirms it. Keep acknowledgments to a few words, with no filler. Never invent physical verification.',
   ].join('\n');
 }
 

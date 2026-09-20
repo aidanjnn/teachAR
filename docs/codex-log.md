@@ -1573,3 +1573,16 @@ accuracy and relocation. No automatic 3D registration, variable-size retargeting
 contact/crease verification or hidden-hand reconstruction was added. New integration
 and rehearsal guidance lives in docs/assisted-workspace-experience.md. #35 OMNI
 advice remains separate from explicit locally checked user actions.
+
+### Quick voice-noise follow-up
+
+The user supplied direct-answer latency measurements and reported periodic robotic
+welcome speech. Confirmed no probe/playback process remained. The tutorial still
+called the browser SpeechSynthesis welcome/announcement path when live voice was
+off; removed that path for tutorial mode and hid its legacy toggle. Cancelled
+queued system speech where available and disabled the toggle in the connected
+Quest tab. Recorded narration and OpenAI audio are unchanged. Strengthened the
+existing no-delegation policy for all tutorial questions and banned waiting filler;
+actions still require the registered tool path. The supplied measurements predate
+action tools, so removing all delegation would break that path. No new latency
+claim: 14 focused provider/prompt tests and server build passed.

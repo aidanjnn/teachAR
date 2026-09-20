@@ -77,6 +77,8 @@ async function tutorialSnapshot() {
 function visible() { return session ? session.visibilityState==='visible' : !document.hidden; }
 function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('notice').textContent=message; }
 function speak(message,commandReply=false) {
+  // Tutorial speech comes only from recorded narration or the OpenAI voice paths.
+  if(tutorialMode){globalThis.speechSynthesis?.cancel();return;}
   // One voice at a time: while the coach is taking a question or answering, step text waits its turn.
   if(voice?.active)return;
   if (coachBusy()) { if(heldSpeech.length>=3)heldSpeech.shift();heldSpeech.push({text:message,epoch:guide?.epoch}); if(!heldSpeechTimer)heldSpeechTimer=setTimeout(releaseHeldSpeech,500); return; }
