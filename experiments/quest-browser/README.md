@@ -14,7 +14,7 @@ cd experiments/quest-browser
 sh start.sh
 ```
 
-The first start creates a Python virtual environment and installs `requirements.txt`. `prepare-vendor.mjs` copies the exact locked Three.js 0.186.0 artifacts and MIT license from the workspace, checking their hashes. No CDN or separate JavaScript install is needed.
+The first start creates a Python virtual environment and installs `requirements.txt`. `prepare-vendor.mjs` copies the exact locked Three.js 0.186.0 artifacts and MIT license from the workspace, checking their hashes. The same preparation verifies the local MIT-licensed skinned hand models and required Three.js addons. No CDN or separate JavaScript install is needed.
 
 Open **http://127.0.0.1:4321/tutorial**. Desktop can inspect the library/review UI; actual tracking/immersive sessions require the headset. Keep the server running. This is a loopback development server, not a production or authenticated multi-user service.
 
@@ -25,11 +25,13 @@ cd experiments/quest-browser
 sh launch-ar.sh tutorial
 ```
 
-This runs `adb reverse tcp:4321 tcp:4321` and opens `http://localhost:4321/tutorial` in Quest Browser. Keep USB connected and the laptop awake. Close other camera-sender tabs before enabling the camera. Use **Create tutorial** or **Follow tutorial**, then the page's AR entry control. The tutorial hand loop does not require an API key or camera.
+This runs `adb reverse tcp:4321 tcp:4321` and opens `http://localhost:4321/tutorial` in Quest Browser. Keep USB connected and the laptop awake. Close other camera-sender tabs before enabling the camera. Choose **Enter the experience**, then **Create tutorial** or **Follow tutorial** inside AR. Create offers optional narration/photos together, with a hands-only fallback. Browser tools remain collapsed for editing and backup. The tutorial hand loop does not require an API key or camera.
 
 For another local port: `PORT=4331 sh start.sh`, then `adb reverse tcp:4331 tcp:4331` and manually open `http://localhost:4331/tutorial`. The convenience launch script uses port 4321. Stop the foreground server with Ctrl-C. `start-background.py` is optional and records its PID in `.runtime/server.pid`; stop only that process when finished.
 
 See [the connected UI/UX base](../../docs/web-ui-base.md) for appearance settings, recording/review controls, save feedback and the headset acceptance walkthrough.
+
+See [immersive entry and holographic hands](../../docs/web-immersive-entry.md) for the current flow, asset provenance and headset acceptance.
 
 ## What is included
 
@@ -59,7 +61,7 @@ cd experiments/quest-browser
 sh test-all.sh
 ```
 
-The suite runs Node and Python unit tests plus ten browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
+The suite runs Node and Python unit tests plus thirteen browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
 
 Hosted CI runs this suite alongside the existing repository checks. Neither these tests nor `pnpm check` establish headset tracking accuracy or Unity readiness. The latest packaging result is in [the activity log](../../docs/codex-log.md).
 

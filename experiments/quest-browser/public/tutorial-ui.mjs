@@ -12,8 +12,10 @@ export function tutorialView(g){
   const t=g.library?.[g.libraryIndex];v.tag='FOLLOW · LIBRARY';v.title=t?.title||'No tutorials yet';v.text=t?`${t.steps.length} recordings · ${t.completion?'ready to follow':'draft — review first'}`:'Create your first tutorial. Saved recordings stay on this headset.';
   if(t){b('open-tutorial',t.completion?'Open tutorial':'Review draft');if(g.library.length>1){b('library-prev','Previous tutorial');b('library-next','Next tutorial');}}
   b('home','Back home');break;}
+ case 'media-setup':v.tag='CREATE · CAPTURE';v.title='Add your voice and reference photos';v.text='Enable both once for this session. Narration records only during a take; photos stay local until you choose to share.';v.detail='Browser permission prompts may appear. You can create with hands alone.';b('media-enable','Enable narration & photos');b('media-skip','Hands only');b('home','Back home');break;
+ case 'media-wait':v.tag='CREATE · PERMISSIONS';v.title='Allow capture when prompted';v.text='Respond to the browser permission prompts. Hand recording is available even if you decline.';b('media-skip','Continue with hands only');break;
  case 'save-home':v.tag='CREATE · SAVE POSITION';v.title='Where will you return to save?';v.text='Choose a comfortable, visible spot for both hands, away from the task. Set it once; every recording uses this same save zone.';v.detail='After each action: hold the ending, then return to the save rings. The return is trimmed from the recording.';b('set-save-position','Set save position · 3s');if(g.tutorial.save_position)b('cancel-save-position','Keep current position');else b('home','Back home');break;
- case 'setup-new':v.tag='CREATE · PREPARE';v.title='Define the starting setup';v.text=g.tutorial.setup||'Use the first recorded hand pose and an optional reference photo to show the setup. Add written details in the setup page when needed.';b('setup-ready',g.tutorial.setup?'Use this setup':'Use first pose as setup');b('home','Back home');break;
+ case 'setup-new':v.tag='CREATE · PREPARE';v.title='Define the starting setup';v.text=g.tutorial.setup||'Arrange the objects as the learner should start. The first recorded hand pose and optional photo will be the starting reference. You can explain the layout in your narration.';b('setup-ready',g.tutorial.setup?'Use this setup':'Use first pose as setup');b('home','Back home');break;
  case 'setup-follow':v.tag='FOLLOW · PREPARE';v.title=g.tutorial.title;v.text=g.tutorial.setup;b('setup-ready','Ready · place tutorial');b('home','Back home');break;
  case 'start':v.tag='PLACE · 1 / 2';v.title='Choose the origin';v.text='Mark where the recording’s origin belongs in this workspace. Hold your right index fingertip there during the countdown.';b('primary','Mark origin · 4s');b('home','Back home');break;
  case 'end':v.tag='PLACE · 2 / 2';v.title='Point along the workspace';v.text='Mark a second point to the right of the origin. It sets direction, not size. Any spacing from 20–120 cm works.';b('primary','Mark direction · 4s');b('redo-placement','Restart placement');break;
@@ -60,7 +62,7 @@ export function tutorialView(g){
 export function uiButtons(view){
  const buttons=view.buttons;
  const global=view.compact?[{id:'settings',label:'Settings',x:860,y:420,w:180,h:64}]:[{id:'settings',label:'Settings',x:736,y:20,w:140,h:48},{id:'exit',label:'Exit AR',x:892,y:20,w:148,h:48}];
- if(view.mode==='settings')global.splice(0,1);
+ if(['settings','media-wait'].includes(view.mode))global.splice(0,1);
  if(view.mode==='home')return buttons.map((b,i)=>({...b,x:i<2?40+i*508:40,y:i<2?224:460,w:i<2?492:1000,h:i<2?210:64,icon:i<2?(i?'library':'plus'):null})).concat(global);
  if(view.compact){const width=Math.min(248,(792-(buttons.length-1)*12)/Math.max(1,buttons.length));return buttons.map((b,i)=>({...b,x:40+i*(width+12),y:420,w:width,h:64})).concat(global);}
  const columns=buttons.length>6?3:2,rows=Math.ceil(buttons.length/columns),height=rows>2?55:64,gap=12,start=536-rows*(height+gap),width=(1000-(columns-1)*16)/columns;

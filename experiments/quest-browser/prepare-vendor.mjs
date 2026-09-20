@@ -20,3 +20,15 @@ for(const [name,expected]of Object.entries(manifest.files)){
 await mkdir(resolve(root,'public/vendor'),{recursive:true});
 for(const[name,data]of files)await writeFile(resolve(root,'public/vendor',name),data);
 console.log(`Prepared verified Three.js ${manifest.version} and MIT license from the workspace lockfile.`);
+
+for(const [name,expected] of Object.entries(manifest.addons||{})){
+ const data=await readFile(resolve(build,'../examples/jsm',name));
+ if(createHash('sha256').update(data).digest('hex')!==expected)throw Error(`Unexpected Three.js addon: ${name}`);
+ const code=data.toString().replaceAll("from 'three'","from '/vendor/three.module.js'").replaceAll("from '../utils/","from './");
+ await writeFile(resolve(root,'public/vendor',name.split('/').at(-1)),code);
+}
+const handManifest=JSON.parse(await readFile(resolve(root,'public/assets/hands/provenance.json'),'utf8'));
+for(const [name,expected] of Object.entries(handManifest.sha256)){
+ const data=await readFile(resolve(root,'public/assets/hands',name));
+ if(createHash('sha256').update(data).digest('hex')!==expected)throw Error(`Unexpected hand asset: ${name}`);
+}

@@ -18,7 +18,7 @@ export class TutorialGuide extends HandGuide {
   log(event,extra={}){super.log(event,{tutorial_id:this.tutorial?.id??null,revision:this.tutorial?.revision??null,...extra});}
   constructor(options) {
     super(options);
-    this.snapshot = options.snapshot;this.writeTutorial=options.writeTutorial||saveTutorial;
+    this.media=options.media;this.snapshot = options.snapshot;this.writeTutorial=options.writeTutorial||saveTutorial;
     this.narrator=options.narrator;this.audioPlayer=options.audioPlayer;this.saveTask=Promise.resolve();
     this.tutorial = newTutorial();this.alignmentEnabled=true;this.cleanSave=false;this.alignment=new PalmAlignment();this.endpoint=new CaptureEndpoint();this.savePositionCapture=new SavePositionCapture();
     this.saveQueue = Promise.resolve();this.appearance=preferences();this.feedback=new TutorialFeedback();this.onFeedback=options.onFeedback;applyAppearance(this.appearance);
@@ -97,10 +97,10 @@ export class TutorialGuide extends HandGuide {
     super.attach(scene);
     if (this.leftGhost) return;
     this.leftGhost = new HandGuide({speak:()=>{}, verify:()=>{}, exit:()=>{}});
-    this.leftGhost.attach(scene);this.enableHologram();this.leftGhost.enableHologram();
+    this.leftGhost.attach(scene);this.enableHologram();this.leftGhost.enableHologram(false,'left');
     this.liveHands={};this.zones={};
     for(const side of ['left','right']){
-      const live=new HandGuide({speak:()=>{},verify:()=>{},exit:()=>{}});live.attach(scene);live.enableHologram(true);this.liveHands[side]=live;
+      const live=new HandGuide({speak:()=>{},verify:()=>{},exit:()=>{}});live.attach(scene);live.enableHologram(true,side);this.liveHands[side]=live;
       const zone=new THREE.Group();zone.visible=false;this.space.add(zone);this.zones[side]=zone;
       const mat=new THREE.MeshBasicMaterial({color:0xffd47d,transparent:true,opacity:.45,side:THREE.DoubleSide,depthTest:false,depthWrite:false});
       for(let axis=0;axis<3;axis++){const ring=new THREE.Mesh(new THREE.RingGeometry(.118,.12,48),mat);if(axis===0)ring.rotation.x=Math.PI/2;if(axis===1)ring.rotation.y=Math.PI/2;zone.add(ring);}
@@ -119,6 +119,7 @@ export class TutorialGuide extends HandGuide {
     this.markers.forEach(m => m.children.filter(c=>c.isSprite).forEach(c=>c.visible=false));
   }
   reset() {
+    if(this.mediaPending){this.media?.cancel();this.mediaPending=false;}
     this.takeGeneration=(this.takeGeneration||0)+1;this.narrator?.cancel();this.audioPlayer?.stop();
     this.saveHomeWorld=null;this.saveReturn=null;this.savePositionCapture?.reset();
     this.takeNarrationIssue=null;this.alignment?.reset();this.endpoint?.reset();this.alignmentResult=null;this.hideAssistance();
@@ -173,7 +174,7 @@ export class TutorialGuide extends HandGuide {
   }
   handleUX(id){
     if(id==='settings'){
-      if(this.pending)return true;
+      if(this.pending||this.mediaPending)return true;
       if(this.mode==='capture'){this.mode='capture-paused';this.narrator?.pause();this.endpoint.interrupt();}
       this.settingsReturn=this.mode;this.gatePaused=true;this.followEngine?.pause();this.practice?.pause();if(this.player)this.player.paused=true;this.audioPlayer?.stop();this.mode='settings';return true;
     }
@@ -208,7 +209,19 @@ export class TutorialGuide extends HandGuide {
     }
     if(this.mode==='loading-library')return true;
     if(id==='create'){
-      this.reset();this.instructions=[];this.tutorial=newTutorial(`Tutorial ${new Date().toLocaleDateString()}`);this.intent='create';this.mode='save-home';this.cleanSave=true;this.persist();return true;
+      this.reset();this.instructions=[];this.tutorial=newTutorial(`Tutorial ${new Date().toLocaleDateString()}`);this.intent='create';this.mode=this.media?'media-setup':'save-home';this.cleanSave=true;this.persist();return true;
+    }
+    if(id==='media-enable'&&this.mode==='media-setup'){
+      this.mode='media-wait';this.mediaPending=true;const generation=this.takeGeneration;
+      this.mediaTask=this.media.enable().then(result=>{
+        if(generation!==this.takeGeneration||this.mode!=='media-wait'||!result)return;
+        this.mediaPending=false;this.captureCapabilities=result;this.mode='save-home';
+        this.notify('record',result.errors.length?'Continue with available features':'Narration and photos ready');
+        this.note=result.errors.length?'Some permissions were declined. Hand recording still works.':'Narration and photos are ready. Set your save position.';
+      }).catch(e=>{if(generation===this.takeGeneration&&this.mode==='media-wait'){this.mediaPending=false;this.mode='save-home';this.problem=`Capture setup unavailable: ${e.message}. Hand recording still works.`;}});return true;
+    }
+    if(id==='media-skip'&&['media-setup','media-wait'].includes(this.mode)){
+      this.media?.cancel();this.mediaPending=false;this.captureCapabilities={camera:false,microphone:false};this.mode='save-home';return true;
     }
     if(id==='library'){void this.openLibrary();return true;}
     if(id==='edit-current'){this.reset();this.intent='create';this.mode=this.tutorial.save_position?'setup-new':'save-home';this.cleanSave=true;return true;}
@@ -468,6 +481,8 @@ export class TutorialGuide extends HandGuide {
     this.currentHands={};
     for(const side of ['left','right']){this.hand=side;this.currentHands[side]=this.localJoints(this.sample(frame,session,reference));}
     this.hand='right';this.joints=this.currentHands.right;
+    const assetError=this.skinHand?.error||this.leftGhost.skinHand?.error;
+    if(assetError){this.problem='Hand visuals could not load. Exit AR and reload the page.';if(this.mode==='learn')this.gatePaused=true;}
     const now=performance.now();
     if(this.pending?.kind.startsWith('cue-')){
       if(now>this.pending.until-400){const p=this.currentHands.right?.[9]?.p;if(p)this.pending.samples.push([...p]);else this.pending.samples=[];}

@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader','--mute-audio']});try{
  const context=await browser.newContext({viewport:{width:1280,height:1100}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));await context.route('**/api/**',async r=>{assert.equal(r.request().method(),'GET');await r.fulfill({contentType:'application/json',body:'{"automatic":{"enabled":false}}'});});
- await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await page.getByRole('button',{name:'Create tutorial',exact:true}).click();
+ await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.getByRole('button',{name:'Create tutorial',exact:true}).click();
  await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#notice').textContent.includes('Describe the starting setup'));
  await page.locator('#setup-from-pose').check();await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#setup-status').textContent.includes('Setup saved'));
  const result=await page.evaluate(async()=>{
@@ -67,7 +67,7 @@ const assert=require('node:assert/strict');
   return {newSpacing:.75,originalScale:true,orderedFollow:true,trackingRecovery:true,libraryCount:library.length};
  });
  require('node:fs').writeFileSync('/tmp/trail-new-hud.png',Buffer.from((await page.evaluate(()=>window.trailNewHud)).split(',')[1],'base64'));
- await page.reload();await page.locator('[data-route=library]').first().click();await page.waitForFunction(()=>document.querySelectorAll('.library-item').length===2);
+ await page.reload();await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.locator('[data-route=library]').first().click();await page.waitForFunction(()=>document.querySelectorAll('.library-item').length===2);
  await page.screenshot({path:'/tmp/trail-library-new.png',fullPage:true});await page.locator('.library-item').filter({hasText:'Recorded movement test'}).getByRole('button',{name:'Follow tutorial'}).click();await page.waitForFunction(()=>document.querySelector('#launch-title').textContent.startsWith('Follow:'));
  await page.locator('[data-route=home]').click();await page.screenshot({path:'/tmp/trail-home-new.png',fullPage:true});
  await page.setViewportSize({width:375,height:950});await page.screenshot({path:'/tmp/trail-home-mobile.png',fullPage:true});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
@@ -79,7 +79,7 @@ const assert=require('node:assert/strict');
   const {syntheticTutorial}=await import('/tutorial-review.mjs');const old=syntheticTutorial();old.title='Existing device recording';
   await new Promise((resolve,reject)=>{const r=indexedDB.open('trail-tutorials',1);r.onupgradeneeded=()=>r.result.createObjectStore('drafts');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('drafts','readwrite');tx.objectStore('drafts').put(old,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});return old.id;
  });
- await migration.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await migration.locator('[data-route=library]').first().click();await migration.getByText('Existing device recording',{exact:true}).waitFor();
+ await migration.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await migration.locator('#browser-tools').evaluate(e=>e.open=true);await migration.locator('[data-route=library]').first().click();await migration.getByText('Existing device recording',{exact:true}).waitFor();
  assert.equal(await migration.evaluate(async()=>{const m=await import('/tutorial-store.mjs');return(await m.loadTutorial()).id;}),oldId);
  await migrationContext.close();
  assert.deepEqual(errors,[]);console.log('PASS new Trail workflow', {...result,authoring:true,oldLibraryMigration:true});

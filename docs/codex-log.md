@@ -1018,6 +1018,19 @@ Publication follow-up: the user requested pushing this cleanup and opening a PR.
 - Inspected generated ghost review and immersive transition images. No fresh Quest/human acceptance or paid provider calls. Local server 4345 serves the new files; Quest must leave AR and reload to receive them. No private recordings/runtime data are published.
 - Added `docs/web-practice-flow.md` and linked it from AGENTS.md with phase ownership, exact tuning values, event semantics, voice/OMNI/vision boundaries, known limitations and headset acceptance. Separate PR stacks on UI-base PR #23; no merge requested.
 
+### 2026-09-20 — Immersive launcher and continuous hand surfaces
+
+- Replaced the browser-first workflow with Trail → Enter the experience. Normal Create/Follow, optional capture preparation, save-position selection, placement, recording, review and practice operate inside AR. Existing browser editing/import/export remain in a collapsed recovery section. The first pose can provide starting-reference metadata without mandatory desktop typing.
+- Added sequential camera/microphone preparation with partial-denial and hands-only fallbacks, reuse of live resources, cancellation generations, session-end cleanup and a real XR exit-confirmation dispatch fix. Browser-controlled permission dialogs and simultaneous capture/XR still need Quest acceptance. No microphone/camera is requested merely by loading or entering the app.
+- Replaced tutorial/review joint spheres and rods with generic left/right skinned hands from Immersive Web input profiles at f4992299601614adbfefd398dc8e281556bb7444. Preserved MIT attribution and SHA256 provenance; vendored exact-locked Three.js loader/clone dependencies. The cyan rim material uses the original 25 joint poses underneath; no personalized anatomy, forearm, cloth occlusion or missing-tracking inference. Incomplete joint sets hide the skin.
+- `test-all.sh` passed 65 Node tests, 52 Python tests and all 11 browser workflows on the uncommitted worktree. New coverage loads/renders actual GLBs/shaders, hides joint geometry, preserves input poses, checks incomplete tracking, permission denial/cancellation, immersive preparation, initial browser layout and user-triggered XR request without capture prompts. `pnpm check` passed 361 tests, typechecks, builds and 130 static Quest GUID checks. Prior fixture validation and seven desktop workflows are reused because their inputs are unchanged. Existing Vite chunk-size warning remains.
+- Visually inspected desktop/mobile launchers and continuous hand renders; refreshed the user's local browser launcher. Server4345 serves these changes without paid API credentials. No fresh headset/human or provider test; Quest must exit AR and reload. Added `docs/web-immersive-entry.md` with source seams, provenance, integration boundaries and concrete hardware checks. Follow-up PR stacks on #24; no merge requested.
+
+### 2026-09-20 — Repair PR #25 permission-focus recovery
+
+- Reproduced preparation remaining in `media-wait` when a browser permission prompt causes XR focus loss: the shared UI epoch rejected its own in-flight capture result. Bound capture setup to the take/session generation instead, retaining cancellation and stale-session rejection. Settings cannot strand a pending prompt.
+- A synthetic Chromium regression failed before this repair and passed afterwards, covering focus interruption, settings, Hands only cancellation and exit/new-session isolation. Full stack reconciliation and the broader software gate follow separately; this test does not establish real Quest camera/microphone permission behavior.
+
 ### 2026-09-20 — Repair PR #17 review findings
 
 - **Scope:** User requested fixes for the three staff-review findings on PR #17 at `40514f5`. Created isolated `codex/pr17-review-fixes` from that revision; preserved the original checkout's Unity work.
@@ -1041,6 +1054,13 @@ Publication follow-up: the user requested pushing this cleanup and opening a PR.
 - **P2 fixed:** Added automatic movement-only completion events to the diagnostics allowlist; the integrated two-step browser run verifies both are exported and no physical confirmations are invented.
 - Automated validation: 68 Node cases, 52 Python cases and all 11 prototype Chromium workflows passed; the integrated two-step workflow was rerun after adding the diagnostics assertion. Reused PR #23's passing `pnpm check` (361 tests/typecheck/build/static scaffold), fixture validation and seven repository browser workflows because their inputs are unchanged. Hosted checks are assessed after push. No headset, live provider or native runtime acceptance was performed.
 - Staff verdict after repair: Approve with nits, 90/100 (correctness 94, trust/data 93, architecture 88, maintainability 86, tests/evidence 88, recovery 90, docs 92; weights 25/15/15/15/15/10/5). Broad tolerances and automatic movement transitions still require fresh Quest/human tuning; physical-result correctness remains explicitly unverified.
+
+### 2026-09-20 — Complete PR #25 staff review and stack reconciliation
+
+- Reviewed the complete `6d10bec` delta against its preview/practice base: launcher, actual XR action routing, sequential optional media, resource generations, skinned assets/pose mapping, local vendoring and tests. Merged PR #24's `44de6fd`, retaining the #17/#23 durable-save and required-hand fixes, the protected real Exit handler, and #24's short-excursion/diagnostics repairs. Preserved the immersive launcher and both activity histories.
+- **P1 fixed:** Permission-prompt focus loss no longer strands capture setup. Session replacement, Hands only and exit still reject late results. The new browser regression exercises those transitions; settings is unavailable while a request is pending.
+- Final prototype gate passed 70 Node cases, 52 Python cases and 13 synthetic Chromium workflows, including actual GLB/shader rendering, permission recovery, local IndexedDB failures and the two-step automatic practice flow. Inspected the generated skinned-hand and save-failure images. Reused PR #23's passing 361-test workspace gate, fixture validation and seven repository Chromium cases after confirming all their source/config inputs are unchanged; hosted checks are assessed separately on the pushed heads.
+- Staff verdict after repair: Approve with nits, 89/100 (correctness 92, trust/data 92, architecture 88, maintainability 86, tests/evidence 85, recovery 92, docs 92; weights 25/15/15/15/15/10/5). Fresh Quest camera/mic/XR permission concurrency, real skin pose/contrast and user comfort remain untested. No paid provider request or native runtime test was performed.
 
 ### 2026-09-20 — Align the main README with the WebXR product direction
 
@@ -1079,3 +1099,8 @@ Publication follow-up: the user requested pushing this cleanup and opening a PR.
 
 - Merged updated PR #23 at `029f696` into #24. Resolved follower/test conflicts by retaining preview-first practice, broad positional gates, retained turns, excursion checks and automatic movement-only transitions, while requiring fresh observed directional motion at every moving gate. Pause, stale time and tracking loss reset that evidence in both ordered and relaxed modes.
 - Parameterized the seven incoming movement regressions across both modes. The browser recovery scenario resumes after focus loss, rejects stationary hidden jumps, then succeeds after a fresh approach. All 23 focused follower/practice cases and the complete prototype suite passed: 82 Node cases, 52 Python cases and 11 synthetic browser workflows. Verified that workspace app/package/script/test/lock inputs match the validated #23 checkout, so its passing pnpm, fixture and seven desktop checks are reused; hosted CI is checked on the published head. Patch whitespace passed. No new native, live-provider or headset/human evidence.
+
+### 2026-09-20 — Catch PR #25 immersive entry up with practice
+
+- Merged its actual updated #24 base at `98fd8b1`, preserving immersive entry, permission recovery and holographic hand rendering. Inspected automatic README/browser-test merges; follower source and its regression file exactly match the validated #24 result.
+- Complete isolated prototype checks passed: 84 Node cases, 52 Python cases and 13 synthetic browser workflows. Reused #23's passing workspace, fixtures and seven desktop checks after confirming their inputs are unchanged. Patch whitespace passed; hosted checks are verified separately. No new native, provider or headset/human run.

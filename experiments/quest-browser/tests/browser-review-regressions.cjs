@@ -92,7 +92,7 @@ const assert=require('node:assert/strict');
       return {quotaFailure:true,retry:true,pendingSave:true,conflict:true,lateSave:true,requiredHandReview:true};
     });
     require('node:fs').writeFileSync('/tmp/trail-pr17-save-failure.png',Buffer.from((await page.evaluate(()=>window.saveFailurePreview)).split(',')[1],'base64'));
-    await page.reload();await page.locator('[data-route=library]').first().click();
+    await page.reload();await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.locator('[data-route=library]').first().click();
     const legacy=page.locator('.library-item').filter({hasText:'Legacy automatic hand choice'});
     await legacy.getByRole('button',{name:'Review draft'}).click();
     await page.locator('#guide-hands').selectOption('both');await page.locator('#reviewed').check();
