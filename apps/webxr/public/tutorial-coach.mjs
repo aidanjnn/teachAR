@@ -2,6 +2,7 @@
 // The coach only ever hears reviewed step text through the paired server; it never advances a step.
 export const GUIDE_MAP_KEY='trail-coach-guides';
 const MAX_TITLE=60,MAX_INSTRUCTION=240,MAX_NOTES=500,MAX_TUTORIAL_TITLE=120;
+export const CAPTION_GAP_MS=2500,LEARNER_TURN_MS=800;
 const uuid=()=>globalThis.crypto.randomUUID();
 const clip=(text,max)=>String(text??'').trim().slice(0,max);
 
@@ -38,18 +39,25 @@ function writeMap(storage,map){try{storage?.setItem(GUIDE_MAP_KEY,JSON.stringify
  */
 export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(input,init),storage=globalThis.localStorage,audioSink=null,tell=()=>{}}={}){
   let api=null,loaded=runtime,attemptId=null,epoch=0,captionAt=0,startGeneration=0,captionStreaming=false;
-  const state={mode:'idle',pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:'',tutorialId:null,tutorialRevision:null};
+  const state={mode:'idle',listenRequested:false,pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:'',tutorialId:null,tutorialRevision:null};
   const stateHandlers=new Set(),captionHandlers=new Set();
   const snapshot=()=>({...state});
   const emit=()=>{for(const h of stateHandlers)h(snapshot());};
-  // Live transcripts arrive as deltas: keep one growing caption per coach turn. A learner turn or a whole text answer starts a new one.
+  // Live transcripts arrive as deltas, and the learner's own words can interleave with them. One coach turn keeps growing
+  // while its deltas keep coming; a pause longer than a couple of seconds or a whole text answer starts a new caption.
   const caption=entry=>{
-    const text=String(entry.delta||'');
-    if(entry.role==='coach'){state.caption=captionStreaming&&!entry.source?state.caption+text:text;captionStreaming=!entry.source;captionAt=Date.now();}
-    else captionStreaming=false;
+    const text=String(entry.delta||''),now=Date.now();
+    if(entry.role==='coach'){const continues=captionStreaming&&!entry.source&&now-captionAt<CAPTION_GAP_MS;state.caption=continues?state.caption+text:text;captionStreaming=!entry.source;captionAt=now;}
+    // The learner's words trail their speech: a straggler within a second of a coach delta does not split the answer; a later question does.
+    else if(now-captionAt>=LEARNER_TURN_MS)captionStreaming=false;
     for(const h of captionHandlers)h(entry);
   };
-  async function load(){if(!loaded)loaded=await import('/vendor/trail-coach.js');return loaded;}
+  async function load(){
+    if(loaded)return loaded;
+    try{loaded=await import('/vendor/trail-coach.js');}
+    catch(e){throw Error(`Voice coach bundle failed to load (${e?.message||e}). Run pnpm --filter @trail/web build:tutor-coach and reload.`);}
+    return loaded;
+  }
 
   // The browser's mapping is a hint; the server is the truth. A wiped server or a republish from another device must not leave the coach ungrounded while the badge says otherwise.
   async function verifyGuide(id){
@@ -104,7 +112,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
     const context=coachContextFor(tutorial,guide,{runId:uuid(),attemptId,stepId:step.id,epoch});
     const created=rt.createCoach({context,fetchImpl,...(audioSink?{audioSink}:{})});
     api=created;
-    created.onState(s=>{if(api!==created)return;state.mode=s.mode;emit();});
+    created.onState(s=>{if(api!==created)return;state.mode=s.mode;state.listenRequested=!!s.listenRequested;emit();});
     created.onTranscript(entry=>{if(api!==created||entry.stale)return;caption(entry);});
     created.onAnswer(answer=>{if(api!==created)return;caption({role:'coach',delta:answer.answer,stepRevision:epoch,stale:false,source:answer.source||'text'});});
     created.onLiveError(error=>{if(api!==created)return;state.error=error.message;emit();tell(error.message);});
@@ -118,7 +126,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   function onAttempt(){if(!api)return;attemptId=uuid();api.setAttempt(attemptId);}
   function ask(){api?.ask();}
   function askText(question){return api?api.askText(question):Promise.resolve(null);}
-  function stop(){startGeneration++;if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}state.tutorialId=null;state.tutorialRevision=null;if(state.mode!=='idle'){state.mode='idle';emit();}}
+  function stop(){startGeneration++;if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}state.tutorialId=null;state.tutorialRevision=null;captionAt=0;captionStreaming=false;state.listenRequested=false;if(state.mode!=='idle'){state.mode='idle';emit();}}
   async function pair(code){
     const rt=await load();const result=await rt.pairBrowser(code,fetchImpl);
     if(result.ok){state.pairing='paired';state.role=result.role;state.reason=null;state.error=null;}else state.error=result.message;
@@ -127,7 +135,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   return {
     get state(){return snapshot();},get active(){return !!api;},
     // Cheap reads for the per-frame headset panel and the speech gate; no copy.
-    get mode(){return state.mode;},get caption(){return state.caption;},get captionAgeMs(){return captionAt?Date.now()-captionAt:Infinity;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
+    get mode(){return state.mode;},get listenRequested(){return state.listenRequested;},get caption(){return state.caption;},get captionAgeMs(){return captionAt?Date.now()-captionAt:Infinity;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
     start,stop,onStep,onAttempt,ask,askText,pair,
     onCaption(h){captionHandlers.add(h);return()=>captionHandlers.delete(h);},
     onState(h){stateHandlers.add(h);return()=>stateHandlers.delete(h);},
