@@ -89,7 +89,11 @@ export class TutorialGuide extends HandGuide {
     if(this.takeNarrationIssue){step.narration_issue=this.takeNarrationIssue;step.acceptance=null;}
     if(hasAudio)step.narration_issue='Narration is still finishing. Review this step if capture was interrupted.';
     const saveFailed=()=>{
-      if(generation!==this.takeGeneration||tutorial!==this.tutorial)return;
+      if(tutorial!==this.tutorial)return;
+      // Accepted media can fail after another take starts in the same tutorial.
+      const recording=['capture','capture-paused'].includes(this.mode)||this.pending?.kind==='record';
+      if(generation!==this.takeGeneration&&!recording)return;
+      if(this.pending?.kind==='record')this.pending=null;
       if(this.mode==='capture')this.mode='capture-paused';
       this.narrator?.pause();this.segmenter.interrupt();
       this.problem='Step is in memory but was not saved. Retry or export before leaving.';

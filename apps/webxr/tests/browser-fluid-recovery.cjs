@@ -6,7 +6,12 @@ const assert=require('node:assert/strict');
  try{
   const page=await browser.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.route('**/api/**',r=>r.fulfill({contentType:'application/json',body:'{}'}));
+  await page.route('**/api/**',r=>{
+   const path=new URL(r.request().url()).pathname;
+   const body=path.endsWith('/transcriptions')?{spans:[{text:'Move the block to the left.'}],source:'fixture'}:
+    path.endsWith('/labels')?{labels:[{stepId:r.request().postDataJSON().segments[0].id,title:'Move the block',instruction:'Move the block to the left.',needsReview:true}],provenance:{labels:'model',model:'mock'}}:{};
+   return r.fulfill({contentType:'application/json',body:JSON.stringify(body)});
+  });
   await page.goto(`${process.env.TRAIL_TEST_ORIGIN}/tutorial`);
   const result=await page.evaluate(async()=>{
    const THREE=await import('/vendor/three.module.js');
@@ -18,6 +23,7 @@ const assert=require('node:assert/strict');
    const failures=[],passed=[];
    const check=(ok,message)=>{if(!ok)throw Error(message);};
    const run=async(name,fn)=>{try{await fn();passed.push(name);}catch(e){failures.push(`${name}: ${e.message}`);}};
+   const waitFor=async predicate=>{for(let i=0;i<500;i++){if(predicate())return;await new Promise(r=>setTimeout(r,10));}throw Error('Browser action did not finish');};
    const make=(options={})=>{
     const g=new TutorialGuide({speak:()=>{},exit:()=>{},writeTutorial:async()=>{},...options});
     g.attach(new THREE.Scene());g.begin('home');g.start=[0,1,0];g.end=[.5,1,0];g.setWorkspace();
@@ -54,6 +60,33 @@ const assert=require('node:assert/strict');
     g.tutorial.steps=[];g.sealFluidSegment();await g.saveQueue.catch(()=>{});await new Promise(r=>setTimeout(r,0));
     const paused=g.mode==='capture-paused';resolveAudio(null);await Promise.all([...g.segmentJobs]);
     check(paused,'Capture kept running after the motion write failed');
+   });
+   for(const target of ['capture','countdown','home'])await run(`late audio save failure protects ${target} after resetting the take`,async()=>{
+    let resolveAudio,writes=0,pauses=0;
+    const narrator={take:{},finish(){this.take=null;return new Promise(r=>resolveAudio=r);},begin(){this.take={};},cancel(){this.take=null;},pause(){pauses++;}};
+    const g=make({narrator,writeTutorial:async()=>{if(++writes>1)throw Error('Disk full');}});narrator.take={};
+    const sample=structuredClone(g.frames[0]);g.tutorial.steps=[];const tutorial=g.tutorial;g.sealFluidSegment();await g.saveQueue;
+    g.action('home');g.action('home-discard');
+    const originalNow=performance.now;let time=originalNow.call(performance);
+    Object.defineProperty(performance,'now',{configurable:true,value:()=>time});
+    try{
+     if(target!=='home'){
+      g.action('edit-current');g.action('setup-ready');g.start=[0,1,0];g.end=[.5,1,0];g.setWorkspace();g.action('placement-ready');
+      g.sample=()=>sample[g.hand];g.action('primary');check(g.pending?.kind==='record','Resumed recording countdown did not start');
+      if(target==='capture'){time=g.pending.until+1;g.tick({},{visibilityState:'visible'},{},time);check(g.mode==='capture','Recording did not resume');}
+     }
+     const previousProblem=g.problem,pauseCount=pauses,frames=g.frames.length;
+     g.segmenter.progress=.5;
+     resolveAudio(encodeNarration(new Float32Array(AUDIO_RATE*3)));await Promise.all([...g.segmentJobs]);
+     check(g.tutorial===tutorial&&g.saveStatus==='failed'&&g.tutorial.steps[0].narration,'Failed final audio was not retained for retry/export');
+     if(target==='home')check(g.mode==='home'&&g.problem===previousProblem&&pauses===pauseCount,'Late failure changed the inactive Home screen');
+     else{
+      check(g.mode===(target==='capture'?'capture-paused':'author')&&!g.pending,'Failed save left resumed capture or countdown active');
+      check(pauses>pauseCount&&g.segmenter.progress===0&&g.problem.includes('Retry or export'),'Failed save did not pause narration, clear hold dwell and show recovery');
+      time+=4000;g.tick({},{visibilityState:'visible'},{},time);
+      check(g.frames.length===frames,'Capture added frames after storage failure');
+     }
+    }finally{Object.defineProperty(performance,'now',{configurable:true,value:originalNow});}
    });
    await run('narration startup failure remains a repairable draft',async()=>{
     const g=make();g.tutorial.steps=[];g.takeNarrationIssue='Microphone failed to start';g.sealFluidSegment(true);
@@ -136,6 +169,23 @@ const assert=require('node:assert/strict');
     const input=document.getElementById('guide-hands');input.value='right';input.dispatchEvent(new Event('change'));
     document.getElementById('save-step-edits').click();await new Promise(r=>setTimeout(r,20));
     check(!g.tutorial.steps[0].acceptance&&!authoringReadiness(g.tutorial).ready,'Changed required hands retained author acceptance');
+   });
+   for(const acceptance of ['hold','finish'])await run(`narrated instruction drafts invalidate ${acceptance} acceptance`,async()=>{
+    const g=make();g.endSession();g.tutorial.steps=g.tutorial.steps.slice(0,1);
+    const step=g.tutorial.steps[0];step.acceptance=acceptance;step.narration=encodeNarration(new Float32Array(AUDIO_RATE*3));
+    g.tutorial=finishTutorial(g.tutorial);mountReview(g,{isActive:()=>false,tell:()=>{}});
+    document.getElementById('draft-from-narration').click();
+    await waitFor(()=>document.querySelector('#narration-proposals button')?.textContent==='Apply to this step');
+    check(document.getElementById('narration-proposals').textContent.includes('flagged for review'),'Test draft must require review');
+    document.querySelector('#narration-proposals button').click();
+    await waitFor(()=>document.querySelector('#narration-proposals button')?.textContent==='Applied');
+    const edited=g.tutorial.steps[0];
+    check(edited.instruction==='Move the block to the left.'&&!edited.reviewed&&!edited.acceptance,'Applied draft retained obsolete capture acceptance');
+    check(!g.tutorial.completion&&!authoringReadiness(g.tutorial).ready,'Changed draft became ready without review');
+    let blocked=false;try{finishTutorial(g.tutorial);}catch{blocked=true;}check(blocked,'Finish accepted the unreviewed instruction');
+    document.getElementById('reviewed').checked=true;document.getElementById('save-step-edits').click();
+    await waitFor(()=>g.tutorial.steps[0].reviewed);
+    check(!!finishTutorial(g.tutorial).completion,'Explicit review could not finish the repaired tutorial');
    });
    return {passed,failures};
   });

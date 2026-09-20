@@ -142,7 +142,7 @@ export function mountReview(guide,{isActive,tell}){
         apply.onclick=()=>void report(async()=>{
           if(!current(proposal.stepId))throw Error('This recording changed after the draft was made. Draft again before applying.');
           const next=structuredClone(guide.tutorial),step=next.steps.find(s=>s.id===proposal.stepId);if(!step)throw Error('That step no longer exists.');
-          step.title=proposal.title.slice(0,60);step.instruction=proposal.instruction.slice(0,240);step.reviewed=false;next.revision++;
+          step.title=proposal.title.slice(0,60);step.instruction=proposal.instruction.slice(0,240);step.reviewed=false;step.acceptance=null;next.revision++;
           await replace(validateTutorial(next));select(next.steps.indexOf(step));status('Drafted text applied. Review the step before finishing.');apply.disabled=true;apply.textContent='Applied';
         });
         row.append(title,instruction,meta,apply);host.append(row);
