@@ -37,12 +37,12 @@ function writeMap(storage,map){try{storage?.setItem(GUIDE_MAP_KEY,JSON.stringify
  * it is loaded lazily from /vendor/trail-coach.js unless injected, so tests never touch the network or a microphone.
  */
 export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(input,init),storage=globalThis.localStorage,audioSink=null,tell=()=>{}}={}){
-  let api=null,loaded=runtime,attemptId=null,epoch=0;
+  let api=null,loaded=runtime,attemptId=null,epoch=0,captionAt=0;
   const state={mode:'idle',pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:'',tutorialId:null,tutorialRevision:null};
   const stateHandlers=new Set(),captionHandlers=new Set();
   const snapshot=()=>({...state});
   const emit=()=>{for(const h of stateHandlers)h(snapshot());};
-  const caption=entry=>{state.caption=entry.role==='coach'?String(entry.delta||''):state.caption;for(const h of captionHandlers)h(entry);emit();};
+  const caption=entry=>{if(entry.role==='coach'){state.caption=String(entry.delta||'');captionAt=Date.now();}for(const h of captionHandlers)h(entry);emit();};
   async function load(){if(!loaded)loaded=await import('/vendor/trail-coach.js');return loaded;}
 
   async function ensureGuide(tutorial){
@@ -97,7 +97,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   return {
     get state(){return snapshot();},get active(){return !!api;},
     // Cheap reads for the per-frame headset panel and the speech gate; no copy.
-    get mode(){return state.mode;},get caption(){return state.caption;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
+    get mode(){return state.mode;},get caption(){return state.caption;},get captionAgeMs(){return captionAt?Date.now()-captionAt:Infinity;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
     start,stop,onStep,onAttempt,ask,askText,pair,
     onCaption(h){captionHandlers.add(h);return()=>captionHandlers.delete(h);},
     onState(h){stateHandlers.add(h);return()=>stateHandlers.delete(h);},

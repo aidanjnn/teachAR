@@ -48,7 +48,7 @@ export function tutorialView(g){
   if(phase==='practice'){v.title=g.followEngine.state==='tracking'?'Show your hands again':g.followEngine.state==='reference-gap'?'Recording has tracking gaps':'Move at your own pace';v.detail='Follow the direction and broad checkpoints. You do not need to copy every motion.';}
   if(phase==='transition'){v.title=g.player.index+1<g.tutorial.steps.length?'Movement reached · next step':'Last movement reached';v.detail='No button needed. Physical result has not been checked.';}
  }
- if(g.mode==='learn'&&g.coach?.active&&g.coach.caption&&!g.watchOnly&&!g.gatePaused&&(!g.practice||g.practice.phase==='practice')&&!['tracking','reference-gap','checkpoint'].includes(g.followEngine?.state))v.detail=`Coach: ${g.coach.caption.slice(0,150)}`;
+ if(g.mode==='learn'&&g.coach?.active&&g.coach.caption&&g.coach.captionAgeMs<12000&&!g.watchOnly&&!g.gatePaused&&(!g.practice||g.practice.phase==='practice')&&!['tracking','reference-gap','checkpoint'].includes(g.followEngine?.state))v.detail=`Coach: ${g.coach.caption.slice(0,150)}`;
  if(g.mode==='finished'&&g.movementOnly){v.title='Movements finished';v.text='You followed the movement checkpoints. Check the physical result yourself; it has not been verified.';}
  if(g.problem){v.detail=g.problem;v.tone='warning';}
  if(g.mode==='learn'){const state=g.followEngine?.state;v.tone=state==='checkpoint'?'success':state==='tracking'||state==='reference-gap'||state==='waiting'&&g.followEngine?.started?'warning':null;v.progress=g.followEngine?g.followEngine.index/Math.max(1,g.followEngine.gates.length-1):null;if(state==='waiting'&&g.followEngine?.started&&!g.gatePaused)v.title='Continue toward the ghost';}

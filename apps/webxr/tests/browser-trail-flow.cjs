@@ -14,7 +14,7 @@ const assert=require('node:assert/strict');
   await saveTutorial(demo,draftVersion(await loadTutorial()));
   const g=new TutorialGuide({speak:()=>{},exit:()=>{}});g.persist=()=>Promise.resolve();g.tutorial=structuredClone(demo);g.attach(new THREE.Scene());g.begin('follow');
   const coachSteps=[];let asks=0,attempts=0,stops=0;
-  g.coach={active:true,mode:'text',caption:'Follow the current movement.',onStep:step=>coachSteps.push(step.id),onAttempt:()=>attempts++,ask:()=>asks++,stop:()=>stops++};
+  g.coach={active:true,mode:'text',caption:'Follow the current movement.',captionAgeMs:0,onStep:step=>coachSteps.push(step.id),onAttempt:()=>attempts++,ask:()=>asks++,stop:()=>stops++};
   let t=1000,data={};Object.defineProperty(performance,'now',{configurable:true,value:()=>t});g.sample=()=>data[g.hand];
   const hand=p=>Array.from({length:25},()=>({p:[...p],q:[0,0,0,1],radius:.007}));
   const session={visibilityState:'visible'},tick=(dt=40)=>{t+=dt;g.tick({},session,{},t);};
@@ -34,7 +34,11 @@ const assert=require('node:assert/strict');
   data=near(g.followEngine.target,1);for(let i=0;i<30;i++)tick();if(g.followEngine.started)fail('Far hands started guidance');
   g.action('primary');if(g.player.index!==0)fail('Unreached movement confirmed');
   while(g.practice.phase==='preview')tick();data=near(g.followEngine.target);for(let i=0;i<18;i++)tick();if(!g.followEngine.started)fail('Start hold failed');
+  g.action('coach-ask'); // Clear the earlier rejected-confirmation message through a real action.
+  if(!tutorialView(g).detail.startsWith('Coach:'))fail('Fresh coach caption missing during practice');
+  g.coach.captionAgeMs=12000;if(tutorialView(g).detail.startsWith('Coach:'))fail('Expired coach caption hid practice guidance');g.coach.captionAgeMs=0;
   const gate=g.followEngine.index;data={};for(let i=0;i<20;i++)tick();if(g.followEngine.index!==gate||g.followEngine.state!=='tracking')fail('Missing hands advanced');
+  if(tutorialView(g).detail.startsWith('Coach:'))fail('Coach caption hid tracking recovery');
   g.hide();session.visibilityState='visible';data=near(g.followEngine.target);tick();if(g.followEngine.index!==gate)fail('Visibility loss lost current gate');g.action('replay');
   for(let i=0;i<500&&!g.followEngine.done;i++){data=near(g.followEngine.target);tick();}
   if(!g.followEngine.done||g.player.index!==0)fail('Checkpoint or progression authority failed');

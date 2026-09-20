@@ -42,14 +42,14 @@ answers only from the published step text and never advances a step. On the revi
 **Draft titles from narration** sends each narrated step's WAV through the transcription and
 label routes and shows drafts to apply.
 
-Run the tutor from the API origin for this: from the repository root, `pnpm build`, then `pnpm dev:desktop` and
-`adb reverse tcp:3001 tcp:3001` and open `http://localhost:3001/tutorial` in Quest Browser
-(the API serves this folder's files and `/vendor/trail-coach.js`, built from `apps/web` by
-`prepare-vendor.mjs`). With `ALLOW_USB_LOOPBACK=true` and `PAIRING_ORIGINS=http://localhost:3001`
-the page asks for a pairing code; mint an author code from the desktop authoring page or use the
-bootstrap code in `data/<dir>/pairing.json`. Without pairing the coach uses the steps in this
-browser. Live voice needs `AI_PROVIDER=openai` on the server; the mock provider answers in text.
-Microphone, WebRTC and an immersive session together on the Quest are not yet verified.
+Run the tutor from the API origin for this: from the repository root, run `pnpm build` first, then `pnpm dev:desktop` with
+`ALLOW_USB_LOOPBACK=true PAIRING_ORIGINS=http://localhost:3001`, then `adb reverse tcp:3001 tcp:3001`
+and open `http://localhost:3001/tutorial` in Quest Browser. The API serves this folder's `public`
+files and `/vendor/trail-coach.js`, which `prepare-vendor.mjs` builds from `apps/web`. The page
+asks for a pairing code; mint an author code from the desktop authoring page or use the bootstrap
+code in `data/<dir>/pairing.json`. Without pairing the coach uses the steps in this browser. Live
+voice needs `AI_PROVIDER=openai` on the server; the mock provider answers in text. Microphone,
+WebRTC and an immersive session together on the Quest are not yet verified.
 
 ## What is included
 
