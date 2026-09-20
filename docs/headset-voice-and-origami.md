@@ -2,9 +2,9 @@
 
 ## What this delivery connects
 
-Main's PR #28 (`763676d`) supplies the shared GPT-Live coach, paired step-text grounding,
+Main's PR #28 supplies the shared GPT-Live coach, paired step-text grounding,
 narration transcription and label drafts. This branch brings that runtime together with
-the immersive entry/holographic hands and fluid-workspace UX from PRs #25/#29 under
+the merged immersive entry/holographic hands and fluid-workspace UX from PRs #25/#29 under
 `apps/webxr`. It adds natural spoken actions to the actual `TutorialGuide`, not a separate
 voice demo. Unity remains retired. No OMNI or visual grading was added.
 

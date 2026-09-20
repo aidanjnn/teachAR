@@ -1,6 +1,6 @@
 # Fluid recording, movable controls and immersive library
 
-Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practice](web-practice-flow.md). User-directed browser delivery; no Unity changes.
+Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practice](web-practice-flow.md). The active runtime is `apps/webxr` on the WebXR product foundation.
 
 ## Implemented user flow
 
@@ -28,7 +28,7 @@ Narration finishes asynchronously per segment while the next take begins. At mos
 
 ### Browser format change
 
-The existing browser v3 format accepts optional step `acceptance: "hold" | "finish" | null`. `reviewed` remains false for continuous captures: a deliberate recording hold is author acceptance, not replay review. Completion reports `expert-accepted; physical result unverified` when any step was not replay-reviewed. Imported values are validated; required-hand tracking/timestamp gaps and narration issues still block readiness. Gapped continuous segments remain drafts needing repair. Edits to layout, guide hands, cues/photos, narration, step order or trimmed motion invalidate acceptance and require review again. Old recordings remain readable; old clients do not understand this acceptance field and may require review. Native wire contracts are unchanged.
+The existing browser v3 format accepts optional step `acceptance: "hold" | "finish" | null`. `reviewed` remains false for continuous captures: a deliberate recording hold is author acceptance, not replay review. Completion reports `expert-accepted; physical result unverified` when any step was not replay-reviewed. Imported values are validated; required-hand tracking/timestamp gaps and narration issues still block readiness. Gapped continuous segments remain drafts needing repair. Edits to layout, guide hands, cues/photos, narration, step order or trimmed motion invalidate acceptance and require review again. Old recordings remain readable; old clients do not understand this acceptance field and may require review. Shared API wire contracts are unchanged.
 
 ## Quest boundary limitation
 
@@ -46,5 +46,7 @@ The app already requests `immersive-ar` with a **local** reference space, suitab
 `fluid-capture.mjs` owns deterministic hold detection and library filtering. `tutorial-guide.mjs` owns segment acceptance, storage and local progression. `spatial-controls.mjs` owns presentation dragging, timer and hold rings. `ar.js` owns session/input/keyboard lifetime. `tutorial-ui.mjs` owns matching render/hit rectangles. Voice/OMNI must route authorized actions through these seams; model replies must not directly advance movement or claim physical correctness.
 
 Software checks cover uninterrupted two-segment capture, no idle duplicates, storage rejection, acceptance export/trim invalidation, pause/tracking gaps, permission blur, search, and panel/timer dragging without changing calibration. Existing manual capture, narrated recording, review, import/export and learner progression regressions remain required.
+
+The [PR #29 review repairs](pr29-review.md) add nested Home/Exit protection, countdown cancellation during dragging, immediate pause on failed motion storage, and durable completion of previously accepted narration after the next take is discarded or XR ends. Opening another tutorial waits for accepted media; failed saves retain the current data for retry/export. Desktop instruction/hand edits invalidate capture acceptance, and narration startup errors remain drafts requiring repair. Page unload still cannot guarantee asynchronous media completion; wait for local saves before closing the page.
 
 Headset checklist: exit old AR, reload the same origin (`http://localhost:4345/tutorial` on the current dev setup), Enter → Create, choose hands-only or capture permissions, place the workspace, demonstrate two movements with deliberate endpoint holds, Finish, Home → Library → Follow. Try panel/timer dragging, Home mid-take, muting, search keyboard, tracking loss and deliberate off-path practice. Confirm narration boundaries and save cues by listening to replay. Verify comfort and actual tracking on Quest; synthetic browser tests do not establish those results.
