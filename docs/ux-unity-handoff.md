@@ -80,6 +80,16 @@ All paths below are under [experiments/quest-browser](../experiments/quest-brows
 | Review / trim / save / reload | `public/tutorial-review.mjs`, `tutorial-store.mjs` | `tests/browser-review.cjs`, `browser-tutorial.cjs` |
 | Fresh photo / advisory state | `public/camera-snapshot.mjs`, `tutorial-assist.mjs` | `tests/camera-snapshot.test.mjs`, `tutorial-assist.test.mjs`, `browser-camera-snapshot.cjs`, `browser-assistance.cjs` |
 
+## PR #19 review corrections
+
+PR #19 includes fixes for seven concrete review findings:
+application-root deactivation when hiding pairing, confirmation on touching-hand
+loss, queued coach output surviving a step change, reentrant coach shutdown on
+pairing expiry, recording-duration overflow, rejection of retained trailing markers,
+and browser save-success UI before IndexedDB commit. These corrections do not
+complete the open U1–U7 or physical acceptance checkboxes. Regression commands and
+validation results are recorded in [the activity log](codex-log.md).
+
 ## Explicitly unresolved after merge
 
 - General object detection, depth localization, object-relative retargeting, grasps and cloth deformation. The [offline detector spike](../experiments/model-spike/README.md) showed false positives and seconds-long CPU passes; it is not a live guidance dependency.

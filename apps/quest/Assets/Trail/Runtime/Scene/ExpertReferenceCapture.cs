@@ -68,7 +68,16 @@ namespace Trail.Runtime.Scene
                 if (effect.Kind == RecordingEffectKind.TakeArmed) ClearPending();
             if (!CaptureEnabled) return;
             if (transition.AdmitFrameAtMs.HasValue && observation != null)
-                samples.Admit(transition.AdmitFrameAtMs.Value, observation.TimestampMs);
+            {
+                // MotionClock uses Stopwatch's origin; camera delivery uses Unity startup time.
+                // Bracket the paired reads so a scheduling stall cannot masquerade as fresh alignment.
+                var before = Now;
+                var motionNow = capture.Clock();
+                var after = Now;
+                if (after >= before && after - before <= 5 &&
+                    ExpertReferenceSamples.TryMapMotionTime(observation.TimestampMs, motionNow, (before + after) / 2, out var deliveredSample))
+                    samples.Admit(transition.AdmitFrameAtMs.Value, deliveredSample);
+            }
             // Only stable endpoint samples; no frame from the return-to-save gesture is requested.
             if (transition.State.Phase != RecordingPhase.Recording || !transition.State.EndpointCandidateMs.HasValue ||
                 Math.Abs(transition.State.EndpointCandidateMs.Value - transition.State.TakeMs) > .001 ||

@@ -13,7 +13,14 @@ namespace Trail.Runtime.Network
         // typing an eight-digit code is not an acceptable entry path. The shell keeps this
         // hidden until Settings asks for it, and a tethered development build pairs itself
         // from a USB handoff instead. See DevelopmentPairing.
-        public void SetPanelVisible(bool visible) => gameObject.SetActive(visible);
+        public void SetPanelVisible(bool visible)
+        {
+            // This component belongs to the application root; only the canvas may be hidden.
+            if (panel != null) panel.gameObject.SetActive(visible);
+            enabled = visible;
+            if (hovered != null) hovered.Image.color = Idle;
+            hovered = null; dwell = 0; latched = false;
+        }
 
         private sealed class Key { public RectTransform Rect; public Image Image; public Action Press; }
         private readonly List<Key> keys = new List<Key>();

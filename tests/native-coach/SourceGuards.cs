@@ -6,9 +6,8 @@ using System.Text.RegularExpressions;
 namespace Trail.Tests.Coach
 {
     /// <summary>
-    /// Source-text guards for the parts this machine cannot compile. Unity is not installed here, so
-    /// NativeVoiceCoach.cs is never compiled or run; these checks constrain it statically instead. They are
-    /// explicitly weaker than compilation and prove nothing about runtime behaviour on a headset.
+    /// Static dependency and asset guards, independent of the separate adapter behavioral harness.
+    /// These checks alone prove nothing about runtime behaviour on a headset.
     /// </summary>
     public static class SourceGuards
     {

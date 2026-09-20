@@ -4,6 +4,7 @@ Run from the repository root with a .NET 8 SDK:
 
 ```sh
 dotnet run --project tests/native-coach/CoachHarness.csproj
+dotnet run --project tests/native-coach/AdapterHarness.csproj
 ```
 
 This compiles the **actual C#** pure coach session layer from
@@ -22,6 +23,10 @@ effect vocabulary, and strict rejection of malformed or oversized coach payloads
 
 Nothing about Unity compilation, an APK, microphone permission, a real WebRTC peer connection,
 a GPT Live session, audio quality, or a headset. `NativeVoiceCoach.cs` is a `MonoBehaviour`
-and is **never compiled here**; only static source guards constrain it. `UnityCoachTransport` and `UnityCoachMicrophone` implement native media separately.
-Unity `Trail.Tests.CoachRuntime` covers lifecycle with injected effects; actual
-permission, audio/ICE, duplex echo handling and simultaneous XR remain device gates.
+and is compiled separately by `AdapterHarness` against the actual pure guide and coach
+sources, with small engine/HTTP/audio boundary stubs. Its regression cases reject queued
+old-step replies, clear displayed answers on Repeat/Prepare, and safely handle synchronous
+pairing expiry during connect and context synchronization. These stubs do not validate Unity
+lifecycle delivery or native audio. `UnityCoachTransport` and `UnityCoachMicrophone` provide native implementations.
+Unity `Trail.Tests.CoachRuntime` adds injected-effect tests; actual permission,
+audio/ICE, echo handling and simultaneous XR remain device gates.

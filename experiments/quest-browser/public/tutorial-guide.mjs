@@ -43,9 +43,22 @@ export class TutorialGuide extends HandGuide {
     this.onChange?.();return this.saveQueue;
   }
   changed(){this.tutorial.revision++;this.tutorial.completion=null;this.epoch++;this.persist();}
-  finishAuthoring(){
-    try{this.tutorial=finishTutorial(this.tutorial);this.epoch++;this.persist();this.note='Tutorial finished. Reset the task and start learning.';this.speak(this.note);}
-    catch(e){this.problem=e.message;}
+  async finishAuthoring(){
+    let finished;
+    try{finished=finishTutorial(this.tutorial);}catch(e){this.problem=e.message;return;}
+    const epoch=++this.epoch;this.tutorial=finished;
+    try{
+      this.mode='saving-tutorial';this.problem='';
+      await this.persist();
+      if(this.epoch!==epoch)return;
+      this.mode=this.ux?'saved':'author';
+      this.note='Tutorial saved on this device. Reset the task and start learning.';this.speak(this.note);
+    }catch(e){
+      if(this.epoch!==epoch)return;
+      this.mode='save-failed';
+      this.problem=e.name==='DraftConflict'?e.message:'Local save failed. Retry, or exit AR and export before closing this page.';
+    }
+    this.onChange?.();
   }
   commitStep(step,index){
     if(this.takeNarrationIssue&&!step.narration_issue)step.narration_issue=this.takeNarrationIssue;
@@ -255,9 +268,10 @@ export class TutorialGuide extends HandGuide {
     } catch(e) { if(epoch===this.epoch){this.problem=e.message;this.log('photo_rejected',{reason:e.message});} }
   }
   action(id) {
-    this.problem='';
+    if(this.mode!=='save-failed')this.problem='';
     if(id==='exit'){this.exit();return;}
-    if(this.mode==='saving'){this.problem='Finishing local narration. Please wait.';return;}
+    if(this.mode==='saving'||this.mode==='saving-tutorial'){this.problem='Saving locally. Please wait.';return;}
+    if(this.mode==='save-failed'){if(id==='retry-save'||(!this.ux&&id==='primary'))this.finishTask=this.finishAuthoring();return;}
     if(this.ux&&this.handleUX(id))return;
     if(!this.workspace) {
       if(id==='primary'&&!this.pending) this.countdown(this.mode==='end'?'end':'start');
@@ -281,7 +295,7 @@ export class TutorialGuide extends HandGuide {
     }
     if(this.mode==='author') {
       if(id==='removeCue'){this.cleanSave=!this.cleanSave;this.note=this.cleanSave?'Clean save on: hold the end pose for one second, then return both hands to their starting positions for one second.':'Clean save off. Save step keeps the full take.';this.speak(this.note);return;}
-      if(id==='cue'){this.finishAuthoring();return;}
+      if(id==='cue'){this.finishTask=this.finishAuthoring();return;}
       if(id==='primary') {
         if(this.tutorial.steps.length>=MAX_STEPS&&this.replaceIndex==null){this.problem='Twelve-step limit reached. Download this tutorial.';return;}
         this.pending={kind:'record',until:performance.now()+3000};
@@ -295,7 +309,7 @@ export class TutorialGuide extends HandGuide {
     if(this.mode==='review-step') {
       if(id==='primary'){
         if(this.player.step.narration_issue){this.problem='Narration failed. Re-record this step or choose Use text instruction.';return;}
-        this.player.step.reviewed=true;this.log('step_reviewed',{step_id:this.player.step.id});this.changed();if(this.player.index<this.tutorial.steps.length-1){this.player.index++;this.player.replay();this.showStep();}else {this.mode='author';this.player=null;this.photoPanel.visible=false;this.note='Recordings reviewed. Save the tutorial, then reset the task and follow.';if(this.ux){this.finishAuthoring();if(this.tutorial.completion)this.mode='saved';}}}
+        this.player.step.reviewed=true;this.log('step_reviewed',{step_id:this.player.step.id});this.changed();if(this.player.index<this.tutorial.steps.length-1){this.player.index++;this.player.replay();this.showStep();}else {this.mode='author';this.player=null;this.photoPanel.visible=false;this.note='Recordings reviewed. Save the tutorial, then reset the task and follow.';if(this.ux){this.finishTask=this.finishAuthoring();}}}
       else if(id==='replay')this.player.replay();
       else if(id==='verify'){this.photoTarget=this.player.step;this.player.paused=true;this.pending={kind:'photo',until:performance.now()+3000};this.note='Photo in 3 seconds. Clear your hands and look at the result.';this.speak(this.note);}
       else if(id==='hand'){this.replaceIndex=this.player.index;this.mode='author';this.player=null;this.photoPanel.visible=false;this.action('primary');}
@@ -501,6 +515,8 @@ export class TutorialGuide extends HandGuide {
     }
     if(this.mode==='finished'){title='Tutorial self-confirmed';labels.clear='Back to authoring';labels.primary=labels.replay=labels.verify=labels.hand='—';}
     if(this.mode==='saving'){title='Saving narration…';text='Keep this page open while local audio finishes.';for(const key of Object.keys(labels))if(key!=='exit')labels[key]='—';}
+    if(this.mode==='saving-tutorial'){title='Saving tutorial…';text='Keep this page open until local storage confirms the save.';for(const key of Object.keys(labels))if(key!=='exit')labels[key]='—';}
+    if(this.mode==='save-failed'){title='Tutorial has not been saved';text=this.problem;for(const key of Object.keys(labels))if(key!=='exit')labels[key]='—';labels.primary='Retry save';}
     if(this.pending){title=`${this.pending.kind==='photo'?'PHOTO':this.pending.kind==='record'?'RECORD':this.pending.kind.startsWith('cue-')?'FOLD LINE':'MARK'} IN ${Math.ceil((this.pending.until-performance.now())/1000)}s`;text=this.note;}
     if(this.problem)text=this.problem;
     ctx.clearRect(0,0,1080,560);ctx.fillStyle='#10231f';ctx.fillRect(0,0,1080,560);

@@ -268,6 +268,34 @@ internal static class Program
         }
     }
 
+    private static void TrackingLossNeverConfirms()
+    {
+        var buttons = Panel();
+        var away = new Vector3(0, -.5f, 0);
+        ShellInteractionState Armed()
+        {
+            var s = ShellInteraction.Create();
+            for (var i = 0; i <= 12; i++) s = ShellInteraction.Observe(s, buttons,
+                new ShellTouchSample(i * 50, i, 1, "session", away, Vector3.Zero), i * 50);
+            Check(s.Touch == ShellTouch.Armed, "right hand armed before tracking loss");
+            return s;
+        }
+        foreach (var missing in new Vector3?[] { null, new Vector3(float.NaN, 0, 0) })
+        {
+            var lost = ShellInteraction.Observe(Armed(), buttons,
+                new ShellTouchSample(650, 13, 1, "session", away, missing), 650);
+            Check(lost.ConfirmedIndex < 0 && lost.Touch == ShellTouch.Idle,
+                "missing or invalid owner cancels even when the other hand remains tracked");
+        }
+        var takeover = ShellInteraction.Observe(Armed(), buttons,
+            new ShellTouchSample(650, 13, 1, "session", Vector3.Zero, null), 650);
+        Check(takeover.ConfirmedIndex < 0 && takeover.Touch == ShellTouch.Idle, "another hand cannot inherit dwell");
+        var disabled = Panel(); disabled[0] = new ShellButton("a", Vector3.Zero, false);
+        var changed = ShellInteraction.Observe(Armed(), disabled,
+            new ShellTouchSample(650, 13, 1, "session", away, away), 650);
+        Check(changed.ConfirmedIndex < 0, "disabling an armed control cannot confirm it");
+    }
+
     private static bool IsNavigation(ShellCommand command) =>
         command == ShellCommand.OpenCreate || command == ShellCommand.OpenFollow ||
         command == ShellCommand.OpenLibrary || command == ShellCommand.OpenSettings || command == ShellCommand.Back;
@@ -275,6 +303,8 @@ internal static class Program
     private static void Main()
     {
         Interaction();
+        TrackingLossNeverConfirms();
+        GuideConfirmationRegression.Run(Check);
         Routing();
         Console.WriteLine("PASS: " + checks + " real C# shell checks (actual ShellInteraction/ShellModel sources).");
         Console.WriteLine("Covers one touch/hold/withdraw confirm model and Create/Follow routing, role and availability rules.");

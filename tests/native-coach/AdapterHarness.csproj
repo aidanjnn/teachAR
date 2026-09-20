@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="CoachPure.csproj" />
+    <ProjectReference Include="../guide-harness/GuideRuntime.csproj" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Coach/NativeVoiceCoach.cs" />
+    <Compile Include="AdapterStubs.cs" />
+    <Compile Include="AdapterScenarios.cs" />
+  </ItemGroup>
+</Project>

@@ -2,7 +2,7 @@
   <!--
     The pure native coach session layer, compiled with no Unity, Meta, contracts or motion reference at all.
     The absence of those references is itself the purity proof: NativeVoiceCoach.cs is deliberately excluded
-    because it is a MonoBehaviour and cannot compile or run outside an installed Unity editor.
+    because engine/transport boundaries belong to the separate AdapterHarness project.
   -->
   <ItemGroup>
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Coach/CoachContext.cs" Link="CoachContext.cs" />

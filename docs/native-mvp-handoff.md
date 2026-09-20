@@ -73,7 +73,16 @@ foreach (var camera in rigRoot.GetComponentsInChildren<Camera>(true))
 rigRoot.SetActive(true);
 ```
 
-Hypotheses, in the order worth testing:
+**Subsequent PR #19 review finding:** `NativePairingPanel` lives on the application
+root, but its new `SetPanelVisible(false)` called `gameObject.SetActive(false)`.
+The shell calls that during initialization, disabling the root and its rig. The
+PR #19 correction changes visibility to the pairing canvas
+and disables only the panel's input component. A regression test checks the actual
+root/camera activation and connection lifetime. This is a concrete startup defect;
+a fresh headset run is still required to establish whether any rendering issue
+remains after its correction. The hypotheses below predate that finding.
+
+Hypotheses recorded at handoff:
 
 1. **`OVRManager` / `OVRPassthroughLayer` added while the GameObject is inactive.**
    Their `Awake`/`OnEnable` run only at `SetActive(true)`, after `isInsightPassthroughEnabled`

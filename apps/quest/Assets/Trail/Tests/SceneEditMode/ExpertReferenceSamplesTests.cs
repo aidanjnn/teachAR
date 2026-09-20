@@ -15,6 +15,29 @@ namespace Trail.Tests.Scene
             return new Recording { Frames = frames, DurationMs = times[times.Length - 1] };
         }
         [Test]
+        public void IndependentClockOriginsPreserveSampleAgeBeforeMatchingCameraDelivery()
+        {
+            const double stopwatchNow = 9000000000;
+            const double unityNow = 5000;
+            Assert.IsTrue(ExpertReferenceSamples.TryMapMotionTime(stopwatchNow - 37.5, stopwatchNow, unityNow, out var mapped));
+            Assert.AreEqual(37.5, unityNow - mapped, .000001, "mapping preserves the observation's age");
+            var samples = new ExpertReferenceSamples(); samples.Admit(200, mapped);
+            var image = Image(unityNow);
+            Assert.IsTrue(samples.Add(image), "large clock offsets no longer discard every real camera frame");
+            Assert.AreEqual(4962.5, image.SampleMonoMs, .000001);
+            Assert.AreEqual(200, samples.Select(Take(100, 200), 0, 201, out _).TakeMs);
+        }
+        [TestCase(1001, 1000, 5000)]
+        [TestCase(899, 1000, 5000)]
+        [TestCase(950, 1000, 20)]
+        [TestCase(double.NaN, 1000, 5000)]
+        [TestCase(950, double.PositiveInfinity, 5000)]
+        [TestCase(950, 1000, double.NaN)]
+        public void ClockMappingRejectsFutureStaleInvalidAndPreStartupSamples(double sample, double motionNow, double cameraNow)
+        {
+            Assert.IsFalse(ExpertReferenceSamples.TryMapMotionTime(sample, motionNow, cameraNow, out _));
+        }
+        [Test]
         public void TrimExcludesReturnGestureAndSelectsLatestRetainedEndpoint()
         {
             var samples = new ExpertReferenceSamples();

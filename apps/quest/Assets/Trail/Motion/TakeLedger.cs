@@ -21,6 +21,7 @@ namespace Trail.Motion
         public Recording Recording { get; }
         public AudioAsset Narration { get; }
         public NarrationTrim NarrationSource { get; }
+        // Null keeps the entire recording, including its final timestamp.
         public TakeTrim Trim { get; }
         public string DroppedNarrationReason { get; }
         internal TrimmedTake(Recording recording, AudioAsset narration, NarrationTrim source, TakeTrim trim, string droppedReason)
@@ -32,6 +33,7 @@ namespace Trail.Motion
         public Recording Recording { get; }
         public AudioAsset Narration { get; }
         public NarrationTrim NarrationSource { get; }
+        // Null keeps the entire recording, including its final timestamp.
         public TakeTrim Trim { get; }
         public string TrimReason { get; }
         internal RecordedTake(TrimmedTake trimmed, string trimReason)

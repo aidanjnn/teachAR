@@ -63,3 +63,10 @@ and end holds. It sends that portable recording through the real authenticated
 byte-upload, compile, review and finalize routes, then verifies repository restart.
 It removes its temporary files. The explicit review labels are synthetic/manual;
 this does not test narrated authoring, a model provider, Quest capture or a learner.
+
+Recording review regressions cover automatic full-take saving at the 120-second
+limit, an explicit full save containing a frame exactly at 120,000 ms, and markers
+between the final pose and the retained interval end. `RecordedTake.Trim` remains
+null for a full take; a half-open trimmed interval retains its timeline duration
+rather than shortening it to the last sampled pose. Rejected ledger admission now
+fails explicitly so adapters cannot silently drop samples.

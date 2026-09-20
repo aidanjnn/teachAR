@@ -58,6 +58,7 @@ namespace Trail.Runtime.Coach
         private double listenDeadline, connectDeadline;
         private bool outputGateClosed;
         private bool subscribed;
+        private bool releasing;
         private GuideContextRef bound;
 
         /// <summary>
@@ -270,9 +271,12 @@ namespace Trail.Runtime.Coach
             { EndSession("The guide changed run or revision. Prepare the coach again for it."); return; }
             if (!Session.Context.Contains(current.StepId))
             { EndSession("The guide moved to a step this coach context does not hold."); return; }
-            if (current.AttemptId != bound.AttemptId) Raise(CoachEvent.AttemptChanged(current.AttemptId));
+            // Invalidate before queued replies, never behind them. Watch runs outside dispatch.
+            if (current.AttemptId != bound.AttemptId || current.StepId != bound.StepId || current.StepRevision != bound.StepRevision)
+                LastAnswer = null;
+            if (current.AttemptId != bound.AttemptId) Session.Dispatch(CoachEvent.AttemptChanged(current.AttemptId));
             if (current.StepId != bound.StepId || current.StepRevision != bound.StepRevision)
-                Raise(CoachEvent.StepChanged(current.StepId, current.StepRevision));
+                Session.Dispatch(CoachEvent.StepChanged(current.StepId, current.StepRevision));
             bound = current;
         }
 
@@ -381,22 +385,28 @@ namespace Trail.Runtime.Coach
         /// <summary>Every exit path ends here. The microphone is freed first, before anything that can fail.</summary>
         private void ReleaseLive()
         {
-            generation++;
-            LearnerCaption = ""; CoachCaption = "";
-            listenDeadline = 0; connectDeadline = 0;
-            if (Microphone != null) Microphone.Release();
-            if (Transport != null)
+            if (releasing) return;
+            releasing = true;
+            try
             {
-                if (Transport.Open) { try { Transport.Send(CoachLiveEvents.Close(++eventSequence)); } catch (Exception) { /* already closed */ } }
-                // The audio sink outlives this conversation; never leave it muted for the next one.
-                Transport.Close();
-                Transport.SetOutputMuted(false);
+                generation++;
+                LearnerCaption = ""; CoachCaption = "";
+                listenDeadline = 0; connectDeadline = 0;
+                if (Microphone != null) Microphone.Release();
+                if (Transport != null)
+                {
+                    if (Transport.Open) { try { Transport.Send(CoachLiveEvents.Close(++eventSequence)); } catch (Exception) { /* already closed */ } }
+                    // The audio sink outlives this conversation; never leave it muted for the next one.
+                    Transport.Close();
+                    Transport.SetOutputMuted(false);
+                }
+                outputGateClosed = false;
+                var id = liveSessionId;
+                liveSessionId = null;
+                if (id != null && Connection != null && Connection.State == ConnectionState.Ready)
+                    Connection.Request("DELETE", "/api/live/sessions/" + id, null, (_, __) => { });
             }
-            outputGateClosed = false;
-            var id = liveSessionId;
-            liveSessionId = null;
-            if (id != null && Connection != null && Connection.State == ConnectionState.Ready)
-                Connection.Request("DELETE", "/api/live/sessions/" + id, null, (_, __) => { });
+            finally { releasing = false; }
         }
 
         private void Refuse(long status, string response)
@@ -411,6 +421,7 @@ namespace Trail.Runtime.Coach
         private void EndSession(string status)
         {
             listeningRequested = false; inspectionOnly = false; inspectionOutputInvalid = false; permissionSession = null; permissionGranted = false;
+            LastAnswer = null;
             var active = Session;
             if (active != null)
             {
@@ -444,8 +455,10 @@ namespace Trail.Runtime.Coach
         {
             VoiceIntentRevision++; listeningRequested = false;
             // The loaded guide is untouched by this; only the coach becomes explicitly unavailable.
-            // HTTP expiry can fire synchronously inside an effect. Release immediately,
-            // but queue the reducer event to avoid reentering an active transition.
+            // Request can revoke pairing synchronously from inside an effect. Release now,
+            // but let the current dispatch unwind before reducing the invalidation.
+            LastAnswer = null;
+            pending.Clear();
             ReleaseLive();
             Raise(CoachEvent.Of(CoachEventKind.BackendLost));
         }
