@@ -45,3 +45,5 @@ if(process.env.TRAIL_REBUILD_COACH==='1'||!(await readFile(coach).then(()=>true,
  }
 }
 console.log(await readFile(coach).then(()=>'Coach bundle ready at public/vendor/trail-coach.js.',()=>'Coach bundle absent; the voice coach card will report it.'));
+
+await import('./prepare-telemetry.mjs');

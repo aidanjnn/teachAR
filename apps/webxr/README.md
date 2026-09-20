@@ -16,7 +16,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-The first start creates a Python virtual environment and installs `requirements.txt`. `prepare-vendor.mjs` copies the exact locked Three.js 0.186.0 artifacts and MIT license from the workspace, checking their hashes. The same preparation verifies the local MIT-licensed skinned hand models and required Three.js addons. No CDN or separate JavaScript install is needed.
+The first start creates a Python virtual environment and installs `requirements.txt`. `prepare-vendor.mjs` copies the exact locked Three.js 0.186.0 artifacts and MIT license from the workspace, checking their hashes. The same preparation verifies the local MIT-licensed skinned hand models and required Three.js addons, and builds the pinned Sentry 10.75.0 browser SDK with its license. No CDN or separate JavaScript install is needed.
 
 Open **http://127.0.0.1:4321/tutorial**. Desktop can inspect the library/review UI; actual tracking/immersive sessions require the headset. Keep the server running. This is a loopback development server, not a production or authenticated multi-user service.
 
@@ -86,9 +86,20 @@ pnpm setup:webxr
 pnpm test:webxr
 ```
 
-The suite runs Node and Python unit tests plus eighteen browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
+The suite runs Node and Python unit tests plus synthetic browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data, disabled provider credentials and disabled external Sentry delivery, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
 
 Hosted CI runs this suite alongside the existing repository checks. Neither these tests nor `pnpm check` establish headset tracking accuracy or physical task success. The latest packaging result is in [the activity log](../../docs/codex-log.md).
+
+## Optional Sentry interaction diagnostics
+
+The tutorial includes a local diagnostic reconstruction of gesture delivery and
+step interruptions. Optional Sentry **Tracing + Logs + Session Replay** use the
+same bounded, sanitized observations. See [the sponsor walkthrough](../../docs/sentry.md)
+and [setup and evidence boundaries](../../docs/sentry-observability.md).
+The [environment template](.env.example) documents explicit opt-in variables.
+Both the Python tutor and Fastify's `/tutorial` route serve public browser config;
+the SDK monitors the browser. External telemetry defaults off, and telemetry
+failures leave local guidance available.
 
 ## Optional paid camera lab
 
