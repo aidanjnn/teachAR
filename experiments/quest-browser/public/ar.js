@@ -25,7 +25,7 @@ let status=null, statusAt=-Infinity, polling=false, busy=false, pendingCheck=0;
 let session=null, renderer=null, scene, camera, head, panel, texture, rayLines=[],panelNeedsPlace=true,panelSide=false;
 let xrSupported=false, trial=null, trialRunning=false, lastSpeech='', lastDraw='', hover='';
 let notice='', noticeUntil=0, referenceImage=null, referenceRevision=null, boxes=[], firstCorner=null;
-let frameTime=0, networkTime=0, remoteFrameId=0, handHudTime=-Infinity;
+let frameTime=0, networkTime=0, remoteFrameId=0, handHudTime=-Infinity, legacyStatusMissing=false;
 const raycaster=new THREE.Raycaster(), direction=new THREE.Vector3(0,0,-1);
 
 async function tutorialSnapshot() {
@@ -127,7 +127,10 @@ async function poll() {
     if(handsMode)$('readiness').textContent=status.capture?.has_reference?'Saved image reference available. Hand guidance works with or without the camera.':'Hand guidance is ready without a reference. Set up images only if you want final placement verification.';
     if(tutorialMode)$('readiness').textContent='Tutorial mode: both hands, local step photos, manual learner confirmation. No paid checks.';
     $('budget').textContent=`${status.calls||0}/${status.max_calls||100} paid attempts · $${(status.reserved_usd||0).toFixed(2)} of $${(status.budget_usd||2).toFixed(2)} allowance reserved. Exiting AR pauses checks.`;
-  } catch(e) { tell(`Server connection: ${e.message}`); }
+  } catch(e) {
+    // Served by the Trail API, the tutor has no camera-lab status endpoint; stop asking instead of overwriting every notice.
+    if(tutorialMode&&/Not Found|HTTP 404/i.test(e.message))legacyStatusMissing=true;else tell(`Server connection: ${e.message}`);
+  }
   finally { polling=false; update(); }
 }
 function beginTrial() {
@@ -330,7 +333,7 @@ async function enterAR() {
 function service(time) {
   if(!visible())return;
   if(time-frameTime>600){frameTime=time;void pump();}
-  if(time-networkTime>1000){networkTime=time;void poll();}
+  if(time-networkTime>1000&&!legacyStatusMissing){networkTime=time;void poll();}
   if(pendingCheck && performance.now()>=pendingCheck && !busy)void doManualCheck();
 }
 function drawReference() {
