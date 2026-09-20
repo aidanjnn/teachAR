@@ -35,7 +35,7 @@ async function storageWritable(dataDir: string): Promise<boolean> {
 
 export async function createApp(
   config: ServerConfig,
-  options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
+  options: { webRoot?: string; tutorRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
 ) {
   let resolveTutorial = options.resolveTutorial;
   const https = config.tls ? { cert: await readFile(config.tls.certFile), key: await readFile(config.tls.keyFile) } : null;
@@ -109,8 +109,14 @@ export async function createApp(
     ...(options.auth ? { auth: options.auth } : {}),
     ...(resolveTutorial ? { resolveTutorial } : {}),
   });
-  if (options.webRoot) {
-    await app.register(fastifyStatic, { root: options.webRoot, dotfiles: 'deny' });
+  // The desktop build wins on collisions; the browser tutor's files fill in behind it so both share this origin.
+  const roots = [options.webRoot, options.tutorRoot].filter((root): root is string => Boolean(root));
+  if (roots.length) {
+    await app.register(fastifyStatic, { root: roots, dotfiles: 'deny' });
+  }
+  if (options.tutorRoot) {
+    // The tutor's documented entry is /tutorial; the page itself is tutorial.html.
+    app.get('/tutorial', async (_request, reply) => reply.redirect('/tutorial.html'));
   }
   return app;
 }

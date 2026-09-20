@@ -50,11 +50,11 @@
 - Modify: `apps/server/src/main.ts` (compute `tutorRoot`, pass in dev and prod)
 - Test: `apps/server/test/static-tutor.test.ts`
 
-- [ ] **Step 1: Failing test:** `createApp(config, { tutorRoot: <temp dir with tutorial.html and x.mjs> })` serves `GET /tutorial.html` 200 with `text/html`, `GET /x.mjs` with a JavaScript content type, `GET /tutorial` 302 to `/tutorial.html`, and `GET /api/health` still works.
-- [ ] **Step 2: Implement.** `fastifyStatic` accepts `root: string[]`; pass `[webRoot, tutorRoot].filter(Boolean)`. Register when either is present. Add `app.get('/tutorial', (_r, reply) => reply.redirect('/tutorial.html'))` when `tutorRoot` is set.
-- [ ] **Step 3: `main.ts`:** `const tutorRoot = resolve(repositoryRoot, 'experiments/quest-browser/public')`, include when `existsSync`. Development mode now serves the tutor even though it skips `webRoot`.
+- [x] **Step 1: Failing test:** `createApp(config, { tutorRoot: <temp dir with tutorial.html and x.mjs> })` serves `GET /tutorial.html` 200 with `text/html`, `GET /x.mjs` with a JavaScript content type, `GET /tutorial` 302 to `/tutorial.html`, and `GET /api/health` still works.
+- [x] **Step 2: Implement.** `fastifyStatic` accepts `root: string[]`; pass `[webRoot, tutorRoot].filter(Boolean)`. Register when either is present. Add `app.get('/tutorial', (_r, reply) => reply.redirect('/tutorial.html'))` when `tutorRoot` is set.
+- [x] **Step 3: `main.ts`:** `const tutorRoot = resolve(repositoryRoot, 'experiments/quest-browser/public')`, include when `existsSync`. Development mode now serves the tutor even though it skips `webRoot`.
 - [ ] **Step 4: Green test, typecheck, and a manual check:** `pnpm dev` then `curl -I http://127.0.0.1:3001/tutorial.html`.
-- [ ] **Step 5: Commit:** `feat(server): serve the browser tutor from the main API origin`.
+- [x] **Step 5: Commit:** `feat(server): serve the browser tutor from the main API origin`.
 
 ### Task 3: Bundle the coach runtime for the tutor
 

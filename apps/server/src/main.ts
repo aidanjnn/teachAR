@@ -1,6 +1,6 @@
 import { createPairingAuthority } from './auth/pairing.js';
 import { writePairingBootstrap } from './auth/bootstrap.js';
-import { access } from 'node:fs/promises';
+import { access, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createApp } from './app.js';
 import { loadEnvironment, readConfig, repositoryRoot } from './config.js';
@@ -17,7 +17,10 @@ if (!development) {
 const origins = config.pairing.allowedOrigins.length ? config.pairing.allowedOrigins : config.pairing.allowUsbLoopback ? [`http://127.0.0.1:${config.port}`] : [];
 const auth = origins.length ? createPairingAuthority({ ...config.pairing, allowedOrigins: origins }) : undefined;
 if (auth) await writePairingBootstrap(auth, config.dataDir);
-const app = await createApp(config, { logger: true, ...(auth ? { auth } : {}), ...(development ? {} : { webRoot }) });
+// The Quest Browser tutor is plain static files; serving them here gives the headset one origin for pages, pairing and voice.
+const tutorRoot = resolve(repositoryRoot, 'experiments/quest-browser/public');
+const tutorAvailable = await stat(resolve(tutorRoot, 'tutorial.html')).then(() => true, () => false);
+const app = await createApp(config, { logger: true, ...(auth ? { auth } : {}), ...(development ? {} : { webRoot }), ...(tutorAvailable ? { tutorRoot } : {}) });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     void app.close().catch(() => { process.exitCode = 1; });
