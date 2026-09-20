@@ -1073,3 +1073,22 @@ The user heard “Test sequence observed” from the local regression browser: t
   device startup again reports root/rig/camera active and passthrough resumed.
   [Validation evidence](validation.md) records APK/source identity and synthetic
   versus device evidence. Actual wearer pinch/navigation confirmation is pending.
+
+### 2026-09-19 — Deliver the Quest repair and pinch input to existing PR #19
+
+- User requested pushing these changes to Hamza Ammar's existing PR #19. Preserved
+  the isolated worktree and original dirty checkout. Committed the repair/input
+  work as `24ae6de`, then incorporated the PR's newer `de74ae7` review repairs in
+  merge commit `d05b527`, preserving both histories and their regression tests.
+  Pairing conflict resolution retains component disabling plus full hidden-input
+  reset. Historical log entries remain intact.
+- Fresh combined-code gates passed: `pnpm check` (**352 tests**, builds/typechecks,
+  **166 GUIDs**), fixtures, **7/7** Chromium workflows, Unity **57/57 EditMode** and
+  **13/13 PlayMode**, and the Android ARM64/IL2CPP Development APK. Exact source,
+  report and APK identities are in [validation.md](validation.md). Inspected and
+  restored generated Unity settings noise; no package or motion contract changed.
+- Updated the handoff to mark the black-view defect resolved by the earlier
+  wearer observation. Delivery targets `codex/native-mvp-integration` on existing
+  PR #19 with an updated description. The combined APK has not been installed;
+  real hand-pinch navigation, physical transfer and live voice remain unverified.
+  This is PR publication, not a merge or full-demo acceptance.

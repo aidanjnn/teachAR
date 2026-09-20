@@ -4,8 +4,9 @@
 
 This run uses `codex/quest-black-screen-diagnosis`, based on PR #19 commit
 `bdfb757e9062d3170597d018a32c0762378babb5`, plus the uncommitted repair. The
-source patch and APK hashes are kept with the local build evidence. No commit,
-push, or merge was performed. See [the diagnosis](native-black-screen-diagnosis.md)
+source patch and APK hashes are kept with the local build evidence. At that
+stage, no commit, push, or merge had been performed; the later PR delivery is
+recorded separately below. See [the diagnosis](native-black-screen-diagnosis.md)
 for the failure path and rejected hypotheses.
 
 ### Toolchain and device
@@ -163,3 +164,39 @@ it without weakening the color assertion.
   the build.
 
 Wearer confirmation of actual point-and-pinch navigation is pending.
+
+## 2026-09-19 — Combined PR #19 delivery checks
+
+The user requested publication to existing PR #19. Commit
+`d05b5279cef8fda9744ff879e30264001a886ec3` combines this task's repair/input commit
+`24ae6de` with the PR's newer review-fix commit `de74ae7`. Both histories are
+preserved. Pairing visibility retains the review fix's component disabling and
+hover reset, plus the repair's entered-code reset and inactive-canvas guard.
+All code inputs below match that combined commit; only documentation changed
+subsequently. Unity's generated whitespace/empty-field changes were inspected
+and restored after the checks.
+
+Fresh automated results:
+
+- `pnpm check`: strict typechecks, **352/352 tests in 32 files**, production builds,
+  and **166** static native GUID checks passed.
+- `pnpm validate:fixtures`: passed. `pnpm test:e2e`: **7/7** Chromium workflows
+  passed with synthetic inputs and mocked providers.
+- Unity 6000.3.24f1 CLI: **57/57 EditMode** and **13/13 PlayMode** passed. XML reports
+  are `artifacts/quest/test-1263f4aa-60c2-423d-aa18-6565f9ff18dd/results.xml` and
+  `artifacts/quest/test-play-ab039bdb-f525-4a5c-9884-ddadbe1a049c/results.xml`.
+- Android ARM64/IL2CPP Development build passed, including startup-scene and APK
+  data-layout guards. APK:
+  `artifacts/quest/build-a6506903-459d-4add-9059-a6d47e19433b/Trail.apk`,
+  **103,293,737 bytes**, SHA-256
+  `d2516039d8a585663d3090147926a7ec37295f1b740e690bc6901b997cc07f61`.
+  Its current loose startup scene is present and no packed `data.unity3d` exists.
+- Delivery logs and nonprivate metadata remain local under
+  `artifacts/pr19-delivery-*`. Document links and patch whitespace passed.
+
+The combined APK has **not** been installed or tested on the headset. The earlier
+wearer-confirmed rendering recovery and subsequent installed pinch APK remain
+attributed to their exact pre-integration source patches above. Actual wearer
+confirmation of point-and-pinch navigation is still pending. No new live-provider
+or physical-transfer evidence is claimed. Earlier prototype, .NET and mutation
+results retain their own recorded revisions; they were not rerun in this delivery.
