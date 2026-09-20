@@ -193,7 +193,8 @@ internal static class Program
             "a tutorial already on the device preloads with no server");
         Check(!Can(library0, ShellCommand.RefreshLibrary, unpairedLibrary),
             "refreshing the shared library still requires pairing");
-        Check(Can(create, ShellCommand.DiscardTake, taken), "a take can be discarded");
+        Check(!Can(create, ShellCommand.DiscardTake, taken), "saved takes are preserved; discard applies to the in-progress take");
+        Check(Can(create, ShellCommand.DiscardTake, recording), "the first in-progress take can be discarded");
         Check(!Can(create, ShellCommand.UploadLastCapture, Author(savePositionSet: true)), "there is nothing to upload without a take");
 
         // Follow: progression controls track the reducer's own phase, never the shell's wishes.

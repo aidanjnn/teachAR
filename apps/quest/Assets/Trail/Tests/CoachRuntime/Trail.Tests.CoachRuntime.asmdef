@@ -1,0 +1,6 @@
+{
+  "name": "Trail.Tests.CoachRuntime",
+  "references": ["Trail.Contracts", "Trail.Motion", "Trail.Runtime", "Trail.Presentation", "Trail.Guide", "Trail.Coach", "Trail.Scene"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}

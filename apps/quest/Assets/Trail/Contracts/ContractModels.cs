@@ -6,6 +6,96 @@ using System.Numerics;
 
 namespace Trail.Contracts
 {
+    public sealed class AuthoredCapture
+    {
+        public int SchemaVersion { get; set; }
+        public Recording Recording { get; set; }
+        public TakeAuthoringMetadata Authoring { get; set; }
+    }
+    public sealed class Recording
+    {
+        public int SchemaVersion { get; set; }
+        public string Id { get; set; }
+        public string CoordinateFrame { get; set; }
+        public WorkspaceDefinition Workspace { get; set; }
+        public string[] JointOrder { get; set; }
+        public int NominalSampleHz { get; set; }
+        public double DurationMs { get; set; }
+        public MotionFrame[] Frames { get; set; }
+        public StepMarker[] Markers { get; set; }
+        public AudioAsset Audio { get; set; }
+        public string Source { get; set; }
+    }
+    public sealed class WorkspaceDefinition
+    {
+        public string Id { get; set; }
+        public int Version { get; set; }
+        public double WidthM { get; set; }
+        public double DepthM { get; set; }
+        public CalibrationMarks CalibrationMarksM { get; set; }
+        public string LayoutId { get; set; }
+        public string DominantHand { get; set; }
+        public string CalibrationMethod { get; set; }
+    }
+    public sealed class CalibrationMarks
+    {
+        public Vector3 A { get; set; }
+        public Vector3 B { get; set; }
+        public Vector3 C { get; set; }
+        public Vector3 D { get; set; }
+    }
+    public sealed class MotionFrame
+    {
+        public double TMs { get; set; }
+        public HandSamples Hands { get; set; }
+        public CanonicalPose? Head { get; set; }
+    }
+    public sealed class HandSamples
+    {
+        public HandSample Left { get; set; }
+        public HandSample Right { get; set; }
+    }
+    public sealed class HandSample
+    {
+        public string Status { get; set; }
+        public string Reason { get; set; }
+        public Dictionary<string, CanonicalPose> Joints { get; set; }
+    }
+    public sealed class StepMarker
+    {
+        public string Id { get; set; }
+        public double TMs { get; set; }
+        public string Kind { get; set; }
+        public string Source { get; set; }
+    }
+    public sealed class AudioAsset
+    {
+        public string AssetId { get; set; }
+        public string MimeType { get; set; }
+        public double DurationMs { get; set; }
+        public double AudioStartOffsetMs { get; set; }
+        public string SyncMethod { get; set; }
+        public double? EstimatedSyncErrorMs { get; set; }
+    }
+    public sealed class TakeAuthoringMetadata
+    {
+        public int SchemaVersion { get; set; }
+        public string TutorialId { get; set; }
+        public int TakeIndex { get; set; }
+        public TakeAuthoringMetadataSavePosition SavePosition { get; set; }
+        public TakeAuthoringMetadataTrim Trim { get; set; }
+        public string TrimReason { get; set; }
+    }
+    public sealed class TakeAuthoringMetadataSavePosition
+    {
+        public Vector3 LeftM { get; set; }
+        public Vector3 RightM { get; set; }
+    }
+    public sealed class TakeAuthoringMetadataTrim
+    {
+        public double StartMs { get; set; }
+        public double EndMsExclusive { get; set; }
+    }
     public sealed class CalibrationV2
     {
         public int SchemaVersion { get; set; }
@@ -48,40 +138,6 @@ namespace Trail.Contracts
         public StepMarker[] Markers { get; set; }
         public AudioAsset Audio { get; set; }
         public string Source { get; set; }
-    }
-    public sealed class WorkspaceDefinition
-    {
-        public string Id { get; set; }
-        public int Version { get; set; }
-        public double WidthM { get; set; }
-        public double DepthM { get; set; }
-        public CalibrationMarks CalibrationMarksM { get; set; }
-        public string LayoutId { get; set; }
-        public string DominantHand { get; set; }
-        public string CalibrationMethod { get; set; }
-    }
-    public sealed class CalibrationMarks
-    {
-        public Vector3 A { get; set; }
-        public Vector3 B { get; set; }
-        public Vector3 C { get; set; }
-        public Vector3 D { get; set; }
-    }
-    public sealed class StepMarker
-    {
-        public string Id { get; set; }
-        public double TMs { get; set; }
-        public string Kind { get; set; }
-        public string Source { get; set; }
-    }
-    public sealed class AudioAsset
-    {
-        public string AssetId { get; set; }
-        public string MimeType { get; set; }
-        public double DurationMs { get; set; }
-        public double AudioStartOffsetMs { get; set; }
-        public string SyncMethod { get; set; }
-        public double? EstimatedSyncErrorMs { get; set; }
     }
     public sealed class FinalizeRecordingRequest
     {
@@ -135,12 +191,6 @@ namespace Trail.Contracts
         public string Left { get; set; }
         public string Right { get; set; }
     }
-    public sealed class HandSample
-    {
-        public string Status { get; set; }
-        public string Reason { get; set; }
-        public Dictionary<string, CanonicalPose> Joints { get; set; }
-    }
     public sealed class HandTarget
     {
         public string Side { get; set; }
@@ -189,17 +239,6 @@ namespace Trail.Contracts
         public MotionFrame[] Frames { get; set; }
         public string Sha256 { get; set; }
     }
-    public sealed class MotionFrame
-    {
-        public double TMs { get; set; }
-        public HandSamples Hands { get; set; }
-        public CanonicalPose? Head { get; set; }
-    }
-    public sealed class HandSamples
-    {
-        public HandSample Left { get; set; }
-        public HandSample Right { get; set; }
-    }
     public sealed class NativeCaptureSidecar
     {
         public int SchemaVersion { get; set; }
@@ -214,20 +253,6 @@ namespace Trail.Contracts
         public string AdapterVersion { get; set; }
         public ClockMapping Clock { get; set; }
         public string ConfidencePolicy { get; set; }
-        public string Source { get; set; }
-    }
-    public sealed class Recording
-    {
-        public int SchemaVersion { get; set; }
-        public string Id { get; set; }
-        public string CoordinateFrame { get; set; }
-        public WorkspaceDefinition Workspace { get; set; }
-        public string[] JointOrder { get; set; }
-        public int NominalSampleHz { get; set; }
-        public double DurationMs { get; set; }
-        public MotionFrame[] Frames { get; set; }
-        public StepMarker[] Markers { get; set; }
-        public AudioAsset Audio { get; set; }
         public string Source { get; set; }
     }
     public sealed class RecordingByteChunk

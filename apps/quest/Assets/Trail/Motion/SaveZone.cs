@@ -57,7 +57,7 @@ namespace Trail.Motion
         public TakeTrim(double startMs, double endMsExclusive)
         {
             if (!GuideValidation.Finite(startMs) || !GuideValidation.Finite(endMsExclusive) ||
-                startMs < 0 || endMsExclusive <= startMs || endMsExclusive > 120000)
+                startMs < 0 || endMsExclusive <= startMs || endMsExclusive > 120001)
                 throw new ArgumentException("Trim must be a bounded half-open take interval.");
             StartMs = startMs; EndMsExclusive = endMsExclusive;
         }

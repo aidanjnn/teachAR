@@ -45,7 +45,12 @@ save('transforms',{cases:[
   {name:'rotated-y-90',pose:pose(1,0,0),referenceFromWorkspace:{positionM:[1,2,3],orientationXyzw:[0,q,0,q]},expected:{positionM:[1,2,2],orientationXyzw:[0,q,0,q]}},
   {name:'rotated-z-90',pose:pose(1,0,0),referenceFromWorkspace:{positionM:[0,0,0],orientationXyzw:[0,0,q,q]},expected:{positionM:[0,1,0],orientationXyzw:[0,0,q,q]}},
 ],basisCases:[{pose:{positionM:[1,2,3],orientationXyzw:[q,0,0,q]},expected:{positionM:[1,2,-3],orientationXyzw:[-q,0,0,q]}}]});
-const valid: [string,string][]=[['Recording','recording'],['Tutorial','tutorial'],['TutorialDraftEdit','draft-edit'],['GuideEvent','guide-event'],['GuideEvent','guide-tracking'],['GuideEvent','guide-completed'],['GuideEvent','guide-ended'],['NativeCaptureSidecar','native-sidecar'],['CalibrationV2','calibration-v2'],['SceneReferenceManifest','scene-references'],['InspectionRequest','inspection-request'],['SceneObservation','scene-observation'],['InspectionResult','inspection-result'],['CreateRecordingRequest','create-recording'],['MotionChunk','motion-chunk'],['FinalizeRecordingRequest','finalize-recording'],['TutorialJobCreate','tutorial-job-create'],['TutorialFinalize','tutorial-finalize'],['ReferenceEdit','reference-edit'],['ReferenceImageUpload','reference-image-upload'],['SpectatorState','spectator-state'],['SpectatorState','spectator-connected'],['TutorialLabelBatch','tutorial-label-batch'],['RecordingByteChunk','recording-byte-chunk']];
+const authoring = { schemaVersion: 1, tutorialId: 'synthetic-tutorial', takeIndex: 0,
+  savePosition: { leftM: [0,0,0], rightM: [0.2,0,0] },
+  trim: { startMs: 0, endMsExclusive: 101 }, trimReason: 'explicit-stop' };
+save('take-authoring', authoring);
+save('authored-capture', { schemaVersion: 1, recording, authoring });
+const valid: [string,string][]=[['TakeAuthoringMetadata','take-authoring'],['AuthoredCapture','authored-capture'],['Recording','recording'],['Tutorial','tutorial'],['TutorialDraftEdit','draft-edit'],['GuideEvent','guide-event'],['GuideEvent','guide-tracking'],['GuideEvent','guide-completed'],['GuideEvent','guide-ended'],['NativeCaptureSidecar','native-sidecar'],['CalibrationV2','calibration-v2'],['SceneReferenceManifest','scene-references'],['InspectionRequest','inspection-request'],['SceneObservation','scene-observation'],['InspectionResult','inspection-result'],['CreateRecordingRequest','create-recording'],['MotionChunk','motion-chunk'],['FinalizeRecordingRequest','finalize-recording'],['TutorialJobCreate','tutorial-job-create'],['TutorialFinalize','tutorial-finalize'],['ReferenceEdit','reference-edit'],['ReferenceImageUpload','reference-image-upload'],['SpectatorState','spectator-state'],['SpectatorState','spectator-connected'],['TutorialLabelBatch','tutorial-label-batch'],['RecordingByteChunk','recording-byte-chunk']];
 type Case={name:string;contract:string;file?:string;valid:boolean;patches?:{path:(string|number)[];value?:unknown;remove?:boolean}[];json?:string};
 const cases:Case[]=valid.map(([contract,file])=>({name:`valid ${file}`,contract,file:`${file}.json`,valid:true}));
 function bad(contract:string,file:string,name:string,path:(string|number)[],value?:unknown,remove=false){cases.push({name,contract,file:`${file}.json`,valid:false,patches:[{path,...(remove?{remove:true}:{value})}]});}
@@ -119,4 +124,10 @@ for (const [name,path,value] of [
 bad('Recording','recording','native audio cannot silently widen v1',['audio'],{...audio,syncMethod:'unity-dsp-clock-map'});
 bad('Recording','recording','audio offset limit',['audio'],{...audio,audioStartOffsetMs:5001});
 bad('Recording','recording','audio blob URL',['audio'],{...audio,assetId:'blob:test'});
+bad('TakeAuthoringMetadata','take-authoring','save position out of workspace bounds',['savePosition','leftM',0],11);
+bad('TakeAuthoringMetadata','take-authoring','reversed take trim',['trim','startMs'],102);
+bad('TakeAuthoringMetadata','take-authoring','empty take trim',['trim','startMs'],101);
+bad('TakeAuthoringMetadata','take-authoring','unsupported authoring version',['schemaVersion'],2);
+bad('TakeAuthoringMetadata','take-authoring','negative take index',['takeIndex'],-1);
+bad('AuthoredCapture','authored-capture','motion reaches excluded trim boundary',['authoring','trim','endMsExclusive'],100);
 save('corpus',{cases});

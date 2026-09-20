@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "tutorialId": "synthetic-tutorial",
+  "takeIndex": 0,
+  "savePosition": {
+    "leftM": [
+      0,
+      0,
+      0
+    ],
+    "rightM": [
+      0.2,
+      0,
+      0
+    ]
+  },
+  "trim": {
+    "startMs": 0,
+    "endMsExclusive": 101
+  },
+  "trimReason": "explicit-stop"
+}

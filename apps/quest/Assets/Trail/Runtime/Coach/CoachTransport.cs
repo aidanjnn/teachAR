@@ -21,8 +21,7 @@ namespace Trail.Runtime.Coach
     /// Narrow live-audio transport. The offer is relayed through the paired Trail server, which holds the
     /// provider credential; this client never talks to a provider directly and never sees a provider key.
     ///
-    /// NOT IMPLEMENTED in this repository: no Unity/Meta WebRTC package is installed or resolvable here, so no
-    /// production implementation of this interface exists and none of it is headset-verified.
+    /// UnityCoachTransport implements this with the pinned native WebRTC package; headset validation remains required.
     /// </summary>
     public interface ICoachTransport
     {

@@ -48,3 +48,18 @@ hand source. This avoids importing unrelated Meta sample media while exercising
 source behavior. Full project import, shader/prefab validation, platform rig and
 Android/IL2CPP remain separate gates. The runner records a nonempty passing XML
 result or fails; source hashes accompany each result.
+
+## Native export through desktop review
+
+With Node 22, pnpm dependencies/shared builds and .NET 8 available, run:
+
+```sh
+pnpm build:shared
+pnpm exec tsx tests/native-capture/export-roundtrip.ts
+```
+
+This runs the actual C# ledger to export three synthetic actions with stable start
+and end holds. It sends that portable recording through the real authenticated
+byte-upload, compile, review and finalize routes, then verifies repository restart.
+It removes its temporary files. The explicit review labels are synthetic/manual;
+this does not test narrated authoring, a model provider, Quest capture or a learner.

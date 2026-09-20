@@ -4,7 +4,7 @@ import * as contracts from '../src/index.js';
 // shared valid/invalid fixtures, and compatibility notes. Authoring envelopes are
 // covered by the same corpus; generated DTOs do not imply native UI consumers.
 export const NATIVE_SCHEMA_NAMES = [
-  'JointName', 'Side', 'Vec3', 'Quat', 'Pose', 'HandSample', 'MotionFrame', 'WorkspaceDefinition', 'Recording',
+  'TakeAuthoringMetadata', 'AuthoredCapture', 'JointName', 'Side', 'Vec3', 'Quat', 'Pose', 'HandSample', 'MotionFrame', 'WorkspaceDefinition', 'Recording',
   'MotionGate', 'HandTarget', 'TutorialStep', 'TutorialProvenance', 'Tutorial', 'TutorialDraftStep', 'TutorialDraftEdit', 'CompletionMode',
   'GuideContextRef', 'GuideSnapshot', 'GuideEvent', 'CalibrationV2', 'ClockMapping', 'NativeCaptureSidecar',
   'SceneSource', 'StepSceneReference', 'SceneReferenceManifest', 'InspectionRequest', 'SceneObservation', 'CoachAssessment', 'InspectionResult',

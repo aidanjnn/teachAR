@@ -205,9 +205,10 @@ namespace Trail.Runtime.Storage
         {
             lock (gate) foreach (var folder in Directory.GetDirectories(root, ".pending-*")) Directory.Delete(folder, true);
         }
-        public string SaveCapture(Recording recording)
+        public string SaveCapture(Recording recording, TakeAuthoringMetadata authoring = null)
         {
-            var bytes = Encoding.UTF8.GetBytes(ContractJson.SerializeRecording(recording));
+            var bytes = Encoding.UTF8.GetBytes(authoring == null ? ContractJson.SerializeRecording(recording) :
+                ContractJson.SerializeAuthoredCapture(new AuthoredCapture { SchemaVersion = 1, Recording = recording, Authoring = authoring }));
             if (bytes.Length > MaximumRecordingBytes) throw new IOException("Recording exceeds local limit");
             lock (gate)
             {
@@ -220,18 +221,49 @@ namespace Trail.Runtime.Storage
             }
         }
         /// <summary>The most recently saved private capture, or null when none survives; unreadable files are skipped.</summary>
-        public Recording LoadLatestCapture()
+        public Recording LoadLatestCapture() => LoadLatestCapture(out _);
+        public Recording LoadLatestCapture(out TakeAuthoringMetadata authoring)
         {
+            authoring = null;
             lock (gate)
             {
                 var files = Directory.GetFiles(root, "capture-*.json");
                 Array.Sort(files, (a, b) => File.GetLastWriteTimeUtc(b).CompareTo(File.GetLastWriteTimeUtc(a)));
                 foreach (var file in files)
                 {
-                    try { return ContractJson.ParseRecording(new UTF8Encoding(false, true).GetString(ReadBounded(file, MaximumRecordingBytes))); }
+                    try
+                    {
+                        var json = new UTF8Encoding(false, true).GetString(ReadBounded(file, MaximumRecordingBytes));
+                        try
+                        {
+                            var capture = ContractJson.ParseAuthoredCapture(json);
+                            authoring = capture.Authoring; return capture.Recording;
+                        }
+                        catch (ContractException) { return ContractJson.ParseRecording(json); }
+                    }
                     catch (Exception) { }
                 }
                 return null;
+            }
+        }
+        public AuthoredCapture[] LoadAuthoredTakes(string tutorialId)
+        {
+            lock (gate)
+            {
+                var files = Directory.GetFiles(root, "capture-*.json");
+                Array.Sort(files, (a, b) => File.GetLastWriteTimeUtc(b).CompareTo(File.GetLastWriteTimeUtc(a)));
+                var byIndex = new SortedDictionary<int, AuthoredCapture>();
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        var capture = ContractJson.ParseAuthoredCapture(new UTF8Encoding(false, true).GetString(ReadBounded(file, MaximumRecordingBytes)));
+                        if (capture.Authoring.TutorialId == tutorialId && !byIndex.ContainsKey(capture.Authoring.TakeIndex))
+                            byIndex.Add(capture.Authoring.TakeIndex, capture);
+                    }
+                    catch (Exception) { }
+                }
+                var result = new AuthoredCapture[byIndex.Count]; byIndex.Values.CopyTo(result, 0); return result;
             }
         }
         private static PreloadedTutorial Validate(byte[] tutorialJson, byte[] recordingJson, string expectedHash)

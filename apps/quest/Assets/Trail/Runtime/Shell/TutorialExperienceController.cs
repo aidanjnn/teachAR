@@ -27,12 +27,6 @@ namespace Trail.Runtime.Shell
         public NativeStorageFeature Storage;
         public NativeApiConnection Connection;
 
-        // Authoring save-zone hooks. The capture feature assigns these once save-zone
-        // authoring is installed; until then Create truthfully reports no save position,
-        // which blocks recording rather than inventing a workspace point.
-        public Func<bool> SavePositionSet = () => false;
-        public Action SetSavePosition, ChangeSavePosition, DiscardTake;
-
         public ShellRoute Route => state.Route;
         public string Notice { get; private set; } = "";
 
@@ -104,7 +98,7 @@ namespace Trail.Runtime.Shell
                 isAuthor: Connection != null && Connection.Role == "author",
                 calibrated: Capture != null && Capture.Registration != null,
                 handsTracked: tracked,
-                savePositionSet: SavePositionSet != null && SavePositionSet(),
+                savePositionSet: Capture != null && Capture.SavePositionSet,
                 isRecording: Capture != null && Capture.IsRecording,
                 hasLastTake: Capture != null && Capture.LastRecording != null,
                 guideLoaded: session != null,
@@ -113,7 +107,9 @@ namespace Trail.Runtime.Shell
                     phase == GuidePhase.Holding || phase == GuidePhase.TrackingLost || phase == GuidePhase.Showing,
                 guidePaused: phase == GuidePhase.Paused,
                 guideUserConfirmed: step != null && step.CompletionMode == GuideCompletionMode.UserConfirmed,
-                libraryHasEntries: Storage != null && Storage.HasReadyGuides);
+                libraryHasEntries: Storage != null && Storage.HasReadyGuides,
+                recordingPaused: Capture != null && Capture.Authoring.Phase == RecordingPhase.Paused,
+                choosingSavePosition: Capture != null && Capture.Authoring.Phase == RecordingPhase.ChoosingSaveZone);
         }
 
         private void Update()
@@ -124,7 +120,7 @@ namespace Trail.Runtime.Shell
             Notice = view.Notice;
             title.text = view.Title;
             // The reducer's own status stays visible underneath; the shell never restates progress itself.
-            notice.text = view.Notice + (Guide != null && Guide.Session != null ? "\n" + Guide.Status : "");
+            notice.text = view.Notice + (state.Route == ShellRoute.Create && Storage != null ? "\n" + Storage.Status : "") + (Capture != null && (state.Route == ShellRoute.Create || state.Route == ShellRoute.Settings) ? "\n" + Capture.Status : "") + (Guide != null && Guide.Session != null ? "\n" + Guide.Status : "");
             for (var i = 0; i < Capacity; i++)
             {
                 var present = i < view.Entries.Count;
@@ -187,9 +183,14 @@ namespace Trail.Runtime.Shell
             state = next;
             switch (command)
             {
-                case ShellCommand.SetSavePosition: if (SetSavePosition != null) SetSavePosition(); break;
-                case ShellCommand.ChangeSavePosition: if (ChangeSavePosition != null) ChangeSavePosition(); break;
-                case ShellCommand.DiscardTake: if (DiscardTake != null) DiscardTake(); break;
+                case ShellCommand.SetSavePosition: Capture?.BeginSavePosition(); break;
+                case ShellCommand.ChangeSavePosition: Capture?.BeginSavePosition(); break;
+                case ShellCommand.DiscardTake: Capture?.DiscardRecording(); break;
+                case ShellCommand.PauseRecording: Capture?.PauseRecording(); break;
+                case ShellCommand.ResumeRecording: Capture?.ResumeRecording(); break;
+                case ShellCommand.ReRecordTake: if (Capture != null) Capture.ReRecordTake(Capture.Authoring.LastTakeIndex); break;
+                case ShellCommand.NewTutorial: Capture?.NewTutorial(); break;
+                case ShellCommand.CancelSavePosition: Capture?.CancelSavePosition(); break;
                 case ShellCommand.StartRecording: if (Capture != null) Capture.StartRecording(120000); break;
                 case ShellCommand.StopRecording: if (Capture != null) Capture.StopRecording(); break;
                 case ShellCommand.Calibrate: if (Capture != null) Capture.BeginCalibration(); break;

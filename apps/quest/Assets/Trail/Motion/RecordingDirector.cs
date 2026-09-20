@@ -215,7 +215,7 @@ namespace Trail.Motion
                         if (!left.HasValue || !right.HasValue) { s.Notice = "Show both hands to begin recording."; break; }
                         s.Phase = RecordingPhase.Recording; s.TakeMs = 0; s.FrameCount = 0;
                         s.LastFrameMs = double.NegativeInfinity; s.Armed = false; ClearEndpoint();
-                        Emit(RecordingEffectKind.TakeStarted, "Recording. Perform the action, hold the finished pose, then return both hands to the save position.");
+                        Emit(RecordingEffectKind.TakeStarted, "Recording. Hold the starting pose briefly, perform the action, hold the finished pose, then return both hands to the save position.");
                     }
                     else s.TakeMs += delta;
                     if (s.TakeMs - s.LastFrameMs >= policy.FramePeriodMs)

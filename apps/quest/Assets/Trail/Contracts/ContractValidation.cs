@@ -60,6 +60,18 @@ namespace Trail.Contracts
         private static bool SamePosition(Vector3 a, Vector3 b) => Math.Abs(a.X-b.X) <= 0.000001 && Math.Abs(a.Y-b.Y) <= 0.000001 && Math.Abs(a.Z-b.Z) <= 0.000001;
         private static bool SamePose(CanonicalPose a, CanonicalPose b) => SamePosition(a.PositionM, b.PositionM) &&
             Math.Min(Vector4.Distance(new Vector4(a.OrientationXyzw.X,a.OrientationXyzw.Y,a.OrientationXyzw.Z,a.OrientationXyzw.W), new Vector4(b.OrientationXyzw.X,b.OrientationXyzw.Y,b.OrientationXyzw.Z,b.OrientationXyzw.W)), Vector4.Distance(new Vector4(a.OrientationXyzw.X,a.OrientationXyzw.Y,a.OrientationXyzw.Z,a.OrientationXyzw.W), -new Vector4(b.OrientationXyzw.X,b.OrientationXyzw.Y,b.OrientationXyzw.Z,b.OrientationXyzw.W))) <= 0.0001;
+        public static void Validate(TakeAuthoringMetadata value)
+        {
+            foreach (var position in new[] { value.SavePosition.LeftM, value.SavePosition.RightM })
+                Require(Math.Abs(position.X) <= 10 && Math.Abs(position.Y) <= 10 && Math.Abs(position.Z) <= 10,
+                    "Save position must lie within 10 m of the workspace origin");
+            Require(value.Trim.EndMsExclusive > value.Trim.StartMs, "Trim must be a nonempty half-open interval");
+        }
+        public static void Validate(AuthoredCapture value)
+        {
+            Require(value.Recording.DurationMs < value.Authoring.Trim.EndMsExclusive - value.Authoring.Trim.StartMs,
+                "Motion must fit inside the retained half-open interval");
+        }
         public static void ValidateTutorialRecording(Tutorial tutorial, Recording recording, string recordingHash)
         {
             // Validate constructed DTOs as well as parsed DTOs. Callers may use object initializers.

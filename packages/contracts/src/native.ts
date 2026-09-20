@@ -32,3 +32,25 @@ export function parseNativeSidecarForRecording(input: unknown, recordingInput: R
   if (sidecar.recordingId !== recording.id || sidecar.recordingHash !== HashSchema.parse(recordingHash) || sidecar.source !== recording.source) throw new Error('Native sidecar recording/hash/source mismatch');
   return sidecar;
 }
+
+/** Local authoring envelope. Motion remains v1; legacy bare recordings still import. */
+export const TakeAuthoringMetadataSchema = z.strictObject({
+  schemaVersion: z.literal(1), tutorialId: IdSchema,
+  takeIndex: z.number().int().min(0).max(127),
+  savePosition: z.strictObject({ leftM: Vec3Schema, rightM: Vec3Schema }),
+  trim: z.strictObject({ startMs: z.number().min(0).max(120_000), endMsExclusive: z.number().positive().max(120_001) }),
+  trimReason: z.enum(['endpoint-hold', 'endpoint-hold-return', 'explicit-stop']),
+}).superRefine((value, ctx) => {
+  if ([...value.savePosition.leftM, ...value.savePosition.rightM].some(v => Math.abs(v) > 10))
+    ctx.addIssue({ code: 'custom', message: 'Save position must lie within 10 m of the workspace origin' });
+  if (value.trim.endMsExclusive <= value.trim.startMs)
+    ctx.addIssue({ code: 'custom', message: 'Trim must be a nonempty half-open interval' });
+});
+export const AuthoredCaptureSchema = z.strictObject({
+  schemaVersion: z.literal(1), recording: RecordingSchema, authoring: TakeAuthoringMetadataSchema,
+}).superRefine((value, ctx) => {
+  if (value.recording.durationMs >= value.authoring.trim.endMsExclusive - value.authoring.trim.startMs)
+    ctx.addIssue({ code: 'custom', message: 'Motion must fit inside the retained half-open interval' });
+});
+export type TakeAuthoringMetadata = z.infer<typeof TakeAuthoringMetadataSchema>;
+export type AuthoredCapture = z.infer<typeof AuthoredCaptureSchema>;

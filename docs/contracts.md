@@ -228,3 +228,35 @@ C# remains pure and AOT-safe, without Unity, provider, file or network dependenc
 clients treat unknown codes as a failed request). `LiveStepUpdate` is the client's
 step/attempt report for an open live session; `MAX_COACH_STEPS` now equals the
 tutorial step limit so coach numbering matches the tutorial.
+
+
+## Native take authoring envelope v1
+
+`AuthoredCapture` stores the unchanged portable v1 `Recording` with versioned
+`TakeAuthoringMetadata`. The private cache writes this envelope atomically in the
+existing capture file, so motion cannot be restored with another take's metadata.
+Metadata identifies the tutorial and take slot, the deliberately chosen workspace
+palm positions, the half-open source-take trim interval and its reason. Zero is a
+valid save-position coordinate. Save positions are bounded to 10 m from the origin;
+unknown versions, extra fields, empty/reversed intervals and motion reaching the
+excluded end are rejected by both Zod and generated C# with semantic validation.
+
+Legacy bare capture files still load, with absent authoring metadata; no save
+position is invented for them. Restoring authored actions requires contiguous take
+slots with matching workspace/source and starts uncalibrated. The newest durable
+revision of each slot wins, so a discarded replacement does not erase the prior
+saved action. Explicit New tutorial clears in-memory authoring without deleting
+previous private files.
+
+Trim time is the reducer's active-take timeline, excluding countdown, pause and
+stall time. Full-take end may be 120001 ms (one exclusive sentinel beyond a legal
+120000 ms final frame); recording duration remains bounded at 120000 ms. The old
+`NativeCaptureSidecar` has only one clock offset and cannot describe pause removal.
+The runtime refuses that sidecar for paused takes; synchronized narration needs a
+piecewise audio-to-take clock mapping and actual byte trimming, still separate work.
+
+Desktop submission assembles committed actions into one v1 motion recording with
+explicit expert-control start/end markers for each take. Combined duration/frame
+limits are validated rather than truncating later actions. The authoring envelope
+is local metadata; the current server upload still receives portable motion, not
+this envelope. The native client still requires desktop step review and publication.

@@ -1,12 +1,14 @@
 import { z } from 'zod';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { InspectionCancelSchema, InspectionUploadSchema, parseContractJson } from '@trail/contracts';
+import type { LiveSessionRegistry } from '../ai/live-sessions.js';
 import { InspectionCoordinator } from './coordinator.js';
 import { InspectionError } from './inspection-client.js';
 
 export interface InspectionRoutesOptions {
   authorizeLearner(request: FastifyRequest): { sessionId: string };
   coordinator: InspectionCoordinator;
+  liveSessions?: LiveSessionRegistry;
 }
 export async function registerInspectionRoutes(app: FastifyInstance, options: InspectionRoutesOptions): Promise<void> {
   // Encapsulation keeps auth/error handlers restricted to this module.
@@ -47,6 +49,15 @@ export async function registerInspectionRoutes(app: FastifyInstance, options: In
       reply.raw.once('close', closed);
       try { return await options.coordinator.upload(principals.get(request)!, parsed.data); }
       finally { reply.raw.removeListener('close', closed); }
+    });
+    routes.post('/api/inspections/:requestId/speak', { bodyLimit: 2048 }, (request, reply) => {
+      const body = z.strictObject({ requestEpoch: z.number().int().min(1).max(2147483647),
+        liveSessionId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), generation: z.number().int().min(0).max(2147483647) }).safeParse(request.body);
+      const id = z.string().min(1).max(128).safeParse((request.params as Record<string, unknown>).requestId);
+      if (!body.success || !id.success) throw new InspectionError('invalid-input');
+      options.coordinator.speak(principals.get(request)!, id.data, body.data.requestEpoch,
+        result => options.liveSessions?.speakInspection(body.data.liveSessionId, body.data.generation, result, principals.get(request)!) ?? false);
+      return reply.code(204).send();
     });
     routes.delete('/api/inspections/:requestId', async (request, reply) => {
       const query = request.query as Record<string, unknown>;

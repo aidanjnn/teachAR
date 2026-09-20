@@ -17,7 +17,7 @@ namespace Trail.Runtime.Shell
         Calibrate, SampleMark, RecenterWorkspace,
         PreloadSelected, NextGuide, RefreshLibrary, UploadLastCapture,
         StartStep, Repeat, Pause, Resume, ConfirmStep,
-        ToggleDiagnostics
+        ToggleDiagnostics, PauseRecording, ResumeRecording, ReRecordTake, NewTutorial, CancelSavePosition
     }
 
     /// <summary>
@@ -34,6 +34,8 @@ namespace Trail.Runtime.Shell
         public bool SavePositionSet { get; }
         public bool IsRecording { get; }
         public bool HasLastTake { get; }
+        public bool RecordingPaused { get; }
+        public bool ChoosingSavePosition { get; }
         public bool GuideLoaded { get; }
         public bool GuideAwaitingExplicitStart { get; }
         public bool GuideActive { get; }
@@ -44,13 +46,13 @@ namespace Trail.Runtime.Shell
             bool handsTracked = false, bool savePositionSet = false, bool isRecording = false,
             bool hasLastTake = false, bool guideLoaded = false, bool guideAwaitingExplicitStart = false,
             bool guideActive = false, bool guidePaused = false, bool guideUserConfirmed = false,
-            bool libraryHasEntries = false)
+            bool libraryHasEntries = false, bool recordingPaused = false, bool choosingSavePosition = false)
         {
             Paired = paired; IsAuthor = isAuthor; Calibrated = calibrated; HandsTracked = handsTracked;
             SavePositionSet = savePositionSet; IsRecording = isRecording; HasLastTake = hasLastTake;
             GuideLoaded = guideLoaded; GuideAwaitingExplicitStart = guideAwaitingExplicitStart;
             GuideActive = guideActive; GuidePaused = guidePaused; GuideUserConfirmed = guideUserConfirmed;
-            LibraryHasEntries = libraryHasEntries;
+            LibraryHasEntries = libraryHasEntries; RecordingPaused = recordingPaused; ChoosingSavePosition = choosingSavePosition;
         }
     }
 
@@ -127,13 +129,23 @@ namespace Trail.Runtime.Shell
                         ? "Rest both palms where every recording should start, then Set save position."
                         : c.IsRecording ? "Recording. Return both palms to the save position to finish."
                         : "Save position kept for this tutorial. Record the next action.";
-                    Add(ShellCommand.SetSavePosition, "Set save position");
-                    Add(ShellCommand.ChangeSavePosition, "Change save position");
-                    Add(ShellCommand.StartRecording, "Record action");
-                    Add(ShellCommand.StopRecording, "Stop recording");
-                    Add(ShellCommand.DiscardTake, "Discard take");
-                    Add(ShellCommand.UploadLastCapture, "Send for review");
-                    // Local takes are saved to private storage whether or not a server exists.
+                    if (c.ChoosingSavePosition) Add(ShellCommand.CancelSavePosition, "Cancel save position");
+                    else if (c.IsRecording)
+                    {
+                        Add(c.RecordingPaused ? ShellCommand.ResumeRecording : ShellCommand.PauseRecording,
+                            c.RecordingPaused ? "Resume recording" : "Pause recording");
+                        Add(ShellCommand.StopRecording, "Stop and keep full take");
+                        Add(ShellCommand.DiscardTake, "Discard current take");
+                    }
+                    else
+                    {
+                        Add(c.SavePositionSet ? ShellCommand.ChangeSavePosition : ShellCommand.SetSavePosition,
+                            c.SavePositionSet ? "Change save position" : "Set save position");
+                        Add(ShellCommand.StartRecording, "Record next action");
+                        if (c.HasLastTake) Add(ShellCommand.ReRecordTake, "Replace last take");
+                        Add(ShellCommand.UploadLastCapture, "Send saved actions for review");
+                        Add(ShellCommand.NewTutorial, "New tutorial");
+                    }
                     Add(ShellCommand.Back, "Back");
                     break;
                 case ShellRoute.Follow:
@@ -188,7 +200,7 @@ namespace Trail.Runtime.Shell
         {
             switch (command)
             {
-                case ShellCommand.Back: return s.Route != ShellRoute.Home;
+                case ShellCommand.Back: return s.Route != ShellRoute.Home && !(s.Route == ShellRoute.Create && (c.IsRecording || c.ChoosingSavePosition));
                 case ShellCommand.OpenSettings: return s.Route == ShellRoute.Home;
                 // Recording, reviewing and following are local to this headset and its private
                 // storage, so they must work with no server: loaded guidance has to survive loss
@@ -207,14 +219,19 @@ namespace Trail.Runtime.Shell
                 // Authoring needs calibration and live hands; a save position established from
                 // missing tracking would be a bogus workspace point reused by every later take.
                 case ShellCommand.SetSavePosition:
-                    return s.Route == ShellRoute.Create && c.Calibrated && c.HandsTracked && !c.SavePositionSet && !c.IsRecording;
+                    return s.Route == ShellRoute.Create && c.Calibrated && c.HandsTracked && !c.SavePositionSet && !c.IsRecording && !c.ChoosingSavePosition && !c.ChoosingSavePosition;
                 case ShellCommand.ChangeSavePosition:
-                    return s.Route == ShellRoute.Create && c.Calibrated && c.HandsTracked && c.SavePositionSet && !c.IsRecording;
+                    return s.Route == ShellRoute.Create && c.Calibrated && c.HandsTracked && c.SavePositionSet && !c.IsRecording && !c.ChoosingSavePosition;
                 case ShellCommand.StartRecording:
-                    return s.Route == ShellRoute.Create && c.Calibrated && c.SavePositionSet && !c.IsRecording;
+                    return s.Route == ShellRoute.Create && c.Calibrated && c.SavePositionSet && !c.IsRecording && !c.ChoosingSavePosition;
                 // Explicit stop stays available for tasks that naturally end at the save position.
                 case ShellCommand.StopRecording: return s.Route == ShellRoute.Create && c.IsRecording;
-                case ShellCommand.DiscardTake: return s.Route == ShellRoute.Create && c.HasLastTake && !c.IsRecording;
+                case ShellCommand.DiscardTake: return s.Route == ShellRoute.Create && c.IsRecording;
+                case ShellCommand.PauseRecording: return s.Route == ShellRoute.Create && c.IsRecording && !c.RecordingPaused;
+                case ShellCommand.ResumeRecording: return s.Route == ShellRoute.Create && c.IsRecording && c.RecordingPaused;
+                case ShellCommand.CancelSavePosition: return s.Route == ShellRoute.Create && c.ChoosingSavePosition;
+                case ShellCommand.NewTutorial: return s.Route == ShellRoute.Create && !c.IsRecording && !c.ChoosingSavePosition;
+                case ShellCommand.ReRecordTake: return s.Route == ShellRoute.Create && c.Calibrated && c.SavePositionSet && c.HasLastTake && !c.IsRecording && !c.ChoosingSavePosition;
                 case ShellCommand.UploadLastCapture:
                     return s.Route == ShellRoute.Create && c.HasLastTake && !c.IsRecording && c.Paired && c.IsAuthor;
 

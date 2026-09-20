@@ -8,6 +8,283 @@ namespace Trail.Contracts
 {
     public static partial class ContractJson
     {
+        public static AuthoredCapture ParseAuthoredCapture(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("AuthoredCapture", raw); return ReadAuthoredCapture(raw); }
+        public static string SerializeAuthoredCapture(AuthoredCapture value) { var json = StrictJson.Stringify(WriteAuthoredCapture(value)); ParseAuthoredCapture(json); return json; }
+        private static AuthoredCapture ReadAuthoredCapture(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new AuthoredCapture();
+            if (map.ContainsKey("schemaVersion")) result.SchemaVersion = (int)(double)map["schemaVersion"];
+            if (map.ContainsKey("recording")) result.Recording = ReadRecording(map["recording"]);
+            if (map.ContainsKey("authoring")) result.Authoring = ReadTakeAuthoringMetadata(map["authoring"]);
+            ContractValidation.Validate(result);
+            return result;
+        }
+        private static object WriteAuthoredCapture(AuthoredCapture value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["schemaVersion"] = (object)value.SchemaVersion;
+            map["recording"] = WriteRecording(value.Recording);
+            map["authoring"] = WriteTakeAuthoringMetadata(value.Authoring);
+            return map;
+        }
+        public static Recording ParseRecording(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("Recording", raw); return ReadRecording(raw); }
+        public static string SerializeRecording(Recording value) { var json = StrictJson.Stringify(WriteRecording(value)); ParseRecording(json); return json; }
+        private static Recording ReadRecording(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new Recording();
+            if (map.ContainsKey("schemaVersion")) result.SchemaVersion = (int)(double)map["schemaVersion"];
+            if (map.ContainsKey("id")) result.Id = (string)map["id"];
+            if (map.ContainsKey("coordinateFrame")) result.CoordinateFrame = (string)map["coordinateFrame"];
+            if (map.ContainsKey("workspace")) result.Workspace = ReadWorkspaceDefinition(map["workspace"]);
+            if (map.ContainsKey("jointOrder")) result.JointOrder = ((List<object>)map["jointOrder"]).Select(item => (string)item).ToArray();
+            if (map.ContainsKey("nominalSampleHz")) result.NominalSampleHz = (int)(double)map["nominalSampleHz"];
+            if (map.ContainsKey("durationMs")) result.DurationMs = (double)(double)map["durationMs"];
+            if (map.ContainsKey("frames")) result.Frames = ((List<object>)map["frames"]).Select(item => ReadMotionFrame(item)).ToArray();
+            if (map.ContainsKey("markers")) result.Markers = ((List<object>)map["markers"]).Select(item => ReadStepMarker(item)).ToArray();
+            if (map.ContainsKey("audio")) result.Audio = (map["audio"] == null ? (AudioAsset)null : ReadAudioAsset(map["audio"]));
+            if (map.ContainsKey("source")) result.Source = (string)map["source"];
+            ContractValidation.Validate(result);
+            return result;
+        }
+        private static object WriteRecording(Recording value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["schemaVersion"] = (object)value.SchemaVersion;
+            map["id"] = (object)value.Id;
+            map["coordinateFrame"] = (object)value.CoordinateFrame;
+            map["workspace"] = WriteWorkspaceDefinition(value.Workspace);
+            map["jointOrder"] = (value.JointOrder == null ? null : value.JointOrder.Select(item => (object)item).ToList());
+            map["nominalSampleHz"] = (object)value.NominalSampleHz;
+            map["durationMs"] = (object)value.DurationMs;
+            map["frames"] = (value.Frames == null ? null : value.Frames.Select(item => WriteMotionFrame(item)).ToList());
+            map["markers"] = (value.Markers == null ? null : value.Markers.Select(item => WriteStepMarker(item)).ToList());
+            map["audio"] = (value.Audio == null ? null : WriteAudioAsset(value.Audio));
+            map["source"] = (object)value.Source;
+            return map;
+        }
+        public static WorkspaceDefinition ParseWorkspaceDefinition(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("WorkspaceDefinition", raw); return ReadWorkspaceDefinition(raw); }
+        public static string SerializeWorkspaceDefinition(WorkspaceDefinition value) { var json = StrictJson.Stringify(WriteWorkspaceDefinition(value)); ParseWorkspaceDefinition(json); return json; }
+        private static WorkspaceDefinition ReadWorkspaceDefinition(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new WorkspaceDefinition();
+            if (map.ContainsKey("id")) result.Id = (string)map["id"];
+            if (map.ContainsKey("version")) result.Version = (int)(double)map["version"];
+            if (map.ContainsKey("widthM")) result.WidthM = (double)(double)map["widthM"];
+            if (map.ContainsKey("depthM")) result.DepthM = (double)(double)map["depthM"];
+            if (map.ContainsKey("calibrationMarksM")) result.CalibrationMarksM = ReadCalibrationMarks(map["calibrationMarksM"]);
+            if (map.ContainsKey("layoutId")) result.LayoutId = (string)map["layoutId"];
+            if (map.ContainsKey("dominantHand")) result.DominantHand = (string)map["dominantHand"];
+            if (map.ContainsKey("calibrationMethod")) result.CalibrationMethod = (string)map["calibrationMethod"];
+            return result;
+        }
+        private static object WriteWorkspaceDefinition(WorkspaceDefinition value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["id"] = (object)value.Id;
+            map["version"] = (object)value.Version;
+            map["widthM"] = (object)value.WidthM;
+            map["depthM"] = (object)value.DepthM;
+            map["calibrationMarksM"] = WriteCalibrationMarks(value.CalibrationMarksM);
+            map["layoutId"] = (object)value.LayoutId;
+            map["dominantHand"] = (object)value.DominantHand;
+            map["calibrationMethod"] = (object)value.CalibrationMethod;
+            return map;
+        }
+        private static CalibrationMarks ReadCalibrationMarks(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new CalibrationMarks();
+            if (map.ContainsKey("A")) result.A = ReadVec3(map["A"]);
+            if (map.ContainsKey("B")) result.B = ReadVec3(map["B"]);
+            if (map.ContainsKey("C")) result.C = ReadVec3(map["C"]);
+            if (map.ContainsKey("D")) result.D = ReadVec3(map["D"]);
+            return result;
+        }
+        private static object WriteCalibrationMarks(CalibrationMarks value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["A"] = WriteVec3(value.A);
+            map["B"] = WriteVec3(value.B);
+            map["C"] = WriteVec3(value.C);
+            map["D"] = WriteVec3(value.D);
+            return map;
+        }
+        public static MotionFrame ParseMotionFrame(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("MotionFrame", raw); return ReadMotionFrame(raw); }
+        public static string SerializeMotionFrame(MotionFrame value) { var json = StrictJson.Stringify(WriteMotionFrame(value)); ParseMotionFrame(json); return json; }
+        private static MotionFrame ReadMotionFrame(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new MotionFrame();
+            if (map.ContainsKey("tMs")) result.TMs = (double)(double)map["tMs"];
+            if (map.ContainsKey("hands")) result.Hands = ReadHandSamples(map["hands"]);
+            if (map.ContainsKey("head")) result.Head = (map["head"] == null ? (CanonicalPose?)null : ReadPose(map["head"]));
+            return result;
+        }
+        private static object WriteMotionFrame(MotionFrame value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["tMs"] = (object)value.TMs;
+            map["hands"] = WriteHandSamples(value.Hands);
+            map["head"] = (value.Head == null ? null : WritePose(value.Head.Value));
+            return map;
+        }
+        private static HandSamples ReadHandSamples(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new HandSamples();
+            if (map.ContainsKey("left")) result.Left = ReadHandSample(map["left"]);
+            if (map.ContainsKey("right")) result.Right = ReadHandSample(map["right"]);
+            return result;
+        }
+        private static object WriteHandSamples(HandSamples value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["left"] = WriteHandSample(value.Left);
+            map["right"] = WriteHandSample(value.Right);
+            return map;
+        }
+        public static HandSample ParseHandSample(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("HandSample", raw); return ReadHandSample(raw); }
+        public static string SerializeHandSample(HandSample value) { var json = StrictJson.Stringify(WriteHandSample(value)); ParseHandSample(json); return json; }
+        private static HandSample ReadHandSample(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new HandSample();
+            if (map.ContainsKey("status")) result.Status = (string)map["status"];
+            if (map.ContainsKey("reason")) result.Reason = (string)map["reason"];
+            if (map.ContainsKey("joints")) result.Joints = ((Dictionary<string, object>)map["joints"]).ToDictionary(pair => pair.Key, pair => ReadPose(pair.Value), StringComparer.Ordinal);
+            return result;
+        }
+        private static object WriteHandSample(HandSample value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            if (value.Status == "missing")
+            {
+            map["status"] = (object)value.Status;
+            map["reason"] = (object)value.Reason;
+                return map;
+            }
+            if (value.Status == "valid")
+            {
+            map["status"] = (object)value.Status;
+            map["joints"] = (value.Joints == null ? null : value.Joints.ToDictionary(pair => pair.Key, pair => WritePose(pair.Value), StringComparer.Ordinal));
+                return map;
+            }
+            throw new ContractException("Unknown union discriminator");
+        }
+        private static StepMarker ReadStepMarker(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new StepMarker();
+            if (map.ContainsKey("id")) result.Id = (string)map["id"];
+            if (map.ContainsKey("tMs")) result.TMs = (double)(double)map["tMs"];
+            if (map.ContainsKey("kind")) result.Kind = (string)map["kind"];
+            if (map.ContainsKey("source")) result.Source = (string)map["source"];
+            return result;
+        }
+        private static object WriteStepMarker(StepMarker value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["id"] = (object)value.Id;
+            map["tMs"] = (object)value.TMs;
+            map["kind"] = (object)value.Kind;
+            map["source"] = (object)value.Source;
+            return map;
+        }
+        private static AudioAsset ReadAudioAsset(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new AudioAsset();
+            if (map.ContainsKey("assetId")) result.AssetId = (string)map["assetId"];
+            if (map.ContainsKey("mimeType")) result.MimeType = (string)map["mimeType"];
+            if (map.ContainsKey("durationMs")) result.DurationMs = (double)(double)map["durationMs"];
+            if (map.ContainsKey("audioStartOffsetMs")) result.AudioStartOffsetMs = (double)(double)map["audioStartOffsetMs"];
+            if (map.ContainsKey("syncMethod")) result.SyncMethod = (string)map["syncMethod"];
+            if (map.ContainsKey("estimatedSyncErrorMs")) result.EstimatedSyncErrorMs = (map["estimatedSyncErrorMs"] == null ? (double?)null : (double)(double)map["estimatedSyncErrorMs"]);
+            ContractValidation.Validate(result);
+            return result;
+        }
+        private static object WriteAudioAsset(AudioAsset value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["assetId"] = (object)value.AssetId;
+            map["mimeType"] = (object)value.MimeType;
+            map["durationMs"] = (object)value.DurationMs;
+            map["audioStartOffsetMs"] = (object)value.AudioStartOffsetMs;
+            map["syncMethod"] = (object)value.SyncMethod;
+            map["estimatedSyncErrorMs"] = (value.EstimatedSyncErrorMs == null ? null : (object)value.EstimatedSyncErrorMs.Value);
+            return map;
+        }
+        public static TakeAuthoringMetadata ParseTakeAuthoringMetadata(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("TakeAuthoringMetadata", raw); return ReadTakeAuthoringMetadata(raw); }
+        public static string SerializeTakeAuthoringMetadata(TakeAuthoringMetadata value) { var json = StrictJson.Stringify(WriteTakeAuthoringMetadata(value)); ParseTakeAuthoringMetadata(json); return json; }
+        private static TakeAuthoringMetadata ReadTakeAuthoringMetadata(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TakeAuthoringMetadata();
+            if (map.ContainsKey("schemaVersion")) result.SchemaVersion = (int)(double)map["schemaVersion"];
+            if (map.ContainsKey("tutorialId")) result.TutorialId = (string)map["tutorialId"];
+            if (map.ContainsKey("takeIndex")) result.TakeIndex = (int)(double)map["takeIndex"];
+            if (map.ContainsKey("savePosition")) result.SavePosition = ReadTakeAuthoringMetadataSavePosition(map["savePosition"]);
+            if (map.ContainsKey("trim")) result.Trim = ReadTakeAuthoringMetadataTrim(map["trim"]);
+            if (map.ContainsKey("trimReason")) result.TrimReason = (string)map["trimReason"];
+            ContractValidation.Validate(result);
+            return result;
+        }
+        private static object WriteTakeAuthoringMetadata(TakeAuthoringMetadata value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["schemaVersion"] = (object)value.SchemaVersion;
+            map["tutorialId"] = (object)value.TutorialId;
+            map["takeIndex"] = (object)value.TakeIndex;
+            map["savePosition"] = WriteTakeAuthoringMetadataSavePosition(value.SavePosition);
+            map["trim"] = WriteTakeAuthoringMetadataTrim(value.Trim);
+            map["trimReason"] = (object)value.TrimReason;
+            return map;
+        }
+        private static TakeAuthoringMetadataSavePosition ReadTakeAuthoringMetadataSavePosition(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TakeAuthoringMetadataSavePosition();
+            if (map.ContainsKey("leftM")) result.LeftM = ReadVec3(map["leftM"]);
+            if (map.ContainsKey("rightM")) result.RightM = ReadVec3(map["rightM"]);
+            return result;
+        }
+        private static object WriteTakeAuthoringMetadataSavePosition(TakeAuthoringMetadataSavePosition value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["leftM"] = WriteVec3(value.LeftM);
+            map["rightM"] = WriteVec3(value.RightM);
+            return map;
+        }
+        private static TakeAuthoringMetadataTrim ReadTakeAuthoringMetadataTrim(object value)
+        {
+            var map = (Dictionary<string, object>)value;
+            var result = new TakeAuthoringMetadataTrim();
+            if (map.ContainsKey("startMs")) result.StartMs = (double)(double)map["startMs"];
+            if (map.ContainsKey("endMsExclusive")) result.EndMsExclusive = (double)(double)map["endMsExclusive"];
+            return result;
+        }
+        private static object WriteTakeAuthoringMetadataTrim(TakeAuthoringMetadataTrim value)
+        {
+            if (value == null) return null;
+            var map = new Dictionary<string, object>(StringComparer.Ordinal);
+            map["startMs"] = (object)value.StartMs;
+            map["endMsExclusive"] = (object)value.EndMsExclusive;
+            return map;
+        }
         public static CalibrationV2 ParseCalibrationV2(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("CalibrationV2", raw); return ReadCalibrationV2(raw); }
         public static string SerializeCalibrationV2(CalibrationV2 value) { var json = StrictJson.Stringify(WriteCalibrationV2(value)); ParseCalibrationV2(json); return json; }
         private static CalibrationV2 ReadCalibrationV2(object value)
@@ -134,101 +411,6 @@ namespace Trail.Contracts
             map["markers"] = (value.Markers == null ? null : value.Markers.Select(item => WriteStepMarker(item)).ToList());
             map["audio"] = (value.Audio == null ? null : WriteAudioAsset(value.Audio));
             map["source"] = (object)value.Source;
-            return map;
-        }
-        public static WorkspaceDefinition ParseWorkspaceDefinition(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("WorkspaceDefinition", raw); return ReadWorkspaceDefinition(raw); }
-        public static string SerializeWorkspaceDefinition(WorkspaceDefinition value) { var json = StrictJson.Stringify(WriteWorkspaceDefinition(value)); ParseWorkspaceDefinition(json); return json; }
-        private static WorkspaceDefinition ReadWorkspaceDefinition(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new WorkspaceDefinition();
-            if (map.ContainsKey("id")) result.Id = (string)map["id"];
-            if (map.ContainsKey("version")) result.Version = (int)(double)map["version"];
-            if (map.ContainsKey("widthM")) result.WidthM = (double)(double)map["widthM"];
-            if (map.ContainsKey("depthM")) result.DepthM = (double)(double)map["depthM"];
-            if (map.ContainsKey("calibrationMarksM")) result.CalibrationMarksM = ReadCalibrationMarks(map["calibrationMarksM"]);
-            if (map.ContainsKey("layoutId")) result.LayoutId = (string)map["layoutId"];
-            if (map.ContainsKey("dominantHand")) result.DominantHand = (string)map["dominantHand"];
-            if (map.ContainsKey("calibrationMethod")) result.CalibrationMethod = (string)map["calibrationMethod"];
-            return result;
-        }
-        private static object WriteWorkspaceDefinition(WorkspaceDefinition value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["id"] = (object)value.Id;
-            map["version"] = (object)value.Version;
-            map["widthM"] = (object)value.WidthM;
-            map["depthM"] = (object)value.DepthM;
-            map["calibrationMarksM"] = WriteCalibrationMarks(value.CalibrationMarksM);
-            map["layoutId"] = (object)value.LayoutId;
-            map["dominantHand"] = (object)value.DominantHand;
-            map["calibrationMethod"] = (object)value.CalibrationMethod;
-            return map;
-        }
-        private static CalibrationMarks ReadCalibrationMarks(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new CalibrationMarks();
-            if (map.ContainsKey("A")) result.A = ReadVec3(map["A"]);
-            if (map.ContainsKey("B")) result.B = ReadVec3(map["B"]);
-            if (map.ContainsKey("C")) result.C = ReadVec3(map["C"]);
-            if (map.ContainsKey("D")) result.D = ReadVec3(map["D"]);
-            return result;
-        }
-        private static object WriteCalibrationMarks(CalibrationMarks value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["A"] = WriteVec3(value.A);
-            map["B"] = WriteVec3(value.B);
-            map["C"] = WriteVec3(value.C);
-            map["D"] = WriteVec3(value.D);
-            return map;
-        }
-        private static StepMarker ReadStepMarker(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new StepMarker();
-            if (map.ContainsKey("id")) result.Id = (string)map["id"];
-            if (map.ContainsKey("tMs")) result.TMs = (double)(double)map["tMs"];
-            if (map.ContainsKey("kind")) result.Kind = (string)map["kind"];
-            if (map.ContainsKey("source")) result.Source = (string)map["source"];
-            return result;
-        }
-        private static object WriteStepMarker(StepMarker value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["id"] = (object)value.Id;
-            map["tMs"] = (object)value.TMs;
-            map["kind"] = (object)value.Kind;
-            map["source"] = (object)value.Source;
-            return map;
-        }
-        private static AudioAsset ReadAudioAsset(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new AudioAsset();
-            if (map.ContainsKey("assetId")) result.AssetId = (string)map["assetId"];
-            if (map.ContainsKey("mimeType")) result.MimeType = (string)map["mimeType"];
-            if (map.ContainsKey("durationMs")) result.DurationMs = (double)(double)map["durationMs"];
-            if (map.ContainsKey("audioStartOffsetMs")) result.AudioStartOffsetMs = (double)(double)map["audioStartOffsetMs"];
-            if (map.ContainsKey("syncMethod")) result.SyncMethod = (string)map["syncMethod"];
-            if (map.ContainsKey("estimatedSyncErrorMs")) result.EstimatedSyncErrorMs = (map["estimatedSyncErrorMs"] == null ? (double?)null : (double)(double)map["estimatedSyncErrorMs"]);
-            ContractValidation.Validate(result);
-            return result;
-        }
-        private static object WriteAudioAsset(AudioAsset value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["assetId"] = (object)value.AssetId;
-            map["mimeType"] = (object)value.MimeType;
-            map["durationMs"] = (object)value.DurationMs;
-            map["audioStartOffsetMs"] = (object)value.AudioStartOffsetMs;
-            map["syncMethod"] = (object)value.SyncMethod;
-            map["estimatedSyncErrorMs"] = (value.EstimatedSyncErrorMs == null ? null : (object)value.EstimatedSyncErrorMs.Value);
             return map;
         }
         public static FinalizeRecordingRequest ParseFinalizeRecordingRequest(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("FinalizeRecordingRequest", raw); return ReadFinalizeRecordingRequest(raw); }
@@ -415,35 +597,6 @@ namespace Trail.Contracts
             map["right"] = (object)value.Right;
             return map;
         }
-        public static HandSample ParseHandSample(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("HandSample", raw); return ReadHandSample(raw); }
-        public static string SerializeHandSample(HandSample value) { var json = StrictJson.Stringify(WriteHandSample(value)); ParseHandSample(json); return json; }
-        private static HandSample ReadHandSample(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new HandSample();
-            if (map.ContainsKey("status")) result.Status = (string)map["status"];
-            if (map.ContainsKey("reason")) result.Reason = (string)map["reason"];
-            if (map.ContainsKey("joints")) result.Joints = ((Dictionary<string, object>)map["joints"]).ToDictionary(pair => pair.Key, pair => ReadPose(pair.Value), StringComparer.Ordinal);
-            return result;
-        }
-        private static object WriteHandSample(HandSample value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            if (value.Status == "missing")
-            {
-            map["status"] = (object)value.Status;
-            map["reason"] = (object)value.Reason;
-                return map;
-            }
-            if (value.Status == "valid")
-            {
-            map["status"] = (object)value.Status;
-            map["joints"] = (value.Joints == null ? null : value.Joints.ToDictionary(pair => pair.Key, pair => WritePose(pair.Value), StringComparer.Ordinal));
-                return map;
-            }
-            throw new ContractException("Unknown union discriminator");
-        }
         public static HandTarget ParseHandTarget(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("HandTarget", raw); return ReadHandTarget(raw); }
         public static string SerializeHandTarget(HandTarget value) { var json = StrictJson.Stringify(WriteHandTarget(value)); ParseHandTarget(json); return json; }
         private static HandTarget ReadHandTarget(object value)
@@ -583,42 +736,6 @@ namespace Trail.Contracts
             map["sha256"] = (object)value.Sha256;
             return map;
         }
-        public static MotionFrame ParseMotionFrame(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("MotionFrame", raw); return ReadMotionFrame(raw); }
-        public static string SerializeMotionFrame(MotionFrame value) { var json = StrictJson.Stringify(WriteMotionFrame(value)); ParseMotionFrame(json); return json; }
-        private static MotionFrame ReadMotionFrame(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new MotionFrame();
-            if (map.ContainsKey("tMs")) result.TMs = (double)(double)map["tMs"];
-            if (map.ContainsKey("hands")) result.Hands = ReadHandSamples(map["hands"]);
-            if (map.ContainsKey("head")) result.Head = (map["head"] == null ? (CanonicalPose?)null : ReadPose(map["head"]));
-            return result;
-        }
-        private static object WriteMotionFrame(MotionFrame value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["tMs"] = (object)value.TMs;
-            map["hands"] = WriteHandSamples(value.Hands);
-            map["head"] = (value.Head == null ? null : WritePose(value.Head.Value));
-            return map;
-        }
-        private static HandSamples ReadHandSamples(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new HandSamples();
-            if (map.ContainsKey("left")) result.Left = ReadHandSample(map["left"]);
-            if (map.ContainsKey("right")) result.Right = ReadHandSample(map["right"]);
-            return result;
-        }
-        private static object WriteHandSamples(HandSamples value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["left"] = WriteHandSample(value.Left);
-            map["right"] = WriteHandSample(value.Right);
-            return map;
-        }
         public static NativeCaptureSidecar ParseNativeCaptureSidecar(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("NativeCaptureSidecar", raw); return ReadNativeCaptureSidecar(raw); }
         public static string SerializeNativeCaptureSidecar(NativeCaptureSidecar value) { var json = StrictJson.Stringify(WriteNativeCaptureSidecar(value)); ParseNativeCaptureSidecar(json); return json; }
         private static NativeCaptureSidecar ReadNativeCaptureSidecar(object value)
@@ -656,43 +773,6 @@ namespace Trail.Contracts
             map["adapterVersion"] = (object)value.AdapterVersion;
             map["clock"] = WriteClockMapping(value.Clock);
             map["confidencePolicy"] = (object)value.ConfidencePolicy;
-            map["source"] = (object)value.Source;
-            return map;
-        }
-        public static Recording ParseRecording(string json) { var raw = StrictJson.Parse(json); ContractShape.Validate("Recording", raw); return ReadRecording(raw); }
-        public static string SerializeRecording(Recording value) { var json = StrictJson.Stringify(WriteRecording(value)); ParseRecording(json); return json; }
-        private static Recording ReadRecording(object value)
-        {
-            var map = (Dictionary<string, object>)value;
-            var result = new Recording();
-            if (map.ContainsKey("schemaVersion")) result.SchemaVersion = (int)(double)map["schemaVersion"];
-            if (map.ContainsKey("id")) result.Id = (string)map["id"];
-            if (map.ContainsKey("coordinateFrame")) result.CoordinateFrame = (string)map["coordinateFrame"];
-            if (map.ContainsKey("workspace")) result.Workspace = ReadWorkspaceDefinition(map["workspace"]);
-            if (map.ContainsKey("jointOrder")) result.JointOrder = ((List<object>)map["jointOrder"]).Select(item => (string)item).ToArray();
-            if (map.ContainsKey("nominalSampleHz")) result.NominalSampleHz = (int)(double)map["nominalSampleHz"];
-            if (map.ContainsKey("durationMs")) result.DurationMs = (double)(double)map["durationMs"];
-            if (map.ContainsKey("frames")) result.Frames = ((List<object>)map["frames"]).Select(item => ReadMotionFrame(item)).ToArray();
-            if (map.ContainsKey("markers")) result.Markers = ((List<object>)map["markers"]).Select(item => ReadStepMarker(item)).ToArray();
-            if (map.ContainsKey("audio")) result.Audio = (map["audio"] == null ? (AudioAsset)null : ReadAudioAsset(map["audio"]));
-            if (map.ContainsKey("source")) result.Source = (string)map["source"];
-            ContractValidation.Validate(result);
-            return result;
-        }
-        private static object WriteRecording(Recording value)
-        {
-            if (value == null) return null;
-            var map = new Dictionary<string, object>(StringComparer.Ordinal);
-            map["schemaVersion"] = (object)value.SchemaVersion;
-            map["id"] = (object)value.Id;
-            map["coordinateFrame"] = (object)value.CoordinateFrame;
-            map["workspace"] = WriteWorkspaceDefinition(value.Workspace);
-            map["jointOrder"] = (value.JointOrder == null ? null : value.JointOrder.Select(item => (object)item).ToList());
-            map["nominalSampleHz"] = (object)value.NominalSampleHz;
-            map["durationMs"] = (object)value.DurationMs;
-            map["frames"] = (value.Frames == null ? null : value.Frames.Select(item => WriteMotionFrame(item)).ToList());
-            map["markers"] = (value.Markers == null ? null : value.Markers.Select(item => WriteStepMarker(item)).ToList());
-            map["audio"] = (value.Audio == null ? null : WriteAudioAsset(value.Audio));
             map["source"] = (object)value.Source;
             return map;
         }

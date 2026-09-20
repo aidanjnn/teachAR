@@ -1,3 +1,4 @@
+import { LiveSessionRegistry } from './ai/live-sessions.js';
 import { ReferenceStore } from './storage/references.js';
 import { InspectionCoordinator } from './vision/coordinator.js';
 import { registerInspectionRoutes } from './vision/routes.js';
@@ -36,6 +37,7 @@ export async function createApp(
   options: { webRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
 ) {
   let resolveTutorial = options.resolveTutorial;
+  const liveSessions = new LiveSessionRegistry();
   const https = config.tls ? { cert: await readFile(config.tls.certFile), key: await readFile(config.tls.keyFile) } : null;
   const app = Fastify({
     ...(https ? { https } : {}),
@@ -77,7 +79,7 @@ export async function createApp(
       return state.phase === 'paused' && state.calibrationValid && state.tutorialId === context.tutorialId && state.tutorialRevision === context.tutorialRevision && state.stepId === context.stepId && state.stepRevision === context.stepRevision && state.attemptId === context.attemptId;
     } });
     const unsubscribe = relay.subscribe(() => inspection.guideChanged(auth.sessionId));
-    await registerInspectionRoutes(app, { coordinator: inspection, authorizeLearner: request => auth.authorize(request, { roles: ['learner'], sessionId: auth.sessionId }) });
+    await registerInspectionRoutes(app, { coordinator: inspection, liveSessions, authorizeLearner: request => auth.authorize(request, { roles: ['learner'], sessionId: auth.sessionId }) });
     app.addHook('onClose', async () => { unsubscribe(); inspection.close(); });
   }
   app.get('/api/health', async (_request, reply) => {
@@ -93,6 +95,7 @@ export async function createApp(
     return probeVision(config.vision);
   });
   await registerVoiceRoutes(app, options.provider ?? createProvider(config), {
+    sessions: liveSessions,
     ...(options.auth ? { auth: options.auth } : {}),
     ...(resolveTutorial ? { resolveTutorial } : {}),
   });

@@ -1,0 +1,2106 @@
+{
+  "schemaVersion": 1,
+  "recording": {
+    "schemaVersion": 1,
+    "id": "contract-recording",
+    "coordinateFrame": "workspace",
+    "workspace": {
+      "id": "mat-v1",
+      "version": 1,
+      "widthM": 0.6,
+      "depthM": 0.4,
+      "calibrationMarksM": {
+        "A": [
+          0,
+          0,
+          0
+        ],
+        "B": [
+          0.6,
+          0,
+          0
+        ],
+        "C": [
+          0,
+          0,
+          -0.4
+        ],
+        "D": [
+          0.6,
+          0,
+          -0.4
+        ]
+      },
+      "layoutId": "synthetic-layout",
+      "dominantHand": "right",
+      "calibrationMethod": "three-point-index-tip-v1"
+    },
+    "jointOrder": [
+      "wrist",
+      "thumb-metacarpal",
+      "thumb-phalanx-proximal",
+      "thumb-phalanx-distal",
+      "thumb-tip",
+      "index-finger-metacarpal",
+      "index-finger-phalanx-proximal",
+      "index-finger-phalanx-intermediate",
+      "index-finger-phalanx-distal",
+      "index-finger-tip",
+      "middle-finger-metacarpal",
+      "middle-finger-phalanx-proximal",
+      "middle-finger-phalanx-intermediate",
+      "middle-finger-phalanx-distal",
+      "middle-finger-tip",
+      "ring-finger-metacarpal",
+      "ring-finger-phalanx-proximal",
+      "ring-finger-phalanx-intermediate",
+      "ring-finger-phalanx-distal",
+      "ring-finger-tip",
+      "pinky-finger-metacarpal",
+      "pinky-finger-phalanx-proximal",
+      "pinky-finger-phalanx-intermediate",
+      "pinky-finger-phalanx-distal",
+      "pinky-finger-tip"
+    ],
+    "nominalSampleHz": 30,
+    "durationMs": 100,
+    "frames": [
+      {
+        "tMs": 0,
+        "hands": {
+          "left": {
+            "status": "valid",
+            "joints": {
+              "wrist": {
+                "positionM": [
+                  0,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-metacarpal": {
+                "positionM": [
+                  0.001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-proximal": {
+                "positionM": [
+                  0.002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-distal": {
+                "positionM": [
+                  0.003,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-tip": {
+                "positionM": [
+                  0.004,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-metacarpal": {
+                "positionM": [
+                  0.005,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-proximal": {
+                "positionM": [
+                  0.006,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.007,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-distal": {
+                "positionM": [
+                  0.008,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-tip": {
+                "positionM": [
+                  0.009000000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-metacarpal": {
+                "positionM": [
+                  0.01,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-proximal": {
+                "positionM": [
+                  0.011,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.012,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-distal": {
+                "positionM": [
+                  0.013000000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-tip": {
+                "positionM": [
+                  0.014,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-metacarpal": {
+                "positionM": [
+                  0.015,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-proximal": {
+                "positionM": [
+                  0.016,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.017,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-distal": {
+                "positionM": [
+                  0.018000000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-tip": {
+                "positionM": [
+                  0.019,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-metacarpal": {
+                "positionM": [
+                  0.02,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-proximal": {
+                "positionM": [
+                  0.021,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.022,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-distal": {
+                "positionM": [
+                  0.023,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-tip": {
+                "positionM": [
+                  0.024,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            }
+          },
+          "right": {
+            "status": "valid",
+            "joints": {
+              "wrist": {
+                "positionM": [
+                  0,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-metacarpal": {
+                "positionM": [
+                  0.001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-proximal": {
+                "positionM": [
+                  0.002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-distal": {
+                "positionM": [
+                  0.003,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-tip": {
+                "positionM": [
+                  0.004,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-metacarpal": {
+                "positionM": [
+                  0.005,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-proximal": {
+                "positionM": [
+                  0.006,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.007,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-distal": {
+                "positionM": [
+                  0.008,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-tip": {
+                "positionM": [
+                  0.009000000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-metacarpal": {
+                "positionM": [
+                  0.01,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-proximal": {
+                "positionM": [
+                  0.011,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.012,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-distal": {
+                "positionM": [
+                  0.013000000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-tip": {
+                "positionM": [
+                  0.014,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-metacarpal": {
+                "positionM": [
+                  0.015,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-proximal": {
+                "positionM": [
+                  0.016,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.017,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-distal": {
+                "positionM": [
+                  0.018000000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-tip": {
+                "positionM": [
+                  0.019,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-metacarpal": {
+                "positionM": [
+                  0.02,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-proximal": {
+                "positionM": [
+                  0.021,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.022,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-distal": {
+                "positionM": [
+                  0.023,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-tip": {
+                "positionM": [
+                  0.024,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            }
+          }
+        },
+        "head": null
+      },
+      {
+        "tMs": 40,
+        "hands": {
+          "left": {
+            "status": "valid",
+            "joints": {
+              "wrist": {
+                "positionM": [
+                  0.1,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-metacarpal": {
+                "positionM": [
+                  0.101,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-proximal": {
+                "positionM": [
+                  0.10200000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-distal": {
+                "positionM": [
+                  0.10300000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-tip": {
+                "positionM": [
+                  0.10400000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-metacarpal": {
+                "positionM": [
+                  0.10500000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-proximal": {
+                "positionM": [
+                  0.10600000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.10700000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-distal": {
+                "positionM": [
+                  0.10800000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-tip": {
+                "positionM": [
+                  0.10900000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-metacarpal": {
+                "positionM": [
+                  0.11,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-proximal": {
+                "positionM": [
+                  0.111,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.112,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-distal": {
+                "positionM": [
+                  0.113,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-tip": {
+                "positionM": [
+                  0.114,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-metacarpal": {
+                "positionM": [
+                  0.115,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-proximal": {
+                "positionM": [
+                  0.116,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.117,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-distal": {
+                "positionM": [
+                  0.11800000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-tip": {
+                "positionM": [
+                  0.11900000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-metacarpal": {
+                "positionM": [
+                  0.12000000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-proximal": {
+                "positionM": [
+                  0.12100000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.122,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-distal": {
+                "positionM": [
+                  0.123,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-tip": {
+                "positionM": [
+                  0.124,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            }
+          },
+          "right": {
+            "status": "valid",
+            "joints": {
+              "wrist": {
+                "positionM": [
+                  0.1,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-metacarpal": {
+                "positionM": [
+                  0.101,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-proximal": {
+                "positionM": [
+                  0.10200000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-distal": {
+                "positionM": [
+                  0.10300000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-tip": {
+                "positionM": [
+                  0.10400000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-metacarpal": {
+                "positionM": [
+                  0.10500000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-proximal": {
+                "positionM": [
+                  0.10600000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.10700000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-distal": {
+                "positionM": [
+                  0.10800000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-tip": {
+                "positionM": [
+                  0.10900000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-metacarpal": {
+                "positionM": [
+                  0.11,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-proximal": {
+                "positionM": [
+                  0.111,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.112,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-distal": {
+                "positionM": [
+                  0.113,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-tip": {
+                "positionM": [
+                  0.114,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-metacarpal": {
+                "positionM": [
+                  0.115,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-proximal": {
+                "positionM": [
+                  0.116,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.117,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-distal": {
+                "positionM": [
+                  0.11800000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-tip": {
+                "positionM": [
+                  0.11900000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-metacarpal": {
+                "positionM": [
+                  0.12000000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-proximal": {
+                "positionM": [
+                  0.12100000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.122,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-distal": {
+                "positionM": [
+                  0.123,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-tip": {
+                "positionM": [
+                  0.124,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            }
+          }
+        },
+        "head": null
+      },
+      {
+        "tMs": 100,
+        "hands": {
+          "left": {
+            "status": "valid",
+            "joints": {
+              "wrist": {
+                "positionM": [
+                  0.2,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-metacarpal": {
+                "positionM": [
+                  0.201,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-proximal": {
+                "positionM": [
+                  0.202,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-distal": {
+                "positionM": [
+                  0.203,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-tip": {
+                "positionM": [
+                  0.20400000000000001,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-metacarpal": {
+                "positionM": [
+                  0.20500000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-proximal": {
+                "positionM": [
+                  0.20600000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.20700000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-distal": {
+                "positionM": [
+                  0.20800000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-tip": {
+                "positionM": [
+                  0.20900000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-metacarpal": {
+                "positionM": [
+                  0.21000000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-proximal": {
+                "positionM": [
+                  0.21100000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.21200000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-distal": {
+                "positionM": [
+                  0.21300000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-tip": {
+                "positionM": [
+                  0.21400000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-metacarpal": {
+                "positionM": [
+                  0.21500000000000002,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-proximal": {
+                "positionM": [
+                  0.21600000000000003,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.21700000000000003,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-distal": {
+                "positionM": [
+                  0.21800000000000003,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-tip": {
+                "positionM": [
+                  0.219,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-metacarpal": {
+                "positionM": [
+                  0.22,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-proximal": {
+                "positionM": [
+                  0.221,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.222,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-distal": {
+                "positionM": [
+                  0.223,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-tip": {
+                "positionM": [
+                  0.224,
+                  0.2,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            }
+          },
+          "right": {
+            "status": "valid",
+            "joints": {
+              "wrist": {
+                "positionM": [
+                  0.2,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-metacarpal": {
+                "positionM": [
+                  0.201,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-proximal": {
+                "positionM": [
+                  0.202,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-phalanx-distal": {
+                "positionM": [
+                  0.203,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "thumb-tip": {
+                "positionM": [
+                  0.20400000000000001,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-metacarpal": {
+                "positionM": [
+                  0.20500000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-proximal": {
+                "positionM": [
+                  0.20600000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.20700000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-phalanx-distal": {
+                "positionM": [
+                  0.20800000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "index-finger-tip": {
+                "positionM": [
+                  0.20900000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-metacarpal": {
+                "positionM": [
+                  0.21000000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-proximal": {
+                "positionM": [
+                  0.21100000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.21200000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-phalanx-distal": {
+                "positionM": [
+                  0.21300000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "middle-finger-tip": {
+                "positionM": [
+                  0.21400000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-metacarpal": {
+                "positionM": [
+                  0.21500000000000002,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-proximal": {
+                "positionM": [
+                  0.21600000000000003,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.21700000000000003,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-phalanx-distal": {
+                "positionM": [
+                  0.21800000000000003,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "ring-finger-tip": {
+                "positionM": [
+                  0.219,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-metacarpal": {
+                "positionM": [
+                  0.22,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-proximal": {
+                "positionM": [
+                  0.221,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-intermediate": {
+                "positionM": [
+                  0.222,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-phalanx-distal": {
+                "positionM": [
+                  0.223,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              "pinky-finger-tip": {
+                "positionM": [
+                  0.224,
+                  0.1,
+                  -0.1
+                ],
+                "orientationXyzw": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            }
+          }
+        },
+        "head": null
+      }
+    ],
+    "markers": [
+      {
+        "id": "start",
+        "tMs": 0,
+        "kind": "step-start",
+        "source": "review"
+      },
+      {
+        "id": "end",
+        "tMs": 100,
+        "kind": "step-end",
+        "source": "review"
+      }
+    ],
+    "audio": null,
+    "source": "synthetic-fixture"
+  },
+  "authoring": {
+    "schemaVersion": 1,
+    "tutorialId": "synthetic-tutorial",
+    "takeIndex": 0,
+    "savePosition": {
+      "leftM": [
+        0,
+        0,
+        0
+      ],
+      "rightM": [
+        0.2,
+        0,
+        0
+      ]
+    },
+    "trim": {
+      "startMs": 0,
+      "endMsExclusive": 101
+    },
+    "trimReason": "explicit-stop"
+  }
+}

@@ -80,6 +80,15 @@ namespace Trail.Motion
         internal double? StillStartMs, ReturnStartMs;
         internal RecordingPhase ReturnPhase = RecordingPhase.Idle;
         internal RecordingState Clone() => (RecordingState)MemberwiseClone();
+        public static RecordingState Restore(string tutorialId, SaveZone savePosition, int takeCount, int lastTakeIndex = -1)
+        {
+            if (savePosition == null || takeCount < 1 || takeCount > 12) throw new ArgumentException("Invalid saved authoring state.");
+            var state = Create(tutorialId); state.SavePosition = savePosition; state.TakeCount = takeCount;
+            if (lastTakeIndex < -1 || lastTakeIndex >= takeCount) throw new ArgumentException("Invalid latest take index.");
+            state.LastTakeIndex = lastTakeIndex < 0 ? takeCount - 1 : lastTakeIndex; state.Phase = RecordingPhase.Ready;
+            state.Notice = "Saved actions restored. Register the workspace before recording more.";
+            return state; // Calibration belongs to this XR session, never the saved tutorial.
+        }
         public static RecordingState Create(string tutorialId)
         {
             if (string.IsNullOrWhiteSpace(tutorialId) || tutorialId.Length > 128) throw new ArgumentException("Tutorial ID required.");

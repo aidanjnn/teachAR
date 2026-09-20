@@ -51,7 +51,16 @@ namespace Trail.Runtime.Storage
             Status = library.Length == 0
                 ? "No guide stored on this headset yet. Record one, or pair once to download a reviewed guide."
                 : library.Length + " guide(s) stored on this headset. Preload needs no pairing.";
-            try { lastCapture = cache.LoadLatestCapture(); } catch (Exception) { }
+            try
+            {
+                lastCapture = cache.LoadLatestCapture(out var authoring);
+                if (lastCapture != null)
+                {
+                    if (authoring != null) Capture.RestoreAuthoring(cache.LoadAuthoredTakes(authoring.TutorialId), authoring);
+                    else Capture.LoadRecording(lastCapture);
+                }
+            }
+            catch (Exception) { Status = "Saved authoring state could not be restored; earlier private files are preserved."; }
             if (lastCapture != null) Status = "Saved recording restored. " + Status;
             pendingPath = Path.Combine(Application.persistentDataPath, "trail-pending-upload.json");
             if (Capture != null) Capture.RecordingCompleted += SaveCapture;
@@ -62,7 +71,7 @@ namespace Trail.Runtime.Storage
         }
         private void SaveCapture(Recording recording)
         {
-            try { cache.SaveCapture(recording); lastCapture = recording; Status = "Recording saved privately. Upload as author to review on desktop."; }
+            try { cache.SaveCapture(recording, Capture.LastAuthoringMetadata); lastCapture = recording; Status = "Recording saved privately. Upload as author to review on desktop."; }
             catch (Exception) { Status = "Local save failed. Free private storage and record again."; }
         }
         public void UploadLastCapture()
@@ -73,6 +82,11 @@ namespace Trail.Runtime.Storage
                 try { if (new FileInfo(pendingPath).Length > 96L*1024*1024) throw new IOException(); var pending = JsonUtility.FromJson<PendingUpload>(File.ReadAllText(pendingPath)); ResumeUpload(pending); }
                 catch (Exception) { Status = "Interrupted upload metadata is invalid; inspect private storage."; }
                 return;
+            }
+            if (Capture != null && Capture.Takes.Count > 0)
+            {
+                try { lastCapture = Capture.ExportTakes(); }
+                catch (Exception) { Status = "Saved actions exceed one upload or a take is unfinished. Keep the tutorial within 120 seconds and 3600 frames."; return; }
             }
             if (lastCapture == null) { Status = "Record a new demonstration first."; return; }
             if (lastCapture.Audio != null) { Status = "Narration upload is provided by the voice integration."; return; }

@@ -26,6 +26,7 @@ interface Active {
 /** A one-headset coordinator. It can pause-check identity, never mutate guide progression. */
 export class InspectionCoordinator {
   private active: Active | null = null;
+  private accepted: { sessionId: string; result: InspectionResult; capturedAfter: number } | null = null;
   private resolving = false;
   private lease: { sessionId: string; liveSessionId: string } | null = null;
   private source: { sessionId: string; id: string; sequence: number } | null = null;
@@ -134,12 +135,17 @@ export class InspectionCoordinator {
         if (this.now() - active.nonceIssued > 5000 || result.requestId !== input.data.request.requestId ||
             result.requestEpoch !== input.data.request.requestEpoch || result.observationId !== input.data.observation.id ||
             JSON.stringify(result.referenceIds) !== JSON.stringify(input.data.request.referenceIds)) throw new InspectionError('stale', 409);
-        return InspectionResultSchema.parse({ request: active.capture.request, observationId: result.observationId,
+        const accepted = InspectionResultSchema.parse({ request: active.capture.request, observationId: result.observationId,
           referenceIds: result.referenceIds, assessment: result.assessment, provenance: result.provider === 'openai' ? 'model' : 'mock' });
+        this.accepted = { sessionId, result: accepted, capturedAfter: active.nonceIssued };
+        return accepted;
       }).finally(() => { clearTimeout(ageTimer); this.finish(active); });
     return active.promise;
   }
   cancel(sessionId: string, requestId: string, epoch: number): void {
+    if (this.accepted?.sessionId === sessionId && this.accepted.result.request.requestId === requestId && this.accepted.result.request.requestEpoch === epoch) {
+      this.accepted = null; return;
+    }
     const active = this.active;
     if (!active || active.sessionId !== sessionId || active.capture.request.requestId !== requestId || active.capture.request.requestEpoch !== epoch) {
       throw new InspectionError('stale', 409);
@@ -147,16 +153,28 @@ export class InspectionCoordinator {
     this.invalidate(sessionId);
   }
   invalidate(sessionId: string): void {
+    if (this.accepted?.sessionId === sessionId) this.accepted = null;
     const active = this.active;
     if (active?.sessionId === sessionId) {
       active.controller.abort(new InspectionError('cancelled', 409)); this.finish(active);
     }
   }
   /** Call on guide updates and session/connection loss. Paused-state validation is also repeated at dispatch. */
+  /** One dispatch, from server-owned findings only. Recheck identity and camera age at the speech boundary. */
+  speak(sessionId: string, requestId: string, epoch: number, dispatch: (result: InspectionResult) => boolean): void {
+    const accepted = this.accepted;
+    if (!accepted || accepted.sessionId !== sessionId || accepted.result.request.requestId !== requestId ||
+        accepted.result.request.requestEpoch !== epoch || this.now() - accepted.capturedAfter > 5000 ||
+        !this.deps.isCurrent(sessionId, accepted.result.request)) throw new InspectionError('stale', 409);
+    // Consume before dispatch. An ambiguous transport failure must never duplicate spoken advice on retry.
+    this.accepted = null;
+    if (!dispatch(accepted.result)) throw new InspectionError('provider-unavailable', 503);
+  }
   guideChanged(sessionId: string): void {
+    if (this.accepted?.sessionId === sessionId && !this.deps.isCurrent(sessionId, this.accepted.result.request)) this.accepted = null;
     if (this.active?.sessionId === sessionId && !this.deps.isCurrent(sessionId, this.active.start.context)) this.invalidate(sessionId);
   }
-  close(): void { if (this.active) this.invalidate(this.active.sessionId); this.lease = null; this.epoch = null; }
+  close(): void { if (this.active) this.invalidate(this.active.sessionId); this.lease = null; this.epoch = null; this.accepted = null; }
   private expire(active: Active): void {
     active.controller.abort(new InspectionError('deadline', 504)); this.finish(active);
   }

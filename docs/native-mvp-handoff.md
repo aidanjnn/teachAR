@@ -267,3 +267,35 @@ Huawei OMNI Live needs raw speech, a recent Quest camera image and tutorial cont
 contributing to **one** interaction, plus the actual model id, endpoint, schema and
 credits from the sponsor; AR rendering is not model vision. `.env.example` already
 carries `OMNI_*` and `SENTRY_*` placeholders.
+
+### Post-19 spoken placement bridge (source implementation)
+
+With a paired learner, loaded/calibrated guide, camera enabled and native voice started,
+say **“check my placement”**, **“am I doing this right?”**, or **“does this look right?”**.
+The native bridge recognizes these explicit English phrases from bounded transcript
+fragments after 450 ms without further text. GPT Live does not provide a finalized
+turn event; this is a command recognizer, not general intent understanding.
+
+A check pauses guidance, discards the old voice peer, and prepares a fresh peer with
+its microphone and speaker muted. Only after that peer is ready does capture begin.
+Accepted findings dispatch once, by request ID, through the authenticated server
+`/api/inspections/:requestId/speak` route into `session.commentary.append`. The server
+rechecks pairing ownership, Live generation, run/tutorial/step/attempt and the
+five-second source-age bound; clients cannot submit replacement verdict prose.
+Mock findings retain a spoken synthetic disclosure. Oversized findings fail speech
+closed rather than truncating their uncertainty; the full findings remain readable.
+
+The fresh peer's output opens at dispatch; its microphone remains muted. Resume,
+Repeat, camera/source loss, Cancel, a changed context or a subsequent spoken question
+after explicit Unmute destroys that peer to prevent stale buffered speech. For an
+adjusted view: **Resume/Cancel the previous check, Start voice again, and repeat the
+placement command**. The next check always captures a new frame. A failed voice
+reconnect leaves the guide paused with Retry/Resume available; it never advances it.
+
+Automated coverage includes trusted-result routing, pairing/context/generation
+rejection, stale/duplicate/cancelled speech, and explicit command recognition.
+The native microphone/peer gate has injected lifecycle tests. These do not prove
+provider speech, camera capture, acoustic echo handling or headset coexistence.
+Real correct/wrong/obscured/adjusted Quest scenes with heard speech remain required.
+The append API requests spoken commentary but its transport acknowledgement is not
+proof that the learner heard it; see [official Live session documentation](https://developers.openai.com/api/docs/guides/live-conversations).

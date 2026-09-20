@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Trail.Runtime.Scene
 {
-    /// <summary>Non-voice inspection: explicit Check pauses locally, acknowledges identity, captures and returns advice.</summary>
+    /// <summary>Camera inspection: explicit Check pauses locally, acknowledges identity, captures and returns advice.</summary>
     public sealed class SceneInspectionController : MonoBehaviour
     {
         public SceneCaptureController CameraSource;
@@ -15,7 +15,11 @@ namespace Trail.Runtime.Scene
         public NativeApiConnection Connection;
         public string Status { get; private set; } = "Camera transmission requires Enable camera; Check sends one image.";
         public InspectionResult Findings { get; private set; }
-        public event Action<InspectionResult> FindingsAccepted; // PR3 hook: speak only while IsCurrent remains true.
+        public event Action<InspectionResult> FindingsAccepted;
+        public event Action InspectionStarted;
+        public event Action Invalidated;
+        private bool subscribed;
+        private string question = "Does the visible placement match this reviewed step?";
         private string appSessionId;
         private int epoch;
         private long generation;
@@ -25,28 +29,39 @@ namespace Trail.Runtime.Scene
         private double observationAt;
         private bool pending;
         private bool checkQueued;
+        public bool IsBusy => pending || checkQueued;
         private static double Now => Time.realtimeSinceStartupAsDouble * 1000;
 
         public void Bind()
         {
+            if (subscribed || CameraSource == null || Connection == null) return;
+            subscribed = true;
             CameraSource.Captured += OnFrame;
             CameraSource.Unavailable += OnCameraUnavailable;
             Connection.SessionInvalidated += OnConnectionInvalidated;
         }
-        public void CheckPlacement() { checkQueued = true; }
+        public void CheckPlacement() { CheckPlacement("Does the visible placement match this reviewed step?"); }
+        public void CheckPlacement(string spokenQuestion)
+        {
+            if (string.IsNullOrWhiteSpace(spokenQuestion) || spokenQuestion.Length > 500) return;
+            question = spokenQuestion; checkQueued = true;
+        }
+        public bool FindingsCurrent(InspectionResult result) => result != null && ReferenceEquals(result, Findings) &&
+            IsCurrent(context) && Now - observationAt <= 5000 && CameraSource != null && CameraSource.SourceHealthy;
+
         private void Update()
         {
             if (checkQueued) { checkQueued = false; Begin(); }
             if (pending && (Now - startedAt > 8000 || !IsCurrent(context) || (capture != null && !CameraSource.SourceHealthy)))
                 Unavailable("Inspection expired or source changed; Retry or Resume.");
-            if (Findings != null && !IsCurrent(context)) { Findings = null; Status = "Inspection invalidated by guide change."; }
+            if (Findings != null && (!IsCurrent(context) || !CameraSource.SourceHealthy)) { Cancel(); Status = "Inspection invalidated by guide or source change."; }
         }
         private void Begin()
         {
             Cancel();
             if (Guide == null || Guide.Session == null || Connection == null || Connection.State != ConnectionState.Ready || Connection.Role != "learner")
             { Status = "Pair as learner and load a calibrated guide first."; return; }
-            if (!CameraSource.ReadyForCapture) { Status = "Enable the camera and wait for a fresh feed."; return; }
+            if (CameraSource == null || !CameraSource.ReadyForCapture) { Status = "Enable the camera and wait for a fresh feed."; return; }
             GuideEvent paused;
             try { paused = Guide.PauseForInspection(); }
             catch { Status = "Guide cannot pause for inspection yet."; return; }
@@ -54,6 +69,7 @@ namespace Trail.Runtime.Scene
                 TutorialRevision = paused.State.TutorialRevision, StepId = paused.State.StepId,
                 StepRevision = paused.State.StepRevision, AttemptId = paused.State.AttemptId };
             pending = true; startedAt = Now; var current = ++generation; var requestEpoch = ++epoch;
+            InspectionStarted?.Invoke();
             Status = "Checking placement — guide paused. Resume remains your choice.";
             // Explicit ACK ensures the main server has this paused generation before issuing a nonce.
             Connection.Request("POST", "/api/guide-events", ContractJson.SerializeGuideEvent(paused), (status, _) => {
@@ -67,7 +83,7 @@ namespace Trail.Runtime.Scene
                     try { appSessionId = ContractJson.ParseInspectionSession(leaseBody); }
                     catch { Unavailable("Invalid inspection session; Retry or Resume."); return; }
                     var start = ContractJson.SerializeInspectionStart(context, appSessionId, 1, requestEpoch,
-                        "Does the visible placement match this reviewed step?", CameraSource.SourceSessionId, CameraSource.SourceFrameSequence);
+                        question, CameraSource.SourceSessionId, CameraSource.SourceFrameSequence);
                     Connection.Request("POST", "/api/inspections", start, (startStatus, body) => {
                         if (!Active(current)) return;
                         if (startStatus != 200) { Unavailable("Inspection unavailable; verify reviewed references, then Retry or Resume."); return; }
@@ -119,13 +135,14 @@ namespace Trail.Runtime.Scene
             (capture == null || (CameraSource.SourceSessionId == capture.SourceSessionId && CameraSource.SourceHealthy));
         public void Cancel()
         {
-            generation++; pending = false; Findings = null; Status = "Inspection cancelled. Resume remains your choice.";
+            generation++; pending = false; checkQueued = false; Findings = null;
+            Invalidated?.Invoke(); Status = "Inspection cancelled. Resume remains your choice.";
             if (capture != null && Connection != null && Connection.State == ConnectionState.Ready)
                 Connection.Request("DELETE", "/api/inspections/" + Uri.EscapeDataString(capture.Request.RequestId) + "?epoch=" + capture.Request.RequestEpoch, null, (_, __) => { });
             capture = null; if (CameraSource != null) CameraSource.Cancel();
         }
         private void Unavailable(string message) { Cancel(); Status = message; }
-        private void OnCameraUnavailable(string _) { if (pending) Unavailable("Camera unavailable; Retry or Resume."); }
+        private void OnCameraUnavailable(string _) { if (pending || Findings != null) Unavailable("Camera unavailable; Retry or Resume."); }
         private void OnConnectionInvalidated() { Cancel(); appSessionId = null; epoch = 0; Status = "Connection unavailable; guide remains paused until Resume."; }
         private void OnDisable() { Cancel(); }
         private void OnDestroy()

@@ -24,6 +24,7 @@ namespace Trail.Runtime.Guide
         public event Action<GuideEvent> Telemetry;
         public event Action<GuideTransition> Transitioned;
         private CaptureReplaySession subscribed;
+        public Tutorial ReviewedTutorial => tutorial == null ? null : ContractJson.ParseTutorial(ContractJson.SerializeTutorial(tutorial));
         private Tutorial tutorial;
         private Recording recording;
         private MotionReplay replay;

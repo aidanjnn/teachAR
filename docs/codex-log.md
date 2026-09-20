@@ -1005,3 +1005,74 @@ The user heard “Test sequence observed” from the local regression browser: t
 - Worked around it by removing the network from the path entirely. `PrivateTutorialCache` has no UnityEngine dependency, so `tests/device-seed` compiles the real cache and contract sources on the host, builds a ready tutorial through the actual `StoreReady` validation, reloads it through `Load`, and the result is pushed straight into the app's private storage. The seed comes from `fixtures/contracts`, whose recording is `source: "synthetic-fixture"`, so the runtime preloads it as a synthetic diagnostic and says so in the headset; it is not a human demonstration and teaches no physical task. Pushing a directory to that path silently creates an empty directory and errors, so files must be pushed individually.
 - **Unresolved and blocking: the headset renders black.** The app is the top resumed activity and the session reaches `FOCUSED`, yet `xrPassthroughLayerPauseFB` fires and `numLayers` drops to 0 after passthrough had correctly resumed with `textureOpacityFactor=1`. An earlier reading blamed focus loss; that was wrong and is corrected here. A single small red dot per eye renders with correct stereo disparity, unexplained; one hypothesis is that the three `TextMesh` panels assign the built-in `GUI/Text Shader` through `Font.material`, which does not render under this project's URP pipeline, but the dots are far too small for full-size magenta text quads and the hypothesis is unconfirmed. Diagnosis, log evidence, three ranked hypotheses and the exact commands are in [the native MVP handoff](native-mvp-handoff.md).
 - No calibration, ghost legibility, learner progression, frame time or voice behaviour is verified on hardware. The save-zone reducer is still not wired into `CaptureReplaySession`, `ICoachTransport` and `ICoachMicrophone` have no implementation, and no two-hand PlayMode test exists.
+
+## Post-19 spoken inspection connection
+
+- Added a runtime Scene feature joining explicit native transcript commands to fresh
+  camera inspection and one-shot server-owned Live commentary. Camera consent stays
+  explicit. Guide run/step/attempt identity, 5-second image age, pairing ownership and
+  Live context generation are rechecked at dispatch; client-supplied verdict prose is
+  rejected. Cancel/new checks/guide changes invalidate cached results.
+- A fresh muted Live peer replaces the question's peer before camera capture, so a
+  generic pre-camera answer cannot bleed into visual coaching. Output opens only for
+  accepted findings; mic remains muted. Context changes/new questions close the peer;
+  adjusted checks currently require Start voice again. This intentionally favors
+  stale-audio exclusion over seamless conversation recovery.
+- Checked official OpenAI Live session docs: `session.commentary.append` requests
+  spoken content; thinking append is silent context, and transcript deltas have no
+  completed-turn event. Explicit English command recognition uses a 450ms quiet
+  window, not a fabricated final-transcript event.
+- Focused server tests: 22 passed (`inspection.test.ts`, `ai/live-sessions.test.ts`);
+  server TypeScript check passed on Node 22. Native/media/provider/headset acceptance
+  remains separate; integration owns Unity validation for the combined changes.
+
+### 2026-09-19 — Post-#19 recording and coaching integration
+
+- With user approval, created isolated `codex/recording-integration` from `bdfb757`
+  at `/Users/hamzaammar/Documents/Code/trail-recording`; PR #19's checkout/rendering
+  work remains separate. Recording integration ran alongside the requested native
+  voice and camera-to-speech work.
+- Connected the pure save-zone/take reducer and ledger to actual capture and shell
+  commands. Added pause/resume, replacement/discard, atomic authoring envelopes,
+  legacy import, action restoration without calibration, and bounded multi-take
+  export with explicit step markers. Storage errors remain visible in Create.
+- Added strict C#/Zod authoring metadata and shared fixtures. Paused capture refuses
+  the old single-offset native clock sidecar instead of claiming inaccurate audio
+  synchronization; narrated WAV capture/trim/upload remains implementation work.
+- Native microphone/WebRTC and platform-mounted coach controls now exist. Hands-free
+  listening, permission/lifecycle cleanup and silent inspection-session replacement
+  have injected-media regressions; acoustic echo cancellation is not established.
+- Automated native-to-server proof exports three synthetic actions through byte
+  upload, compilation, explicit review, immutable publication and repository restart.
+  It initially rejected motions lacking stable start/end holds; valid synthetic
+  holds now exercise the real requirement. No human/model/narration evidence is
+  claimed. Aggregate limits refuse oversized exports without deleting saved takes.
+- `pnpm check` passed 373 tests/32 files, typechecks/builds and the scaffold check.
+  Unity 6000.3.24f1 passed 53 EditMode and 17 PlayMode tests. Earlier coach test
+  failure was a reused synthetic clock, fixed by resetting the test fixture clock;
+  connection timeout already covered offer negotiation. First concurrent browser
+  run had three fake-microphone stalls while Unity ran; isolated voice rerun passed
+  3/3 after Unity stopped. Final build/browser results follow below.
+- No paid provider request, real camera/microphone session, headset install or learner
+  trial was performed. `docs/post-19-progress.md` records the remaining eight gates;
+  the physical milestone and full acceptance remain open. Work is local and uncommitted.
+
+- Final review fixed a refused double-Start changing the active duration limit and
+  restored replacement selection referring to the last slot instead of the most
+  recently saved slot. The refreshed native gates passed 53/53 EditMode and 17/17
+  PlayMode; final APK build succeeded on Unity 6000.3.24f1, Android ARM64/IL2CPP,
+  release (69,647,210 bytes). Artifact:
+  `artifacts/quest/build-16574c00-03a1-44b3-8e10-76be0594ac00/Trail.apk`;
+  SHA-256 `baef222a1eb84ce6468c8de03e5c10b0f7d6ad5eba53b9c8334ed72c3574bc55`.
+  Manifest inspection confirms microphone, hand-tracking and headset-camera
+  permissions; no install or simultaneous hardware operation is implied.
+- Final post-Unity Chromium run passed all 7 workflows with one worker. Final static
+  scaffold check passed 173 GUIDs; pure C# contracts passed 163 checks, shell 225,
+  presentation 36; native capture and cross-language authoring checks passed.
+  Removed only the editor's whitespace/empty-scalar serialization churn from eight
+  unrelated project assets. `git diff --check` passed. All work remains local and
+  uncommitted; no PR was created, pushed, merged or deployed.
+
+## Publication follow-up
+
+- User requested publication after the local checkpoint. Preparing the tested recording, native voice and spoken-inspection integration for `codex/recording-integration`; reusing the unchanged-code checks recorded above. Full product acceptance remains open. No merge or deployment is included.

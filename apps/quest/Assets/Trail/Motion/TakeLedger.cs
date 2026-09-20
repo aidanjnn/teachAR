@@ -142,6 +142,47 @@ namespace Trail.Motion
             DiscardPending();
             return take;
         }
+        public void Restore(AuthoredCapture capture)
+        {
+            capture = ContractJson.ParseAuthoredCapture(ContractJson.SerializeAuthoredCapture(capture));
+            if (capture.Authoring.TakeIndex != takes.Count || takes.Count >= maxTakes || capture.Recording.Source != source ||
+                ContractJson.SerializeWorkspaceDefinition(capture.Recording.Workspace) != ContractJson.SerializeWorkspaceDefinition(workspace))
+                throw new ArgumentException("Saved takes must be contiguous and share one workspace and source.");
+            var trim = capture.Authoring.Trim;
+            takes.Add(new RecordedTake(new TrimmedTake(capture.Recording, null, null,
+                new TakeTrim(trim.StartMs, trim.EndMsExclusive), null), capture.Authoring.TrimReason));
+        }
+        // A tutorial upload contains every committed action, with explicit boundaries so
+        // server segmentation cannot mistake inter-take discontinuities for physical motion.
+        public Recording Export(string recordingId)
+        {
+            if (takes.Count == 0) throw new InvalidOperationException("No saved takes to export.");
+            var totalFrames = 0; double totalDuration = 0;
+            foreach (var take in takes)
+            {
+                totalFrames += take.Recording.Frames.Length;
+                totalDuration += take.Recording.DurationMs + 1000.0 / 30;
+            }
+            if (totalFrames > 3600 || totalDuration - 1000.0 / 30 > 120000)
+                throw new InvalidOperationException("Saved actions exceed the portable recording limit.");
+            var frames = new List<MotionFrame>(totalFrames); var markers = new List<StepMarker>();
+            double offset = 0;
+            for (var i = 0; i < takes.Count; i++)
+            {
+                var take = takes[i].Recording;
+                if (take.Audio != null) throw new InvalidOperationException("Narrated takes require synchronized audio assembly.");
+                markers.Add(new StepMarker { Id = "take-" + i + "-start", TMs = offset, Kind = "step-start", Source = "expert-control" });
+                foreach (var frame in take.Frames)
+                    frames.Add(new MotionFrame { TMs = offset + frame.TMs, Hands = frame.Hands, Head = frame.Head });
+                markers.Add(new StepMarker { Id = "take-" + i + "-end", TMs = offset + take.DurationMs, Kind = "step-end", Source = "expert-control" });
+                offset += take.DurationMs + 1000.0 / 30;
+            }
+            var recording = new Recording { SchemaVersion = 1, Id = recordingId, CoordinateFrame = "workspace", Workspace = workspace,
+                JointOrder = Names(), NominalSampleHz = 30, DurationMs = frames[frames.Count - 1].TMs, Frames = frames.ToArray(),
+                Markers = markers.ToArray(), Audio = null, Source = source };
+            // Aggregate limits apply to the whole upload too; never silently truncate later actions.
+            return ContractJson.ParseRecording(ContractJson.SerializeRecording(recording));
+        }
         // Convenience wiring for one reduced transition; the runtime adapter adds no policy of its own.
         public RecordedTake Apply(RecordingTransition transition, ReferenceObservation observation, string recordingId = null,
             AudioAsset narration = null, string trimmedNarrationAssetId = null)

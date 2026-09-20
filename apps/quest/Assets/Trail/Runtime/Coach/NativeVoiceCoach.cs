@@ -13,8 +13,7 @@ namespace Trail.Runtime.Coach
     /// microphone, the live transport handle and the paired HTTP calls. It makes no coaching decision of its
     /// own, and it calls no guide action -- the headset reducer alone starts, completes and repeats steps.
     ///
-    /// NOT COMPILED HERE: Unity is not installed in this repository checkout, so this file is source-reviewed
-    /// only. The transport implementation it drives does not exist yet either (see ICoachTransport).
+    /// Native audio is installed by CoachPlatformFeature; device acceptance is separate from compilation.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class NativeVoiceCoach : MonoBehaviour
@@ -22,8 +21,9 @@ namespace Trail.Runtime.Coach
         public NativeApiConnection Connection;
         public GuideController Guide;
         [SerializeField] private int listenTimeoutMs = 10000;
+        [SerializeField] private bool handsFree = true;
         [SerializeField] private int connectTimeoutMs = 15000;
-        /// <summary>Injected by the installer. No production implementation exists in this repository yet.</summary>
+        /// <summary>Injected by the installer; replaceable for runtime tests.</summary>
         public ICoachTransport Transport { get; set; }
         public ICoachMicrophone Microphone { get; set; }
         public CoachSession Session { get; private set; }
@@ -39,6 +39,16 @@ namespace Trail.Runtime.Coach
         public event Action<string> Refused;
 
         private readonly Queue<CoachEvent> pending = new Queue<CoachEvent>();
+        public string LiveSessionId => liveSessionId;
+        public int SessionGeneration => Session?.State.ContextGeneration ?? 0;
+        public string LearnerCaption { get; private set; } = "";
+        public string CoachCaption { get; private set; } = "";
+        /// <summary>Cumulative bounded transcript fragments, not a provider-finalized conversational turn.</summary>
+        public event Action<string> LearnerTranscriptReceived;
+        private bool listeningRequested;
+        private bool inspectionOnly;
+        private CoachSession permissionSession;
+        private bool permissionGranted;
         private string liveSessionId;
         private long generation;
         private int eventSequence;
@@ -68,8 +78,86 @@ namespace Trail.Runtime.Coach
             Status = Session.State.Notice;
         }
 
-        public void Connect() => Raise(CoachEvent.Of(CoachEventKind.ConnectRequested));
-        public void ToggleListen() => Raise(CoachEvent.Of(CoachEventKind.ListenToggled));
+        public void InstallNativeAudio()
+        {
+            if (Transport != null || Microphone != null) return;
+            var input = new GameObject("Coach microphone"); input.transform.SetParent(transform, false);
+            var mic = input.AddComponent<UnityCoachMicrophone>();
+            var output = new GameObject("Coach speaker"); output.transform.SetParent(transform, false);
+            var transport = output.AddComponent<UnityCoachTransport>(); transport.Microphone = mic;
+            transport.Transcript += OnTranscript;
+            transport.Closed += NotifyLiveClosed;
+            Microphone = mic; Transport = transport;
+        }
+        public void Connect()
+        {
+            if (Session == null || Session.State.Mode == CoachMode.Connecting || Session.State.Mode == CoachMode.Listening || Session.State.Mode == CoachMode.Live) return;
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Microphone))
+            {
+                permissionSession = Session;
+                var requestedSession = Session;
+                var callbacks = new UnityEngine.Android.PermissionCallbacks();
+                callbacks.PermissionGranted += _ => { if (Session == requestedSession && permissionSession == requestedSession) permissionGranted = true; };
+                callbacks.PermissionDenied += _ => { permissionSession = null; Status = "Microphone permission denied. Press Start voice to retry."; };
+                UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.Microphone, callbacks);
+                Status = "Allow microphone access to start voice.";
+                return;
+            }
+#endif
+            if (Session.State.Mode != CoachMode.Idle) Prepare(Session.Context);
+            listeningRequested = handsFree && !inspectionOnly;
+            Raise(CoachEvent.Of(CoachEventKind.ConnectRequested));
+        }
+        public void ToggleListen()
+        {
+            if (Session == null || (inspectionOnly && outputGateClosed)) return;
+            listeningRequested = !listeningRequested;
+            if ((Session.State.Mode == CoachMode.Listening && !listeningRequested) ||
+                (Session.State.Mode == CoachMode.Live && listeningRequested))
+                Raise(CoachEvent.Of(CoachEventKind.ListenToggled));
+        }
+        /// <summary>Isolate a camera question from the already-streaming conversational reply.</summary>
+        public bool BeginInspectionConversation()
+        {
+            if (Session == null || Session.State.Sync != CoachSync.Idle || liveSessionId == null) return false;
+            var context = Session.Context;
+            if (Transport != null) Transport.SetOutputMuted(true);
+            Prepare(context);
+            inspectionOnly = true;
+            Connect();
+            return true;
+        }
+        /// <summary>The scene bridge has accepted a current finding. Only this fresh peer may speak it.</summary>
+        public void AllowInspectionOutput()
+        {
+            if (!inspectionOnly || Session == null || Session.State.Mode != CoachMode.Live || Session.State.Sync != CoachSync.Idle) return;
+            inspectionOnly = false;
+            outputGateClosed = false;
+            if (Transport != null) Transport.SetOutputMuted(false);
+        }
+        public bool WaitingForInspection => inspectionOnly;
+        public void EndConversation() => EndSession("Voice ended. Press Start voice to reconnect.");
+        public void ClearLearnerTranscript() => LearnerCaption = "";
+        public void InvalidateOutput()
+        {
+            // Arbitrary in-flight audio cannot be attributed to an inspection: destroy the old session.
+            if (Transport != null) Transport.SetOutputMuted(true);
+            EndSession("Voice stopped because its visual context changed. Press Start voice to reconnect.");
+        }
+        private void OnTranscript(string role, string delta)
+        {
+            if (Session == null || Session.State.Sync != CoachSync.Idle) return;
+            if (role == "learner")
+            {
+                NotifyLearnerSpoke();
+                LearnerCaption = Tail(LearnerCaption + delta, 4096);
+                LearnerTranscriptReceived?.Invoke(LearnerCaption);
+            }
+            else if (!outputGateClosed) CoachCaption = Tail(CoachCaption + delta, 1200);
+        }
+        private static string Tail(string text, int maximum) => text.Length <= maximum ? text : text.Substring(text.Length - maximum);
+
 
         /// <summary>Text question path. It keeps working when live audio does not, and falls back to loaded step text.</summary>
         public void AskText(string question)
@@ -106,7 +194,7 @@ namespace Trail.Runtime.Coach
         {
             if (Session == null) return;
             listenDeadline = Clock() + listenTimeoutMs;
-            if (!outputGateClosed || Session.State.Sync != CoachSync.Idle) return;
+            if (inspectionOnly || !outputGateClosed || Session.State.Sync != CoachSync.Idle) return;
             outputGateClosed = false;
             if (Transport != null) Transport.SetOutputMuted(false);
         }
@@ -116,13 +204,21 @@ namespace Trail.Runtime.Coach
         private void Update()
         {
             Bind();
+            if (permissionGranted && Application.isFocused)
+            {
+                permissionGranted = false;
+                if (Session != null && Session == permissionSession) Connect();
+                permissionSession = null;
+            }
             if (Session == null) return;
             Watch();
             Drain();
             if (Session == null) return;
+            if (listeningRequested && handsFree && Session.State.Mode == CoachMode.Live && Session.State.Sync == CoachSync.Idle)
+                Raise(CoachEvent.Of(CoachEventKind.ListenToggled));
             var now = Clock();
             if (Session.State.Mode == CoachMode.Connecting && now > connectDeadline) Raise(CoachEvent.Of(CoachEventKind.LiveFailed));
-            else if (Session.State.Mode == CoachMode.Listening && now > listenDeadline) Raise(CoachEvent.Of(CoachEventKind.ListenTimeout));
+            else if (!handsFree && Session.State.Mode == CoachMode.Listening && now > listenDeadline) Raise(CoachEvent.Of(CoachEventKind.ListenTimeout));
             Drain();
         }
 
@@ -156,8 +252,8 @@ namespace Trail.Runtime.Coach
                 switch (effect.Kind)
                 {
                     case CoachEffectKind.AcquireMicrophoneMuted:
-                        outputGateClosed = false;
-                        if (Transport != null) Transport.SetOutputMuted(false);
+                        outputGateClosed = inspectionOnly;
+                        if (Transport != null) Transport.SetOutputMuted(inspectionOnly);
                         if (Microphone == null || !Microphone.AcquireMuted()) Raise(CoachEvent.Of(CoachEventKind.MicrophoneUnavailable));
                         break;
                     case CoachEffectKind.OpenTransport:
@@ -178,6 +274,7 @@ namespace Trail.Runtime.Coach
                         ReportStep(effect.Generation);
                         break;
                     case CoachEffectKind.InvalidateLiveOutput:
+                        LearnerCaption = ""; CoachCaption = "";
                         outputGateClosed = true;
                         if (Transport != null) Transport.SetOutputMuted(true);
                         break;
@@ -254,14 +351,15 @@ namespace Trail.Runtime.Coach
         private void ReleaseLive()
         {
             generation++;
+            LearnerCaption = ""; CoachCaption = "";
             listenDeadline = 0; connectDeadline = 0;
             if (Microphone != null) Microphone.Release();
             if (Transport != null)
             {
                 if (Transport.Open) { try { Transport.Send(CoachLiveEvents.Close(++eventSequence)); } catch (Exception) { /* already closed */ } }
                 // The audio sink outlives this conversation; never leave it muted for the next one.
-                Transport.SetOutputMuted(false);
                 Transport.Close();
+                Transport.SetOutputMuted(false);
             }
             outputGateClosed = false;
             var id = liveSessionId;
@@ -281,6 +379,7 @@ namespace Trail.Runtime.Coach
 
         private void EndSession(string status)
         {
+            listeningRequested = false; inspectionOnly = false; permissionSession = null; permissionGranted = false;
             var active = Session;
             if (active != null)
             {
@@ -312,8 +411,10 @@ namespace Trail.Runtime.Coach
         private void OnConnectionInvalidated()
         {
             // The loaded guide is untouched by this; only the coach becomes explicitly unavailable.
-            if (Session != null) Session.Dispatch(CoachEvent.Of(CoachEventKind.BackendLost));
-            else ReleaseLive();
+            // HTTP expiry can fire synchronously inside an effect. Release immediately,
+            // but queue the reducer event to avoid reentering an active transition.
+            ReleaseLive();
+            Raise(CoachEvent.Of(CoachEventKind.BackendLost));
         }
         private void OnEnable() => Bind();
         private void OnApplicationPause(bool paused) { if (paused) Suspend(CoachEventKind.ApplicationPaused); }

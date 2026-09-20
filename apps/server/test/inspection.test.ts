@@ -146,3 +146,55 @@ it('bounds unresolved reference IO even if the resolver ignores cancellation', a
   await expect(coordinator.start('session', { ...h.start, requestEpoch: 2 })).rejects.toMatchObject({ code: 'busy' });
   finish(); await rejected; coordinator.close(); h.coordinator.close();
 });
+
+it('speaks only server-owned accepted findings once, while fresh and still paused', async () => {
+  const h = await setup();
+  try {
+    const capture = await h.coordinator.start('session', h.start);
+    const result = await h.coordinator.upload('session', h.upload(capture));
+    expect(() => h.coordinator.speak('other-session', result.request.requestId, 1, () => true)).toThrow();
+    expect(() => h.coordinator.speak('session', result.request.requestId, 2, () => true)).toThrow();
+    let spoken: unknown;
+    h.coordinator.speak('session', result.request.requestId, 1, value => { spoken = value; return true; });
+    expect(spoken).toEqual(result);
+    expect(() => h.coordinator.speak('session', result.request.requestId, 1, () => true)).toThrow();
+  } finally { h.coordinator.close(); }
+});
+it.each(['resume', 'cancel', 'age', 'new-check', 'failed-dispatch'] as const)('never replays accepted findings after %s', async cause => {
+  const h = await setup();
+  try {
+    const capture = await h.coordinator.start('session', h.start);
+    const result = await h.coordinator.upload('session', h.upload(capture));
+    if (cause === 'resume') { h.setCurrent(false); h.coordinator.guideChanged('session'); }
+    if (cause === 'cancel') h.coordinator.cancel('session', result.request.requestId, 1);
+    if (cause === 'age') h.advance(5001);
+    if (cause === 'new-check') h.coordinator.openSession('session', h.start.context);
+    if (cause === 'failed-dispatch') expect(() => h.coordinator.speak('session', result.request.requestId, 1, () => false)).toThrow();
+    let dispatched = false;
+    expect(() => h.coordinator.speak('session', result.request.requestId, 1, () => { dispatched = true; return true; })).toThrow();
+    expect(dispatched).toBe(false);
+  } finally { h.coordinator.close(); }
+});
+
+it('routes speech by request ID only, refusing client prose and duplicate speech', async () => {
+  const { LiveSessionRegistry } = await import('../src/ai/live-sessions.js');
+  const h = await setup(); const app = Fastify(); const sessions = new LiveSessionRegistry();
+  const sent: unknown[] = [];
+  sessions.register('live_1', { tutorialId: 'tutorial-1', tutorialRevision: 1, runId: 'run-1', attemptId: 'attempt-1',
+    title: 'Task', steps: [{ id: 'step-1', title: 'Place block', instruction: 'Align the visible edges.' }], currentStepId: 'step-1', stepRevision: 1 },
+  { ready: Promise.resolve(), send: event => { sent.push(event); }, close: () => undefined, onClose: () => undefined, onError: () => undefined }, 'session');
+  await registerInspectionRoutes(app, { authorizeLearner: () => ({ sessionId: 'session' }), coordinator: h.coordinator, liveSessions: sessions });
+  try {
+    const capture = await h.coordinator.start('session', h.start);
+    await h.coordinator.upload('session', h.upload(capture));
+    const url = `/api/inspections/${capture.request.requestId}/speak`;
+    const payload = { requestEpoch: 1, liveSessionId: 'live_1', generation: 0 };
+    expect((await app.inject({ method: 'POST', url, payload: { ...payload, feedback: 'You completed the task!' } })).statusCode).toBe(400);
+    expect(sent).toHaveLength(0);
+    expect((await app.inject({ method: 'POST', url, payload })).statusCode).toBe(204);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ type: 'session.commentary.append', content: expect.stringContaining('Synthetic mock only.') });
+    expect((await app.inject({ method: 'POST', url, payload })).statusCode).toBe(409);
+    expect(sent).toHaveLength(1);
+  } finally { await app.close(); sessions.closeAll(); }
+});

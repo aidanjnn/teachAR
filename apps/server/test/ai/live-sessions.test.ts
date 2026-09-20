@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CoachContext } from '@trail/contracts';
+import type { CoachContext, InspectionResult } from '@trail/contracts';
 import { LiveSessionRegistry } from '../../src/ai/live-sessions.js';
 import type { LiveControlChannel } from '../../src/ai/provider.js';
 
@@ -85,4 +85,36 @@ describe('LiveSessionRegistry', () => {
     vi.advanceTimersByTime(5_000);
     expect(h.closed()).toBe(1);
   });
+});
+
+const visual: InspectionResult = {
+  request: { requestId: 'vision-1', liveSessionId: 'app-check', sessionGeneration: 1, requestEpoch: 1,
+    delegationId: null, question: 'Check placement', referenceIds: ['ref'], runId: 'run', tutorialId: 't',
+    tutorialRevision: 0, stepId: 's1', stepRevision: 0, attemptId: 'a' },
+  observationId: 'obs', referenceIds: ['ref'], provenance: 'model',
+  assessment: { verdict: 'adjustment-needed', observedEvidence: ['Block is offset.'], feedback: 'Move the block towards the visible reference.',
+    limitation: 'Cannot verify hidden attachment.', suggestedAction: 'none' },
+};
+it('dispatches accepted inspection as commentary, preserving uncertainty and mock disclosure', () => {
+  const registry = new LiveSessionRegistry(); const c = control();
+  registry.register('live', context, c.channel, 'paired');
+  expect(registry.speakInspection('live', 0, visual, 'paired')).toBe(true);
+  expect(c.sent[0]).toMatchObject({ type: 'session.commentary.append', delegation_id: null,
+    content: expect.stringContaining('adjustment-needed') });
+  expect(c.sent[0]).toMatchObject({ content: expect.stringContaining('Cannot verify hidden attachment.') });
+  expect(registry.speakInspection('live', 0, { ...visual, provenance: 'mock' }, 'paired')).toBe(true);
+  expect(c.sent[1]).toMatchObject({ content: expect.stringContaining('Synthetic mock only.') });
+  registry.closeAll();
+});
+it('rejects old Live generations, attempts, steps, runs and oversized findings without speaking', () => {
+  const registry = new LiveSessionRegistry(); const c = control();
+  registry.register('live', context, c.channel, 'paired');
+  expect(registry.speakInspection('live', 1, visual, 'paired')).toBe(false);
+  for (const change of [{ runId: 'other' }, { stepId: 's2' }, { stepRevision: 1 }, { attemptId: 'retry' }, { tutorialRevision: 1 }]) {
+    expect(registry.speakInspection('live', 0, { ...visual, request: { ...visual.request, ...change } }, 'paired')).toBe(false);
+  }
+  expect(registry.speakInspection('live', 0, { ...visual, assessment: { ...visual.assessment, feedback: 'x'.repeat(2000) } }, 'paired')).toBe(false);
+  expect(registry.speakInspection('live', 0, visual, 'other-pairing')).toBe(false);
+  expect(c.sent).toHaveLength(0);
+  registry.closeAll();
 });

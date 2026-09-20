@@ -1,7 +1,14 @@
 {
   "name": "Trail.Coach",
   "rootNamespace": "Trail.Runtime.Coach",
-  "references": ["Trail.Contracts", "Trail.Motion", "Trail.Runtime", "Trail.Guide"],
+  "references": [
+    "Trail.Contracts",
+    "Trail.Motion",
+    "Trail.Runtime",
+    "Trail.Guide",
+    "Unity.WebRTC",
+    "Trail.Shell"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

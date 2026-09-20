@@ -18,11 +18,17 @@ namespace Trail.Runtime.Record
         public int OriginRevision => Source == null ? 0 : Source.OriginRevision;
         public ReferenceObservation LatestWorkspaceObservation { get; private set; }
         public Recording LastRecording { get; private set; }
+        public TakeAuthoringMetadata LastAuthoringMetadata { get; private set; }
         public MotionFrame ReplayFrame { get; private set; }
         public string Status { get; private set; } = "Calibrate A, B, C, then independent mark D.";
         public string SourceLabel => Source == null ? "unavailable" : Source.SourceKind + ": " + Source.Availability;
         public double MarkProgress => markSampler.Progress;
-        public bool IsRecording => capture != null;
+        public bool IsRecording => Authoring.Phase == RecordingPhase.Arming ||
+            Authoring.Phase == RecordingPhase.Recording || Authoring.Phase == RecordingPhase.Paused;
+        public RecordingState Authoring { get; private set; } = RecordingState.Create(Guid.NewGuid().ToString("N"));
+        public bool SavePositionSet => Authoring.SavePosition != null;
+        public System.Collections.Generic.IReadOnlyList<RecordedTake> Takes => ledger == null
+            ? (System.Collections.Generic.IReadOnlyList<RecordedTake>)Array.Empty<RecordedTake>() : ledger.Takes;
         public bool IsReplaying => replaying;
         public event Action<ReferenceObservation> WorkspaceObserved;
         public event Action<CalibrationRegistration, int> CalibrationChanged;
@@ -34,15 +40,19 @@ namespace Trail.Runtime.Record
         private bool collecting, replaying;
         private double lastObservationMs = -1, replayStartMs;
         private long lastSequence = -1;
-        private MotionCapture capture;
+        private TakeLedger ledger;
+        private RecordingPolicy policy;
+        private double maximumTakeMs = 120000;
         private MotionReplay replay;
         private HandObservationSource subscribedSource;
         private WorkspaceDefinition recordedWorkspace;
         private NativeCaptureSidecar captureMetadata, completedMetadata;
+        private bool takeClockContinuous, completedClockContinuous;
         public double CaptureStartedMs { get; private set; }
         // Storage binds the sidecar to its exact persisted bytes/assigned ID; no competing JSON format.
         public NativeCaptureSidecar CreateCaptureSidecar(string recordingId, string recordingHash)
         {
+            if (!completedClockContinuous) throw new InvalidOperationException("Paused takes require a piecewise clock mapping; the v1 native clock sidecar cannot represent them.");
             if (completedMetadata == null) throw new InvalidOperationException("No completed native capture metadata.");
             completedMetadata.RecordingId = recordingId; completedMetadata.RecordingHash = recordingHash;
             return ContractJson.ParseNativeCaptureSidecar(ContractJson.SerializeNativeCaptureSidecar(completedMetadata));
@@ -78,7 +88,7 @@ namespace Trail.Runtime.Record
         private void HandleInvalidation(string reason, int revision)
         {
             Registration = null; LatestWorkspaceObservation = null; ReplayFrame = null;
-            capture = null; replaying = false; collecting = false; markIndex = 0; markSampler.Reset();
+            Reduce(RecordingAction.OriginInvalidated); replaying = false; collecting = false; markIndex = 0; markSampler.Reset();
             lastObservationMs = -1; lastSequence = -1;
             Status = reason + ". Recalibrate before capture or replay.";
             Invalidated?.Invoke(reason, revision);
@@ -112,6 +122,7 @@ namespace Trail.Runtime.Record
                         {
                             Registration = WorkspaceCalibration.Fit(WidthM, DepthM, marks[0], marks[1], marks[2], marks[3], NVector3.UnitY);
                             Status = "Registered. Independent D error: " + (Registration.HeldOutErrorM * 100).ToString("F1") + " cm.";
+                            Reduce(RecordingAction.Calibrated);
                             CalibrationChanged?.Invoke(Registration, OriginRevision);
                         }
                         catch (ArgumentException error) { Invalidate(error.Message); }
@@ -123,11 +134,8 @@ namespace Trail.Runtime.Record
             LatestWorkspaceObservation = new ReferenceObservation(observation.TimestampMs, observation.Sequence, OriginRevision,
                 observation.Source, frame.Hands.Left, frame.Hands.Right);
             WorkspaceObserved?.Invoke(LatestWorkspaceObservation);
-            if (capture != null)
-            {
-                capture.Append(observation);
-                if (capture.IsFinished) StopRecording();
-            }
+            Reduce(RecordingAction.Sample, LatestWorkspaceObservation);
+            if (Authoring.Phase == RecordingPhase.Recording && Authoring.TakeMs >= maximumTakeMs) StopRecording();
         }
         private void Update()
         {
@@ -136,7 +144,7 @@ namespace Trail.Runtime.Record
             if (collecting && (lastObservationMs < 0 || now - lastObservationMs > 100)) markSampler.Reset();
             if (LatestWorkspaceObservation != null && now - LatestWorkspaceObservation.TimestampMs > 100)
                 LatestWorkspaceObservation = null;
-            if (capture != null) { capture.Tick(now); if (capture.IsFinished) StopRecording(); }
+            if (IsRecording || Authoring.Phase == RecordingPhase.ChoosingSaveZone) Reduce(RecordingAction.Tick);
             if (replaying)
             {
                 var elapsed = now - replayStartMs;
@@ -144,38 +152,119 @@ namespace Trail.Runtime.Record
                 else ReplayFrame = replay.Sample(elapsed);
             }
         }
-        public void StartRecording(double durationMs = 5000)
+        public void RestoreAuthoring(AuthoredCapture[] takes, TakeAuthoringMetadata latest)
         {
-            if (capture != null) { Status = "Recording is already active; stop before starting another capture."; return; }
+            if (IsRecording || takes == null || takes.Length == 0 || latest == null)
+                throw new InvalidOperationException("No saved tutorial to restore, or capture is active.");
+            latest = ContractJson.ParseTakeAuthoringMetadata(ContractJson.SerializeTakeAuthoringMetadata(latest));
+            var restoredState = RecordingState.Restore(latest.TutorialId,
+                new SaveZone(latest.SavePosition.LeftM, latest.SavePosition.RightM), takes.Length, latest.TakeIndex);
+            var first = takes[0].Recording;
+            var restored = new TakeLedger(first.Workspace, first.Source);
+            foreach (var take in takes)
+            {
+                if (take.Authoring.TutorialId != latest.TutorialId) throw new ArgumentException("Mixed tutorials cannot be restored.");
+                restored.Restore(take);
+            }
+            // Load performs the rectangular-workspace validation and invalidates registration.
+            if (latest.TakeIndex < 0 || latest.TakeIndex >= takes.Length) throw new ArgumentException("Saved take index is unavailable.");
+            LoadRecording(takes[latest.TakeIndex].Recording);
+            ledger = restored; recordedWorkspace = first.Workspace; policy = new RecordingPolicy(first.Source);
+            Authoring = restoredState;
+            LastAuthoringMetadata = latest; Status = Authoring.Notice;
+        }
+        public void NewTutorial()
+        {
+            Reduce(RecordingAction.NewTutorial);
+            ledger = null; LastRecording = null; LastAuthoringMetadata = null; completedMetadata = null; replay = null; StopReplay();
+        }
+        public void BeginSavePosition() => Reduce(RecordingAction.BeginSaveZone);
+        public void CancelSavePosition() => Reduce(RecordingAction.CancelSaveZone);
+        public void PauseRecording() => Reduce(RecordingAction.Pause);
+        public void ResumeRecording() => Reduce(RecordingAction.Resume, LatestWorkspaceObservation);
+        public void DiscardRecording() => Reduce(RecordingAction.DiscardTake);
+        public Recording ExportTakes()
+        {
+            if (IsRecording) throw new InvalidOperationException("Finish or discard the current take before sending for review.");
+            if (ledger == null) throw new InvalidOperationException("No saved takes to export.");
+            return ledger.Export(Guid.NewGuid().ToString("N"));
+        }
+        public void ApproveTake() => Reduce(RecordingAction.ApproveTake);
+        public void ReRecordTake(int index) => BeginTake(120000, index);
+        public void StartRecording(double durationMs = 120000) => BeginTake(durationMs, null);
+        private void BeginTake(double durationMs, int? replaceIndex)
+        {
+            if (IsRecording) { Status = "Finish or discard the current take before starting another."; return; }
+            if (double.IsNaN(durationMs) || double.IsInfinity(durationMs) || durationMs < 1200 || durationMs > 120000)
+            { Status = "Take duration must be between 1.2 and 120 seconds."; return; }
             if (string.IsNullOrWhiteSpace(LayoutId) || LayoutId.Length > 124)
             { Status = "A layout ID of 1–124 characters is required."; return; }
-            if (Registration == null || Source == null || LatestWorkspaceObservation == null ||
-                Clock() - LatestWorkspaceObservation.TimestampMs > 100 ||
-                (UseLeftHand ? LatestWorkspaceObservation.Left : LatestWorkspaceObservation.Right).Status != "valid")
-            { Status = "Fresh hands and verified calibration are required."; return; }
-            StopReplay();
-            recordedWorkspace = MakeWorkspace();
-            CaptureStartedMs = Clock();
-            captureMetadata = new NativeCaptureSidecar { SchemaVersion = 1, TrackingSessionId = Source.TrackingSessionId,
-                OriginRevision = OriginRevision, Provider = Source.ProviderId, EditorVersion = Application.unityVersion,
-                SdkVersion = Source.SdkVersion, Skeleton = "openxr-26", AdapterVersion = Source.AdapterVersion,
-                Clock = new ClockMapping { Source = "native-monotonic", OffsetToMonotonicMs = CaptureStartedMs, UncertaintyMs = 1000.0 / System.Diagnostics.Stopwatch.Frequency },
-                ConfidencePolicy = "all-required-joints-valid", Source = Source.SourceKind };
-            capture = new MotionCapture(CaptureStartedMs, durationMs, OriginRevision, Registration.ReferenceFromWorkspace, Source.SourceKind);
-            Status = "Recording " + Source.SourceKind + " motion; tracking gaps remain explicit.";
+            if (Registration == null || Source == null)
+            { Status = "Verified calibration is required."; return; }
+            if (ledger == null) ledger = new TakeLedger(MakeWorkspace(), Source.SourceKind);
+            // A tutorial cannot silently change its declared workspace/source between takes.
+            if (recordedWorkspace != null && (recordedWorkspace.LayoutId != LayoutId ||
+                (float)recordedWorkspace.WidthM != WidthM || (float)recordedWorkspace.DepthM != DepthM ||
+                recordedWorkspace.DominantHand != (UseLeftHand ? "left" : "right") || policy.Source != Source.SourceKind))
+            { Status = "Start a new tutorial before changing its workspace or hand source."; return; }
+            maximumTakeMs = durationMs;
+            Reduce(replaceIndex.HasValue ? RecordingAction.ReRecordTake : RecordingAction.StartTake, takeIndex: replaceIndex ?? -1);
+            if (Authoring.Phase == RecordingPhase.Arming) { recordedWorkspace = MakeWorkspace(); StopReplay(); }
         }
-        public void StopRecording()
+        public void StopRecording() => Reduce(RecordingAction.StopFullTake);
+        private void Reduce(RecordingAction action, ReferenceObservation observation = null, int takeIndex = -1)
         {
-            if (capture == null) return;
-            var completed = capture; capture = null;
+            if (policy == null) policy = new RecordingPolicy(Source == null ? "live" : Source.SourceKind);
+            if (action == RecordingAction.NewTutorial)
+            { policy = new RecordingPolicy(Source == null ? "live" : Source.SourceKind); recordedWorkspace = null; }
+            var transition = RecordingDirector.Reduce(policy, Authoring, new RecordingInput(action, Clock(), observation,
+                action == RecordingAction.NewTutorial ? Guid.NewGuid().ToString("N") : null, OriginRevision, takeIndex));
             try
             {
-                LastRecording = completed.Finish(Guid.NewGuid().ToString("N"), recordedWorkspace, Clock());
-                replay = new MotionReplay(LastRecording); completedMetadata = captureMetadata;
-                Status = "Captured " + LastRecording.Frames.Length + " frames" + (completed.StopReason == null ? "" : " (" + completed.StopReason + ")") + ". Save through the recording store, or Replay.";
-                RecordingCompleted?.Invoke(LastRecording);
+                // Finalize/validate the buffer before publishing the reducer's committed state.
+                var take = ledger == null ? null : ledger.Apply(transition, observation, transition.Commit == null ? null : Guid.NewGuid().ToString("N"));
+                Authoring = transition.State;
+                if (action != RecordingAction.Sample && action != RecordingAction.Tick || transition.Effects.Count > 0)
+                    Status = Authoring.Notice;
+                foreach (var effect in transition.Effects)
+                    if (effect.Kind == RecordingEffectKind.TakeStarted)
+                    {
+                        takeClockContinuous = true;
+                        CaptureStartedMs = observation.TimestampMs;
+                        captureMetadata = new NativeCaptureSidecar { SchemaVersion = 1, TrackingSessionId = Source.TrackingSessionId,
+                            OriginRevision = OriginRevision, Provider = Source.ProviderId, EditorVersion = Application.unityVersion,
+                            SdkVersion = Source.SdkVersion, Skeleton = "openxr-26", AdapterVersion = Source.AdapterVersion,
+                            Clock = new ClockMapping { Source = "native-monotonic", OffsetToMonotonicMs = CaptureStartedMs,
+                                UncertaintyMs = 1000.0 / System.Diagnostics.Stopwatch.Frequency },
+                            ConfidencePolicy = "all-required-joints-valid", Source = Source.SourceKind };
+                    }
+                foreach (var effect in transition.Effects)
+                    if (effect.Kind == RecordingEffectKind.TakePaused) takeClockContinuous = false;
+                if (take != null)
+                {
+                    LastRecording = take.Recording; completedMetadata = captureMetadata; completedClockContinuous = takeClockContinuous;
+                    LastAuthoringMetadata = new TakeAuthoringMetadata { SchemaVersion = 1, TutorialId = Authoring.TutorialId,
+                        TakeIndex = Authoring.LastTakeIndex,
+                        SavePosition = new TakeAuthoringMetadataSavePosition { LeftM = Authoring.SavePosition.LeftM, RightM = Authoring.SavePosition.RightM },
+                        Trim = new TakeAuthoringMetadataTrim { StartMs = take.Trim.StartMs, EndMsExclusive = take.Trim.EndMsExclusive },
+                        TrimReason = take.TrimReason };
+                    replay = new MotionReplay(LastRecording);
+                    RecordingCompleted?.Invoke(LastRecording);
+                }
+                if (ledger != null && ledger.PendingStopReason != null && IsRecording)
+                {
+                    if (action != RecordingAction.StopFullTake) StopRecording();
+                    else { DiscardRecording(); Status = "Capture limit reached before a saveable take. Previous takes are unchanged."; }
+                }
             }
-            catch (Exception error) when (error is InvalidOperationException || error is ContractException || error is ArgumentException) { Status = "Capture could not be finalized: " + error.Message; }
+            catch (Exception error) when (error is InvalidOperationException || error is ContractException || error is ArgumentException)
+            {
+                // A failed finalization must not invent a saved take or overwrite the previous one.
+                ledger?.DiscardPending();
+                Authoring = RecordingDirector.Reduce(policy, Authoring,
+                    new RecordingInput(RecordingAction.DiscardTake, Clock())).State;
+                Status = "Take could not be saved: " + error.Message;
+            }
         }
         public void LoadRecording(Recording recording)
         {
@@ -189,12 +278,14 @@ namespace Trail.Runtime.Record
                 NVector3.Distance(workspace.CalibrationMarksM.D, expectedB + expectedC) > .00001f)
                 throw new ArgumentException("This calibration flow requires the declared rectangular A/B/C/D mat geometry.");
             Invalidate("Loaded tutorial requires independent learner registration");
+            NewTutorial();
             LastRecording = validated; completedMetadata = null; replay = new MotionReplay(validated);
+            UseLeftHand = validated.Workspace.DominantHand == "left";
             WidthM = (float)validated.Workspace.WidthM; DepthM = (float)validated.Workspace.DepthM; LayoutId = validated.Workspace.LayoutId;
         }
         public void StartReplay()
         {
-            if (Registration == null || replay == null || capture != null) { Status = "Load/capture motion and verify registration before replay."; return; }
+            if (Registration == null || replay == null || IsRecording) { Status = "Load/capture motion and verify registration before replay."; return; }
             replayStartMs = Clock(); replaying = true; Status = "Ghost replay • " + replay.Source + ". Endpoint motion is not assembly verification.";
         }
         public void StopReplay() { replaying = false; ReplayFrame = null; }

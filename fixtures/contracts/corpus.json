@@ -1,6 +1,18 @@
 {
   "cases": [
     {
+      "name": "valid take-authoring",
+      "contract": "TakeAuthoringMetadata",
+      "file": "take-authoring.json",
+      "valid": true
+    },
+    {
+      "name": "valid authored-capture",
+      "contract": "AuthoredCapture",
+      "file": "authored-capture.json",
+      "valid": true
+    },
+    {
       "name": "valid recording",
       "contract": "Recording",
       "file": "recording.json",
@@ -143,6 +155,62 @@
       "contract": "RecordingByteChunk",
       "file": "recording-byte-chunk.json",
       "valid": true
+    },
+    {
+      "name": "take-authoring unknown field",
+      "contract": "TakeAuthoringMetadata",
+      "file": "take-authoring.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "take-authoring missing field",
+      "contract": "TakeAuthoringMetadata",
+      "file": "take-authoring.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "authored-capture unknown field",
+      "contract": "AuthoredCapture",
+      "file": "authored-capture.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "unexpected"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "authored-capture missing field",
+      "contract": "AuthoredCapture",
+      "file": "authored-capture.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "remove": true
+        }
+      ]
     },
     {
       "name": "recording unknown field",
@@ -2765,6 +2833,96 @@
             "syncMethod": "manual-markers",
             "estimatedSyncErrorMs": null
           }
+        }
+      ]
+    },
+    {
+      "name": "save position out of workspace bounds",
+      "contract": "TakeAuthoringMetadata",
+      "file": "take-authoring.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "savePosition",
+            "leftM",
+            0
+          ],
+          "value": 11
+        }
+      ]
+    },
+    {
+      "name": "reversed take trim",
+      "contract": "TakeAuthoringMetadata",
+      "file": "take-authoring.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "trim",
+            "startMs"
+          ],
+          "value": 102
+        }
+      ]
+    },
+    {
+      "name": "empty take trim",
+      "contract": "TakeAuthoringMetadata",
+      "file": "take-authoring.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "trim",
+            "startMs"
+          ],
+          "value": 101
+        }
+      ]
+    },
+    {
+      "name": "unsupported authoring version",
+      "contract": "TakeAuthoringMetadata",
+      "file": "take-authoring.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "schemaVersion"
+          ],
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "negative take index",
+      "contract": "TakeAuthoringMetadata",
+      "file": "take-authoring.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "takeIndex"
+          ],
+          "value": -1
+        }
+      ]
+    },
+    {
+      "name": "motion reaches excluded trim boundary",
+      "contract": "AuthoredCapture",
+      "file": "authored-capture.json",
+      "valid": false,
+      "patches": [
+        {
+          "path": [
+            "authoring",
+            "trim",
+            "endMsExclusive"
+          ],
+          "value": 100
         }
       ]
     }

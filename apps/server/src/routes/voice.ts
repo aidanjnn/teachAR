@@ -34,6 +34,7 @@ const SessionIdParam = z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
 export type CoachTutorialLookup = (tutorialId: string) => Promise<CoachTutorialSource | null>;
 
 export interface VoiceRouteOptions {
+  sessions?: LiveSessionRegistry;
   /** When present, narration/labels need an author token and coaching needs a learner or author token on this session. */
   auth?: PairingAuthority;
   /** When present, the client's step text is replaced by the stored tutorial; unknown or stale tutorials are rejected. */
@@ -90,7 +91,7 @@ export async function groundContext(context: CoachContext, resolveTutorial: Coac
 
 export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProvider, options: VoiceRouteOptions = {}): Promise<void> {
   const { auth, resolveTutorial } = options;
-  const sessions = new LiveSessionRegistry();
+  const sessions = options.sessions ?? new LiveSessionRegistry();
   const roleOf = (request: FastifyRequest): PairingRole | null => (auth ? auth.authorize(request, { roles: ['author', 'learner'], sessionId: auth.sessionId }).role : null);
   // Authenticate before the body is parsed so an unpaired client cannot make the server read a 20 MiB upload.
   const guard = (roles: readonly ('author' | 'learner')[]): RouteShorthandOptions =>
@@ -174,7 +175,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
           try { control.close(); } catch { /* already closed */ }
           return unavailable(reply, 503, { error: 'live_unavailable', message: 'The live coach control channel did not become ready.' });
         }
-        sessions.register(result.sessionId, grounded.context, control);
+        sessions.register(result.sessionId, grounded.context, control, auth?.sessionId ?? null);
       } finally {
         reply.raw.off('close', onClose);
       }

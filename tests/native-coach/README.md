@@ -22,5 +22,6 @@ effect vocabulary, and strict rejection of malformed or oversized coach payloads
 
 Nothing about Unity compilation, an APK, microphone permission, a real WebRTC peer connection,
 a GPT Live session, audio quality, or a headset. `NativeVoiceCoach.cs` is a `MonoBehaviour`
-and is **never compiled here**; only static source guards constrain it. `ICoachTransport` has
-no production implementation in this repository.
+and is **never compiled here**; only static source guards constrain it. `UnityCoachTransport` and `UnityCoachMicrophone` implement native media separately.
+Unity `Trail.Tests.CoachRuntime` covers lifecycle with injected effects; actual
+permission, audio/ICE, duplex echo handling and simultaneous XR remain device gates.

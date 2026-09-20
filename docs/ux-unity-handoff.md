@@ -44,6 +44,29 @@ These IDs are local checklist identifiers, not GitHub issues. Keep boxes open un
 
 Recommended order: **N0 → U1 → U2/U3/C1 → U4/U5 → U6/U7 → V1**. Keep a working native checkpoint build at each stage. Source tests are the regression specification; translate the important invariants into native tests instead of importing browser architecture.
 
+## Post-#19 recording integration (worktree `codex/recording-integration`)
+
+U2/U3/C1/U7 now have runtime wiring: `CaptureReplaySession` drives
+`RecordingDirector` and `TakeLedger` with fresh workspace observations and explicit
+clock ticks. The shell invokes actual save-position, cancel, pause/resume,
+replacement and discard operations. Discard applies to the in-progress take and
+preserves previously saved actions. The countdown excludes starting UI motion;
+automatic endpoint-return completion excludes the return gesture. Explicit Stop
+keeps the full take, so its UI reach may remain and must be reviewed.
+
+Saved actions and versioned save-position/trim metadata are written atomically and
+restored from private storage. A restart never restores calibration. Upload combines
+all saved actions with explicit segmentation markers, subject to the portable
+recording's total frame/duration limits. Storage failure status is visible in Create.
+See `docs/contracts.md` for legacy import and clock-mapping limitations.
+
+The integration regression drives real `CaptureReplaySession` through calibration,
+save placement, clean endpoint-return completion, replacement discard, paused-time
+exclusion, origin invalidation, export and restore. Pure-domain and contract tests
+remain separate from Unity and headset evidence. These items remain unchecked:
+real expert capture/replay, audio trimming, device controls and novice acceptance
+have not been demonstrated by this implementation.
+
 ## Where the porting references live
 
 All paths below are under [experiments/quest-browser](../experiments/quest-browser/README.md).

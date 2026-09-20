@@ -36,7 +36,9 @@ namespace Trail.Runtime.Scene
         private void Update()
         {
             if (Inspection == null) return;
-            status.text = "Camera: " + Inspection.CameraSource.Status + "\n" + Inspection.Status;
+            var spoken = Inspection.GetComponent<SpokenSceneInspection>();
+            status.text = "Camera: " + Inspection.CameraSource.Status + "\n" + Inspection.Status +
+                (spoken == null ? "" : "\n" + spoken.Status);
             var next = Inspection.Guide?.Capture?.Source;
             if (next != source) { Detach(); source = next; if (source != null) source.Observed += Observe; }
             if (MotionClock.NowMs - lastTime > 100) ResetTouch();

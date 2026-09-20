@@ -11,6 +11,8 @@ class Program
     {
         switch (name)
         {
+            case "TakeAuthoringMetadata": return ContractJson.SerializeTakeAuthoringMetadata(ContractJson.ParseTakeAuthoringMetadata(json));
+            case "AuthoredCapture": return ContractJson.SerializeAuthoredCapture(ContractJson.ParseAuthoredCapture(json));
             case "Recording": return ContractJson.SerializeRecording(ContractJson.ParseRecording(json));
             case "Tutorial": return ContractJson.SerializeTutorial(ContractJson.ParseTutorial(json));
             case "TutorialDraftEdit": return ContractJson.SerializeTutorialDraftEdit(ContractJson.ParseTutorialDraftEdit(json));
