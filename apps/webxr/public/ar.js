@@ -5,6 +5,7 @@ import {TutorialGuide,tutorialButton} from '/tutorial-guide.mjs';
 import {mountTutorialShell} from '/tutorial-shell.mjs';
 import {mountReview} from '/tutorial-review.mjs';
 import {nextVideoSnapshot} from '/camera-snapshot.mjs';
+import {CaptureSetup} from '/experience-entry.mjs';
 import {FeedbackAudio} from '/tutorial-feedback.mjs';
 import {NarrationRecorder,NarrationPlayback} from '/narration.mjs';
 import {createTutorCoach} from '/tutorial-coach.mjs';
@@ -14,7 +15,7 @@ const handsMode=tutorialMode||location.pathname==='/hands';
 const feedbackAudio=new FeedbackAudio();
 const narrator=tutorialMode?new NarrationRecorder({onStatus:message=>{document.getElementById('microphone-status').textContent=message;}}):null;
 const narrationPlayer=tutorialMode?new NarrationPlayback({onError:message=>tell(message)}):null;
-const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>closeAR(),snapshot:tutorialSnapshot,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take)feedbackAudio.play(event);}}):null;
+const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>closeAR(),snapshot:tutorialSnapshot,media:tutorialMode?{enable:()=>captureSetup.enable(),cancel:()=>captureSetup.cancel()}:null,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take)feedbackAudio.play(event);}}):null;
 
 const $=id=>document.getElementById(id);
 // The voice coach owns its own microphone stream and is started from the page before AR, so the XR entry click stays synchronous.
@@ -28,6 +29,7 @@ let session=null, renderer=null, scene, camera, head, panel, texture, rayLines=[
 let xrSupported=false, trial=null, trialRunning=false, lastSpeech='', lastDraw='', hover='';
 let notice='', noticeUntil=0, referenceImage=null, referenceRevision=null, boxes=[], firstCorner=null;
 let frameTime=0, networkTime=0, remoteFrameId=0, handHudTime=-Infinity, legacyStatusMissing=false;
+const captureSetup=tutorialMode?new CaptureSetup({camera:()=>stream?.getVideoTracks().some(t=>t.readyState==='live')?Promise.resolve():startCamera(true),microphone:()=>narrator.ready?Promise.resolve():narrator.enable(),stopCamera,stopMicrophone:()=>narrator.disable()}):null;
 const raycaster=new THREE.Raycaster(), direction=new THREE.Vector3(0,0,-1);
 
 async function tutorialSnapshot() {
@@ -69,13 +71,13 @@ function stopCamera() {
   $('video').srcObject=null; lastUpload=-Infinity; lastVideo=-1;
   $('camera-status').textContent='Camera stopped. Enable camera to resume.';
 }
-async function startCamera() {
-  if (session) return;
+async function startCamera(propagate=false) {
+  if (session&&!tutorialMode) return;
   pauseOnLeave(); stopCamera(); const generation=cameraGeneration;
   $('camera-start').disabled=true;
   try {
-    if (!navigator.mediaDevices || !isSecureContext) throw new Error('Use http://localhost:4321/ar on Quest through the USB connection.');
-    await poll();
+    if (!navigator.mediaDevices || !isSecureContext) throw new Error('Open the localhost address on Quest through the USB connection.');
+    if(!tutorialMode)await poll();
     const kind=/oculusbrowser|quest/i.test(navigator.userAgent)?'quest':'laptop';
     // Never silently delete a saved Quest reference by switching to a laptop.
     if (!tutorialMode && status?.capture?.source!==kind) throw new Error(`This checker expects ${status?.capture?.source || 'Quest'}. Open this page on that device; change source in laptop diagnostics only if intentional.`);
@@ -88,9 +90,9 @@ async function startCamera() {
     const devices=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
     $('devices').replaceChildren(...devices.map((d,i)=>{const option=document.createElement('option'); option.value=d.deviceId;
       option.textContent=d.label||`Camera ${i+1}`;option.selected=d.deviceId===active;return option;}));
-    tell('Camera started. Confirm the preview shows the table, then enter AR.');
+    tell(tutorialMode?'Reference photos ready.':'Camera started. Confirm the preview shows the table, then enter AR.');
     await pump(); await poll();
-  } catch(e) { stopCamera(); tell(e.message); }
+  } catch(e) { stopCamera(); tell(e.message);if(propagate===true)throw e; }
   finally { $('camera-start').disabled=false; }
 }
 async function pump() {
@@ -201,7 +203,7 @@ function update() {
   const now=performance.now();
   if(handsMode){
     $('enter').disabled=!!session||!xrSupported||busy||(tutorialMode&&guide.loading);
-    $('enter').textContent=xrSupported?(tutorialMode?'Enter Trail AR':'Enter hand guidance · free'):'Immersive AR unavailable in this browser';
+    $('enter').textContent=tutorialMode?'Enter the experience':xrSupported?'Enter hand guidance · free':'Immersive AR unavailable in this browser';
     if(now-handHudTime<50)return;handHudTime=now;
     const network=now<noticeUntil?notice:pendingCheck?'Image check in '+Math.ceil((pendingCheck-now)/1000)+'s':busy?'Image check running…':`Motion guidance: no API calls · camera ${now-lastUpload<3000?'connected':'off'} · image checks ${status?.calls||0}/${status?.max_calls||100}`;
     if(tutorialMode){const event=guide.feedback.visible(now),toast=$('feedback-toast');toast.hidden=!event;if(event){toast.textContent=event.text;toast.dataset.kind=event.kind;}}
@@ -298,9 +300,9 @@ async function enterAR() {
     narrationPlayer?.unlock();
     // Must happen directly inside the click, before awaiting unrelated work.
     const requested=navigator.xr.requestSession('immersive-ar',handsMode?{requiredFeatures:['hand-tracking']}:{optionalFeatures:['hand-tracking']});
-    busy=true;speak(tutorialMode?'Starting the tutorial recorder. Look at your workspace.':'Starting the headset test. Look at the toys and labels.');
+    busy=true;speak(tutorialMode?'Welcome to Trail. Choose Create or Follow.':'Starting the headset test. Look at the toys and labels.');
     const active=await requested; session=active;
-    active.addEventListener('end',()=>{session=null;guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
+    active.addEventListener('end',()=>{session=null;captureSetup?.cancel();guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
     active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){pauseOnLeave();guide?.hide();}});
     active.addEventListener('select',event=>{
       if(session!==active || active.visibilityState!=='visible')return;
@@ -367,7 +369,7 @@ $('reference').onclick=event=>{
 };
 $('undo').onclick=()=>{firstCorner=null;boxes.pop();drawReference();};
 $('save-boxes').onclick=async()=>{try{await api('/api/boxes',{boxes,revision:referenceRevision});trial=null;await poll();tell('Reference ready. Enter AR to test.');}catch(e){tell(e.message);}};
-$('camera-start').onclick=startCamera;$('devices').onchange=startCamera;$('enter').onclick=enterAR;
+$('camera-start').onclick=()=>startCamera();$('devices').onchange=startCamera;$('enter').onclick=enterAR;
 $('stop').onclick=async()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();coach?.stop();await session?.end();};
 if(tutorialMode){
   document.addEventListener('pointerdown',()=>{feedbackAudio.enabled=guide.appearance.sound;void feedbackAudio.unlock();},{passive:true});
@@ -384,7 +386,7 @@ window.addEventListener('beforeunload',event=>{if(tutorialMode&&(['capture','cap
 setInterval(()=>{service(performance.now());update();},200);
 try {xrSupported=!!navigator.xr && await navigator.xr.isSessionSupported('immersive-ar');}
 catch {xrSupported=false;}
-tell(xrSupported?(handsMode?'Ready. Put down controllers and choose Enter hand guidance. Camera is optional.':'Quest AR is available. Enable camera to begin.'):'Open this page on Quest for immersive AR. Desktop preview remains available.');
+tell(xrSupported?(tutorialMode?'Enter the experience to create or follow a tutorial.':handsMode?'Ready. Put down controllers and choose Enter hand guidance. Camera is optional.':'Quest AR is available. Enable camera to begin.'):'Open this page on Quest for immersive AR. Desktop preview remains available.');
 if(tutorialMode){await guide.restore();$('tutorial-title').value=guide.tutorial.title;$('tutorial-instructions').value=guide.tutorial.steps.map(s=>s.instruction).join('\n');}
 // The coach panel mounts last so its onChange hook wraps the review and shell hooks instead of being replaced by them.
 if(tutorialMode){mountReview(guide,{isActive:()=>!!session,tell});mountTutorialShell(guide,{isActive:()=>!!session,tell});mountCoachPanel(guide,coach,{tell});window.trailCoach=coach;}

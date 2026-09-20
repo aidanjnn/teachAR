@@ -46,6 +46,7 @@ const assert=require('node:assert/strict');
       return finished.steps.map(s=>s.id);
     });
     await page.reload();
+    await page.getByText('Browser tools · review, import and backup',{exact:true}).click();
     await page.waitForFunction(()=>document.querySelector('#tutorial-title').value==='Coach smoke');
     await page.click('#coach-start');
     await page.waitForFunction(()=>document.querySelector('#coach-mode').textContent==='text',null,{timeout:20000});

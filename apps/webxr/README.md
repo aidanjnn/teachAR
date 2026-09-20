@@ -16,7 +16,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-The first start creates a Python virtual environment and installs `requirements.txt`. `prepare-vendor.mjs` copies the exact locked Three.js 0.186.0 artifacts and MIT license from the workspace, checking their hashes. No CDN or separate JavaScript install is needed.
+The first start creates a Python virtual environment and installs `requirements.txt`. `prepare-vendor.mjs` copies the exact locked Three.js 0.186.0 artifacts and MIT license from the workspace, checking their hashes. The same preparation verifies the local MIT-licensed skinned hand models and required Three.js addons. No CDN or separate JavaScript install is needed.
 
 Open **http://127.0.0.1:4321/tutorial**. Desktop can inspect the library/review UI; actual tracking/immersive sessions require the headset. Keep the server running. This is a loopback development server, not a production or authenticated multi-user service.
 
@@ -26,15 +26,17 @@ With Quest developer mode enabled, an authorized USB debugging connection and An
 pnpm quest:open
 ```
 
-This runs `adb reverse tcp:4321 tcp:4321` and opens `http://localhost:4321/tutorial` in Quest Browser. Keep USB connected and the laptop awake. Close other camera-sender tabs before enabling the camera. Use **Create tutorial** or **Follow tutorial**, then the page's AR entry control. The tutorial hand loop does not require an API key or camera.
+This runs `adb reverse tcp:4321 tcp:4321` and opens `http://localhost:4321/tutorial` in Quest Browser. Keep USB connected and the laptop awake. Close other camera-sender tabs before enabling the camera. Choose **Enter the experience**, then **Create tutorial** or **Follow tutorial** inside AR. Create offers optional narration/photos together, with a hands-only fallback. Browser tools remain collapsed for editing and backup. The tutorial hand loop does not require an API key or camera.
 
 For another local port: `PORT=4331 pnpm dev` and `PORT=4331 pnpm quest:open`. Stop the foreground server with Ctrl-C. `start-background.py` is optional and records its PID in `.runtime/server.pid`; stop only that process when finished.
 
 See [the connected UI/UX base](../../docs/web-ui-base.md) for appearance settings, recording/review controls, save feedback and the headset acceptance walkthrough. See [practice flow](../../docs/web-practice-flow.md) for preview/ready/practice phases and movement-only completion.
 
+See [immersive entry and holographic hands](../../docs/web-immersive-entry.md) for the current entry flow, asset provenance and headset acceptance.
+
 ## Voice coach and narration drafting
 
-The tutor page has a Voice coach card. It pairs this browser with the Trail API, publishes the
+Expand **Browser tools · review, import and backup** for the Voice coach card. It pairs this browser with the Trail API, publishes the
 current tutorial's reviewed step titles and instructions as a coach guide, and starts the coach
 before you enter AR so the entry click stays synchronous. Inside AR the practice panel gains
 **Ask coach**; press it, speak, and the answer comes back over the coach's own audio. The coach
@@ -81,7 +83,7 @@ pnpm setup:webxr
 pnpm test:webxr
 ```
 
-The suite runs Node and Python unit tests plus twelve browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
+The suite runs Node and Python unit tests plus fourteen browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
 
 Hosted CI runs this suite alongside the existing repository checks. Neither these tests nor `pnpm check` establish headset tracking accuracy or physical task success. The latest packaging result is in [the activity log](../../docs/codex-log.md).
 

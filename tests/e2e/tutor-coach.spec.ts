@@ -34,6 +34,7 @@ test('pairs the browser tutor, publishes a coach guide and coaches from server-s
   await expect(page.locator('#coach-mode')).toHaveText('idle');
   const stepIds = await seedTutorial(page);
   await page.reload();
+  await page.getByText('Browser tools · review, import and backup', { exact: true }).click();
   await expect(page.locator('#tutorial-title')).toHaveValue('Coach smoke');
 
   // Pairing is on for the e2e server: the first Start reveals the code form.
