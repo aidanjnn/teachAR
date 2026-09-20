@@ -19,6 +19,20 @@ const assert=require('node:assert/strict');
  const result=await page.evaluate(async()=>{
   const THREE=await import('/vendor/three.module.js'),{TutorialGuide,tutorialButton}=await import('/tutorial-guide.mjs'),{syntheticTutorial}=await import('/tutorial-review.mjs');
   const {action:appAction,guide:appGuide}=await import('/ar.js');appGuide.ux=true;appGuide.mode='capture';await appAction('exit');if(appGuide.mode!=='confirm-exit')throw Error('Actual XR exit bypassed unfinished-take confirmation');await appAction('exit');if(appGuide.mode!=='confirm-exit')throw Error('Repeated exit discarded the take');appGuide.action('keep-take');if(appGuide.mode!=='capture-paused')throw Error('Exit recovery lost the take');appGuide.reset();
+  const originalExit=appGuide.exit;let exits=0;
+  appGuide.exit=()=>{exits++;appGuide.endSession();};
+  try{
+   for(const confirmation of ['exit','discard-confirm']){
+    const frames=syntheticTutorial().steps[0].frames.slice(0,3),beforeExit=exits;
+    appGuide.mode='capture-paused';appGuide.frames=frames;
+    await appAction(confirmation);await appAction('settings');await appAction('exit');
+    if(exits!==beforeExit||appGuide.mode!=='confirm-exit'||appGuide.frames!==frames)throw Error(`Settings bypassed ${confirmation} and discarded the take`);
+    await appAction('keep-take');
+    if(appGuide.mode!=='capture-paused'||appGuide.frames!==frames)throw Error('Returning from Settings lost the paused take');
+    await appAction('exit');await appAction('exit-discard');
+    if(exits!==beforeExit+1||appGuide.frames.length)throw Error('Explicit discard did not end the session and clear the take');
+   }
+  }finally{appGuide.exit=originalExit;appGuide.reset();}
   const fail=m=>{throw Error(m);};const events=[];let release;
   const g=new TutorialGuide({speak:()=>{},exit:()=>{},onFeedback:e=>events.push(e),writeTutorial:()=>new Promise(resolve=>release=resolve)});g.attach(new THREE.Scene());g.tutorial=syntheticTutorial();g.tutorial.steps.forEach(s=>{s.guide_hands='both';s.reviewed=true;});g.ux=true;g.activeSession=true;g.mode='author';
   const task=g.finishAuthoring();while(!release)await new Promise(r=>setTimeout(r,0));if(g.mode!=='saving-tutorial'||events.length)fail('Completion announced before storage');release();await task;if(g.mode!=='saved'||events.at(-1)?.kind!=='saved')fail('Durable success missing');
@@ -35,7 +49,7 @@ const assert=require('node:assert/strict');
   const c=document.createElement('canvas');c.width=1080;c.height=560;const ctx=c.getContext('2d');g.mode='home';g.draw(ctx,performance.now(),'');window.uiHome=c.toDataURL();
   for(const b of g.uiButtons){if(tutorialButton((b.x+b.w/2)/1080,1-(b.y+b.h/2)/560,g.uiButtons)!==b.id)fail('Hit target differs from visible control');}
   g.mode='learn';g.player={index:0,step:{instruction:'Follow the demonstrated movement'},paused:true};g.followEngine={state:'waiting',started:false,index:0,gates:[{},{}],radius:.12};g.draw(ctx,performance.now(),'');window.uiFollow=c.toDataURL();if(tutorialButton(.9,.6,g.uiButtons)!==null)fail('Transparent canvas area captured input');
-  await g.saveQueue;return {durableSave:true,failedSave:true,staleSave:true,inHeadsetTrim:true,settingsPause:true,exitRecovery:true};
+  await g.saveQueue;return {durableSave:true,failedSave:true,staleSave:true,inHeadsetTrim:true,settingsPause:true,exitRecovery:true,settingsExitConfirmation:true};
  });
  for(const [key,file]of [['uiHome','/tmp/trail-ui-home-canvas.png'],['uiFollow','/tmp/trail-ui-follow-canvas.png']])require('node:fs').writeFileSync(file,Buffer.from((await page.evaluate(k=>window[k],key)).split(',')[1],'base64'));
  await page.locator('[data-route=home]').click();await page.locator('#developer-tools').evaluate(e=>e.open=false);await page.locator('#device-settings').evaluate(e=>e.open=false);

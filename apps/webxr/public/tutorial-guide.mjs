@@ -310,7 +310,7 @@ export class TutorialGuide extends HandGuide {
   action(id) {
     this.problem='';
     if(id==='exit'){
-      if(this.ux&&(['capture','capture-paused','confirm-exit','confirm-discard'].includes(this.mode)||this.mode==='settings'&&['capture','capture-paused'].includes(this.settingsReturn))){this.narrator?.pause();this.endpoint.interrupt();this.mode='confirm-exit';return;}
+      if(this.ux&&(['capture','capture-paused','confirm-exit','confirm-discard'].includes(this.mode)||this.mode==='settings'&&['capture','capture-paused','confirm-exit','confirm-discard'].includes(this.settingsReturn))){this.narrator?.pause();this.endpoint.interrupt();this.mode='confirm-exit';return;}
       this.exit();return;
     }
     if(id==='exit-discard'&&this.mode==='confirm-exit'){this.narrator?.cancel();this.frames=[];this.exit();return;}
