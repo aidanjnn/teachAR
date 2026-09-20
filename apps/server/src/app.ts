@@ -21,6 +21,7 @@ import type { ServerConfig } from './config.js';
 import { registerVoiceRoutes, type CoachTutorialLookup } from './routes/voice.js';
 import { registerSceneCoachRoutes } from './routes/scene-coach.js';
 import { createOmniSceneCoach, offSceneCoach, type SceneCoachProvider } from './ai/scene-coach.js';
+import { registerTelemetryRoute } from './telemetry.js';
 
 async function storageWritable(dataDir: string): Promise<boolean> {
   const probe = join(dataDir, `.health-${randomUUID()}`);
@@ -109,6 +110,7 @@ export async function createApp(
     reply.header('Cache-Control', 'no-store');
     return probeVision(config.vision);
   });
+  registerTelemetryRoute(app, config);
   // A spoken line on connect proves the audio path before the learner enters AR; only the real provider can say it.
   const greeting = config.openai?.liveGreeting ? LIVE_GREETING : undefined;
   await registerVoiceRoutes(app, options.provider ?? createProvider(config), {

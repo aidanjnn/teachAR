@@ -2,6 +2,7 @@ import { loadEnvFile } from 'node:process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+import { readTelemetryConfig } from './telemetry.js';
 
 export const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const ModelName = z.string().min(1).max(128);
@@ -70,6 +71,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     host: values.HOST, port: values.PORT,
     dataDir: resolve(repositoryRoot, values.DATA_DIR),
     buildId: values.BUILD_ID,
+    telemetry: readTelemetryConfig(env),
     providers: { ai: values.AI_PROVIDER, haptics: values.HAPTICS_DRIVER, scene: values.SCENE_COACH },
     openai: values.AI_PROVIDER === 'openai' ? {
       apiKey: values.OPENAI_API_KEY.trim(), transcribeModel: values.OPENAI_TRANSCRIBE_MODEL, textModel: values.OPENAI_TEXT_MODEL,
