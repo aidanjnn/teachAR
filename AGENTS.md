@@ -1,5 +1,9 @@
 # Trail agent guide
 
+## Current user-directed delivery override
+
+The immediate demo now targets **Quest Browser / WebXR**. Read [web-delivery.md](docs/web-delivery.md) before applying the older native-only instructions below. Preserve native work, but do not require Unity for browser tasks. The browser tutor is in `experiments/quest-browser`; its headset-local follower owns browser progression. AI and desktop remain advisory. Native contracts and progression are unchanged; do not mix prototype JSON with native wire formats. The clean design is a reference until connected to real browser actions.
+
 Trail records a physical demonstration and replays workspace-relative hand motion
 for a learner who progresses at their own pace. [plan.md](docs/plan.md) is the product
 and implementation reference. Read the sections relevant to the change; its

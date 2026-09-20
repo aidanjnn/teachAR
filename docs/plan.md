@@ -1,3 +1,5 @@
+> **Current delivery override:** the user selected Quest Browser / WebXR for the immediate demo. Follow [web-delivery.md](web-delivery.md) for current scope and gaps. The native architecture below remains historical/future integration context, not a prerequisite for this web release.
+
 # Trail: demonstration-to-guidance implementation plan
 
 > **Implementation handoff (19 September):** the [browser-to-Unity checklist](ux-unity-handoff.md)

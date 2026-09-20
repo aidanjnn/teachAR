@@ -1,8 +1,8 @@
-# Quest browser tutor: executable Unity handoff
+# Trail: runnable Quest Browser tutor
 
-This is the local prototype used to test Trail's recording, review and learner experience. **Unity remains the shipping runtime.** Merging this directory makes the working reference available; it does not port its features into `apps/quest`.
+This is the local prototype used to test Trail's recording, review and learner experience. **Quest Browser / WebXR is now the immediate demo runtime.** Native Unity work remains available separately.
 
-Start with the [Unity implementation checklist](../../docs/ux-unity-handoff.md). The [source review](NATIVE-INTEGRATION-HANDOFF.md) explains what to reuse from native code and what is still missing.
+Start with [web delivery status and next steps](../../docs/web-delivery.md), including the clean UI reference and remaining coach integration. The [source review](NATIVE-INTEGRATION-HANDOFF.md) explains what to reuse from native code and what is still missing.
 
 ## Run from a fresh checkout
 

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trail — WebXR design reference</title>
+<style>body{margin:0;padding:20px;background:#e5e4dc;font:15px/1.5 system-ui,sans-serif;color:#242522}main{max-width:1100px;margin:auto}.export-note{max-width:80ch}#preview-tools{display:flex;flex-wrap:wrap;gap:16px;padding:16px 0}#preview-tools select{font:inherit;padding:6px}a{color:inherit}</style></head><body><main>
+<p class="export-note"><strong>Trail design reference — simulated, not a working tutor.</strong> Use the screen controls to inspect every state. Tracking, storage, audio and calibration are not connected. The timer, hand illustration and tutorial content are examples. <a href="README.md">Read the handoff</a>.</p>
+<div id="preview-tools" aria-label="Design review controls outside the product"></div>
+<style>
+#trail-review { --surface:#242522;--ink:#f2f0e9;--muted:#bebfb5;--line:#45463f;--action:#e8e7dc;--action-ink:#20231f;--cyan:#7cdadd;--success:#a5dbb5;--warning:#e4bd7c;--wall:#a8aaa0;--table:#777966;--mat:#4d5148;font:400 15px/1.5 system-ui,sans-serif;color:var(--ink); }
+#trail-review * {box-sizing:border-box}
+#trail-review .appearance-preview {display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:12px 16px;background:var(--surface);border-radius:16px}
+#trail-review .appearance-preview > span {font-size:13px;color:var(--muted);margin-right:8px}
+#trail-review .appearance-preview button {min-height:44px;padding:8px 16px;border:1px solid var(--line);border-radius:24px;background:transparent;color:var(--ink)}
+#trail-review .appearance-preview button[aria-pressed="true"] {background:var(--action);color:var(--action-ink);border-color:var(--action)}
+#trail-review button {font:inherit;color:inherit;cursor:pointer}
+#trail-review .scene {position:relative;background:var(--wall);border-radius:24px;overflow:hidden;min-height:710px;isolation:isolate}
+#trail-review .scene:before {content:"";position:absolute;inset:42% -12% -30%;background:var(--table);transform:perspective(700px) rotateX(32deg);border-top:8px solid color-mix(in srgb,var(--table),var(--ink) 12%);z-index:-2}
+#trail-review .mat {position:absolute;left:12%;right:12%;top:57%;height:29%;background:var(--mat);transform:skewY(-5deg);border-radius:10px;z-index:-1}
+#trail-review .concept {padding:16px 22px;display:flex;justify-content:space-between;color:#242722;font-size:12px;gap:12px}
+#trail-review .panel {position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius,26px);padding:28px;margin:36px auto 0;width:min(88%,480px);box-shadow:0 20px 60px #10160f30;transition:background 180ms ease-out,color 180ms ease-out}
+#trail-review .panel.side {margin:22px 0 0 5%;width:340px;max-width:90%;padding:24px}
+#trail-review[data-side="right"] .panel.side {margin-left:auto;margin-right:5%}
+#trail-review h2 {font-size:30px;line-height:1.12;font-weight:500;letter-spacing:-1px;margin:20px 0 14px}
+#trail-review h3 {font-size:23px;line-height:1.22;font-weight:500;letter-spacing:-.5px;margin:16px 0 12px}
+#trail-review p {margin:0 0 22px;color:var(--muted);max-width:42ch}
+#trail-review .heading {display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;color:var(--muted)}
+#trail-review .wordmark {color:var(--ink);letter-spacing:3px;font-weight:500}
+#trail-review .button {border:1px solid var(--line);border-radius:50px;background:transparent;min-height:48px;padding:11px 20px;display:inline-flex;justify-content:center;align-items:center;gap:8px;transition:transform 140ms ease-out,background 140ms ease-out}
+#trail-review .button:hover {background:color-mix(in srgb,var(--surface),var(--ink) 8%)}
+#trail-review .button:active {transform:scale(.97)}
+#trail-review .button.primary {background:var(--action);color:var(--action-ink);border-color:var(--action)}
+#trail-review .button.full {width:100%;margin-bottom:12px}
+#trail-review .actions {display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+#trail-review .quiet {border:0;background:transparent;padding:10px 2px;min-height:44px;color:var(--muted);text-decoration:underline;text-underline-offset:4px}
+#trail-review .rule {height:1px;background:var(--line);margin:22px 0}
+#trail-review .choice {display:flex;align-items:center;justify-content:space-between;width:100%;padding:18px 0;text-align:left;border:0;border-top:1px solid var(--line);background:transparent}
+#trail-review .choice strong {display:block;font-size:18px;font-weight:500;color:var(--ink)}
+#trail-review .choice small {display:block;color:var(--muted);margin-top:5px;font-size:13px}
+#trail-review .small {font-size:12px;color:var(--muted)}
+#trail-review .cue {border-left:3px solid var(--cyan);padding:0 0 0 14px;margin:22px 0;color:var(--ink)}
+#trail-review .cue.green {border-color:var(--success)}
+#trail-review .cue.amber {border-color:var(--warning)}
+#trail-review .dock {position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:60px;padding:6px 22px;white-space:nowrap}
+#trail-review .hands {position:absolute;width:270px;height:200px;right:8%;bottom:95px;color:var(--cyan);pointer-events:none}
+#trail-review[data-side="right"] .hands {right:auto;left:7%}
+#trail-review .hands svg {width:100%;height:100%;overflow:visible}
+#trail-review .guide-line {stroke:var(--cyan);fill:none;stroke-width:2;stroke-dasharray:5 6}
+#trail-review .zone {fill:color-mix(in srgb,var(--success),transparent 88%);stroke:var(--success);stroke-width:2}
+#trail-review .ghost {fill:color-mix(in srgb,var(--cyan),transparent 77%);stroke:var(--cyan);stroke-width:2;stroke-linejoin:round}
+#trail-review .bones {stroke:var(--cyan);stroke-width:1;fill:none;opacity:.65}
+#trail-review .handlabel {position:absolute;bottom:-8px;left:12px;background:var(--surface);border-radius:20px;padding:5px 12px;font-size:12px;white-space:nowrap;color:var(--ink)}
+#trail-review .timer {font-size:36px;letter-spacing:-1px;font-variant-numeric:tabular-nums;margin:16px 0}
+#trail-review .review-row {display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid var(--line);gap:12px}
+#trail-review .handle {width:44px;height:4px;background:var(--muted);opacity:.5;border-radius:10px;margin:22px auto -12px}
+#trail-review .home-tiles {display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
+#trail-review .home-tile {display:flex;flex-direction:column;align-items:flex-start;gap:24px;min-height:176px;padding:22px;text-align:left;border:1px solid var(--line);border-radius:20px;background:color-mix(in srgb,var(--surface),var(--ink) 4%);transition:transform 140ms ease-out,background 140ms ease-out}
+#trail-review .home-tile:hover {background:color-mix(in srgb,var(--surface),var(--ink) 9%)}
+#trail-review .home-tile:active {transform:scale(.97)}
+#trail-review .home-tile .tile-icon {width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--line);border-radius:13px;color:var(--ink)}
+#trail-review .home-tile .tile-icon svg {width:25px;height:25px}
+#trail-review .home-tile strong {font-size:19px;font-weight:500;line-height:1.2;display:block}
+#trail-review .home-tile small {display:block;color:var(--muted);font-size:12px;margin-top:7px}
+#trail-review .panel.home-panel {width:min(90%,560px)}
+#trail-review .panel.compact {width:300px;padding:20px;border-radius:20px}
+#trail-review .compact h3 {margin:10px 0 8px;font-size:22px}
+#trail-review .compact p {margin:0;font-size:14px}
+#trail-review .checkpoint-line {display:flex;align-items:center;gap:10px;color:var(--success);font-size:15px}
+#trail-review .checkpoint-line svg {width:20px;height:20px;flex-shrink:0}
+#trail-review .compact .small {margin-bottom:8px}
+#trail-review .compact .handle {margin-top:16px}
+#trail-review .compact .rule {margin:14px 0}
+#trail-review .step-count {color:var(--muted);font-size:12px}
+#trail-review .recording-line {display:flex;align-items:center;justify-content:space-between;gap:14px;margin:14px 0;color:var(--ink)}
+#trail-review .recording-line strong {font-size:28px;font-weight:500;font-variant-numeric:tabular-nums}
+#trail-review .recording-line span {display:flex;gap:8px;align-items:center;font-size:14px}
+#trail-review .recording-line svg {width:16px;height:16px;color:var(--warning)}
+#trail-review .dock .quiet {display:flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;padding:10px 4px}
+#trail-review .dock svg {width:17px;height:17px}
+#trail-review .dock [data-go="review"] {color:var(--ink)}
+#trail-review .trim {height:44px;display:flex;gap:4px;align-items:center;border-bottom:2px solid var(--cyan);margin:12px 0 8px}
+#trail-review .trim span {flex:1;background:var(--muted);border-radius:3px;opacity:.6}
+#trail-review .trim .excluded {opacity:.16;background:var(--ink)}
+#trail-review .review-meta {display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+#trail-review[data-feedback="lost"] .ghost,#trail-review[data-feedback="lost"] .bones {opacity:.25}
+#trail-review[data-feedback="lost"] .guide-line {visibility:hidden}
+#trail-review[data-feedback="off-path"] .zone {stroke:var(--warning);fill:color-mix(in srgb,var(--warning),transparent 88%)}
+#trail-review[data-screen="record"] .zone,#trail-review[data-screen="record"] .guide-line,#trail-review[data-screen="record-ready"] .zone,#trail-review[data-screen="record-ready"] .guide-line,#trail-review[data-screen="record-paused"] .zone,#trail-review[data-screen="record-paused"] .guide-line {visibility:hidden}
+@media(max-width:400px){#trail-review .home-tiles {gap:10px}#trail-review .home-tile {padding:14px;min-height:165px}#trail-review .home-tile strong {font-size:17px}}
+#trail-review input {width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:16px}
+#trail-review .layout-map {display:flex;justify-content:space-between;gap:18px;border:1px solid var(--line);padding:18px;border-radius:12px;margin-bottom:18px}
+@media(max-width:520px){#trail-review .scene {min-height:820px}#trail-review .panel {padding:24px;margin-top:20px}#trail-review .panel.side {width:90%;margin:20px auto 0!important}#trail-review .hands {right:calc(50% - 135px)!important;left:auto!important;bottom:88px}#trail-review h2 {font-size:28px}#trail-review .concept {padding:14px 18px}#trail-review .dock {gap:8px;padding:6px 18px}}
+@media(prefers-reduced-motion:reduce){#trail-review * {transition:none!important}}
+</style>
+<div id="trail-review" aria-label="Trail spatial interface design">
+  <div class="appearance-preview" role="group" aria-label="Preview appearance, outside the headset interface">
+    <span>Compare appearance</span>
+    <button type="button" data-appearance="graphite" aria-pressed="true">Charcoal</button>
+    <button type="button" data-appearance="paper" aria-pressed="false">Warm gray</button>
+  </div>
+  <div class="scene">
+    <div class="concept"><span>Design preview · example states</span><span id="tr-direction">Charcoal</span></div>
+    <div class="mat"></div>
+    <section class="panel" id="tr-panel" aria-live="polite"></section>
+    <div class="hands" id="tr-hands" hidden>
+      <svg viewBox="0 0 270 200" role="img" aria-label="Illustrative translucent expert hand and a broad starting zone">
+        <ellipse class="zone" cx="136" cy="162" rx="70" ry="22"/>
+        <path class="guide-line" d="M139 154 Q225 133 213 54"/>
+        <path class="ghost" d="M86 177 L86 133 Q68 121 56 99 Q51 89 57 86 Q63 82 70 91 L91 110 L86 65 Q84 52 92 52 Q100 51 102 62 L109 98 L106 37 Q105 24 114 24 Q124 24 124 36 L128 96 L135 40 Q137 28 145 30 Q153 32 150 45 L144 104 L157 65 Q162 52 170 57 Q177 60 172 74 L156 131 Q155 153 148 177 Z"/>
+        <path class="bones" d="M116 171 L107 126 L91 110 M107 126 L100 80 L92 58 M116 133 L119 72 L115 30 M126 134 L140 76 L143 36 M138 137 L158 99 L168 64 M94 137 L146 145"/>
+      </svg>
+      <span class="handlabel" id="tr-handlabel">Expert hand · illustration</span>
+    </div>
+    <nav class="dock" aria-label="Session controls"><button class="quiet" data-go="home">Home</button><span aria-hidden="true">·</span><button class="quiet" data-go="settings">Session settings</button></nav>
+  </div>
+</div>
+<script>
+(() => {
+ const root=document.getElementById('trail-review');
+ const panel=root.querySelector('#tr-panel');
+ const state={theme:'graphite',screen:'home',side:'left',radius:26,feedback:'ready',saveGesture:true,recordStep:1};
+ let prior='home';
+ const palettes={
+ graphite:{surface:'#242522',ink:'#d9d9d2',muted:'#b6b8ad',line:'#56584f',action:'#d7d8cc','action-ink':'#20231f'},
+ paper:{surface:'#d8d7ce',ink:'#262922',muted:'#505448',line:'#838777',action:'#272d26','action-ink':'#d8d7ce'},
+ forest:{surface:'#192e2a',ink:'#e8f0e8',muted:'#b0c6bb',line:'#3a5349',action:'#dfebe0','action-ink':'#192e2a'}
+ };
+ const button=(label,screen,primary=false)=>`<button class="button ${primary?'primary':''}" data-go="${screen}">${label}</button>`;
+ const title=(section,heading,body)=>`<div class="heading"><span class="wordmark">TRAIL</span><span>${section}</span></div><h2>${heading}</h2><p>${body}</p>`;
+ function remember(){window.openai?.setWidgetState?.({modelContent:{...state,proposalOnly:true},privateContent:{prior}})?.catch(()=>{});}
+ function render(){
+   Object.entries(palettes[state.theme]||palettes.graphite).forEach(([k,v])=>root.style.setProperty('--'+k,v));
+   root.querySelectorAll('[data-appearance]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.appearance===state.theme)));
+   root.style.setProperty('--radius',state.radius+'px');root.dataset.side=state.side;
+   root.dataset.feedback=state.screen==='guiding'?state.feedback:'ready';
+   root.dataset.screen=state.screen;
+   root.querySelector('#tr-direction').textContent=({graphite:'Charcoal',paper:'Warm gray',forest:'Forest'})[state.theme];
+   const spatial=['save-pose','record-ready','record','record-paused','waiting','guiding','checkpoint','follow-paused'].includes(state.screen);
+   panel.classList.toggle('side',spatial);root.querySelector('#tr-hands').hidden=!spatial;
+   const following=['waiting','guiding','checkpoint'].includes(state.screen);
+   panel.classList.toggle('compact',following||['record','record-ready','record-paused','follow-paused'].includes(state.screen));panel.classList.toggle('home-panel',state.screen==='home');
+   root.querySelector('.dock').innerHTML=following?'<button class="quiet" data-go="follow-paused"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>Pause</button><button class="quiet" data-go="waiting"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8a8 8 0 1 1-1 7M5 3v5h5"/></svg>Repeat</button><button class="quiet" data-go="settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>Menu</button>':state.screen==='record'?'<button class="quiet" data-go="record-paused"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>Pause</button><button class="quiet" data-go="review"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>End step</button>':'<button class="quiet" data-go="settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="8" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg>Session menu</button>';
+   root.querySelector('#tr-handlabel').textContent=state.screen==='save-pose'?'Your save position · illustration':['record','record-ready','record-paused'].includes(state.screen)?'Your tracked hand · illustration':state.feedback==='lost'&&state.screen==='guiding'?'Tracking lost · ghost waiting':'Expert hand · illustration';
+   let html='';
+   switch(state.screen){
+    case 'home': html='<div class="heading"><span class="wordmark">TRAIL</span><span>Your workspace</span></div>'+
+      '<div class="home-tiles"><button class="home-tile" data-go="create"><span class="tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></span><span><strong>Create a tutorial</strong><small>Teach a skill</small></span></button><button class="home-tile" data-go="library"><span class="tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16M9 4v16M14 4v16M18 4l3 16"/></svg></span><span><strong>Follow a tutorial</strong><small>Learn from a recording</small></span></button></div><div class="rule"></div><div class="small">Recent tutorials</div><button class="choice" data-go="align"><span><strong>My demonstration</strong><small>3 steps · example tutorial</small></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19L19 5M5 5h14v14"/></svg></button>';break;
+    case 'create': html=title('Create · workspace','Where will you work?','Place your materials, then align the tutorial to this surface.')+'<div class="layout-map"><span>Choose the surface</span><span>Check alignment</span></div><div class="actions">'+button('Set up workspace','save-pose',true)+button('Back','home')+'</div>';break;
+    case 'save-pose': html=title('Create · save gesture','Choose your resting spot.','Hold both hands somewhere clear of the task. Return here to save each step.')+'<div class="cue">Set once for this tutorial.<br>Review the trimmed ending after each step.</div><div class="actions"><button class="button primary" data-go="record-ready" data-save="yes">Set this position</button><button class="button" data-go="record-ready" data-save="no">Use buttons instead</button></div>';break;
+    case 'record-ready': html='<div class="step-count">Create · step '+state.recordStep+'</div><h3>Ready to demonstrate.</h3><p>'+ (state.saveGesture?'Your save position is set. Return there when this step is finished.':'Use End step when this movement is finished.')+'</p><div class="actions">'+button('Start recording','record',true)+'</div>';break;
+    case 'record': html='<div class="step-count">Create · step '+state.recordStep+'</div><div class="recording-line"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg>Recording</span><strong>00:12</strong></div><p>'+(state.saveGesture?'Return to your save position to end this step.':'Select End step when you finish.')+'</p>';break;
+    case 'record-paused': html=title('Create · paused','Take your time.','Your recorded movement is kept. Continue when you are ready.')+'<div class="actions">'+button('Resume recording','record',true)+button('Stop & review','review')+'</div>';break;
+    case 'review': html=title('Create · review','Keep this step?','Check that the recording ends with the task movement.')+'<div class="review-row"><span>Step '+state.recordStep+' · recorded motion</span>'+button('Preview','preview')+'</div><div class="trim" aria-label="Illustrative movement timeline with the control motion excluded"><span style="height:12px"></span><span style="height:21px"></span><span style="height:30px"></span><span style="height:27px"></span><span style="height:15px"></span><span style="height:20px"></span><span style="height:29px"></span><span style="height:15px"></span><span class="excluded" style="height:10px"></span><span class="excluded" style="height:17px"></span></div><div class="review-meta"><span>Task movement</span><span>Control motion excluded</span></div><div class="actions"><button class="button primary" data-go="record-ready" data-next="yes">Keep & add next</button>'+button('Finish tutorial','saved')+button('Record again','record-ready')+'</div>';break;
+    case 'preview': html=title('Create · preview','Watch the ending.','This preview would replay the step before you approve it.')+'<div class="actions">'+button('Back to review','review',true)+'</div>';break;
+    case 'saved': html=title('Create · saved','Ready for someone new.','Your tutorial stays in your library. No download needed.')+'<label class="small" for="tr-name">Tutorial name</label><input id="tr-name" value="My demonstration" aria-label="Tutorial name"><div class="actions">'+button('Try following','align',true)+button('Home','home')+'</div>';break;
+    case 'library': html=title('Follow','Choose a tutorial.','Set your workspace once, then follow each movement at your own pace.')+'<button class="choice" data-go="align"><span><strong>My demonstration</strong><small>3 reviewed steps · example</small></span><span aria-hidden="true">→</span></button>';break;
+    case 'align': html=title('Follow · workspace','Place the tutorial here.','Align the reference points to your workspace, then check that the ghost matches your starting layout.')+'<div class="layout-map"><span>Original scale</span><span>New table position</span></div><div class="actions">'+button('Confirm alignment','waiting',true)+button('Back','library')+'</div>';break;
+    case 'waiting': html='<div class="step-count">Step 1 of 3 · ready when you are</div><h3>Meet the ghost.</h3><p>Bring your hands into the starting zones.</p>';break;
+    case 'guiding': {
+      const feedback=state.feedback==='lost'?['Hands out of view','Movement is paused. Bring your hands back into view.','amber']:state.feedback==='off-path'?['A little closer','Move toward the ghost. It waits while you catch up.','amber']:['Follow at your pace.','The ghost stays just ahead of your movement.','green'];
+      html='<div class="step-count">Step 1 of 3</div><h3>'+feedback[0]+'</h3><p>'+feedback[1]+'</p>';break;}
+    case 'follow-paused': html=title('Follow · paused','Pick up where you left off.','Move freely. Guidance resumes after you return to the movement zone.')+'<div class="actions">'+button('Resume','waiting',true)+button('Repeat step','waiting')+'</div>';break;
+    case 'checkpoint': html='<div class="checkpoint-line"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/></svg><span>Movement reached</span></div><div class="rule"></div><div class="step-count">Next · step 2 of 3</div><h3>Ready at the next pose.</h3><p>Move into the starting zones to begin.</p>';break;
+    case 'settings': html=title('Session','Keep your space clear.','Move the panel beside your work. Pairing and diagnostics stay here, outside the main flow.')+'<div class="actions">'+button('Return to tutorial',prior,true)+button('Home','home')+'</div>';break;
+   }
+   panel.innerHTML=html+'<div class="handle" aria-hidden="true"></div>';
+   
+ }
+ root.addEventListener('click',e=>{const appearance=e.target.closest('[data-appearance]');if(appearance){state.theme=appearance.dataset.appearance;render();remember();return;}const b=e.target.closest('[data-go]');if(!b)return;if(b.dataset.save)state.saveGesture=b.dataset.save==='yes';if(b.dataset.next)state.recordStep++;if(b.dataset.go==='create')state.recordStep=1;if(b.dataset.go==='settings')prior=state.screen==='record'?'record-paused':['guiding','waiting','checkpoint'].includes(state.screen)?'follow-paused':state.screen;state.screen=b.dataset.go;render();remember();});
+ function restore(v){const s=v?.modelContent;if(!s||!palettes[s.theme])return;Object.keys(state).forEach(k=>{if(s[k]!==undefined)state[k]=s[k];});prior=v?.privateContent?.prior||'home';render();}
+ restore(window.openai?.widgetState);render();
+ window.addEventListener('openai:set_globals',e=>restore(e.detail?.globals?.widgetState));
+ const tools=document.getElementById('preview-tools');
+ const fields=[['screen','Screen',['home','create','save-pose','record-ready','record','record-paused','review','preview','saved','library','align','waiting','guiding','follow-paused','checkpoint','settings']],['feedback','Simulated hand state',['ready','off-path','lost']],['side','Panel side',['left','right']]];
+ fields.forEach(([key,label,values])=>{const wrap=document.createElement('label');wrap.textContent=label+' ';const select=document.createElement('select');select.id='preview-'+key;values.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value.replaceAll('-',' ');select.append(option);});select.value=state[key];select.addEventListener('change',()=>{state[key]=select.value;if(key==='feedback')state.screen='guiding';render();syncControls();});wrap.append(select);tools.append(wrap);});
+ function syncControls(){fields.forEach(([key])=>{document.getElementById('preview-'+key).value=state[key];});}
+ root.addEventListener('click',syncControls);
+})();
+</script>
+
+</main></body></html>

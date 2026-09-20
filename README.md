@@ -3,7 +3,7 @@
 **Record a physical task once. Follow the expert's movements in your own workspace, at your own pace.**
 
 Trail is a mixed-reality physical-skill tutor being built for **Meta Quest 3S**
-using **Unity + Meta XR**. An expert demonstrates and narrates a short task; a
+with **Quest Browser / WebXR as the immediate demo runtime**, alongside the existing Unity + Meta XR implementation. An expert demonstrates and narrates a short task; a
 learner follows translucent ghost-hand guidance and talks to a GPT Live coach
 that receives visual evidence from a dedicated interpretation backend.
 
@@ -19,16 +19,18 @@ than task-specific code or cached answers.
 [Run the desktop](#run-the-desktop-and-backend-scaffold) →
 [Install Unity and build Android](#prepare-the-quest-app).
 
-## Browser prototype and Unity handoff
+## Run the browser tutor now
 
-The tested local tutor UX is preserved as an [executable browser reference](experiments/quest-browser/README.md).
-**Hamza / native integration: start with the [Unity gap and acceptance checklist](docs/ux-unity-handoff.md).**
-It maps one-time save-position setup, clean recording, paired holograms, learner-paced
-following and the Create/Follow shell onto existing native controllers. The browser
-format is not the native contract; merging this reference does not complete the port.
-No private recordings or API keys are included.
+Start with [the Quest Browser instructions](experiments/quest-browser/README.md).
+The product entry is `/tutorial` on port 4321; `pnpm dev` starts the separate desktop/backend app.
+No Unity install or API key is needed for hand recording and ghost guidance.
 
-## Current status
+See [web delivery status and next steps](docs/web-delivery.md) for what works, what is missing,
+and [the clean UI reference](docs/design/trail-ui/README.md) for the proposed presentation.
+The reference is not yet wired into the live tutor. The older [Unity handoff](docs/ux-unity-handoff.md)
+remains available for future native work. Private recordings and keys are excluded.
+
+## Existing native/backend status (separate from browser demo)
 
 The native platform, capture, motion progression, inspection transport and durable
 authoring/storage implementations are merged. The complete headset experience is
@@ -38,7 +40,7 @@ still being integrated and validated. Source availability is not device acceptan
 | --- | --- | --- |
 | Quest app | Unity/Meta/OpenXR setup, pairing, hand capture, registration, ghost presentation, local guide reducer, MRUK inspection and verified preload | Unified Create/Follow UX, one-time save zone, paired ghost presentation, native voice and end-to-end device validation |
 | Desktop | Replay diagnostics, authoring review, storage/spectator tools and Voice Lab | Integration polish and live-provider acceptance |
-| Main API | Scoped pairing, durable recording/tutorial publication, inspection coordination and voice routes | Complete paired native composition; open PR 14 voice grounding/auth integration |
+| Main API | Scoped pairing, durable recording/tutorial publication, inspection coordination and voice routes | Complete paired composition and live-provider acceptance |
 | Vision backend | Authenticated inspection jobs, input validation, bounded provider adapter and cancellation | Fresh-headset/live-model acceptance and measured reliability; not continuous object tracking |
 | Shared packages | Versioned strict recording/tutorial/inspection schemas, native parity fixtures and rigid transforms | Explicit versioning for new save-zone metadata; physical calibration/transfer acceptance |
 
@@ -466,7 +468,7 @@ have passed; see [native setup evidence](docs/native-setup.md) for the APK resul
 Live providers and headset trials remain unverified. Record actual headset results in `docs/validation.md`
 when they exist, including revision, device/software, scenario and measurements.
 
-- **Unity alone owns progression.** AI can explain and assess visible evidence;
+- **Each headset runtime owns its local progression.** AI can explain and assess visible evidence;
   it cannot invent spatial coordinates or complete a movement step.
 - **Movement is not assembly verification.** “Movement checkpoint reached” does
   not prove grasp, thread engagement, tightness, attachment or a watertight seal.
