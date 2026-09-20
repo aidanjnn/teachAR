@@ -69,8 +69,13 @@ claim of tested headset legibility, input comfort, grasp or assembly verificatio
 - `CreateCaptureSidecar(persistedId, exactBytesHash)` returns the canonical native
   sidecar after a completed capture. Storage supplies its assigned ID and SHA256
   of exact stored bytes. No calibration is restored from storage.
-- `GhostPresentation.ShowGuideFrame(frame, checkpoint)` / `ClearGuideFrame()`:
-  display only. The native guide controls completion and step timing.
+- `GhostPresentation.ShowGuideHands(frame, hands)` / `ClearGuideFrame()`: display
+  only, one translucent rig per required hand. The native guide controls completion
+  and step timing. Each hand's tolerance zone is drawn at the reviewed
+  `PositionToleranceM`, never a decorative radius; an untracked hand hides its own
+  rig and zone without affecting the other. The earlier single-hand
+  `ShowGuideFrame(frame, checkpoint, activeHand)` entry point is removed: it was
+  what made rendering only `Targets[0]` easy to write.
 
 Capture takes at most 3,600 frames and 120 seconds, at up to 30 Hz. It also
 stops admission before serialized motion exceeds 31 MiB, reserving room inside
