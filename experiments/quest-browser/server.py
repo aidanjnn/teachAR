@@ -230,7 +230,8 @@ class Handler(BaseHTTPRequestHandler):
                      "/narration.mjs":"narration.mjs","/narration-core.mjs":"narration-core.mjs","/camera-snapshot.mjs":"camera-snapshot.mjs","/tutorial-review.mjs":"tutorial-review.mjs","/tutorial":"tutorial.html","/tutorial-core.mjs":"tutorial-core.mjs","/tutorial-guide.mjs":"tutorial-guide.mjs","/tutorial-store.mjs":"tutorial-store.mjs",
                      "/hands":"hands.html","/hand-guide.mjs":"hand-guide.mjs","/motion-core.mjs":"motion-core.mjs",
                      "/ar":"ar.html","/ar.js":"ar.js","/ar-state.mjs":"ar-state.mjs","/ar.css":"ar.css",
-                     "/vendor/three.module.js":"vendor/three.module.js","/vendor/three.core.js":"vendor/three.core.js"}
+                     "/vendor/three.module.js":"vendor/three.module.js","/vendor/three.core.js":"vendor/three.core.js",
+                     "/tutorial-coach.mjs":"tutorial-coach.mjs","/tutorial-coach-panel.mjs":"tutorial-coach-panel.mjs","/narration-labels.mjs":"narration-labels.mjs","/vendor/trail-coach.js":"vendor/trail-coach.js"}
             if path not in files:
                 return self.send(404,{"error":"Not found"})
             file = ROOT/"public"/files[path]

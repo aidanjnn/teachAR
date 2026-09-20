@@ -53,7 +53,7 @@
 - [x] **Step 1: Failing test:** `createApp(config, { tutorRoot: <temp dir with tutorial.html and x.mjs> })` serves `GET /tutorial.html` 200 with `text/html`, `GET /x.mjs` with a JavaScript content type, `GET /tutorial` 302 to `/tutorial.html`, and `GET /api/health` still works.
 - [x] **Step 2: Implement.** `fastifyStatic` accepts `root: string[]`; pass `[webRoot, tutorRoot].filter(Boolean)`. Register when either is present. Add `app.get('/tutorial', (_r, reply) => reply.redirect('/tutorial.html'))` when `tutorRoot` is set.
 - [x] **Step 3: `main.ts`:** `const tutorRoot = resolve(repositoryRoot, 'experiments/quest-browser/public')`, include when `existsSync`. Development mode now serves the tutor even though it skips `webRoot`.
-- [ ] **Step 4: Green test, typecheck, and a manual check:** `pnpm dev` then `curl -I http://127.0.0.1:3001/tutorial.html`.
+- [x] **Step 4: Green test, typecheck, and a manual check:** `pnpm dev` then `curl -I http://127.0.0.1:3001/tutorial.html`.
 - [x] **Step 5: Commit:** `feat(server): serve the browser tutor from the main API origin`.
 
 ### Task 3: Bundle the coach runtime for the tutor
@@ -111,12 +111,12 @@
 - Modify: `experiments/quest-browser/server.py` (allowlist `tutorial-coach.mjs`, `narration-labels.mjs`, `/vendor/trail-coach.js`)
 - Test: `experiments/quest-browser/tests/browser-coach.cjs`
 
-- [ ] **Step 1: Failing browser workflow:** route `/api/session` -> 200 author, `/api/coach-guides` -> `{id, revision: 1}`, `/api/coach` -> answer built from the request's current step, `/api/live/sessions` -> 503 `live_unavailable`; seed a two-step tutorial through the page; click Start coach; expect badge `text`; Ask by text "what now" renders the step 1 instruction; drive the synthetic follower to step 2 and ask again; expect step 2 instruction and a recorded `/api/coach` body with `currentStepId` of step 2. Relax the GET-only route assertion for these paths only.
-- [ ] **Step 2: Implement the DOM card and shell handlers.** Start coach: `await coach.start(tutorial, currentStep, guide.epoch)`; unpaired -> reveal the pair form.
-- [ ] **Step 3: Guide hooks:** `showStep` -> `this.coach?.onStep(step, this.epoch)`; restart/try/watch -> `onAttempt()`; `hide` -> `onAttempt()`; `endSession` -> `stop()`. `speak(text)` returns early when `this.coach?.state.mode` is `live` or `listening`.
-- [ ] **Step 4: XR panel:** `b('coach-ask', 'Ask coach')` in the `learn` case when a coach is started; `handleUX('coach-ask')` -> `this.coach.ask()`; last caption in `v.detail`.
-- [ ] **Step 5: `python tests/run-browser.py` from `experiments/quest-browser` green (needs the vendor bundle from Task 3).**
-- [ ] **Step 6: Commit:** `feat(web): start, ask and follow the coach from the browser tutor`.
+- [x] **Step 1: Failing browser workflow:** route `/api/session` -> 200 author, `/api/coach-guides` -> `{id, revision: 1}`, `/api/coach` -> answer built from the request's current step, `/api/live/sessions` -> 503 `live_unavailable`; seed a two-step tutorial through the page; click Start coach; expect badge `text`; Ask by text "what now" renders the step 1 instruction; drive the synthetic follower to step 2 and ask again; expect step 2 instruction and a recorded `/api/coach` body with `currentStepId` of step 2. Relax the GET-only route assertion for these paths only.
+- [x] **Step 2: Implement the DOM card and shell handlers.** Start coach: `await coach.start(tutorial, currentStep, guide.epoch)`; unpaired -> reveal the pair form.
+- [x] **Step 3: Guide hooks:** `showStep` -> `this.coach?.onStep(step, this.epoch)`; restart/try/watch -> `onAttempt()`; `hide` -> `onAttempt()`; `endSession` -> `stop()`. `speak(text)` returns early when `this.coach?.state.mode` is `live` or `listening`.
+- [x] **Step 4: XR panel:** `b('coach-ask', 'Ask coach')` in the `learn` case when a coach is started; `handleUX('coach-ask')` -> `this.coach.ask()`; last caption in `v.detail`.
+- [ ] **Step 5: `python tests/run-browser.py` from `experiments/quest-browser` green (needs the vendor bundle from Task 3).** Ran `tests/browser-coach.cjs` directly against the Fastify-served tutor on port 3117: green. The Python runner waits for Task 10.
+- [x] **Step 6: Commit:** `feat(web): start, ask and follow the coach from the browser tutor`.
 
 ### Task 7: Narration to titles and instructions
 

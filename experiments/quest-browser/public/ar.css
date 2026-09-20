@@ -50,3 +50,11 @@ button:disabled {opacity:.45} details p {font-size:20px} #stop {margin-left:12px
 .tutorial-page details.panel{padding:22px}.tutorial-page summary{font-size:19px;min-height:36px}
 .library-item{display:flex;justify-content:space-between;gap:22px;align-items:center;padding:24px 0;border-bottom:1px solid #3c5c4f}.library-item strong{font-size:24px}.library-item p{font-size:16px;color:#b9d3c5;margin:8px 0}.library-item button{min-width:150px}
 @media(max-width:650px){.trail-choices{grid-template-columns:1fr}.trail-choices button{min-height:190px}.launch-panel{display:block}.launch-panel #enter{width:100%;margin-top:15px}.library-item{display:block}.library-item button{width:100%}#shell-save{margin-left:0}.tutorial-page .panel{padding:20px}}
+
+.coach-panel .badge{display:inline-block;padding:4px 12px;border-radius:999px;background:#2b4841;color:#dffff0;font-size:14px;letter-spacing:.06em;text-transform:uppercase;vertical-align:middle}
+.coach-panel .badge[data-mode=live],.coach-panel .badge[data-mode=listening]{background:#abead5;color:#153a2f}
+.coach-panel .badge[data-mode=text]{background:#4a5f3a;color:#eef9f2}
+.coach-panel .badge[data-mode=connecting]{background:#5b5a2f;color:#f5f0c8}
+#coach-log{list-style:none;padding:0;margin:12px 0 0;max-height:220px;overflow:auto;font-size:16px}
+#coach-log li{padding:6px 0;border-bottom:1px solid #3c5c4f;color:#d0e3db}#coach-log li[data-role=coach]{color:#eef9f2}
+#coach-pair{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:10px 0}

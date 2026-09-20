@@ -34,8 +34,9 @@ describe('browser tutor static serving', () => {
       const vendor = await app.inject('/vendor/trail-coach.js');
       expect(vendor.statusCode).toBe(200);
       const entry = await app.inject('/tutorial');
-      expect(entry.statusCode).toBe(302);
-      expect(entry.headers.location).toBe('/tutorial.html');
+      expect(entry.statusCode).toBe(200);
+      expect(entry.headers['content-type']).toContain('text/html');
+      expect(entry.body).toContain('Tutor fixture');
       expect((await app.inject('/api/health')).statusCode).toBe(200);
       expect((await app.inject('/api/nope')).statusCode).toBe(404);
     } finally { await app.close(); }
@@ -50,7 +51,7 @@ describe('browser tutor static serving', () => {
       expect((await app.inject('/')).body).toContain('Trail desktop');
       expect((await app.inject('/index.html')).body).toContain('Trail desktop');
       expect((await app.inject('/tutorial.html')).body).toContain('Tutor fixture');
-      expect((await app.inject('/tutorial')).statusCode).toBe(302);
+      expect((await app.inject('/tutorial')).body).toContain('Tutor fixture');
     } finally { await app.close(); }
   });
 

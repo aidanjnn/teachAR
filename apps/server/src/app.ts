@@ -115,8 +115,8 @@ export async function createApp(
     await app.register(fastifyStatic, { root: roots, dotfiles: 'deny' });
   }
   if (options.tutorRoot) {
-    // The tutor's documented entry is /tutorial; the page itself is tutorial.html.
-    app.get('/tutorial', async (_request, reply) => reply.redirect('/tutorial.html'));
+    // The tutor's documented entry is /tutorial and its scripts key off that exact pathname, so serve the page there without redirecting.
+    app.get('/tutorial', async (_request, reply) => reply.sendFile('tutorial.html'));
   }
   return app;
 }

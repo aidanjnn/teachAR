@@ -153,6 +153,7 @@ export class TutorialGuide extends HandGuide {
   }
   handleUX(id){
     if(id==='panel-place'){this.onRepositionPanel?.();return true;}
+    if(id==='coach-ask'){this.coach?.ask();return true;}
     if(id==='home'){
       this.narrator?.cancel();this.audioPlayer?.stop();this.reset();this.mode='home';return true;
     }
@@ -211,11 +212,11 @@ export class TutorialGuide extends HandGuide {
     if(id==='start-follow'){this.intent='follow';this.startLearning();return true;}
     if(id==='learn-options'){this.gatePaused=true;this.followEngine?.pause();this.audioPlayer?.stop();this.mode='learn-options';return true;}
     if(id==='learn-back'){this.mode='learn';this.gatePaused=false;this.followEngine?.pause();return true;}
-    if(id==='restart-follow'){this.mode='learn';this.watchOnly=false;this.gatePaused=false;this.showStep();return true;}
+    if(id==='restart-follow'){this.mode='learn';this.watchOnly=false;this.gatePaused=false;this.coach?.onAttempt();this.showStep();return true;}
     if(this.mode==='learn-options'&&['hand','removeCue'].includes(id)){this.mode='learn';return false;}
     if(this.mode==='learn'){
-      if(id==='watch-demo'){this.watchOnly=true;this.player.replay();this.audioPlayer?.stop();return true;}
-      if(id==='try-follow'){this.watchOnly=false;this.gatePaused=false;this.showStep();return true;}
+      if(id==='watch-demo'){this.watchOnly=true;this.player.replay();this.audioPlayer?.stop();this.coach?.onAttempt();return true;}
+      if(id==='try-follow'){this.watchOnly=false;this.gatePaused=false;this.coach?.onAttempt();this.showStep();return true;}
       if(id==='replay'&&!this.watchOnly){this.gatePaused=!this.gatePaused;this.followEngine?.pause();return true;}
       if(id==='primary'&&(!this.followEngine?.done||this.watchOnly)){this.problem='Reach the movement checkpoint before confirming. Watching a replay does not complete it.';return true;}
     }
@@ -226,7 +227,7 @@ export class TutorialGuide extends HandGuide {
     this.hideAssistance();this.followEngine?.pause();this.alignment?.reset();this.endpoint?.interrupt();this.savePositionCapture?.reset();this.alignmentResult=null;
     if(this.wasHidden)return;
     this.log('tutorial_interrupted',{mode:this.mode,step_id:this.player?.step?.id||null});
-    this.epoch++;this.photoEpoch=(this.photoEpoch||0)+1;this.photoTarget=null;this.currentHands=null;this.wasHidden=true;
+    this.epoch++;this.photoEpoch=(this.photoEpoch||0)+1;this.photoTarget=null;this.currentHands=null;this.wasHidden=true;this.coach?.onAttempt();
     if (this.mode==='capture'){this.mode='capture-paused';this.narrator?.pause();}
     this.audioPlayer?.stop();
     if (this.player) this.player.paused=true;
@@ -236,7 +237,7 @@ export class TutorialGuide extends HandGuide {
     if (this.leftGhost) this.leftGhost.ghost.visible=false;
     if (this.photoPanel) this.photoPanel.visible=false;
   }
-  endSession() { this.hide();this.log('tutorial_session_end'); this.reset();this.narrator?.disable();this.activeSession=false;this.onChange?.(); }
+  endSession() { this.hide();this.log('tutorial_session_end'); this.reset();this.narrator?.disable();this.coach?.stop();this.activeSession=false;this.onChange?.(); }
   exportData() { return {...this.tutorial, events:this.events}; }
   exportDiagnostics(){
     const allowed=['tutorial_session_start','tutorial_session_end','tutorial_interrupted','record_start','record_pause','record_resume','record_tracking','record_saved','record_rejected','step_reviewed','fold_line_saved','photo_saved','photo_rejected','learning_start','step_self_confirmed','playback_interrupted','playback_rate'];
@@ -345,6 +346,8 @@ export class TutorialGuide extends HandGuide {
     this.alignment.reset();this.alignmentResult=null;
     const step=this.player.step;
     if(this.ux&&this.mode==='learn'&&!preserve){this.followEngine=new TutorialFollower(step);this.player.time=0;this.player.paused=true;}
+    // The coach hears the step change through the server; it cannot move the learner. The epoch marks answers for an older step as stale.
+    if(this.mode==='learn'&&!preserve)this.coach?.onStep(step,this.epoch);
     this.note=step.instruction || `Step ${this.player.index+1}`;if(!step.narration)this.speak(this.note);else globalThis.speechSynthesis?.cancel();
     this.photoPanel.visible=false;
     const epoch=this.photoEpoch=(this.photoEpoch||0)+1;

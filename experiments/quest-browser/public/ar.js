@@ -6,13 +6,18 @@ import {mountTutorialShell} from '/tutorial-shell.mjs';
 import {mountReview} from '/tutorial-review.mjs';
 import {nextVideoSnapshot} from '/camera-snapshot.mjs';
 import {NarrationRecorder,NarrationPlayback} from '/narration.mjs';
-const tutorialMode=location.pathname==='/tutorial';
+import {createTutorCoach} from '/tutorial-coach.mjs';
+import {mountCoachPanel} from '/tutorial-coach-panel.mjs';
+const tutorialMode=['/tutorial','/tutorial.html'].includes(location.pathname);
 const handsMode=tutorialMode||location.pathname==='/hands';
 const narrator=tutorialMode?new NarrationRecorder({onStatus:message=>{document.getElementById('microphone-status').textContent=message;}}):null;
 const narrationPlayer=tutorialMode?new NarrationPlayback({onError:message=>tell(message)}):null;
 const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>action('exit'),snapshot:tutorialSnapshot,narrator,audioPlayer:narrationPlayer}):null;
 
 const $=id=>document.getElementById(id);
+// The voice coach owns its own microphone stream and is started from the page before AR, so the XR entry click stays synchronous.
+const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell}):null;
+if(guide&&coach)guide.coach=coach;
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
 const capture=document.createElement('canvas'), captureCtx=capture.getContext('2d');
 let stream=null, cameraGeneration=0, uploading=false, lastVideo=-1, lastUpload=-Infinity;
@@ -37,6 +42,8 @@ async function tutorialSnapshot() {
 function visible() { return session ? session.visibilityState==='visible' : !document.hidden; }
 function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('notice').textContent=message; }
 function speak(message) {
+  // One voice at a time: while the live coach can speak, step text is not read aloud by the browser.
+  if (coach&&['live','listening'].includes(coach.state.mode)) return;
   if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return;
   speechSynthesis.cancel(); const utterance=new SpeechSynthesisUtterance(message);
   utterance.rate=1; speechSynthesis.speak(utterance);
@@ -351,16 +358,17 @@ $('reference').onclick=event=>{
 $('undo').onclick=()=>{firstCorner=null;boxes.pop();drawReference();};
 $('save-boxes').onclick=async()=>{try{await api('/api/boxes',{boxes,revision:referenceRevision});trial=null;await poll();tell('Reference ready. Enter AR to test.');}catch(e){tell(e.message);}};
 $('camera-start').onclick=startCamera;$('devices').onchange=startCamera;$('enter').onclick=enterAR;
-$('stop').onclick=async()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();await session?.end();};
+$('stop').onclick=async()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();coach?.stop();await session?.end();};
 if(tutorialMode){
   $('microphone-enable').onclick=async()=>{try{await narrator.enable();narrationPlayer.unlock();}catch(e){tell(e.message);}};
   $('microphone-disable').onclick=()=>narrator.disable();
+  mountCoachPanel(guide,coach,{tell});window.trailCoach=coach;
   $('narration-playback').onchange=()=>{narrationPlayer.enabled=$('narration-playback').checked;if(!narrationPlayer.enabled)narrationPlayer.stop();else narrationPlayer.unlock();};
 }
 $('speech').onchange=()=>{if(!$('speech').checked)window.speechSynthesis?.cancel();else speak('Spoken corrections enabled.');};
 hud.onclick=event=>{if(tutorialMode&&!session){tell('This is a preview. Enter AR on Quest to use these controls.');return;}const r=hud.getBoundingClientRect();const id=(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)((event.clientX-r.left)/r.width,1-(event.clientY-r.top)/r.height);if(id)void action(id);};
 document.addEventListener('visibilitychange',()=>{if(!visible()){pauseOnLeave();guide?.hide();if(!session)stopCamera();}});
-window.addEventListener('pagehide',()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();});
+window.addEventListener('pagehide',()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();coach?.stop();});
 window.addEventListener('beforeunload',event=>{if(tutorialMode&&['capture','capture-paused','saving'].includes(guide.mode)){event.preventDefault();event.returnValue='';}});
 // A separate timer keeps the non-immersive setup and fallback usable.
 setInterval(()=>{service(performance.now());update();},200);
