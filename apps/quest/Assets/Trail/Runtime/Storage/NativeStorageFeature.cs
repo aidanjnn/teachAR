@@ -35,7 +35,11 @@ namespace Trail.Runtime.Storage
         private static void Register() => PlatformFeatures.Register("tutorial-storage", root => root.AddComponent<NativeStorageFeature>());
         public void Initialize(PlatformContext context)
         {
-            connection = context.Connection; Capture = context.Root.GetComponentInChildren<CaptureReplaySession>(); guide = context.Root.GetComponentInChildren<GuideController>();
+            connection = context.Connection;
+            // The rig is still deactivated during composition; without includeInactive the capture
+            // lookup silently returned null and no recording was ever saved locally.
+            Capture = context.Root.GetComponentInChildren<CaptureReplaySession>(true); guide = context.Root.GetComponentInChildren<GuideController>(true);
+            if (Capture == null) throw new InvalidOperationException("Storage requires the capture feature");
             cache = new PrivateTutorialCache(Application.persistentDataPath); cache.RecoverInterruptedWrites();
             try { lastCapture = cache.LoadLatestCapture(); if (lastCapture != null) Status = "Saved recording restored. Upload as author to review on desktop."; } catch (Exception) { }
             pendingPath = Path.Combine(Application.persistentDataPath, "trail-pending-upload.json");

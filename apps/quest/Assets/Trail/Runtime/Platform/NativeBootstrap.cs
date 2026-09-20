@@ -36,19 +36,27 @@ namespace Trail.Runtime.Platform
             { camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.clear; camera.nearClipPlane = 0.05f; }
             var connection = gameObject.AddComponent<NativeApiConnection>();
             Context = new PlatformContext(gameObject, rig.trackingSpace, rig.centerEyeAnchor.GetComponent<Camera>(), connection);
+            var stage = "pairing panel";
             try
             {
                 gameObject.AddComponent<NativePairingPanel>().Initialize(Context);
+                stage = "feature registration";
                 PlatformFeatures.Install(gameObject);
-                foreach (var feature in GetComponentsInChildren<MonoBehaviour>(true).OfType<IPlatformFeature>().OrderBy(value => value.Order)) feature.Initialize(Context);
+                foreach (var feature in GetComponentsInChildren<MonoBehaviour>(true).OfType<IPlatformFeature>().OrderBy(value => value.Order))
+                {
+                    // Record which feature is running so a device-only failure can be identified.
+                    // Type names only: an exception message may carry a token or payload.
+                    stage = feature.GetType().Name;
+                    feature.Initialize(Context);
+                }
                 rigRoot.SetActive(true);
                 Status = "OpenXR initialized; pair and calibrate before use";
             }
-            catch (Exception)
+            catch (Exception failure)
             {
                 // Do not print feature exceptions: networking callbacks may carry sensitive payloads.
                 connection.Disconnect(); rigRoot.SetActive(false);
-                Unavailable("Feature composition failed; inspect setup and feature tests");
+                Unavailable("Feature composition failed in " + stage + " (" + failure.GetType().Name + "); inspect setup and feature tests");
             }
         }
         private void Unavailable(string reason) { Status = reason; Debug.LogError(reason); }
