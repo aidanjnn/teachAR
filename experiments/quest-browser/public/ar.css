@@ -58,3 +58,4 @@ button:disabled {opacity:.45} details p {font-size:20px} #stop {margin-left:12px
 #coach-log{list-style:none;padding:0;margin:12px 0 0;max-height:220px;overflow:auto;font-size:16px}
 #coach-log li{padding:6px 0;border-bottom:1px solid #3c5c4f;color:#d0e3db}#coach-log li[data-role=coach]{color:#eef9f2}
 #coach-pair{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:10px 0}
+.proposal{border:1px solid #3c5c4f;border-radius:16px;padding:14px 18px;margin:12px 0}.proposal p{margin:6px 0}.proposal button{margin-top:8px}

@@ -2,6 +2,7 @@ import * as THREE from '/vendor/three.module.js';
 import {HandGuide} from '/hand-guide.mjs';
 import {newTutorial,prepareStep,parseTutorialJSON,validateTutorial,trimStep,TutorialPlayer,MAX_FILE_BYTES,learningReadiness,authoringReadiness,finishTutorial} from '/tutorial-core.mjs';
 import {NarrationPlayback} from '/narration.mjs';
+import {draftFromNarration} from '/narration-labels.mjs';
 
 // Entirely generated fixture: never presented as a physical task recording.
 export function syntheticTutorial(){
@@ -111,6 +112,33 @@ export function mountReview(guide,{isActive,tell}){
   $('guide-hands').onchange=()=>{$('reviewed').checked=false;};
   $('step-instruction').oninput=()=>{$('reviewed').checked=false;};
   $('step-title').oninput=()=>{$('reviewed').checked=false;};
+  // Whisper and the label model draft text from what the expert said; nothing is applied until the expert chooses Apply.
+  $('draft-from-narration').onclick=()=>void report(async()=>{
+    const narrated=guide.tutorial.steps.filter(s=>s.narration?.audio).length;
+    if(!narrated)throw Error('No step has recorded narration. Enable the microphone before recording, or type the instructions.');
+    $('draft-from-narration').disabled=true;$('draft-status').textContent=`Transcribing ${narrated} narrated step${narrated===1?'':'s'}…`;
+    const host=$('narration-proposals');host.replaceChildren();
+    try{
+      const proposals=await draftFromNarration(guide.tutorial);
+      const drafted=proposals.filter(p=>!p.error).length;
+      $('draft-status').textContent=drafted?`${drafted} draft${drafted===1?'':'s'} ready. Read each one, then Apply the ones that match what you did.`:'Nothing could be drafted. The messages below say why.';
+      for(const proposal of proposals){
+        const index=guide.tutorial.steps.findIndex(s=>s.id===proposal.stepId),row=document.createElement('div');row.className='proposal';
+        const head=document.createElement('p');head.innerHTML=`<strong>Step ${index+1}</strong>`;row.append(head);
+        if(proposal.error){const p=document.createElement('p');p.className='quiet';p.textContent=proposal.error;row.append(p);host.append(row);continue;}
+        const title=document.createElement('p');title.textContent=`Title: ${proposal.title}`;
+        const instruction=document.createElement('p');instruction.textContent=`Instruction: ${proposal.instruction}`;
+        const meta=document.createElement('p');meta.className='quiet';meta.textContent=`Heard: "${proposal.transcriptText}" · ${proposal.provenance==='model'?`written by ${proposal.model||'the label model'}`:'fallback wording from the transcript'}${proposal.transcriptSource==='fixture'?' · mock transcript':''}${proposal.needsReview?' · flagged for review':''}`;
+        const apply=document.createElement('button');apply.type='button';apply.textContent='Apply to this step';apply.dataset.tutorialEdit='';
+        apply.onclick=()=>void report(async()=>{
+          const next=structuredClone(guide.tutorial),step=next.steps.find(s=>s.id===proposal.stepId);if(!step)throw Error('That step no longer exists.');
+          step.title=proposal.title.slice(0,60);step.instruction=proposal.instruction.slice(0,240);step.reviewed=false;next.revision++;
+          await replace(validateTutorial(next));select(next.steps.indexOf(step));status('Drafted text applied. Review the step before finishing.');apply.disabled=true;apply.textContent='Applied';
+        });
+        row.append(title,instruction,meta,apply);host.append(row);
+      }
+    }finally{$('draft-from-narration').disabled=isActive();}
+  });
   $('remove-narration').onclick=()=>void report(async()=>{
     if(!confirm('Remove narration and use the written instruction? Review this step again before finishing.'))return;
     const next=structuredClone(guide.tutorial),step=next.steps[selected];step.narration=null;step.narration_issue=null;step.reviewed=false;next.revision++;

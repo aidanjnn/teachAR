@@ -129,10 +129,10 @@
 - `export function wavBytesFromDataUrl(dataUrl): Uint8Array`
 - `export async function draftFromNarration(tutorial, { fetchImpl })` -> `Array<{ stepId, title, instruction, provenance, needsReview, error? }>`; per step: `POST /api/voice/transcriptions` (body WAV bytes, `content-type: audio/wav`, `x-audio-start-offset-ms: 0`, `x-audio-duration-ms`), then `POST /api/voice/labels` `{ schemaVersion: 1, transcript, segments: [{ id: step.id, startMs: 0, endMs: duration }] }`; on any failure record `error` and continue.
 
-- [ ] **Step 1: Failing node tests** with injected fetch: request shaping (headers, one segment per step), skipping steps without narration, per-step failure isolation, provenance passthrough.
-- [ ] **Step 2: Implement.**
-- [ ] **Step 3: Review UI:** button (author role required; show pairing hint otherwise), a proposals list, Apply writes `title` and `instruction` through the existing edit path and clears `reviewed`.
-- [ ] **Step 4: Tests green; commit:** `feat(web): draft step titles and instructions from narration`.
+- [x] **Step 1: Failing node tests** with injected fetch: request shaping (headers, one segment per step), skipping steps without narration, per-step failure isolation, provenance passthrough.
+- [x] **Step 2: Implement.**
+- [x] **Step 3: Review UI:** button (author role required; show pairing hint otherwise), a proposals list, Apply writes `title` and `instruction` through the existing edit path and clears `reviewed`.
+- [x] **Step 4: Tests green; commit:** `feat(web): draft step titles and instructions from narration`.
 
 ### Task 8: Repository end-to-end smoke
 
