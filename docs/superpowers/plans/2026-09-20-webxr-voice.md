@@ -115,7 +115,7 @@
 - [x] **Step 2: Implement the DOM card and shell handlers.** Start coach: `await coach.start(tutorial, currentStep, guide.epoch)`; unpaired -> reveal the pair form.
 - [x] **Step 3: Guide hooks:** `showStep` -> `this.coach?.onStep(step, this.epoch)`; restart/try/watch -> `onAttempt()`; `hide` -> `onAttempt()`; `endSession` -> `stop()`. `speak(text)` returns early when `this.coach?.state.mode` is `live` or `listening`.
 - [x] **Step 4: XR panel:** `b('coach-ask', 'Ask coach')` in the `learn` case when a coach is started; `handleUX('coach-ask')` -> `this.coach.ask()`; last caption in `v.detail`.
-- [ ] **Step 5: `python tests/run-browser.py` from `experiments/quest-browser` green (needs the vendor bundle from Task 3).** Ran `tests/browser-coach.cjs` directly against the Fastify-served tutor on port 3117: green. The Python runner waits for Task 10.
+- [x] **Step 5: `python tests/run-browser.py` from `experiments/quest-browser` green (needs the vendor bundle from Task 3).** Ran `tests/browser-coach.cjs` directly against the Fastify-served tutor on port 3117: green. The Python runner waits for Task 10.
 - [x] **Step 6: Commit:** `feat(web): start, ask and follow the coach from the browser tutor`.
 
 ### Task 7: Narration to titles and instructions
@@ -140,9 +140,9 @@
 - Create: `tests/e2e/tutor-coach.spec.ts`
 - Modify: `playwright.config.ts` only if the web server needs `tutorRoot` (it starts `apps/server/dist/main.js`, which now serves the tutor when the directory exists).
 
-- [ ] **Step 1: Write the spec:** mint an author code with `issueBrowserCode('author')`; `page.goto('/tutorial.html')`; pair through the tutor's form; seed a two-step tutorial via `page.evaluate` importing `/tutorial-core.mjs` and `/tutorial-store.mjs`; open Follow; Start coach; expect badge `text` (mock provider); Ask by text; expect the step 1 instruction; call the exposed `window.__trailGuide.showStep` path or drive the follower to step 2; ask again; expect step 2; reload and confirm the coach guide mapping survives.
-- [ ] **Step 2: `pnpm build && E2E_PORT=3117 pnpm exec playwright test tests/e2e/tutor-coach.spec.ts` green.**
-- [ ] **Step 3: Commit:** `test(e2e): pair, start and step the coach inside the browser tutor`.
+- [x] **Step 1: Write the spec:** mint an author code with `issueBrowserCode('author')`; `page.goto('/tutorial.html')`; pair through the tutor's form; seed a two-step tutorial via `page.evaluate` importing `/tutorial-core.mjs` and `/tutorial-store.mjs`; open Follow; Start coach; expect badge `text` (mock provider); Ask by text; expect the step 1 instruction; call the exposed `window.__trailGuide.showStep` path or drive the follower to step 2; ask again; expect step 2; reload and confirm the coach guide mapping survives.
+- [x] **Step 2: `pnpm build && E2E_PORT=3117 pnpm exec playwright test tests/e2e/tutor-coach.spec.ts` green.**
+- [x] **Step 3: Commit:** `test(e2e): pair, start and step the coach inside the browser tutor`.
 
 ### Task 9: Documentation
 

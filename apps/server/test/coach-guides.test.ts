@@ -92,6 +92,9 @@ describe('coach guide routes', () => {
       expect(read.statusCode).toBe(200);
       expect(read.json()).toMatchObject({ id, revision: 1, title: 'Record player', steps: publishBody.steps });
       expect(read.headers['cache-control']).toBe('no-store');
+      const queried = await app.inject({ method: 'POST', url: `/api/coach-guides/${id}/query`, headers: learner });
+      expect(queried.statusCode).toBe(200);
+      expect(queried.json().id).toBe(id);
       const missing = await app.inject({ method: 'GET', url: '/api/coach-guides/00000000-0000-4000-8000-000000000000', headers: learner });
       expect(missing.statusCode).toBe(404);
       expect(missing.json().error).toBe('unknown_guide');

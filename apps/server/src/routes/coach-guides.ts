@@ -23,11 +23,15 @@ export async function registerCoachGuideRoutes(app: FastifyInstance, store: Coac
       return fail(reply, 503, 'storage_unavailable', 'The coach guide could not be stored.');
     });
     scope.post('/api/coach-guides', { onRequest: auth.require({ roles: ['author'], sessionId: auth.sessionId }), bodyLimit: MAX_PUBLISH_BYTES }, request => store.publish(request.body));
-    scope.get('/api/coach-guides/:id', { onRequest: auth.require({ roles: ['author', 'learner'], sessionId: auth.sessionId }) }, async (request, reply) => {
+    const reader = { onRequest: auth.require({ roles: ['author', 'learner'], sessionId: auth.sessionId }) };
+    const read = async (request: { params: unknown }, reply: FastifyReply) => {
       const params = GuideIdParam.safeParse(request.params);
       const guide = params.success ? await store.get(params.data.id) : null;
       if (!guide) return fail(reply, 404, 'unknown_guide', 'No coach guide with that ID is stored on this server.');
       return guide;
-    });
+    };
+    // Browser cookies are only honoured with an Origin header, which same-origin GETs omit; the POST query mirrors the storage routes.
+    scope.get('/api/coach-guides/:id', reader, read);
+    scope.post('/api/coach-guides/:id/query', { ...reader, bodyLimit: 1024 }, read);
   });
 }
