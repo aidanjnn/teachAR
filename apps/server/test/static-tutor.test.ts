@@ -15,6 +15,10 @@ async function tutorFixture() {
   await writeFile(join(tutorRoot, 'tutorial-guide.mjs'), 'export const guide = 1;');
   await mkdir(join(tutorRoot, 'vendor'));
   await writeFile(join(tutorRoot, 'vendor', 'trail-coach.js'), 'export const coach = 1;');
+  await writeFile(join(tutorRoot, 'telemetry-sentry.mjs'), 'export const telemetry = 1;');
+  await writeFile(join(tutorRoot, 'telemetry.css'), '#trail-diagnostics { display: block; }');
+  await writeFile(join(tutorRoot, 'vendor', 'sentry.mjs'), 'export const SDK_VERSION = "test";');
+  await writeFile(join(tutorRoot, 'vendor', 'SENTRY-LICENSE.txt'), 'MIT license fixture');
   await writeFile(join(tutorRoot, 'index.html'), '<h1>legacy camera lab</h1>');
   return tutorRoot;
 }
@@ -33,6 +37,13 @@ describe('browser tutor static serving', () => {
       expect(String(module.headers['content-type'])).toMatch(/javascript/);
       const vendor = await app.inject('/vendor/trail-coach.js');
       expect(vendor.statusCode).toBe(200);
+      for (const path of ['/telemetry-sentry.mjs', '/vendor/sentry.mjs']) {
+        const telemetry = await app.inject(path);
+        expect(telemetry.statusCode).toBe(200);
+        expect(String(telemetry.headers['content-type'])).toMatch(/javascript/);
+      }
+      expect((await app.inject('/telemetry.css')).headers['content-type']).toContain('text/css');
+      expect((await app.inject('/vendor/SENTRY-LICENSE.txt')).body).toContain('MIT license fixture');
       const entry = await app.inject('/tutorial');
       expect(entry.statusCode).toBe(200);
       expect(entry.headers['content-type']).toContain('text/html');

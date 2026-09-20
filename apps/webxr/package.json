@@ -12,6 +12,7 @@
     "quest:open": "sh launch-ar.sh tutorial"
   },
   "dependencies": {
-    "three": "0.186.0"
+    "three": "0.186.0",
+    "@sentry/browser": "10.75.0"
   }
 }

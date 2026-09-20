@@ -1,0 +1,32 @@
+#trail-diagnostics{position:fixed;right:18px;bottom:18px;z-index:50;box-sizing:border-box;width:min(860px,calc(100vw - 36px));max-height:75vh;overflow:auto;border:1px solid #688277;border-radius:14px;background:#101e1c;color:#def0e8;box-shadow:0 12px 50px #0006;font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#trail-diagnostics:not([open]){width:min(380px,calc(100vw - 36px))}
+#trail-diagnostics>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:48px;padding:0 16px;cursor:pointer;list-style:none;font-size:12px}
+#trail-diagnostics>summary::-webkit-details-marker{display:none}
+#trail-diagnostics>summary::after{content:'+';font-size:20px;color:#a3f0d9}
+#trail-diagnostics[open]>summary::after{content:'−'}
+#trail-diagnostics summary:focus-visible,#trail-diagnostics button:focus-visible{outline:2px solid #a3f0d9;outline-offset:-3px}
+#trail-diagnostics .td-eyebrow{font-size:10px;letter-spacing:.12em;color:#add4c4}
+#trail-diagnostics .td-pulse{font-size:11px;color:#d1e6dd;text-align:right;overflow-wrap:anywhere}
+#trail-diagnostics .td-body{padding:0 20px 20px;border-top:1px solid #355048}
+#trail-diagnostics h2{font:600 16px/1.4 system-ui,sans-serif;margin:17px 0 6px;letter-spacing:0}
+#trail-diagnostics h3{font:600 14px/1.4 system-ui,sans-serif;margin:22px 0 10px}
+#trail-diagnostics p{font-size:11px;margin:7px 0;line-height:1.6}
+#trail-diagnostics .td-status{color:#a3f0d9}
+#trail-diagnostics .td-state{display:grid;grid-template-columns:1fr 1fr;gap:12px 22px;background:#182e28;border-radius:8px;padding:12px;margin:14px 0}
+#trail-diagnostics dt{font-size:10px;color:#9ab9ac;margin-bottom:3px}
+#trail-diagnostics dd{margin:0;font-size:12px;overflow-wrap:anywhere}
+#trail-diagnostics .td-timeline{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+#trail-diagnostics .td-timeline li{border-left:2px solid #4d7764;padding-left:12px}
+#trail-diagnostics .td-timeline strong{font-size:11px;font-weight:500}
+#trail-diagnostics .td-stages{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
+#trail-diagnostics .td-stage{border:1px solid #3b594e;border-radius:4px;padding:3px 6px;font-size:10px;color:#b9dacb}
+#trail-diagnostics .td-stopped{border-color:#aa8055;color:#f1c293}
+#trail-diagnostics .td-note,#trail-diagnostics .td-empty{color:#a2bcb0;font-size:10px}
+#trail-diagnostics .td-table-wrap{overflow-x:auto;border:1px solid #355048;border-radius:8px}
+#trail-diagnostics table{border-collapse:collapse;width:100%;font-size:10px;min-width:680px}
+#trail-diagnostics caption{caption-side:bottom;text-align:left;padding:9px 10px;color:#9db8ab;font-size:10px}
+#trail-diagnostics th,#trail-diagnostics td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid #2b453a;white-space:pre-line}
+#trail-diagnostics th{font-weight:500;color:#a3c5b6;background:#193028}
+#trail-diagnostics .td-review{color:#d2cab1;margin-top:12px}
+#trail-diagnostics button{font:500 11px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;min-height:36px;padding:8px 12px;background:#254c3c;color:#e4f8ed;border:1px solid #5a8670;border-radius:6px;margin:12px 0 0}
+@media(max-width:540px){#trail-diagnostics{right:10px;bottom:10px;width:calc(100vw - 20px);max-height:72vh}#trail-diagnostics:not([open]){width:calc(100vw - 20px)}#trail-diagnostics .td-body{padding:0 12px 14px}#trail-diagnostics .td-state{gap:10px}}
