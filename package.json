@@ -11,7 +11,7 @@
     "dev": "pnpm build:shared && tsx scripts/dev.ts",
     "build:shared": "pnpm --filter @trail/contracts build && pnpm --filter @trail/motion build",
     "dev:shared": "concurrently -k \"pnpm --filter @trail/contracts dev\" \"pnpm --filter @trail/motion dev\"",
-    "build": "pnpm build:shared && pnpm --filter @trail/web build && pnpm --filter @trail/server build && pnpm --filter @trail/vision build",
+    "build": "pnpm build:shared && pnpm --filter @trail/web build && pnpm --filter @trail/web build:tutor-coach && pnpm --filter @trail/server build && pnpm --filter @trail/vision build",
     "typecheck": "pnpm build:shared && pnpm -r typecheck && tsc -p tsconfig.tools.json",
     "test": "vitest run",
     "test:e2e": "playwright test",

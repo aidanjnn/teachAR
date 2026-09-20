@@ -20,3 +20,10 @@ for(const [name,expected]of Object.entries(manifest.files)){
 await mkdir(resolve(root,'public/vendor'),{recursive:true});
 for(const[name,data]of files)await writeFile(resolve(root,'public/vendor',name),data);
 console.log(`Prepared verified Three.js ${manifest.version} and MIT license from the workspace lockfile.`);
+// The coach runtime is bundled from apps/web so the tutor and the desktop share one implementation.
+const coach=resolve(root,'public/vendor/trail-coach.js');
+if(process.env.TRAIL_REBUILD_COACH==='1'||!(await readFile(coach).then(()=>true,()=>false))){
+ const {execFileSync}=await import('node:child_process');
+ execFileSync('pnpm',['--filter','@trail/web','build:tutor-coach'],{cwd:resolve(root,'../..'),stdio:'inherit'});
+}
+console.log('Coach bundle ready at public/vendor/trail-coach.js.');

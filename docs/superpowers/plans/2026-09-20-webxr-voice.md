@@ -63,11 +63,11 @@
 - Create: `apps/web/vite.tutor-coach.config.ts`
 - Modify: `apps/web/package.json` (`build:tutor-coach`), root `package.json` (`build` runs it), `experiments/quest-browser/prepare-vendor.mjs` (invoke the build when `trail-coach.js` is missing or `TRAIL_REBUILD_COACH=1`), `.github/workflows/check.yml` if the prototype suite needs the bundle before `test-all.sh`.
 
-- [ ] **Step 1: `tutor-coach.ts`:** `export { createCoach } from './guide/coach.js'; export type { CoachApi, CoachOptions, TranscriptEntry, LiveError } from './guide/coach.js'; export async function sessionState(fetchImpl = fetch): Promise<{ status: 'no-pairing' | 'unpaired' | 'paired'; role?: string }>` (POST `/api/session`, 404 -> no-pairing, !ok -> unpaired); `export async function pairBrowser(code: string, fetchImpl = fetch): Promise<{ ok: boolean; role?: string; message?: string }>` (POST `/api/pair` `{ code, client: 'browser' }`).
-- [ ] **Step 2: Vite lib config:** `build: { lib: { entry: 'src/tutor-coach.ts', formats: ['es'], fileName: () => 'trail-coach.js' }, outDir: '../../experiments/quest-browser/public/vendor', emptyOutDir: false, sourcemap: false }`. Bundle the `openai` WebRTC client in; no externals.
-- [ ] **Step 3: Build:** `pnpm --filter @trail/web build:tutor-coach`; confirm `experiments/quest-browser/public/vendor/trail-coach.js` exists, is under 400 KB, and `node -e "import('./experiments/quest-browser/public/vendor/trail-coach.js').then(m=>console.log(Object.keys(m)))"` lists `createCoach`.
-- [ ] **Step 4: `prepare-vendor.mjs`:** after the Three.js copy, run the build with `execFileSync('pnpm', ['--filter', '@trail/web', 'build:tutor-coach'])` when the file is missing. Keep the Three.js hash checks untouched.
-- [ ] **Step 5: Commit:** `build(web): bundle the browser coach runtime for the tutor`.
+- [x] **Step 1: `tutor-coach.ts`:** `export { createCoach } from './guide/coach.js'; export type { CoachApi, CoachOptions, TranscriptEntry, LiveError } from './guide/coach.js'; export async function sessionState(fetchImpl = fetch): Promise<{ status: 'no-pairing' | 'unpaired' | 'paired'; role?: string }>` (POST `/api/session`, 404 -> no-pairing, !ok -> unpaired); `export async function pairBrowser(code: string, fetchImpl = fetch): Promise<{ ok: boolean; role?: string; message?: string }>` (POST `/api/pair` `{ code, client: 'browser' }`).
+- [x] **Step 2: Vite lib config:** `build: { lib: { entry: 'src/tutor-coach.ts', formats: ['es'], fileName: () => 'trail-coach.js' }, outDir: '../../experiments/quest-browser/public/vendor', emptyOutDir: false, sourcemap: false }`. Bundle the `openai` WebRTC client in; no externals.
+- [x] **Step 3: Build:** `pnpm --filter @trail/web build:tutor-coach`; confirm `experiments/quest-browser/public/vendor/trail-coach.js` exists, is under 400 KB, and `node -e "import('./experiments/quest-browser/public/vendor/trail-coach.js').then(m=>console.log(Object.keys(m)))"` lists `createCoach`.
+- [x] **Step 4: `prepare-vendor.mjs`:** after the Three.js copy, run the build with `execFileSync('pnpm', ['--filter', '@trail/web', 'build:tutor-coach'])` when the file is missing. Keep the Three.js hash checks untouched.
+- [x] **Step 5: Commit:** `build(web): bundle the browser coach runtime for the tutor`.
 
 ### Task 4: Step titles in the prototype
 
