@@ -27,7 +27,7 @@ test('guided green zones use the same boundary as advancement, without sticky gr
  const {PalmAlignment}=await import('../public/tutorial-assist.mjs');
  const {TutorialFollower}=await import('../public/tutorial-follow.mjs');
  const joint=x=>Array.from({length:25},()=>({p:[x,0,0]}));
- const step={quality:{right_tracked_fraction:1,left_tracked_fraction:0},frames:[{t:0,right:joint(0)},{t:100,right:joint(.2)}]};
+ const step={guide_hands:'right',quality:{right_tracked_fraction:1,left_tracked_fraction:0},frames:[{t:0,right:joint(0)},{t:100,right:joint(.2)}]};
  const follower=new TutorialFollower(step),alignment=new PalmAlignment();follower.started=true;
  alignment.radius=follower.radius;alignment.hysteresis=0;alignment.holdMs=0;
  assert.equal(alignment.update({right:joint(.09)},step.frames[0],100).right.state,'inside');
