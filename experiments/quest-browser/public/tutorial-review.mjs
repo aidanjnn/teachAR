@@ -79,7 +79,7 @@ export function mountReview(guide,{isActive,tell}){
   }
   $('save-tutorial-details').onclick=()=>void report(async()=>{
     const next=structuredClone(guide.tutorial);next.title=$('tutorial-title').value;
-    if(next.setup!==$('tutorial-setup').value)next.steps.forEach(s=>s.reviewed=false);
+    if(next.setup!==$('tutorial-setup').value)next.steps.forEach(s=>{s.reviewed=false;s.acceptance=null;});
     next.setup=$('tutorial-setup').value;next.revision++;
     await replace(next);status('Starting layout and title saved. Tutorial is a draft until finished again.');
   });
@@ -112,7 +112,7 @@ export function mountReview(guide,{isActive,tell}){
   $('step-instruction').oninput=()=>{$('reviewed').checked=false;};
   $('remove-narration').onclick=()=>void report(async()=>{
     if(!confirm('Remove narration and use the written instruction? Review this step again before finishing.'))return;
-    const next=structuredClone(guide.tutorial),step=next.steps[selected];step.narration=null;step.narration_issue=null;step.reviewed=false;next.revision++;
+    const next=structuredClone(guide.tutorial),step=next.steps[selected];step.narration=null;step.narration_issue=null;step.reviewed=false;step.acceptance=null;next.revision++;
     await replace(next);status('Narration removed. Review the written instruction and motion again.');
   });
   $('trim-step').onclick=()=>void report(async()=>{
@@ -128,7 +128,7 @@ export function mountReview(guide,{isActive,tell}){
   for(const [button,delta] of [['move-step-up',-1],['move-step-down',1]])$(button).onclick=()=>void report(async()=>{
     const next=structuredClone(guide.tutorial),destination=selected+delta;if(destination<0||destination>=next.steps.length)return;
     [next.steps[selected],next.steps[destination]]=[next.steps[destination],next.steps[selected]];
-    next.steps.forEach(s=>s.reviewed=false);next.revision++;selected=destination;await replace(next);status('Step order changed. Review all steps in their new order.');
+    next.steps.forEach(s=>{s.reviewed=false;s.acceptance=null;});next.revision++;selected=destination;await replace(next);status('Step order changed. Review all steps in their new order.');
   });
   $('preview-play').onclick=()=>{voice.unlock();if(player)player.paused=!player.paused;};
   $('preview-replay').onclick=()=>{voice.unlock();player?.replay();};

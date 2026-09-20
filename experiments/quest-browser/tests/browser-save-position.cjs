@@ -11,7 +11,7 @@ const assert=require('node:assert/strict');
   const fail=m=>{throw Error(m);};const hand=p=>Array.from({length:25},()=>({p:[...p],q:[0,0,0,1]}));
   const pair=(x,z)=>({left:hand([x,1,z]),right:hand([x+.4,1,z])});
   let t=1000,data=pair(0,.3);Object.defineProperty(performance,'now',{configurable:true,value:()=>t});
-  const g=new TutorialGuide({speak:()=>{},exit:()=>{}});await g.restore();g.attach(new THREE.Scene());g.sample=()=>data[g.hand];g.begin('home');g.action('create');
+  const g=new TutorialGuide({speak:()=>{},exit:()=>{}});await g.restore();g.attach(new THREE.Scene());g.sample=()=>data[g.hand];g.begin('home');g.action('create');g.action('toggle-fluid');g.action('change-save-position');
   const session={visibilityState:'visible'},tick=(n=1)=>{for(let i=0;i<n;i++){t+=40;g.tick({},session,{},t);}};
   if(g.mode!=='save-home')fail('Create did not ask for save position first');
   const setupHud=document.createElement('canvas');setupHud.width=1080;setupHud.height=560;g.draw(setupHud.getContext('2d'),t,'');window.saveSetupHud=setupHud.toDataURL();

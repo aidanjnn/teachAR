@@ -33,9 +33,11 @@ See [the connected UI/UX base](../../docs/web-ui-base.md) for appearance setting
 
 See [immersive entry and holographic hands](../../docs/web-immersive-entry.md) for the current flow, asset provenance and headset acceptance.
 
+[Fluid workspace and continuous recording](../../docs/web-fluid-workspace.md) describes hold rings, Home navigation, keyboard search, acceptance provenance and the Quest boundary limitation.
+
 ## What is included
 
-- `/tutorial`: Create/Follow shell, one save position per tutorial, hand-motion capture/pause/resume, clean-save trimming, review, automatic device-local library, explicit import/export, workspace placement, paired holographic ghosts, live palm zones and learner-paced checkpoints.
+- `/tutorial`: immersive Home/Create/Library, searchable local library, movable panels and surface timer, continuous hold-to-save segments or optional return-to-save mode, hand-motion capture/pause/resume, clean-save trimming, review, automatic device-local library, explicit import/export, workspace placement, paired holographic ghosts, live palm zones and learner-paced checkpoints.
 - Pure motion, following, recording, camera-snapshot and narration modules plus adversarial tests. Missing/stale tracking must pause gates rather than create success.
 - Optional reference photos/audio and an isolated assistance interface. These do not prove physical task completion.
 - `/hands`: earlier path-following experiment; `/`, `/camera`, `/ar`: earlier plushie image-checking experiment. They remain regression references, **not the new product home**. See [legacy camera lab](LEGACY-CAMERA-LAB.md).
@@ -53,7 +55,7 @@ cd experiments/quest-browser
 sh test-all.sh
 ```
 
-The suite runs Node and Python unit tests plus eleven browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
+The suite runs Node and Python unit tests plus twelve browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
 
 Hosted CI runs this suite alongside the existing repository checks. Neither these tests nor `pnpm check` establish headset tracking accuracy or Unity readiness. The latest packaging result is in [the activity log](../../docs/codex-log.md).
 

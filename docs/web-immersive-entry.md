@@ -1,5 +1,7 @@
 # Immersive entry and continuous holographic hands
 
+**Workflow update:** [Fluid workspace](web-fluid-workspace.md) adds continuous recording, a searchable library and movable controls. Return-to-save is now optional; entry always opens Home.
+
 This extends the browser UI and [preview-first practice flow](web-practice-flow.md). Quest Browser remains the demo runtime. This is an implementation handoff, not headset acceptance evidence.
 
 ## User flow

@@ -5,6 +5,7 @@ import {TutorialGuide,tutorialButton} from '/tutorial-guide.mjs';
 import {mountTutorialShell} from '/tutorial-shell.mjs';
 import {mountReview} from '/tutorial-review.mjs';
 import {nextVideoSnapshot} from '/camera-snapshot.mjs';
+import {SpatialControls} from '/spatial-controls.mjs';
 import {CaptureSetup} from '/experience-entry.mjs';
 import {FeedbackAudio} from '/tutorial-feedback.mjs';
 import {NarrationRecorder,NarrationPlayback} from '/narration.mjs';
@@ -13,7 +14,7 @@ const handsMode=tutorialMode||location.pathname==='/hands';
 const feedbackAudio=new FeedbackAudio();
 const narrator=tutorialMode?new NarrationRecorder({onStatus:message=>{document.getElementById('microphone-status').textContent=message;}}):null;
 const narrationPlayer=tutorialMode?new NarrationPlayback({onError:message=>tell(message)}):null;
-const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>action('exit'),snapshot:tutorialSnapshot,media:tutorialMode?{enable:()=>captureSetup.enable(),cancel:()=>captureSetup.cancel()}:null,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take)feedbackAudio.play(event);}}):null;
+const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>action('exit'),snapshot:tutorialSnapshot,media:tutorialMode?{enable:()=>captureSetup.enable(),cancel:()=>captureSetup.cancel()}:null,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take||event.kind==='saved')feedbackAudio.play(event);}}):null;
 
 const $=id=>document.getElementById(id);
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
@@ -21,6 +22,7 @@ const capture=document.createElement('canvas'), captureCtx=capture.getContext('2
 let stream=null, cameraGeneration=0, uploading=false, lastVideo=-1, lastUpload=-Infinity;
 let status=null, statusAt=-Infinity, polling=false, busy=false, pendingCheck=0;
 let session=null, renderer=null, scene, camera, head, panel, texture, rayLines=[],panelNeedsPlace=true,panelSide=false;
+let spatial=null,libraryInput=null,animatedMode=null,modeEntered=0;
 let xrSupported=false, trial=null, trialRunning=false, lastSpeech='', lastDraw='', hover='';
 let notice='', noticeUntil=0, referenceImage=null, referenceRevision=null, boxes=[], firstCorner=null;
 let frameTime=0, networkTime=0, remoteFrameId=0, handHudTime=-Infinity;
@@ -140,6 +142,8 @@ async function setAuto(enabled) {
   await poll();
 }
 async function action(id) {
+  if(tutorialMode){void feedbackAudio.unlock();if(['create','library','settings','home'].includes(id))feedbackAudio.play({kind:'open'});}
+
   if (id==='exit') {
     if(tutorialMode&&(['capture','capture-paused'].includes(guide.mode)||guide.mode==='settings'&&['capture','capture-paused'].includes(guide.settingsReturn))){guide.action(id);update();return;}
     pauseOnLeave(); await session?.end(); tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.'); return;
@@ -244,7 +248,7 @@ function initRenderer() {
   scene=new THREE.Scene();camera=new THREE.PerspectiveCamera();head=new THREE.Group();scene.add(head);guide?.attach(scene);
   texture=new THREE.CanvasTexture(hud);texture.colorSpace=THREE.SRGBColorSpace;
   panel=new THREE.Mesh(new THREE.PlaneGeometry(tutorialMode?1.08:1.35,tutorialMode?.56:.70),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
-  panel.position.set(0,.34,-1.4);panel.renderOrder=10;if(tutorialMode){scene.add(panel);guide.onRepositionPanel=()=>{panelSide=!panelSide;panelNeedsPlace=true;};}else head.add(panel);
+  panel.position.set(0,.34,-1.4);panel.renderOrder=10;if(tutorialMode){scene.add(panel);spatial=new SpatialControls(scene,panel,guide);guide.onManipulation=()=>{if(guide.mode==='capture'){guide.mode='capture-paused';narrator?.pause();guide.segmenter.interrupt();}if(guide.mode==='learn'){guide.gatePaused=true;guide.practice?.pause();}};guide.onLibrarySearch=()=>{if(libraryInput){libraryInput.value=guide.libraryQuery||'';libraryInput.focus();}if(!session?.isSystemKeyboardSupported){guide.problem='Use a connected keyboard to search, or browse the cards and filters.';}};guide.onRepositionPanel=()=>{panelSide=!panelSide;panelNeedsPlace=true;};}else head.add(panel);
   for(let i=0;i<2;i++) {
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,0,-2)]),
       new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8,depthTest:false}));
@@ -253,7 +257,7 @@ function initRenderer() {
   renderer.setAnimationLoop((time,frame)=>{
     if(!frame || !session)return;
     const reference=renderer.xr.getReferenceSpace(), pose=frame.getViewerPose(reference);
-    if(!pose){guide?.hide();return;}
+    if(!pose||session.visibilityState!=='visible'){spatial?.cancel();guide?.hide();return;}
     if(tutorialMode&&panelNeedsPlace){
       const q=new THREE.Quaternion().copy(pose.transform.orientation),forward=new THREE.Vector3(0,0,-1).applyQuaternion(q);forward.y=0;if(forward.lengthSq()<.01)forward.set(0,0,-1);forward.normalize();
       const right=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0));
@@ -265,10 +269,17 @@ function initRenderer() {
     let i=0;
     for(const source of session.inputSources) {
       const target=frame.getPose(source.targetRaySpace,reference);if(!target)continue;
-      const hit=hitFromPose(target); if(hit)hover=hit;
+      spatial?.move(source,target);const hit=hitFromPose(target); if(hit)hover=hit;
       const line=rayLines[i++];if(line){line.visible=true;line.position.copy(target.transform.position);line.quaternion.copy(target.transform.orientation);}
     }
+    if(spatial?.drag&&!Array.from(session.inputSources).includes(spatial.drag.source))spatial.cancel();
     guide?.tick(frame,session,reference,time);
+    if(tutorialMode){
+      spatial.tick(time,pose);
+      if(animatedMode!==guide.mode){animatedMode=guide.mode;modeEntered=time;}
+      const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const t=Math.min(1,(time-modeEntered)/220),scale=reduced?1:.975+.025*(1-(1-t)**3);panel.scale.setScalar(scale);
+    }
     update();renderer.render(scene,camera);
     // XR drives networking too, so this does not depend on background DOM RAF.
     service(time);
@@ -284,14 +295,21 @@ async function enterAR() {
   if (session || busy) return;
   try {
     initRenderer();
-    narrationPlayer?.unlock();
+    narrationPlayer?.unlock();void feedbackAudio.unlock();
     // Must happen directly inside the click, before awaiting unrelated work.
     const requested=navigator.xr.requestSession('immersive-ar',handsMode?{requiredFeatures:['hand-tracking']}:{optionalFeatures:['hand-tracking']});
     busy=true;speak(tutorialMode?'Welcome to Trail. Choose Create or Follow.':'Starting the headset test. Look at the toys and labels.');
     const active=await requested; session=active;
-    active.addEventListener('end',()=>{session=null;captureSetup?.cancel();guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
-    active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){pauseOnLeave();guide?.hide();}});
+    active.addEventListener('end',()=>{libraryInput?.remove();libraryInput=null;spatial?.reset();session=null;captureSetup?.cancel();guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
+    active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){spatial?.cancel();pauseOnLeave();guide?.hide();}});
+    if(tutorialMode){
+      libraryInput=document.createElement('input');libraryInput.type='search';libraryInput.maxLength=80;libraryInput.setAttribute('aria-label','Search tutorials in AR');libraryInput.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;';document.body.append(libraryInput);
+      libraryInput.oninput=()=>{guide.libraryQuery=libraryInput.value.slice(0,80);guide.libraryIndex=0;};
+      active.addEventListener('selectstart',event=>{if(active.visibilityState!=='visible')return;const pose=event.frame.getPose(event.inputSource.targetRaySpace,renderer.xr.getReferenceSpace());if(pose)spatial.start(event.inputSource,pose);});
+      active.addEventListener('selectend',event=>spatial.end(event.inputSource));
+    }
     active.addEventListener('select',event=>{
+      if(spatial?.suppressed.has(event.inputSource))return;
       if(session!==active || active.visibilityState!=='visible')return;
       const pose=event.frame.getPose(event.inputSource.targetRaySpace,renderer.xr.getReferenceSpace());
       const hit=pose && hitFromPose(pose); if(hit)void action(hit);
@@ -300,11 +318,11 @@ async function enterAR() {
     if(handsMode){
       if(tutorialMode){
         const title=$('tutorial-title').value.slice(0,120)||'Untitled tutorial',setup=$('tutorial-setup').value.slice(0,2000);
-        if(title!==guide.tutorial.title||setup!==guide.tutorial.setup){if(setup!==guide.tutorial.setup)guide.tutorial.steps.forEach(s=>s.reviewed=false);guide.tutorial.title=title;guide.tutorial.setup=setup;guide.changed();}
+        if(title!==guide.tutorial.title||setup!==guide.tutorial.setup){if(setup!==guide.tutorial.setup)guide.tutorial.steps.forEach(s=>{s.reviewed=false;s.acceptance=null;});guide.tutorial.title=title;guide.tutorial.setup=setup;guide.changed();}
         guide.cleanSave=!!guide.tutorial.save_position;guide.alignmentEnabled=$('palm-zones').checked;
         guide.instructions=$('tutorial-instructions').value.split('\n').map(s=>s.trim());
       }
-      panelNeedsPlace=true;guide.begin(tutorialMode?(guide.nextEntry||'home'):undefined);
+      panelNeedsPlace=true;guide.begin(tutorialMode?'home':undefined);if(tutorialMode)guide.nextEntry=null;
       renderer.xr.getReferenceSpace().addEventListener('reset',()=>{panelNeedsPlace=true;guide.reset();tell('XR origin changed. Mark the workspace again.');speak('Tracking origin changed. Mark the workspace again.');});
       await setAuto(false).catch(()=>tell('Server unavailable. Local hand guidance still works.'));
       return;
