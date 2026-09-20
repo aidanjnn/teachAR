@@ -43,7 +43,7 @@ function visible() { return session ? session.visibilityState==='visible' : !doc
 function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('notice').textContent=message; }
 function speak(message) {
   // One voice at a time: while the live coach can speak, step text is not read aloud by the browser.
-  if (coach&&['live','listening'].includes(coach.state.mode)) return;
+  if (coach&&['live','listening'].includes(coach.mode)) return;
   if (!$('speech').checked || !('speechSynthesis' in window) || !visible()) return;
   speechSynthesis.cancel(); const utterance=new SpeechSynthesisUtterance(message);
   utterance.rate=1; speechSynthesis.speak(utterance);
@@ -365,7 +365,6 @@ $('stop').onclick=async()=>{pauseOnLeave();stopCamera();narrator?.disable();narr
 if(tutorialMode){
   $('microphone-enable').onclick=async()=>{try{await narrator.enable();narrationPlayer.unlock();}catch(e){tell(e.message);}};
   $('microphone-disable').onclick=()=>narrator.disable();
-  mountCoachPanel(guide,coach,{tell});window.trailCoach=coach;
   $('narration-playback').onchange=()=>{narrationPlayer.enabled=$('narration-playback').checked;if(!narrationPlayer.enabled)narrationPlayer.stop();else narrationPlayer.unlock();};
 }
 $('speech').onchange=()=>{if(!$('speech').checked)window.speechSynthesis?.cancel();else speak('Spoken corrections enabled.');};
@@ -379,7 +378,8 @@ try {xrSupported=!!navigator.xr && await navigator.xr.isSessionSupported('immers
 catch {xrSupported=false;}
 tell(xrSupported?(handsMode?'Ready. Put down controllers and choose Enter hand guidance. Camera is optional.':'Quest AR is available. Enable camera to begin.'):'Open this page on Quest for immersive AR. Desktop preview remains available.');
 if(tutorialMode){await guide.restore();$('tutorial-title').value=guide.tutorial.title;$('tutorial-instructions').value=guide.tutorial.steps.map(s=>s.instruction).join('\n');}
-if(tutorialMode){mountReview(guide,{isActive:()=>!!session,tell});mountTutorialShell(guide,{isActive:()=>!!session,tell});}
+// The coach panel mounts last so its onChange hook wraps the review and shell hooks instead of being replaced by them.
+if(tutorialMode){mountReview(guide,{isActive:()=>!!session,tell});mountTutorialShell(guide,{isActive:()=>!!session,tell});mountCoachPanel(guide,coach,{tell});window.trailCoach=coach;}
 await poll();update();
 
 if(handsMode){

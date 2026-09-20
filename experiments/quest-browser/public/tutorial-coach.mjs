@@ -38,7 +38,7 @@ function writeMap(storage,map){try{storage?.setItem(GUIDE_MAP_KEY,JSON.stringify
  */
 export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(input,init),storage=globalThis.localStorage,audioSink=null,tell=()=>{}}={}){
   let api=null,loaded=runtime,attemptId=null,epoch=0;
-  const state={mode:'idle',pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:''};
+  const state={mode:'idle',pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:'',tutorialId:null,tutorialRevision:null};
   const stateHandlers=new Set(),captionHandlers=new Set();
   const snapshot=()=>({...state});
   const emit=()=>{for(const h of stateHandlers)h(snapshot());};
@@ -68,7 +68,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
     if(session.status==='unpaired'){stop();state.pairing='unpaired';state.role=null;state.reason='unpaired';state.error=session.message||null;emit();return snapshot();}
     state.pairing=session.status==='paired'?'paired':'none';state.role=session.role||null;state.error=null;
     stop();
-    epoch=currentEpoch;attemptId=uuid();
+    epoch=currentEpoch;attemptId=uuid();state.tutorialId=tutorial.id;state.tutorialRevision=tutorial.revision;state.caption='';
     const guide=session.status==='no-pairing'?{id:tutorial.id,revision:tutorial.revision,grounded:false,reason:'no-pairing'}:await ensureGuide(tutorial);
     state.grounded=guide.grounded;state.reason=guide.reason;
     const context=coachContextFor(tutorial,guide,{runId:uuid(),attemptId,stepId:step.id,epoch});
@@ -88,7 +88,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   function onAttempt(){if(!api)return;attemptId=uuid();api.setAttempt(attemptId);}
   function ask(){api?.ask();}
   function askText(question){return api?api.askText(question):Promise.resolve(null);}
-  function stop(){if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}if(state.mode!=='idle'){state.mode='idle';emit();}}
+  function stop(){if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}state.tutorialId=null;state.tutorialRevision=null;if(state.mode!=='idle'){state.mode='idle';emit();}}
   async function pair(code){
     const rt=await load();const result=await rt.pairBrowser(code,fetchImpl);
     if(result.ok){state.pairing='paired';state.role=result.role;state.reason=null;state.error=null;}else state.error=result.message;
@@ -96,6 +96,8 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   }
   return {
     get state(){return snapshot();},get active(){return !!api;},
+    // Cheap reads for the per-frame headset panel and the speech gate; no copy.
+    get mode(){return state.mode;},get caption(){return state.caption;},get tutorialId(){return state.tutorialId;},get tutorialRevision(){return state.tutorialRevision;},
     start,stop,onStep,onAttempt,ask,askText,pair,
     onCaption(h){captionHandlers.add(h);return()=>captionHandlers.delete(h);},
     onState(h){stateHandlers.add(h);return()=>stateHandlers.delete(h);},

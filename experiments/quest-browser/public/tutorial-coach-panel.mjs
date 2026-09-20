@@ -49,5 +49,13 @@ export function mountCoachPanel(guide,coach,{tell}){
   };
   $('coach-question').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();$('coach-ask-text').click();}};
   $('coach-stop').onclick=()=>coach.stop();
+  // A coach started for one tutorial must not keep answering after the expert swaps or edits it: the published guide no longer matches.
+  const previous=guide.onChange;
+  guide.onChange=()=>{
+    previous?.();
+    if(coach.active&&(guide.tutorial.id!==coach.tutorialId||guide.tutorial.revision!==coach.tutorialRevision)){
+      coach.stop();status.textContent='Coach stopped because the tutorial changed. Start it again for the current steps.';
+    }
+  };
   describe(coach.state);
 }

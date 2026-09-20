@@ -84,7 +84,8 @@ test('step and attempt changes reach the coach with the tutor epoch, and stop di
   const captions=[];coach.onCaption(c=>captions.push(c));
   const answer=await coach.askText('what now');
   assert.equal(answer.answer,'Answer for s1');assert.equal(captions.at(-1).role,'coach');
-  coach.stop();assert.equal(calls.dispose,1);assert.equal(coach.active,false);
+  assert.equal(coach.tutorialId,'tut_1');assert.equal(coach.tutorialRevision,3);assert.equal(coach.mode,'text');
+  coach.stop();assert.equal(calls.dispose,1);assert.equal(coach.active,false);assert.equal(coach.tutorialId,null);assert.equal(coach.mode,'idle');
   coach.onStep(tutorial().steps[0],6);assert.equal(calls.setStep.length,1,'no calls after stop');
 });
 
