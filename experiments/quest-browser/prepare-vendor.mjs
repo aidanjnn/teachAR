@@ -20,3 +20,4 @@ for(const [name,expected]of Object.entries(manifest.files)){
 await mkdir(resolve(root,'public/vendor'),{recursive:true});
 for(const[name,data]of files)await writeFile(resolve(root,'public/vendor',name),data);
 console.log(`Prepared verified Three.js ${manifest.version} and MIT license from the workspace lockfile.`);
+await import('./prepare-telemetry.mjs');

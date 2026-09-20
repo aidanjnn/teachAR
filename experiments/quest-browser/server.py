@@ -12,6 +12,7 @@ from auto_checks import AutoChecks, loop as auto_loop
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
+from telemetry_config import public_config
 
 import cv2
 import numpy as np
@@ -203,6 +204,11 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path=="/api/health":
             return self.send(200,{"app":"trail-browser-prototype","source_id":SOURCE_ID})
+        if path=="/api/telemetry/config":
+            origin = self.headers.get("Origin")
+            if self.headers.get("Sec-Fetch-Site") == "cross-site" or (origin and origin != f"http://{self.headers.get('Host')}"):
+                return self.send(403,{"error":"Local same-origin requests only."})
+            return self.send(200,public_config())
         if path=="/api/ai/status":
             with LOCK:
                 latest=dict(AI_LATEST) if AI_LATEST and AI_LATEST['revision']==STATE['revision'] else None
@@ -231,6 +237,10 @@ class Handler(BaseHTTPRequestHandler):
                      "/hands":"hands.html","/hand-guide.mjs":"hand-guide.mjs","/motion-core.mjs":"motion-core.mjs",
                      "/ar":"ar.html","/ar.js":"ar.js","/ar-state.mjs":"ar-state.mjs","/ar.css":"ar.css",
                      "/vendor/three.module.js":"vendor/three.module.js","/vendor/three.core.js":"vendor/three.core.js"}
+            files.update({f"/{name}":name for name in (
+                "telemetry.mjs", "telemetry-sentry.mjs", "telemetry-runtime.mjs",
+                "telemetry-panel.mjs", "telemetry-friction.mjs", "telemetry.css",
+                "vendor/sentry.mjs", "vendor/SENTRY-LICENSE.txt")})
             if path not in files:
                 return self.send(404,{"error":"Not found"})
             file = ROOT/"public"/files[path]

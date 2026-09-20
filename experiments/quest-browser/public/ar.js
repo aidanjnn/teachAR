@@ -6,11 +6,26 @@ import {mountTutorialShell} from '/tutorial-shell.mjs';
 import {mountReview} from '/tutorial-review.mjs';
 import {nextVideoSnapshot} from '/camera-snapshot.mjs';
 import {NarrationRecorder,NarrationPlayback} from '/narration.mjs';
+import {telemetry} from './telemetry.mjs';
+import {createRuntimeObserver} from './telemetry-runtime.mjs';
+import {mountDiagnostics} from './telemetry-panel.mjs';
+import {initializeSentry} from './telemetry-sentry.mjs';
 const tutorialMode=location.pathname==='/tutorial';
 const handsMode=tutorialMode||location.pathname==='/hands';
 const narrator=tutorialMode?new NarrationRecorder({onStatus:message=>{document.getElementById('microphone-status').textContent=message;}}):null;
 const narrationPlayer=tutorialMode?new NarrationPlayback({onError:message=>tell(message)}):null;
 const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>action('exit'),snapshot:tutorialSnapshot,narrator,audioPlayer:narrationPlayer}):null;
+
+const observation=tutorialMode?createRuntimeObserver({telemetry,guide}):null;
+let diagnostics=null,sentryConnection=null,telemetryDisposed=false;
+if(tutorialMode){
+  // Local observations start immediately. Remote configuration cannot delay the tutor.
+  try{diagnostics=mountDiagnostics({telemetry,document});}catch{}
+  void fetch('/api/telemetry/config',{signal:AbortSignal.timeout(2500)})
+    .then(response=>response.ok?response.json():null)
+    .then(config=>config&&initializeSentry(config,{telemetry}))
+    .then(connection=>{sentryConnection=connection;if(telemetryDisposed)void connection?.close();}).catch(()=>{});
+}
 
 const $=id=>document.getElementById(id);
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
@@ -135,7 +150,10 @@ async function setAuto(enabled) {
   trialRunning=enabled;
   await poll();
 }
-async function action(id) {
+function action(id,interactionId=null) {
+  return observation&&interactionId?observation.dispatch(interactionId,()=>performAction(id)):performAction(id);
+}
+async function performAction(id) {
   if (id==='exit') {
     pauseOnLeave(); await session?.end(); tell('AR closed. Paid checks paused.'); return;
   }
@@ -188,7 +206,7 @@ function update() {
     $('enter').textContent=xrSupported?(tutorialMode?'Enter Trail AR':'Enter hand guidance · free'):'Immersive AR unavailable in this browser';
     if(now-handHudTime<50)return;handHudTime=now;
     const network=now<noticeUntil?notice:pendingCheck?'Image check in '+Math.ceil((pendingCheck-now)/1000)+'s':busy?'Image check running…':`Motion guidance: no API calls · camera ${now-lastUpload<3000?'connected':'off'} · image checks ${status?.calls||0}/${status?.max_calls||100}`;
-    hud.setAttribute('aria-label',guide.draw(ctx,now,hover,network));if(texture)texture.needsUpdate=true;
+    hud.setAttribute('aria-label',guide.draw(ctx,now,hover,network));observation?.drawn();if(texture)texture.needsUpdate=true;
     return;
   }
   const result=feedback(status,now-statusAt,now-lastUpload);
@@ -233,7 +251,7 @@ function update() {
 function initRenderer() {
   if(renderer)return;
   renderer=new THREE.WebGLRenderer({alpha:true,antialias:true}); renderer.setClearColor(0x000000,0);
-  renderer.setSize(16,16); renderer.domElement.className='xr-canvas';document.body.append(renderer.domElement);
+  renderer.setSize(16,16); renderer.domElement.className='xr-canvas sentry-block';document.body.append(renderer.domElement);
   renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local');
   scene=new THREE.Scene();camera=new THREE.PerspectiveCamera();head=new THREE.Group();scene.add(head);guide?.attach(scene);
   texture=new THREE.CanvasTexture(hud);texture.colorSpace=THREE.SRGBColorSpace;
@@ -247,7 +265,7 @@ function initRenderer() {
   renderer.setAnimationLoop((time,frame)=>{
     if(!frame || !session)return;
     const reference=renderer.xr.getReferenceSpace(), pose=frame.getViewerPose(reference);
-    if(!pose){guide?.hide();return;}
+    if(!pose){guide?.hide();observation?.observe({active:true,visible:visible(),freshFrame:true,poseAvailable:false});return;}
     if(tutorialMode&&panelNeedsPlace){
       const q=new THREE.Quaternion().copy(pose.transform.orientation),forward=new THREE.Vector3(0,0,-1).applyQuaternion(q);forward.y=0;if(forward.lengthSq()<.01)forward.set(0,0,-1);forward.normalize();
       const right=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0));
@@ -262,8 +280,12 @@ function initRenderer() {
       const hit=hitFromPose(target); if(hit)hover=hit;
       const line=rayLines[i++];if(line){line.visible=true;line.position.copy(target.transform.position);line.quaternion.copy(target.transform.orientation);}
     }
+    observation?.target(hover||null,'webxr');
     guide?.tick(frame,session,reference,time);
+    observation?.observe({active:true,visible:visible(),freshFrame:true,poseAvailable:true});
     update();renderer.render(scene,camera);
+    // Render submission acknowledges only this UI state, never persistence or human perception.
+    observation?.rendered();
     // XR drives networking too, so this does not depend on background DOM RAF.
     service(time);
   });
@@ -283,12 +305,16 @@ async function enterAR() {
     const requested=navigator.xr.requestSession('immersive-ar',handsMode?{requiredFeatures:['hand-tracking']}:{optionalFeatures:['hand-tracking']});
     busy=true;speak(tutorialMode?'Starting the tutorial recorder. Look at your workspace.':'Starting the headset test. Look at the toys and labels.');
     const active=await requested; session=active;
-    active.addEventListener('end',()=>{session=null;guide?.endSession();pauseOnLeave();hover='';tell('AR closed. Paid checks paused.');update();});
-    active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){pauseOnLeave();guide?.hide();}});
+    active.addEventListener('end',()=>{observation?.suspend('session_ended');session=null;guide?.endSession();observation?.observe({active:false,visible:visible()});pauseOnLeave();hover='';tell('AR closed. Paid checks paused.');update();});
+    active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){pauseOnLeave();guide?.hide();observation?.suspend('hidden');}observation?.observe({active:true,visible:visible()});});
     active.addEventListener('select',event=>{
-      if(session!==active || active.visibilityState!=='visible')return;
+      if(session!==active || active.visibilityState!=='visible'){
+        const attempt=observation?.activate(null,'webxr');observation?.reject(attempt,session!==active?'session_ended':'hidden');return;
+      }
       const pose=event.frame.getPose(event.inputSource.targetRaySpace,renderer.xr.getReferenceSpace());
-      const hit=pose && hitFromPose(pose); if(hit)void action(hit);
+      const hit=pose && hitFromPose(pose),attempt=observation?.activate(hit,'webxr');
+      observation?.hitTest(attempt,!!hit,pose?'no_control':'no_pose');
+      if(hit)void action(hit,attempt);
     });
     await renderer.xr.setSession(active);
     if(handsMode){
@@ -358,12 +384,23 @@ if(tutorialMode){
   $('narration-playback').onchange=()=>{narrationPlayer.enabled=$('narration-playback').checked;if(!narrationPlayer.enabled)narrationPlayer.stop();else narrationPlayer.unlock();};
 }
 $('speech').onchange=()=>{if(!$('speech').checked)window.speechSynthesis?.cancel();else speak('Spoken corrections enabled.');};
-hud.onclick=event=>{if(tutorialMode&&!session){tell('This is a preview. Enter AR on Quest to use these controls.');return;}const r=hud.getBoundingClientRect();const id=(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)((event.clientX-r.left)/r.width,1-(event.clientY-r.top)/r.height);if(id)void action(id);};
-document.addEventListener('visibilitychange',()=>{if(!visible()){pauseOnLeave();guide?.hide();if(!session)stopCamera();}});
-window.addEventListener('pagehide',()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();});
+hud.onclick=event=>{
+  const r=hud.getBoundingClientRect();
+  const id=(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)((event.clientX-r.left)/r.width,1-(event.clientY-r.top)/r.height);
+  const attempt=observation?.activate(id,'desktop');observation?.hitTest(attempt,!!id,'no_control');
+  if(tutorialMode&&!session){if(id)observation?.reject(attempt,'preview_only');tell('This is a preview. Enter AR on Quest to use these controls.');return;}
+  if(id)void action(id,attempt);
+};
+hud.addEventListener('pointermove',event=>{if(!observation||session)return;const r=hud.getBoundingClientRect();observation.target(tutorialButton((event.clientX-r.left)/r.width,1-(event.clientY-r.top)/r.height,guide.uiButtons),'desktop');});
+hud.addEventListener('pointerleave',()=>{if(!session)observation?.target(null,'desktop');});
+document.addEventListener('visibilitychange',()=>{if(!visible()){pauseOnLeave();guide?.hide();observation?.suspend('hidden');if(!session)stopCamera();}observation?.observe({active:!!session,visible:visible()});});
+window.addEventListener('pagehide',event=>{
+  pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();observation?.suspend('session_ended');observation?.observe({active:false,visible:false});
+  if(!event.persisted){telemetryDisposed=true;observation?.close();try{diagnostics?.dispose();void sentryConnection?.close();}catch{}}
+});
 window.addEventListener('beforeunload',event=>{if(tutorialMode&&(['capture','capture-paused','saving','saving-tutorial'].includes(guide.mode)||['saving','failed'].includes(guide.saveStatus))){event.preventDefault();event.returnValue='';}});
 // A separate timer keeps the non-immersive setup and fallback usable.
-setInterval(()=>{service(performance.now());update();},200);
+setInterval(()=>{service(performance.now());observation?.observe({active:!!session,visible:visible()});update();},200);
 try {xrSupported=!!navigator.xr && await navigator.xr.isSessionSupported('immersive-ar');}
 catch {xrSupported=false;}
 tell(xrSupported?(handsMode?'Ready. Put down controllers and choose Enter hand guidance. Camera is optional.':'Quest AR is available. Enable camera to begin.'):'Open this page on Quest for immersive AR. Desktop preview remains available.');

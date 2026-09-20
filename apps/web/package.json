@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@sentry/browser": "10.75.0",
     "@trail/contracts": "workspace:*",
     "@trail/motion": "workspace:*",
     "openai": "7.19.0",

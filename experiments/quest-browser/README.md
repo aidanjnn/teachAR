@@ -14,7 +14,7 @@ cd experiments/quest-browser
 sh start.sh
 ```
 
-The first start creates a Python virtual environment and installs `requirements.txt`. `prepare-vendor.mjs` copies the exact locked Three.js 0.186.0 artifacts and MIT license from the workspace, checking their hashes. No CDN or separate JavaScript install is needed.
+The first start creates a Python virtual environment and installs `requirements.txt`. `prepare-vendor.mjs` copies the exact locked Three.js 0.186.0 artifacts and MIT license from the workspace, checking their hashes, and builds the pinned Sentry 10.75.0 browser SDK with its license. No CDN or separate JavaScript install is needed.
 
 Open **http://127.0.0.1:4321/tutorial**. Desktop can inspect the library/review UI; actual tracking/immersive sessions require the headset. Keep the server running. This is a loopback development server, not a production or authenticated multi-user service.
 
@@ -55,9 +55,18 @@ cd experiments/quest-browser
 sh test-all.sh
 ```
 
-The suite runs Node and Python unit tests plus ten browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data and disabled provider credentials, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
+The suite runs Node and Python unit tests plus thirteen browser workflows. Browser tests start their own server on a free localhost port with temporary runtime data, disabled provider credentials and disabled external Sentry delivery, then stop it. They never reuse your live port 4321 server. Streams and provider responses are synthetic/mocked. `TRAIL_PYTHON=/absolute/path/to/python` can reuse an existing environment; `TRAIL_BROWSER_CHANNEL=chrome` can use installed Chrome instead of bundled Chromium.
 
 Hosted CI runs this suite alongside the existing repository checks. Neither these tests nor `pnpm check` establish headset tracking accuracy or Unity readiness. The latest packaging result is in [the activity log](../../docs/codex-log.md).
+
+## Optional Sentry interaction diagnostics
+
+The tutorial includes a local diagnostic reconstruction of gesture delivery and
+step interruptions. Optional Sentry **Tracing + Logs + Session Replay** use the
+same bounded, sanitized observations. See [the sponsor walkthrough](../../docs/sentry.md)
+and [setup and evidence boundaries](../../docs/sentry-observability.md).
+The local [environment template](.env.example) documents the opt-in variables.
+External telemetry defaults off. No DSN or SDK failure can block local guidance.
 
 ## Optional paid camera lab
 
