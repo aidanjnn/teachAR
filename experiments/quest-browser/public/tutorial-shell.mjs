@@ -1,3 +1,5 @@
+import {applyAppearance} from './tutorial-design.mjs';
+import {enhanceSelects} from './tutorial-select.mjs';
 import {newTutorial,validateTutorial} from './tutorial-core.mjs';
 import {listTutorials,findTutorial} from './tutorial-store.mjs';
 export function mountTutorialShell(guide,{isActive,tell}){
@@ -36,7 +38,11 @@ export function mountTutorialShell(guide,{isActive,tell}){
   if(next.setup!==layout)next.steps.forEach(s=>s.reviewed=false);next.setup=layout;next.revision++;
   await guide.replaceTutorial(next);guide.nextEntry='create';$('setup-status').textContent='Setup saved. Choose Enter Trail AR below.';$('enter').scrollIntoView({behavior:'smooth',block:'center'});
  });
- const previous=guide.onChange;guide.onChange=()=>{previous?.();$('shell-save').textContent=guide.savedMessage;$('continue-draft').hidden=!guide.tutorial.steps.length;if(route==='library')void library();};
+ const updateAppearance=()=>{applyAppearance(guide.appearance);$('appearance-toggle').textContent=`Appearance: ${guide.appearance.theme==='light'?'Warm gray':'Charcoal'}`;$('event-sounds').textContent=`Event sounds: ${guide.appearance.sound?'On':'Off'}`;$('event-sounds').setAttribute('aria-pressed',String(guide.appearance.sound));};
+ $('appearance-toggle').onclick=()=>{guide.appearance.theme=guide.appearance.theme==='light'?'charcoal':'light';updateAppearance();};
+ $('event-sounds').onclick=()=>{guide.appearance.sound=!guide.appearance.sound;updateAppearance();};
+ enhanceSelects();updateAppearance();
+ const previous=guide.onChange;guide.onChange=()=>{previous?.();updateAppearance();$('shell-save').textContent=guide.savedMessage;$('continue-draft').hidden=!guide.tutorial.steps.length;if(route==='library')void library();};
  const synthetic=$('load-synthetic').onclick;$('load-synthetic').onclick=()=>{show('review');synthetic();};
  guide.ux=true;guide.mode='home';guide.nextEntry='home';guide.onChange();show('home');
  return {show};

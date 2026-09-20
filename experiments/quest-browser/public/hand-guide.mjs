@@ -176,14 +176,15 @@ export class HandGuide {
   enableHologram(live=false){
     if(this.palmMesh)return;
     this.hologramLive=live;
-    this.dots[0].material.opacity=live?.75:.9;
+    this.dots[0].material.opacity=live?.45:.65;
+    this.dots.forEach(dot=>dot.scale.setScalar(live?.45:.72));
     this.dots[0].material.wireframe=live;
     this.dots[0].material.depthWrite=false;
-    this.boneMeshes.forEach(m=>{m.scale.x=m.scale.z=live?1.3:2;});
+    this.boneMeshes.forEach(m=>{m.scale.x=m.scale.z=live?.65:1.65;});
     const geometry=new THREE.BufferGeometry();
     geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6*3),3));
     geometry.setIndex([0,1,2,0,2,3,0,3,4,0,4,5]);
-    this.palmMesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:0x8debd4,transparent:true,opacity:live?.6:.28,wireframe:live,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
+    this.palmMesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:0x8debd4,transparent:true,opacity:live?.4:.22,wireframe:live,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
     this.ghost.add(this.palmMesh);
     const edgeGeometry=new THREE.BufferGeometry();edgeGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(7*3),3));
     this.palmEdge=new THREE.Line(edgeGeometry,new THREE.LineBasicMaterial({color:0x8debd4,depthTest:false,transparent:true,opacity:.9}));this.ghost.add(this.palmEdge);

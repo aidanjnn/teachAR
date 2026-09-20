@@ -226,7 +226,7 @@ class Handler(BaseHTTPRequestHandler):
             with LOCK:
                 self.send(200,list(EVENTS))
         else:
-            files = {"/tutorial-shell.mjs":"tutorial-shell.mjs","/tutorial-ui.mjs":"tutorial-ui.mjs","/tutorial-follow.mjs":"tutorial-follow.mjs","/tutorial-assist.mjs":"tutorial-assist.mjs","/":"index.html","/camera":"camera.html","/app.js":"app.js","/camera.js":"camera.js","/style.css":"style.css","/ai-monitor.js":"ai-monitor.js",
+            files = {"/tutorial.css":"tutorial.css","/tutorial-design.mjs":"tutorial-design.mjs","/tutorial-feedback.mjs":"tutorial-feedback.mjs","/tutorial-select.mjs":"tutorial-select.mjs","/tutorial-shell.mjs":"tutorial-shell.mjs","/tutorial-ui.mjs":"tutorial-ui.mjs","/tutorial-follow.mjs":"tutorial-follow.mjs","/tutorial-assist.mjs":"tutorial-assist.mjs","/":"index.html","/camera":"camera.html","/app.js":"app.js","/camera.js":"camera.js","/style.css":"style.css","/ai-monitor.js":"ai-monitor.js",
                      "/narration.mjs":"narration.mjs","/narration-core.mjs":"narration-core.mjs","/camera-snapshot.mjs":"camera-snapshot.mjs","/tutorial-review.mjs":"tutorial-review.mjs","/tutorial":"tutorial.html","/tutorial-core.mjs":"tutorial-core.mjs","/tutorial-guide.mjs":"tutorial-guide.mjs","/tutorial-store.mjs":"tutorial-store.mjs",
                      "/hands":"hands.html","/hand-guide.mjs":"hand-guide.mjs","/motion-core.mjs":"motion-core.mjs",
                      "/ar":"ar.html","/ar.js":"ar.js","/ar-state.mjs":"ar-state.mjs","/ar.css":"ar.css",

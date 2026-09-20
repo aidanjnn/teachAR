@@ -1,6 +1,6 @@
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'@playwright/test');
 const assert=require('node:assert/strict');
-(async()=>{const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader']});try{
+(async()=>{const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader','--mute-audio']});try{
  const context=await browser.newContext({viewport:{width:1280,height:1100}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));await context.route('**/api/**',async r=>{assert.equal(r.request().method(),'GET');await r.fulfill({contentType:'application/json',body:'{"automatic":{"enabled":false}}'});});
  await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await page.getByRole('button',{name:'Create tutorial',exact:true}).click();
@@ -52,7 +52,7 @@ const assert=require('node:assert/strict');
   a.action('primary');if(a.mode!=='review-step'||a.tutorial.steps.length!==1)fail('New capture did not open review: '+a.problem);
   const saved=a.tutorial.steps[0];a.action('hand');t=a.pending.until;atick();a.action('discard-confirm');a.action('discard-take');
   if(a.tutorial.steps[0]!==saved)fail('New replacement discard erased original');
-  a.action('hand');a.action('primary');if(a.mode!=='saved'||!a.tutorial.completion)fail('Approve did not finish and save: '+a.problem);
+  a.action('hand');a.action('primary');await a.saveTask;if(a.mode!=='saved'||!a.tutorial.completion)fail('Approve did not finish and save: '+a.problem);
   a.action('start-follow');if(a.mode!=='learn'||a.followEngine.started)fail('Created tutorial did not start with waiting ghost');
   a.endSession();
   const blank=syntheticTutorial();blank.title='Other saved recording';await saveTutorial(blank,draftVersion(await loadTutorial()));

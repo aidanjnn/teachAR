@@ -33,11 +33,11 @@ export function mountReview(guide,{isActive,tell}){
   function selectedStep(){return guide.tutorial.steps[selected];}
   function initPreview(){
     if(renderer)return;
-    renderer=new THREE.WebGLRenderer({canvas:$('motion-preview'),antialias:true});renderer.setSize(640,400,false);renderer.setClearColor('#122d26');
+    renderer=new THREE.WebGLRenderer({canvas:$('motion-preview'),antialias:true});renderer.setSize(640,400,false);renderer.setClearColor('#242522');
     scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(55,640/400,.01,20);
     ghosts=['right','left'].map(()=>{const g=new HandGuide({speak:()=>{},verify:()=>{},exit:()=>{}});g.attach(scene);g.enableHologram();return g;});
     foldPreview=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffd47d}));scene.add(foldPreview);
-    scene.add(new THREE.GridHelper(1.2,12,0x6ba797,0x2b5146));
+    scene.add(new THREE.GridHelper(1.2,12,0x838777,0x56584f));
   }
   function select(index){
     selected=index;const step=selectedStep();if(!step)return;
@@ -50,7 +50,7 @@ export function mountReview(guide,{isActive,tell}){
     $('step-instruction').value=step.instruction;$('trim-start').value=0;$('trim-end').value=(step.duration_ms/1000).toFixed(3);
     $('narration-summary').textContent=step.narration_issue?`Narration needs repair: ${step.narration_issue}`:step.narration?`Recorded narration: ${(step.narration.duration_ms/1000).toFixed(1)} seconds. Listen with the ghost before approving. Timing is approximate.`:'No recorded narration. This step uses written instructions.';
     $('remove-narration').disabled=!step.narration&&!step.narration_issue;
-    $('guide-hands').value=step.guide_hands||'recorded';
+    $('guide-hands').value=step.guide_hands||'recorded';$('guide-hands').dispatchEvent(new Event('ui-refresh'));
     $('reviewed').checked=step.reviewed;$('step-photo').hidden=!step.reference;
     if(step.reference)$('step-photo').src=step.reference.image;else $('step-photo').removeAttribute('src');
     $('scrub').max=step.duration_ms;$('scrub').value=0;

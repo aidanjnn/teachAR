@@ -2,7 +2,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'@playwright/test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 (async()=>{
-  const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader']});
+  const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader','--mute-audio']});
   try{
     const context=await browser.newContext({viewport:{width:1280,height:1000},acceptDownloads:true});
     const errors=[];

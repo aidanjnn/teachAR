@@ -1,7 +1,7 @@
 // Synthetic WebXR poses. Exercises the real recorder/store; no paid provider or hardware.
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'@playwright/test');
 const assert=require('node:assert/strict');
-(async()=>{const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader']});try{
+(async()=>{const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader','--mute-audio']});try{
  const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/api/**',async r=>{assert.equal(r.request().method(),'GET');await r.fulfill({contentType:'application/json',body:'{}'});});
  await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);

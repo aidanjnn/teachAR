@@ -1,9 +1,12 @@
+import {THEMES,drawIcon} from './tutorial-design.mjs';
 // Contextual headset UI. Hit boxes come from the same view model as the visible controls.
 export function tutorialView(g){
- const v={tag:'TRAIL',title:'Your spatial workshop',text:'',detail:'',buttons:[]};
+ const v={tag:'TRAIL',mode:g.mode,title:'Your workspace',text:'',detail:'',buttons:[],compact:['capture','capture-paused','learn'].includes(g.mode)&&!g.problem&&!g.pending};
  const b=(id,label)=>v.buttons.push({id,label});
  switch(g.mode){
- case 'home':v.title='What would you like to do?';v.text='Teach a movement, or follow one at your own pace.';b('create','Create tutorial');b('library','Follow tutorial');if(g.tutorial.steps.length)b('edit-current','Continue current draft');break;
+ case 'home':v.title='Your workspace';v.text='Teach a skill. Learn from a recording.';b('create','Create tutorial');b('library','Follow tutorial');if(g.tutorial.steps.length)b('edit-current','Continue current draft');break;
+ case 'settings':v.tag='PREFERENCES';v.title='Make room for the task';v.text='Move the panel to either side. Your workspace and recording keep their original placement.';b('theme',`Appearance: ${g.appearance?.theme==='light'?'Warm gray':'Charcoal'}`);b('sound',`Event sounds: ${g.appearance?.sound?'On':'Off'}`);b('panel-place','Move panel');b('settings-back','Back');break;
+ case 'trim':v.tag='CREATE · TRIM';v.title='Keep the useful movement';v.text=`Start ${(g.trimRange?.[0]/1000).toFixed(2)}s · End ${(g.trimRange?.[1]/1000).toFixed(2)}s`;v.detail='Adjust in quarter seconds. Applying a trim requires review again.';b('trim-start-less','Start −0.25s');b('trim-start-more','Start +0.25s');b('trim-end-less','End −0.25s');b('trim-end-more','End +0.25s');b('trim-apply','Apply & review');b('trim-cancel','Cancel');break;
  case 'loading-library':v.title='Opening your library…';break;
  case 'library':{
   const t=g.library?.[g.libraryIndex];v.tag='FOLLOW · LIBRARY';v.title=t?.title||'No tutorials yet';v.text=t?`${t.steps.length} recordings · ${t.completion?'ready to follow':'draft — review first'}`:'Create your first tutorial. Saved recordings stay on this headset.';
@@ -19,10 +22,11 @@ export function tutorialView(g){
  case 'author':v.tag='CREATE · RECORD';v.title=g.tutorial.title;v.text='Record the full movement or one action at a time. No task-specific steps are generated.';v.detail=g.savedMessage;b('primary','Start recording · 3s');if(g.tutorial.steps.length){b('hand','Review recordings');b('clear','Follow saved tutorial');}b('author-options','More options');break;
  case 'author-options':v.tag='CREATE · OPTIONS';v.title='Recording options';v.text='Hold the endpoint, then return to the save position chosen at the start of this tutorial. You can explicitly change it here.';b('toggle-clean',`Return to save ${g.cleanSave?'ON':'OFF'}`);b('change-save-position','Change save position');if(g.tutorial.steps.length)b('capture-reference','Reference photo · 3s');b('author-back','Back to recording');b('home','Back home');break;
  case 'capture':case 'capture-paused':v.tag='CREATE · RECORDING';v.title=g.mode==='capture'?'Demonstrate at your pace':'Recording paused';v.text=g.cleanSave?'Hold the finished pose for one second, then return both hands to the same save rings for one second. The return is removed.':'Finish the movement, then save. Review can trim any reach toward the controls.';v.detail=`${((g.recordElapsed||0)/1000).toFixed(1)} seconds · ${g.cleanSave?(g.endpoint.returnSince!==null?'Hold in the save rings…':g.endpoint.cutoff(g.recordElapsed)!==null?'Ending held · return to the save rings':'Hold the ending before returning to save'):g.narrator?.take?'narration recording':'motion only'}`;b('primary',g.cleanSave?'Save at last hold':'Finish recording');b('replay',g.mode==='capture'?'Pause':'Resume');if(g.cleanSave)b('removeCue','Save full take');b('discard-confirm','Discard take…');break;
+ case 'confirm-exit':v.title='Leave this unfinished take?';v.text='Your earlier saved recordings stay in the library. This unfinished movement will be discarded.';b('keep-take','Stay · keep recording');b('exit-discard','Discard take & exit');break;
  case 'confirm-discard':v.title='Discard this unfinished take?';v.text='Your previously saved recordings remain in the library.';b('discard-take','Discard take');b('keep-take','Keep recording');break;
  case 'saving':v.title='Saving your recording…';v.text='Keep the session open while narration finishes.';break;
- case 'review-step':v.tag=`CREATE · REVIEW ${g.player.index+1} / ${g.tutorial.steps.length}`;v.title='Review your recording';v.text=g.player.step.instruction;v.detail=g.player.step.narration_issue?'Narration needs repair. Open More options.':'Inspect the start and ending before approving this recording.';b('primary','Approve & save');b('replay','Replay recording');b('hand','Record replacement');b('review-options','More options');break;
- case 'review-options':v.tag='CREATE · REVIEW OPTIONS';v.title='Refine this recording';v.text='Detailed trimming and instruction edits are available on the review page after exiting AR.';b('verify','Reference photo · 3s');b('cue','Mark guide line');b('removeCue',g.player.step.narration_issue?'Use text instruction':'Clear guide line');b('guide-hands',`Guide: ${g.player.step.guide_hands||'recorded'} hands`);b('review-back','Back to review');break;
+ case 'review-step':v.tag=`CREATE · REVIEW ${g.player.index+1} / ${g.tutorial.steps.length}`;v.title='Review your recording';v.text=g.player.step.instruction;v.detail=g.player.step.narration_issue?'Narration needs repair. Open More options.':'Inspect the start and ending before approving this recording.';b('primary','Approve & save');b('replay','Replay recording');b('review-pause',g.player.paused?'Resume preview':'Pause preview');b('hand','Record replacement');b('review-options','Edit recording');b('keep-add','Keep & add next');break;
+ case 'review-options':v.tag='CREATE · REVIEW OPTIONS';v.title='Refine this recording';v.text='Trim the start or ending here. Written instructions can be edited on the review page after exiting AR.';b('trim-open','Trim movement');b('verify','Reference photo · 3s');b('cue','Mark guide line');b('removeCue',g.player.step.narration_issue?'Use text instruction':'Clear guide line');b('guide-hands',`Guide: ${g.player.step.guide_hands||'recorded'} hands`);b('review-back','Back to review');break;
  case 'saved':v.tag='CREATE · SAVED';v.title='Ready to follow';v.text=`${g.tutorial.title} · ${g.tutorial.steps.length} recordings. Saved on this device; no download required.`;b('start-follow','Follow this tutorial');b('author-back','Add another recording');b('home','Back home');break;
  case 'learn':{
   v.tag=`FOLLOW · ${g.player.index+1} / ${g.tutorial.steps.length}`;v.text=g.player.step.instruction;
@@ -30,26 +34,46 @@ export function tutorialView(g){
   v.title=g.watchOnly?'Watch the demonstration':g.gatePaused?'Paused — take your time':({waiting:g.followEngine?.started?'Waiting for you':'Bring your hands to the start',following:'Follow the next movement',tracking:'Show your hands again','reference-gap':'Recording has tracking gaps',checkpoint:'Movement checkpoint reached'})[state]||'Bring your hands to the start';
   v.detail=g.watchOnly?'Demonstration only. Return to guided practice when ready.':state==='checkpoint'?'Position reached. Check the physical result yourself.':state==='reference-gap'?'Choose Watch again, or re-record with the required hands visible.':state==='tracking'?'Progress is held. Missing tracking is not a movement error.':'The ghost waits for your position. It does not grade objects or grip.';
   if(g.watchOnly)b('try-follow','Ready to try');else if(g.followEngine?.done)b('primary','Result looks right · next');
-  b('replay',g.watchOnly?(g.player.paused?'Resume replay':'Pause replay'):(g.gatePaused?'Resume':'Pause'));b('watch-demo','Watch again');b('learn-options','More options');break;}
- case 'learn-options':v.tag='FOLLOW · OPTIONS';v.title='Practice controls';v.text='Returning from this menu keeps your place and reacquires the current movement.';b('restart-follow','Restart movement');b('hand','Previous recording');b('removeCue',`Palm zones ${g.alignmentEnabled?'ON':'OFF'}`);b('move-tutorial','Reposition tutorial');b('learn-back','Back to practice');b('home','Back home');break;
+  b('replay',g.watchOnly?(g.player.paused?'Resume replay':'Pause replay'):(g.gatePaused?'Resume':'Pause'));b('restart-follow','Repeat');b('learn-options','Menu');break;}
+ case 'learn-options':v.tag='FOLLOW · OPTIONS';v.title='Practice controls';v.text='Your place is held. Return when ready.';b('watch-demo','Watch demonstration');b('restart-follow','Restart movement');b('hand','Previous recording');b('removeCue',`Palm zones ${g.alignmentEnabled?'ON':'OFF'}`);b('move-tutorial','Reposition tutorial');b('learn-back','Back to practice');b('home','Back home');break;
  case 'finished':v.tag='FOLLOW · COMPLETE';v.title='Tutorial completed';v.text='You reached the movement checkpoints and confirmed the results. Physical correctness was not automatically verified.';b('start-follow','Practise again');b('home','Back home');break;
  }
  if(g.pending?.kind==='save-position'&&performance.now()>=g.pending.until){v.title='Hold both hands still';v.text=g.note;v.buttons=[{id:'set-save-position',label:'Restart countdown'}];if(g.tutorial.save_position)v.buttons.push({id:'cancel-save-position',label:'Keep current position'});else v.buttons.push({id:'home',label:'Back home'});}
  else if(g.pending){v.title=`${Math.max(0,Math.ceil((g.pending.until-performance.now())/1000))} seconds`;v.text=g.note;v.buttons=[];}
- if(g.problem){v.detail=g.problem;}
+ if(g.problem){v.detail=g.problem;v.tone='warning';}
+ if(g.mode==='learn'){const state=g.followEngine?.state;v.tone=state==='checkpoint'?'success':state==='tracking'||state==='reference-gap'||state==='waiting'&&g.followEngine?.started?'warning':null;v.progress=g.followEngine?g.followEngine.index/Math.max(1,g.followEngine.gates.length-1):null;if(state==='waiting'&&g.followEngine?.started&&!g.gatePaused)v.title='A little closer';}
+ if(g.pending)v.compact=false;
  return v;
 }
+// The renderer and ray hit testing consume these exact rectangles. Transparent space has no hit target.
 export function uiButtons(view){
- const n=view.buttons.length,columns=2,w=498,h=n>4?58:72,start=n>4?302:350;
- return [...view.buttons.map((b,i)=>({...b,x:30+(i%columns)*522,y:start+Math.floor(i/columns)*(h+12),w,h})),{id:'panel-place',label:'Move panel',x:760,y:18,w:162,h:50},{id:'exit',label:'Exit AR',x:936,y:18,w:114,h:50}];
+ const buttons=view.buttons;
+ const global=view.compact?[{id:'settings',label:'Settings',x:860,y:420,w:180,h:64}]:[{id:'settings',label:'Settings',x:736,y:20,w:140,h:48},{id:'exit',label:'Exit AR',x:892,y:20,w:148,h:48}];
+ if(view.mode==='settings')global.splice(0,1);
+ if(view.mode==='home')return buttons.map((b,i)=>({...b,x:i<2?40+i*508:40,y:i<2?224:460,w:i<2?492:1000,h:i<2?210:64,icon:i<2?(i?'library':'plus'):null})).concat(global);
+ if(view.compact){const width=Math.min(248,(792-(buttons.length-1)*12)/Math.max(1,buttons.length));return buttons.map((b,i)=>({...b,x:40+i*(width+12),y:420,w:width,h:64})).concat(global);}
+ const columns=buttons.length>6?3:2,rows=Math.ceil(buttons.length/columns),height=rows>2?55:64,gap=12,start=536-rows*(height+gap),width=(1000-(columns-1)*16)/columns;
+ return buttons.map((b,i)=>({...b,x:40+(i%columns)*(width+16),y:start+Math.floor(i/columns)*(height+gap),w:width,h:height})).concat(global);
 }
 export function drawTutorialUI(g,ctx,hover){
- const v=tutorialView(g);g.uiButtons=uiButtons(v);
- ctx.clearRect(0,0,1080,560);ctx.fillStyle='#152c29';ctx.beginPath();ctx.roundRect(0,0,1080,560,32);ctx.fill();
- ctx.fillStyle='#a5c8be';ctx.font='600 21px system-ui';ctx.fillText(v.tag,30,48);
- ctx.fillStyle='#f1faf5';ctx.font='600 40px system-ui';g.text(ctx,v.title,30,119,1020,45,2);
- ctx.fillStyle='#d0e3db';ctx.font='27px system-ui';g.text(ctx,v.text,30,191,1000,34,3);
- ctx.fillStyle=g.problem?'#ffd395':'#9fc9ba';ctx.font='21px system-ui';g.text(ctx,v.detail,30,v.buttons.length>4?277:314,1020,26,1);
- for(const b of g.uiButtons){const primary=b===g.uiButtons[0];ctx.fillStyle=hover===b.id?'#d0fbee':primary?'#abead5':'#2b4841';ctx.beginPath();ctx.roundRect(b.x,b.y,b.w,b.h,14);ctx.fill();ctx.fillStyle=hover===b.id||primary?'#153a2f':'#e4f3ee';ctx.font=`600 ${b.y===18?20:25}px system-ui`;ctx.textAlign='center';ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2+8);}
- ctx.textAlign='left';return `${v.title}. ${v.text}. ${v.detail}`;
+ const v=tutorialView(g),p=THEMES[g.appearance?.theme]||THEMES.charcoal;g.uiButtons=uiButtons(v);g.compactUI=v.compact;
+ const box=(x,y,w,h,color,r=26)=>{ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();};
+ ctx.clearRect(0,0,1080,560);ctx.textAlign='left';
+ if(v.compact){box(24,18,670,310,p.surface);box(24,402,1032,100,p.surface,40);}else box(12,6,1056,548,p.surface,32);
+ ctx.fillStyle=p.muted;ctx.font='500 20px system-ui';ctx.fillText(v.tag.replaceAll(' · ',' / '),40,52);
+ ctx.fillStyle=v.tone?p[v.tone]:p.ink;ctx.font='500 40px system-ui';g.text(ctx,v.title,40,116,v.compact?610:980,46,2);
+ ctx.fillStyle=p.muted;ctx.font='26px system-ui';g.text(ctx,v.text,40,184,v.compact?610:980,34,v.compact?2:3);
+ if(v.progress!==null&&v.progress!==undefined){box(40,289,610,4,p.line,2);box(40,289,Math.max(4,610*v.progress),4,p.ink,2);}
+ const detailY=v.compact?274:Math.min(316,Math.min(...g.uiButtons.filter(b=>!['settings','exit'].includes(b.id)).map(b=>b.y))-24);
+ ctx.fillStyle=v.tone?p[v.tone]:p.muted;ctx.font='21px system-ui';g.text(ctx,v.detail,40,detailY,v.compact?610:1000,26,1);
+ for(const [index,b]of g.uiButtons.entries()){
+  const utility=['settings','exit'].includes(b.id),primary=index===0&&v.mode!=='home';
+  box(b.x,b.y,b.w,b.h,hover===b.id?p.ink:primary?p.action:p.raised,b.icon?24:Math.min(32,b.h/2));
+  const ink=hover===b.id||primary?p.actionInk:p.ink;ctx.fillStyle=ink;
+  if(b.icon){ctx.strokeStyle=p.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(b.x+24,b.y+20,56,56,14);ctx.stroke();drawIcon(ctx,b.icon,b.x+38,b.y+34,28,ink);ctx.font='500 29px system-ui';ctx.fillText(b.label,b.x+24,b.y+130);ctx.fillStyle=p.muted;ctx.font='22px system-ui';ctx.fillText(b.icon==='plus'?'Teach a skill':'Learn from a recording',b.x+24,b.y+170);}
+  else {ctx.font=`500 ${utility?20:24}px system-ui`;while(ctx.measureText(b.label).width>b.w-28&&parseInt(ctx.font.match(/(\d+)px/)[1])>17){const n=parseInt(ctx.font.match(/(\d+)px/)[1]);ctx.font=`500 ${n-1}px system-ui`;}ctx.textAlign='center';ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2+8);ctx.textAlign='left';}
+ }
+ const event=g.feedback?.visible(performance.now());
+ if(event&&v.compact){box(716,18,340,116,p.surface);ctx.fillStyle=event.kind==='error'?p.warning:p.success;ctx.font='23px system-ui';g.text(ctx,event.text,738,59,294,30,2);}
+ return `${v.title}. ${v.text}. ${v.detail}`;
 }

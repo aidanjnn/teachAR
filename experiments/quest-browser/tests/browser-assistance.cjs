@@ -2,13 +2,13 @@
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || '@playwright/test');
 const assert=require('node:assert/strict');
 (async()=>{
- const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader']});
+ const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader','--mute-audio']});
  try{
   const page=await browser.newPage({viewport:{width:1280,height:950}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/api/**',async r=>{assert.equal(r.request().method(),'GET');await r.fulfill({contentType:'application/json',body:'{"automatic":{"enabled":false}}'});});
   await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);
-  await page.waitForFunction(()=>document.querySelector('#hud-preview').getAttribute('aria-label').includes('What would you like to do?'));
+  await page.waitForFunction(()=>document.querySelector('#hud-preview').getAttribute('aria-label').includes('Your workspace'));
   const result=await page.evaluate(async()=>{
    const THREE=await import('/vendor/three.module.js'),{TutorialGuide}=await import('/tutorial-guide.mjs');
    const {syntheticTutorial}=await import('/tutorial-review.mjs'),{TutorialPlayer}=await import('/tutorial-core.mjs');

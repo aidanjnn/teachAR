@@ -5,6 +5,8 @@ import {newTutorial, prepareStep, TutorialPlayer, MAX_FRAMES, MAX_STEPS, MAX_TOT
 import {PalmAlignment,CaptureEndpoint,SavePositionCapture} from '/tutorial-assist.mjs';
 import {TutorialFollower} from '/tutorial-follow.mjs';
 import {drawTutorialUI} from '/tutorial-ui.mjs';
+import {preferences,applyAppearance,THEMES} from '/tutorial-design.mjs';
+import {TutorialFeedback} from '/tutorial-feedback.mjs';
 import {saveTutorial, loadTutorial, draftVersion, listTutorials, findTutorial} from '/tutorial-store.mjs';
 
 export const TUTORIAL_BUTTONS=[
@@ -16,10 +18,10 @@ export class TutorialGuide extends HandGuide {
   log(event,extra={}){super.log(event,{tutorial_id:this.tutorial?.id??null,revision:this.tutorial?.revision??null,...extra});}
   constructor(options) {
     super(options);
-    this.snapshot = options.snapshot;
+    this.snapshot = options.snapshot;this.writeTutorial=options.writeTutorial||saveTutorial;
     this.narrator=options.narrator;this.audioPlayer=options.audioPlayer;this.saveTask=Promise.resolve();
     this.tutorial = newTutorial();this.alignmentEnabled=true;this.cleanSave=false;this.alignment=new PalmAlignment();this.endpoint=new CaptureEndpoint();this.savePositionCapture=new SavePositionCapture();
-    this.saveQueue = Promise.resolve();
+    this.saveQueue = Promise.resolve();this.appearance=preferences();this.feedback=new TutorialFeedback();this.onFeedback=options.onFeedback;applyAppearance(this.appearance);
     this.savedMessage = 'No steps saved yet.';this.activeSession=false;this.loading=true;this.saveGeneration=0;this.persistedVersion=null;
   }
   async restore() {
@@ -32,20 +34,26 @@ export class TutorialGuide extends HandGuide {
     } catch (e) { this.savedMessage = `Draft could not be loaded: ${e.message}`; } finally {this.loading=false;this.onChange?.();}
   }
   persist() {
-    const snapshot=structuredClone(this.tutorial), generation=++this.saveGeneration;
+    const snapshot=structuredClone(this.tutorial), generation=++this.saveGeneration, epoch=this.epoch;
     this.savedMessage='Saving on this device…';
     this.saveQueue=this.saveQueue.catch(()=>{}).then(()=>{
       if(new TextEncoder().encode(JSON.stringify(snapshot)).byteLength>MAX_FILE_BYTES)throw Error('Tutorial exceeds the 48 MB storage limit.');
-      return saveTutorial(snapshot,this.persistedVersion).then(()=>{this.persistedVersion=draftVersion(snapshot);});
+      return this.writeTutorial(snapshot,this.persistedVersion).then(()=>{this.persistedVersion=draftVersion(snapshot);});
     });
-    this.saveQueue.then(()=>{if(generation===this.saveGeneration){this.savedMessage=`${snapshot.steps.length} steps saved on this device.`;this.onChange?.();}},
-      e=>{if(generation===this.saveGeneration){this.savedMessage=e.name==='DraftConflict'?e.message:'Local save failed. Download the tutorial before closing.';this.onChange?.();}});
+    this.saveQueue.then(()=>{if(generation===this.saveGeneration){this.savedMessage=`${snapshot.steps.length} steps saved on this device.`;this.storageFailed=false;if(snapshot.steps.length&&epoch===this.epoch)this.notify('saved','Saved on this device');this.onChange?.();}},
+      e=>{if(generation===this.saveGeneration){this.storageFailed=true;this.savedMessage=e.name==='DraftConflict'?e.message:'Local save failed. Export a backup before closing.';this.notify('error',this.savedMessage);this.onChange?.();}});
     this.onChange?.();return this.saveQueue;
   }
-  changed(){this.tutorial.revision++;this.tutorial.completion=null;this.epoch++;this.persist();}
-  finishAuthoring(){
-    try{this.tutorial=finishTutorial(this.tutorial);this.epoch++;this.persist();this.note='Tutorial finished. Reset the task and start learning.';this.speak(this.note);}
-    catch(e){this.problem=e.message;}
+  notify(kind,text){const event=this.feedback?.emit(kind,text,performance.now());if(event)this.onFeedback?.(event);}
+  changed(){this.tutorial.revision++;this.tutorial.completion=null;this.epoch++;return this.persist();}
+  async finishAuthoring(){
+    const tutorial=this.tutorial,epoch=this.epoch;const previousMode=this.mode;
+    try{
+      this.tutorial=finishTutorial(tutorial);if(this.ux)this.mode='saving';
+      await this.persist();
+      if(this.epoch!==epoch||this.tutorial.id!==tutorial.id)return false;
+      this.epoch++;if(this.ux)this.mode='saved';this.note='Tutorial saved. Reset the task and start learning.';this.speak(this.note);return true;
+    }catch(e){if(this.epoch===epoch){this.tutorial.completion=null;this.mode=previousMode==='review-step'?'review-step':'author';this.problem=e.message;this.notify('error','Tutorial not saved');}return false;}
   }
   commitStep(step,index){
     if(this.takeNarrationIssue&&!step.narration_issue)step.narration_issue=this.takeNarrationIssue;
@@ -53,7 +61,7 @@ export class TutorialGuide extends HandGuide {
     this.replaceIndex=null;this.tutorial.calibration_span_m=this.workspace.span;
     this.mode='author';this.frames=[];this.changed();this.log('record_saved',{step_id:step.id,duration_ms:step.duration_ms,quality:step.quality});
     if(this.ux){this.player=new TutorialPlayer(this.tutorial.steps);this.player.index=index;this.mode='review-step';this.showStep();}
-    this.note=step.narration_issue?'Motion saved; narration failed. Re-record or remove narration during review.':'Step saved. Review the ghost and narration before approving.';this.speak(this.note);
+    this.note=step.narration_issue?'Motion saved; narration failed. Re-record or remove narration during review.':'Review the ghost and narration before approving. Local saving is in progress.';this.speak(this.note);
   }
   async finishNarratedStep(step,index,cutoff=null){
     const generation=this.takeGeneration;this.mode='saving';
@@ -69,9 +77,9 @@ export class TutorialGuide extends HandGuide {
     // Persist first: a storage failure must leave the current tutorial intact.
     await this.saveQueue.catch(()=>{});
     if(new TextEncoder().encode(JSON.stringify(next)).byteLength>MAX_FILE_BYTES)throw Error('Tutorial exceeds the 48 MB limit.');
-    await saveTutorial(next,this.persistedVersion);this.persistedVersion=draftVersion(next);
+    await this.writeTutorial(next,this.persistedVersion);this.persistedVersion=draftVersion(next);
     if(next.id!==this.tutorial.id)this.events=[];
-    this.reset();this.tutorial=next;this.savedMessage=`${next.steps.length} steps saved on this device.`;this.onChange?.();
+    this.reset();this.tutorial=next;this.notify('saved','Saved on this device');this.savedMessage=`${next.steps.length} steps saved on this device.`;this.onChange?.();
   }
 
   attach(scene) {
@@ -86,6 +94,7 @@ export class TutorialGuide extends HandGuide {
       const mat=new THREE.MeshBasicMaterial({color:0xffd47d,transparent:true,opacity:.45,side:THREE.DoubleSide,depthTest:false,depthWrite:false});
       for(let axis=0;axis<3;axis++){const ring=new THREE.Mesh(new THREE.RingGeometry(.118,.12,48),mat);if(axis===0)ring.rotation.x=Math.PI/2;if(axis===1)ring.rotation.y=Math.PI/2;zone.add(ring);}
     }
+    this.nextPath=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineDashedMaterial({color:0x7cdadd,transparent:true,opacity:.6,dashSize:.012,gapSize:.009,depthTest:false,depthWrite:false}));this.nextPath.visible=false;this.space.add(this.nextPath);
     this.photoCanvas = document.createElement('canvas'); this.photoCanvas.width = 640; this.photoCanvas.height = 480;
     this.photoTexture = new THREE.CanvasTexture(this.photoCanvas); this.photoTexture.colorSpace = THREE.SRGBColorSpace;
     this.photoPanel = new THREE.Mesh(new THREE.PlaneGeometry(.40,.30), new THREE.MeshBasicMaterial({map:this.photoTexture, side:THREE.DoubleSide}));
@@ -103,11 +112,11 @@ export class TutorialGuide extends HandGuide {
     this.saveHomeWorld=null;this.saveReturn=null;this.savePositionCapture?.reset();
     this.takeNarrationIssue=null;this.alignment?.reset();this.endpoint?.reset();this.alignmentResult=null;this.hideAssistance();
     super.reset();
-    this.followEngine=null;this.watchOnly=false;this.gatePaused=false;this.wasHidden=false;
+    this.feedback?.clear();this.feedbackState=null;this.followEngine=null;this.watchOnly=false;this.gatePaused=false;this.wasHidden=false;
     this.epoch = (this.epoch || 0) + 1; this.player = null; this.replaceIndex=null;this.photoTarget=null;this.photoEpoch=(this.photoEpoch||0)+1;
     if (this.leftGhost) this.leftGhost.ghost.visible = false;
     if (this.photoPanel) this.photoPanel.visible = false;
-    if(this.foldLine)this.foldLine.visible=false;
+    if(this.foldLine)this.foldLine.visible=false;if(this.nextPath)this.nextPath.visible=false;
   }
   hideAssistance(){
     for(const h of Object.values(this.liveHands||{}))h.ghost.visible=false;
@@ -146,12 +155,40 @@ export class TutorialGuide extends HandGuide {
     const id=this.library?.[this.libraryIndex]?.id;if(!id)return;
     const epoch=++this.epoch;this.mode='loading-library';
     try{const next=validateTutorial(await findTutorial(id));if(this.epoch!==epoch||!this.activeSession)return;
-      await this.saveQueue;await saveTutorial(next,this.persistedVersion);this.persistedVersion=draftVersion(next);
+      await this.saveQueue;await this.writeTutorial(next,this.persistedVersion);this.persistedVersion=draftVersion(next);
       if(this.epoch!==epoch||!this.activeSession)return;
       this.reset();this.tutorial=next;this.intent=next.completion?'follow':'create';this.mode=next.completion?'setup-follow':next.save_position?'setup-new':'save-home';this.cleanSave=!!next.save_position;this.onChange?.();
     }catch(e){if(this.epoch===epoch){this.mode='home';this.problem=e.message;}}
   }
   handleUX(id){
+    if(id==='settings'){
+      if(this.pending)return true;
+      if(this.mode==='capture'){this.mode='capture-paused';this.narrator?.pause();this.endpoint.interrupt();}
+      this.settingsReturn=this.mode;this.gatePaused=true;this.followEngine?.pause();if(this.player)this.player.paused=true;this.audioPlayer?.stop();this.mode='settings';return true;
+    }
+    if(id==='settings-back'){this.mode=this.settingsReturn||'home';return true;}
+    if(id==='theme'||id==='sound'){
+      if(id==='theme')this.appearance.theme=this.appearance.theme==='light'?'charcoal':'light';else this.appearance.sound=!this.appearance.sound;
+      applyAppearance(this.appearance);this.onChange?.();return true;
+    }
+    if(id==='keep-add'&&this.mode==='review-step'){
+      if(this.player.step.narration_issue){this.problem='Repair narration or use text before keeping this step.';return true;}
+      this.player.step.reviewed=true;this.changed();this.player=null;this.photoPanel.visible=false;this.mode='author';return true;
+    }
+    if(id==='review-pause'&&this.mode==='review-step'){this.player.paused=!this.player.paused;return true;}
+    if(id==='trim-open'){this.player.paused=true;this.audioPlayer?.stop();this.trimRange=[0,this.player.step.duration_ms];this.mode='trim';return true;}
+    if(id.startsWith('trim-')&&this.mode==='trim'){
+      const range=this.trimRange,duration=this.player.step.duration_ms;
+      if(id==='trim-cancel'){this.mode='review-step';this.player.replay();return true;}
+      if(id==='trim-apply'){
+        try{const index=this.player.index;this.tutorial.steps[index]=trimStep(this.player.step,...range);this.changed();this.player=new TutorialPlayer(this.tutorial.steps);this.player.index=index;this.mode='review-step';this.showStep();}catch(e){this.problem=e.message;}return true;
+      }
+      if(id==='trim-start-less')range[0]=Math.max(0,range[0]-250);
+      if(id==='trim-start-more')range[0]=Math.min(range[1]-1000,range[0]+250);
+      if(id==='trim-end-less')range[1]=Math.max(range[0]+1000,range[1]-250);
+      if(id==='trim-end-more')range[1]=Math.min(duration,range[1]+250);
+      this.player.time=id.includes('start')?range[0]:range[1];return true;
+    }
     if(id==='panel-place'){this.onRepositionPanel?.();return true;}
     if(id==='home'){
       this.narrator?.cancel();this.audioPlayer?.stop();this.reset();this.mode='home';return true;
@@ -205,11 +242,12 @@ export class TutorialGuide extends HandGuide {
       const options=['recorded','left','right','both'],step=this.player.step;step.guide_hands=options[(options.indexOf(step.guide_hands||'recorded')+1)%4];step.reviewed=false;this.changed();return true;
     }
     if(this.mode==='review-options'&&['verify','cue','removeCue'].includes(id)){this.mode='review-step';return false;}
-    if(id==='discard-confirm'){this.discardReturn=this.mode;this.mode='confirm-discard';this.narrator?.pause();return true;}
+    if(id==='discard-confirm'){this.endpoint.interrupt();this.discardReturn=this.mode;this.mode='confirm-discard';this.narrator?.pause();return true;}
     if(id==='keep-take'){this.mode='capture-paused';return true;}
     if(id==='discard-take'){this.mode='capture-paused';this.action('hand');return true;}
     if(id==='start-follow'){this.intent='follow';this.startLearning();return true;}
     if(id==='learn-options'){this.gatePaused=true;this.followEngine?.pause();this.audioPlayer?.stop();this.mode='learn-options';return true;}
+    if(id==='watch-demo'&&this.mode==='learn-options'){this.mode='learn';this.watchOnly=true;this.player.replay();return true;}
     if(id==='learn-back'){this.mode='learn';this.gatePaused=false;this.followEngine?.pause();return true;}
     if(id==='restart-follow'){this.mode='learn';this.watchOnly=false;this.gatePaused=false;this.showStep();return true;}
     if(this.mode==='learn-options'&&['hand','removeCue'].includes(id)){this.mode='learn';return false;}
@@ -232,7 +270,7 @@ export class TutorialGuide extends HandGuide {
     if (this.player) this.player.paused=true;
     if (['record','photo','cue-first','cue-second','save-position'].includes(this.pending?.kind)) this.pending=null;
     super.hide();
-    if(this.foldLine)this.foldLine.visible=false;
+    if(this.foldLine)this.foldLine.visible=false;if(this.nextPath)this.nextPath.visible=false;
     if (this.leftGhost) this.leftGhost.ghost.visible=false;
     if (this.photoPanel) this.photoPanel.visible=false;
   }
@@ -256,8 +294,12 @@ export class TutorialGuide extends HandGuide {
   }
   action(id) {
     this.problem='';
-    if(id==='exit'){this.exit();return;}
-    if(this.mode==='saving'){this.problem='Finishing local narration. Please wait.';return;}
+    if(id==='exit'){
+      if(this.ux&&(['capture','capture-paused'].includes(this.mode)||this.mode==='settings'&&['capture','capture-paused'].includes(this.settingsReturn))){this.narrator?.pause();this.endpoint.interrupt();this.mode='confirm-exit';return;}
+      this.exit();return;
+    }
+    if(id==='exit-discard'&&this.mode==='confirm-exit'){this.narrator?.cancel();this.frames=[];this.exit();return;}
+    if(this.mode==='saving'){this.problem='Saving locally. Please wait.';return;}
     if(this.ux&&this.handleUX(id))return;
     if(!this.workspace) {
       if(id==='primary'&&!this.pending) this.countdown(this.mode==='end'?'end':'start');
@@ -281,7 +323,7 @@ export class TutorialGuide extends HandGuide {
     }
     if(this.mode==='author') {
       if(id==='removeCue'){this.cleanSave=!this.cleanSave;this.note=this.cleanSave?'Clean save on: hold the end pose for one second, then return both hands to their starting positions for one second.':'Clean save off. Save step keeps the full take.';this.speak(this.note);return;}
-      if(id==='cue'){this.finishAuthoring();return;}
+      if(id==='cue'){this.saveTask=this.finishAuthoring();return;}
       if(id==='primary') {
         if(this.tutorial.steps.length>=MAX_STEPS&&this.replaceIndex==null){this.problem='Twelve-step limit reached. Download this tutorial.';return;}
         this.pending={kind:'record',until:performance.now()+3000};
@@ -295,7 +337,7 @@ export class TutorialGuide extends HandGuide {
     if(this.mode==='review-step') {
       if(id==='primary'){
         if(this.player.step.narration_issue){this.problem='Narration failed. Re-record this step or choose Use text instruction.';return;}
-        this.player.step.reviewed=true;this.log('step_reviewed',{step_id:this.player.step.id});this.changed();if(this.player.index<this.tutorial.steps.length-1){this.player.index++;this.player.replay();this.showStep();}else {this.mode='author';this.player=null;this.photoPanel.visible=false;this.note='Recordings reviewed. Save the tutorial, then reset the task and follow.';if(this.ux){this.finishAuthoring();if(this.tutorial.completion)this.mode='saved';}}}
+        this.player.step.reviewed=true;this.log('step_reviewed',{step_id:this.player.step.id});this.changed();if(this.player.index<this.tutorial.steps.length-1){this.player.index++;this.player.replay();this.showStep();}else {this.mode='author';this.player=null;this.photoPanel.visible=false;this.note='Recordings reviewed. Save the tutorial, then reset the task and follow.';if(this.ux){this.saveTask=this.finishAuthoring();}}}
       else if(id==='replay')this.player.replay();
       else if(id==='verify'){this.photoTarget=this.player.step;this.player.paused=true;this.pending={kind:'photo',until:performance.now()+3000};this.note='Photo in 3 seconds. Clear your hands and look at the result.';this.speak(this.note);}
       else if(id==='hand'){this.replaceIndex=this.player.index;this.mode='author';this.player=null;this.photoPanel.visible=false;this.action('primary');}
@@ -304,13 +346,13 @@ export class TutorialGuide extends HandGuide {
     if(this.mode==='capture'||this.mode==='capture-paused') {
       if(id==='hand'){this.takeGeneration++;this.narrator?.cancel();this.frames=[];this.replaceIndex=null;this.mode='author';this.note='Unfinished take discarded. Saved steps are unchanged.';return;}
       if(id==='replay') {
-        if(this.mode==='capture'){this.endpoint.interrupt();this.mode='capture-paused';this.narrator?.pause();this.log('record_pause',{reason:'user'});this.note='Paused. Return both tracked wrists to their recorded positions before resuming.';return;}
+        if(this.mode==='capture'){this.endpoint.interrupt();this.mode='capture-paused';this.narrator?.pause();this.log('record_pause',{reason:'user'});this.notify('pause','Recording paused');this.note='Paused. Return both tracked wrists to their recorded positions before resuming.';return;}
         const last=this.frames.at(-1);
         for(const side of ['left','right']) if(tracked(last?.[side]) &&
           (!tracked(this.currentHands?.[side]) || distance(last[side][0].p,this.currentHands[side][0].p)>.12)) {
           this.problem='Return tracked hands near their paused ghosts before resuming (12 cm).';return;
         }
-        this.lastRecordTick=this.lastTick;this.mode='capture';this.narrator?.resume();this.log('record_resume');
+        this.lastRecordTick=this.lastTick;this.mode='capture';this.narrator?.resume();this.log('record_resume');this.notify('record','Recording resumed');
       }
       if(id==='primary'||id==='removeCue') {
         try {
@@ -342,6 +384,7 @@ export class TutorialGuide extends HandGuide {
     }
   }
   showStep(preserve=false) {
+    this.nextPathKey=null;
     this.alignment.reset();this.alignmentResult=null;
     const step=this.player.step;
     if(this.ux&&this.mode==='learn'&&!preserve){this.followEngine=new TutorialFollower(step);this.player.time=0;this.player.paused=true;}
@@ -428,7 +471,7 @@ export class TutorialGuide extends HandGuide {
       if(kind==='record'){
         if(!tracked(this.currentHands.left)&&!tracked(this.currentHands.right)){this.problem='No hands tracked. Show your hands and start again.';return;}
         this.endpoint.reset(this.tutorial.save_position?['left','right'].map(side=>this.tutorial.save_position[side]):null);this.mode='capture';this.frames=[];this.recordElapsed=0;this.lastRecordTick=time;this.lastSample=-Infinity;
-        this.lastTrackingState=null;this.log('record_start');globalThis.speechSynthesis?.cancel();
+        this.lastTrackingState=null;this.log('record_start');this.notify('record','Recording started');globalThis.speechSynthesis?.cancel();
         this.takeNarrationIssue=null;
         try{if(!this.narrator?.begin())this.speak('Recording started.');}catch(e){this.takeNarrationIssue=e.message.slice(0,240);this.problem=`Narration could not start: ${e.message}`;this.mode='capture-paused';}
       }
@@ -454,9 +497,25 @@ export class TutorialGuide extends HandGuide {
       if(!this.gatePaused)this.followEngine.update(this.currentHands,time);
       if(this.followEngine.done&&this.problem?.startsWith('Reach the movement checkpoint'))this.problem=null;
       sample=this.followEngine.target;this.player.time=sample?.t||0;this.player.paused=true;
-    }else if(['learn','review-step','review-options'].includes(this.mode)&&this.player)sample=this.player.tick(dt);
+    }else if(['learn','review-step','review-options','trim'].includes(this.mode)&&this.player)sample=this.player.tick(dt);
     if(['placement','adjust-placement'].includes(this.mode))sample=this.tutorial.steps[0]?.frames[0];
-    if(sample&&!this.pending){this.drawHand(sample.right,0x8debd4);this.leftGhost.drawHand(sample.left,0x92bfff);}
+    this.nextPath.visible=false;
+    if(this.ux&&this.mode==='learn'&&!this.watchOnly&&!this.gatePaused&&!this.pending&&this.followEngine&&!['tracking','reference-gap'].includes(this.followEngine.state)&&!this.followEngine?.done){
+      const follower=this.followEngine,next=follower.gates[follower.index+1],points=[];
+      for(const side of follower.hands){const a=follower.target?.[side]?.[0]?.p,b=next?.[side]?.[0]?.p;if(a&&b)points.push(new THREE.Vector3(...a),new THREE.Vector3(...b));}
+      const key=`${this.player.step.id}:${follower.index}`;
+      if(this.nextPathKey!==key){this.nextPath.geometry.dispose();this.nextPath.geometry=new THREE.BufferGeometry().setFromPoints(points);this.nextPath.computeLineDistances();this.nextPathKey=key;}
+      this.nextPath.visible=points.length>0;
+    }
+    const savedFlash=this.feedback.visible(now)?.kind==='saved';
+    const ghostColor=savedFlash?0xa5dbb5:0x7cdadd;
+    if(sample&&!this.pending){this.drawHand(sample.right,ghostColor);this.leftGhost.drawHand(sample.left,ghostColor);}
+    if(this.ux&&this.mode==='learn'){
+      const state=this.gatePaused?'paused':this.followEngine?.state;
+      if(state!==this.feedbackState){if(state==='checkpoint')this.notify('checkpoint','Movement reached');if(state==='tracking')this.notify('tracking','Show your hands');this.feedbackState=state;}
+    }
+    if(savedFlash&&this.mode!=='learn')for(const side of ['left','right'])this.liveHands[side].drawHand(this.currentHands[side],0xa5dbb5);
+
     const saveHome=this.tutorial.save_position?['left','right'].map(side=>this.tutorial.save_position[side]):this.endpoint.home;
     if(['author','capture','capture-paused','saved'].includes(this.mode)&&this.cleanSave&&saveHome){
       ['left','right'].forEach((side,i)=>{const zone=this.zones[side];zone.visible=true;zone.position.fromArray(saveHome[i]);zone.scale.setScalar(2/3);zone.children[0].material.color.setHex(0xc4d8df);});

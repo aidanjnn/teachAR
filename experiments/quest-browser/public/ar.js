@@ -5,12 +5,14 @@ import {TutorialGuide,tutorialButton} from '/tutorial-guide.mjs';
 import {mountTutorialShell} from '/tutorial-shell.mjs';
 import {mountReview} from '/tutorial-review.mjs';
 import {nextVideoSnapshot} from '/camera-snapshot.mjs';
+import {FeedbackAudio} from '/tutorial-feedback.mjs';
 import {NarrationRecorder,NarrationPlayback} from '/narration.mjs';
 const tutorialMode=location.pathname==='/tutorial';
 const handsMode=tutorialMode||location.pathname==='/hands';
+const feedbackAudio=new FeedbackAudio();
 const narrator=tutorialMode?new NarrationRecorder({onStatus:message=>{document.getElementById('microphone-status').textContent=message;}}):null;
 const narrationPlayer=tutorialMode?new NarrationPlayback({onError:message=>tell(message)}):null;
-const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>action('exit'),snapshot:tutorialSnapshot,narrator,audioPlayer:narrationPlayer}):null;
+const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>action('exit'),snapshot:tutorialSnapshot,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take)feedbackAudio.play(event);}}):null;
 
 const $=id=>document.getElementById(id);
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
@@ -137,7 +139,7 @@ async function setAuto(enabled) {
 }
 async function action(id) {
   if (id==='exit') {
-    pauseOnLeave(); await session?.end(); tell('AR closed. Paid checks paused.'); return;
+    pauseOnLeave(); await session?.end(); tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.'); return;
   }
   if(handsMode && id!=='check'){if(id!=='verify')pendingCheck=0;guide.action(id);update();return;}
   if (busy || !status || performance.now()-statusAt>4000) return;
@@ -188,6 +190,7 @@ function update() {
     $('enter').textContent=xrSupported?(tutorialMode?'Enter Trail AR':'Enter hand guidance · free'):'Immersive AR unavailable in this browser';
     if(now-handHudTime<50)return;handHudTime=now;
     const network=now<noticeUntil?notice:pendingCheck?'Image check in '+Math.ceil((pendingCheck-now)/1000)+'s':busy?'Image check running…':`Motion guidance: no API calls · camera ${now-lastUpload<3000?'connected':'off'} · image checks ${status?.calls||0}/${status?.max_calls||100}`;
+    if(tutorialMode){const event=guide.feedback.visible(now),toast=$('feedback-toast');toast.hidden=!event;if(event){toast.textContent=event.text;toast.dataset.kind=event.kind;}}
     hud.setAttribute('aria-label',guide.draw(ctx,now,hover,network));if(texture)texture.needsUpdate=true;
     return;
   }
@@ -283,7 +286,7 @@ async function enterAR() {
     const requested=navigator.xr.requestSession('immersive-ar',handsMode?{requiredFeatures:['hand-tracking']}:{optionalFeatures:['hand-tracking']});
     busy=true;speak(tutorialMode?'Starting the tutorial recorder. Look at your workspace.':'Starting the headset test. Look at the toys and labels.');
     const active=await requested; session=active;
-    active.addEventListener('end',()=>{session=null;guide?.endSession();pauseOnLeave();hover='';tell('AR closed. Paid checks paused.');update();});
+    active.addEventListener('end',()=>{session=null;guide?.endSession();pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
     active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){pauseOnLeave();guide?.hide();}});
     active.addEventListener('select',event=>{
       if(session!==active || active.visibilityState!=='visible')return;
@@ -353,6 +356,7 @@ $('save-boxes').onclick=async()=>{try{await api('/api/boxes',{boxes,revision:ref
 $('camera-start').onclick=startCamera;$('devices').onchange=startCamera;$('enter').onclick=enterAR;
 $('stop').onclick=async()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();await session?.end();};
 if(tutorialMode){
+  document.addEventListener('pointerdown',()=>{feedbackAudio.enabled=guide.appearance.sound;void feedbackAudio.unlock();},{passive:true});
   $('microphone-enable').onclick=async()=>{try{await narrator.enable();narrationPlayer.unlock();}catch(e){tell(e.message);}};
   $('microphone-disable').onclick=()=>narrator.disable();
   $('narration-playback').onchange=()=>{narrationPlayer.enabled=$('narration-playback').checked;if(!narrationPlayer.enabled)narrationPlayer.stop();else narrationPlayer.unlock();};
@@ -360,7 +364,7 @@ if(tutorialMode){
 $('speech').onchange=()=>{if(!$('speech').checked)window.speechSynthesis?.cancel();else speak('Spoken corrections enabled.');};
 hud.onclick=event=>{if(tutorialMode&&!session){tell('This is a preview. Enter AR on Quest to use these controls.');return;}const r=hud.getBoundingClientRect();const id=(tutorialMode?((u,v)=>tutorialButton(u,v,guide.uiButtons)):handsMode?handButton:hitButton)((event.clientX-r.left)/r.width,1-(event.clientY-r.top)/r.height);if(id)void action(id);};
 document.addEventListener('visibilitychange',()=>{if(!visible()){pauseOnLeave();guide?.hide();if(!session)stopCamera();}});
-window.addEventListener('pagehide',()=>{pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();});
+window.addEventListener('pagehide',()=>{feedbackAudio.close();pauseOnLeave();stopCamera();narrator?.disable();narrationPlayer?.stop();});
 window.addEventListener('beforeunload',event=>{if(tutorialMode&&['capture','capture-paused','saving'].includes(guide.mode)){event.preventDefault();event.returnValue='';}});
 // A separate timer keeps the non-immersive setup and fallback usable.
 setInterval(()=>{service(performance.now());update();},200);

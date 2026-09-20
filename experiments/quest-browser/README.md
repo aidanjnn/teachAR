@@ -29,6 +29,8 @@ This runs `adb reverse tcp:4321 tcp:4321` and opens `http://localhost:4321/tutor
 
 For another local port: `PORT=4331 sh start.sh`, then `adb reverse tcp:4331 tcp:4331` and manually open `http://localhost:4331/tutorial`. The convenience launch script uses port 4321. Stop the foreground server with Ctrl-C. `start-background.py` is optional and records its PID in `.runtime/server.pid`; stop only that process when finished.
 
+See [the connected UI/UX base](../../docs/web-ui-base.md) for appearance settings, recording/review controls, save feedback and the headset acceptance walkthrough.
+
 ## What is included
 
 - `/tutorial`: Create/Follow shell, one save position per tutorial, hand-motion capture/pause/resume, clean-save trimming, review, automatic device-local library, explicit import/export, workspace placement, paired holographic ghosts, live palm zones and learner-paced checkpoints.

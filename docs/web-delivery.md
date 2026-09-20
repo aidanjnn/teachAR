@@ -6,16 +6,16 @@ The user selected Quest Browser / WebXR as the immediate demo runtime on 2026-09
 
 Start with [the runnable README](../experiments/quest-browser/README.md). `/tutorial` on port 4321 is the product entry. `apps/web` is the separate desktop/backend application; running `pnpm dev` does not start the headset tutor. The server is a loopback single-user development tool, not a public deployment.
 
-This PR preserves the functional local source, tests and [interactive visual reference](design/trail-ui/README.md). It does not claim the reference has already replaced the headset UI. Do not merge the native integration PRs just to obtain browser features.
+The functional tutor now incorporates the visual direction and connected workflow described in [the UI base](web-ui-base.md). The [interactive visual reference](design/trail-ui/README.md) remains a separate mock. Do not merge the native integration PRs just to obtain browser features.
 
 ## What exists versus what remains
 
 | Capability | Browser source today | Boundary / next work |
 | --- | --- | --- |
-| Create / Follow | DOM and in-headset contextual workflow, library/drafts | Apply the cleaner visual reference; current immersive panel is broad and text-heavy |
+| Create / Follow | DOM and in-headset contextual workflow, library/drafts | Shared charcoal/light appearance, Create/Follow tiles and compact active panels implemented; headset legibility needs testing |
 | Expert recording | Both tracked hands, timestamps, manual start/pause/resume/stop | No automatic task understanding; tracking quality remains device-dependent |
 | Save gesture | One configured position per tutorial, endpoint hold and return trimming, manual fallback | Experimental; cyclic actions can trigger it; inspect retained end before approval |
-| Review / local save | Replay, trim, instructions, approvals, IndexedDB drafts/library, import/export | Detailed edits currently require exiting AR to the browser page; no automatic cross-device sync |
+| Review / local save | Replay, trim, instructions, approvals, IndexedDB drafts/library, import/export | Trim/pause/review available in AR; instruction text editing remains on the browser page; no automatic cross-device sync |
 | Narration / photos | Optional local narration with trimming/playback; reference snapshots | Concurrent mic/camera/immersive hands needs a fresh Quest run; not a continuous expert video recorder |
 | Transfer | Origin plus heading, translate/rotate and preview at original scale | Same object geometry/layout; no stretching to different shirts or arbitrary object rearrangement |
 | Ghosts / learner guidance | Procedural articulated translucent hands, learner outlines/palm zones, start gate, ordered learner-paced movement targets | Palm proximity does not grade fingers, grip, contact or object outcome; not a polished skinned mesh |
@@ -23,7 +23,7 @@ This PR preserves the functional local source, tests and [interactive visual ref
 | Image checks | Separate local OpenCV and opt-in paid snapshot lab, capped attempts/cooldown/source/freshness checks | Plushie-specific experiment; not general tutorial completion or continuous 3D object tracking |
 | Voice coach | Main repository has a separate Voice Lab and backend adapters | Not connected end to end to this prototype's tutorial format/context; needs deliberate integration |
 | OMNI | Research/integration target | No OMNI tutor pipeline or live sponsor-model acceptance in this PR |
-| Hand feedback/audio | Existing geometry feedback and some speech paths | Proposed durable-save pulse/ding, coherent event vocabulary and compact dock still need implementation |
+| Hand feedback/audio | Durable-save green pulse/ding, muted event cues, cyan ghosts and learner outlines | Sound preference and cooldowns implemented; cues do not establish object correctness |
 
 The user reported recording, leaving AR, exporting/reloading/replaying and relocating the cloth tutorial by marking its workspace. That is useful bounded human evidence, not a quantified accuracy result. Automated tests use synthetic hands/media/providers; none establishes novice task success or hidden-hand accuracy.
 
@@ -59,6 +59,8 @@ Prototype `trail.tutorial.prototype.v3` is not the repository's native wire cont
 4. **Headset acceptance.** Record two actions, pause, return to the same save zone, review the trimmed ends, save, reload, relocate, wait at the start, move deliberately off path, recover, hide a hand, pause/repeat, confirm physical result. Then independently test real voice + camera + XR together and measure response latency.
 
 General object detection/retargeting follows a working demo; it is not a prerequisite for this fixed-layout tutor. Keep the chosen physical task in recorded data, not hardcoded movement logic.
+
+The UI and feedback work above is now implemented; see [the UI base](web-ui-base.md). The next integration remains the single coherent coach loop, followed by headset acceptance.
 
 ## Validation and publication boundaries
 
