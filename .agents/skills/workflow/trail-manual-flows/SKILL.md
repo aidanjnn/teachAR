@@ -9,7 +9,7 @@ description: Produce a focused Trail manual QA or demo checklist for real headse
 
 - Activate the installed Node 22 toolchain before every independent shell:
   `export PATH="$HOME/.local/share/fnm:$PATH" && eval "$(fnm env)"`.
-  Run `pnpm build:shared && pnpm build` before production `pnpm start`.
+  Run `pnpm build:shared && pnpm build` before the built desktop/backend `pnpm start:server`; use `pnpm dev` for the WebXR tutor.
 - Isolate data and ports per branch; stop the old server before switching.
   Authoring needs `ALLOW_USB_LOOPBACK=true PORT=<port> DATA_DIR=<private-dir>`
   and the exact `http://127.0.0.1:<port>` origin. Pair via the UI with the

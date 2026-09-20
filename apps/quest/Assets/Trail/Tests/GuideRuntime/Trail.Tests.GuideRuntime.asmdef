@@ -1,6 +1,0 @@
-{
-  "name": "Trail.Tests.GuideRuntime",
-  "references": ["Trail.Contracts", "Trail.Motion", "Trail.Runtime", "Trail.Presentation", "Trail.Guide"],
-  "optionalUnityReferences": ["TestAssemblies"],
-  "noEngineReferences": false
-}

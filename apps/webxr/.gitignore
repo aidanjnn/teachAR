@@ -1,0 +1,14 @@
+.venv/
+.runtime/
+.secrets/
+__pycache__/
+*.pyc
+*.sqlite3*
+*.log
+public/vendor/
+tools/
+recordings/
+captures/
+run-data/
+test-results/
+playwright-report/
