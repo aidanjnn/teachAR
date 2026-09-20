@@ -1,6 +1,6 @@
 # Data contracts and compatibility
 
-Trail has two explicit data boundaries. The primary WebXR tutor uses its existing
+TeachAR has two explicit data boundaries. The primary WebXR tutor uses its existing
 browser format. The retained TypeScript backend uses strict shared API schemas.
 This foundation does not convert between them or change either wire format.
 

@@ -1,8 +1,8 @@
-# Trail
+# TeachAR
 
 **Record a physical task once. Follow the expert's movements in your own workspace, at your own pace.**
 
-Trail is a mixed-reality physical-skill tutor being built for **Meta Quest 3S**
+TeachAR is a mixed-reality physical-skill tutor being built for **Meta Quest 3S**
 using **Quest Browser, WebXR and Three.js**. An expert demonstrates a short task;
 a learner follows translucent ghost hands and movement checkpoints in their own
 workspace. Spoken guidance and camera-grounded coaching extend that local loop.

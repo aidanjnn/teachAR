@@ -1,4 +1,4 @@
-# Trail visual reference for the browser tutor
+# TeachAR visual reference for the browser tutor
 
 The current delivery target is Quest Browser / WebXR. This self-contained reference preserves the discussed UI direction; it is not connected to recording, storage, hands or AI. The timer, hand drawing, tutorial contents and success states are simulated. Do not replace the working tutor with this mock.
 

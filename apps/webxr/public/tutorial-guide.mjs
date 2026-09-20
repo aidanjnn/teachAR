@@ -889,7 +889,7 @@ export class TutorialGuide extends HandGuide {
     if(this.pending){title=`${this.pending.kind==='photo'?'PHOTO':this.pending.kind==='record'?'RECORD':this.pending.kind.startsWith('cue-')?'FOLD LINE':'MARK'} IN ${Math.ceil((this.pending.until-performance.now())/1000)}s`;text=this.note;}
     if(this.problem)text=this.problem;
     ctx.clearRect(0,0,1080,560);ctx.fillStyle='#10231f';ctx.fillRect(0,0,1080,560);
-    ctx.fillStyle='#9cf0d3';ctx.font='600 23px system-ui';ctx.fillText(this.tutorial.source==='synthetic-fixture'?'TRAIL · SYNTHETIC DEMO · NOT A HUMAN RECORDING':'TRAIL · TWO-HAND TUTORIAL · LOCAL / NO AI CHECKS',26,39);
+    ctx.fillStyle='#9cf0d3';ctx.font='600 23px system-ui';ctx.fillText(this.tutorial.source==='synthetic-fixture'?'TeachAR · SYNTHETIC DEMO · NOT A HUMAN RECORDING':'TeachAR · TWO-HAND TUTORIAL · LOCAL / NO AI CHECKS',26,39);
     ctx.font='700 43px system-ui';ctx.fillText(title,26,99);ctx.fillStyle='#fff';ctx.font='28px system-ui';this.text(ctx,text,26,147,1020,36,4);
     ctx.fillStyle='#b5ccc4';ctx.font='22px system-ui';ctx.fillText(this.savedMessage,26,305);
     const quality=this.player?.step?.quality;

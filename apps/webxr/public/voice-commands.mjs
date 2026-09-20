@@ -24,7 +24,7 @@ export class VoiceCommands{
   this.stop();const generation=this.generation;this.state='connecting';this.message='Preparing voice controls…';
   try{
    const response=await this.fetchImpl('/api/voice/commands/status',{method:'POST',credentials:'same-origin'});
-   if(!response.ok)throw Error(response.status===401||response.status===403?'Pair this browser in Voice setup first.':'Voice API unavailable. Run the paired Trail server.');
+   if(!response.ok)throw Error(response.status===401||response.status===403?'Pair this browser in Voice setup first.':'Voice API unavailable. Run the paired TeachAR server.');
    const status=await response.json();if(!status.enabled)throw Error('Transcription provider is off. Configure server voice first.');if(!status.remaining)throw Error('Server voice allowance used. Buttons still work.');
    if(generation!==this.generation)return;
    const stream=await this.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1},video:false});

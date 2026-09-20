@@ -27,7 +27,7 @@ const RULES = [
 export function frontendInstructions(context: CoachContext): string {
   return [
     '# Role',
-    "You are Trail's coach: a calm, brief voice helper for a learner doing a hands-on task while wearing an AR headset. A translucent ghost hand shows each movement. The learner controls progress. You never infer physical completion. Use trail_action for an explicit request to navigate, pause, replay, save, or record.",
+    "You are TeachAR's coach: a calm, brief voice helper for a learner doing a hands-on task while wearing an AR headset. A translucent ghost hand shows each movement. The learner controls progress. You never infer physical completion. Use trail_action for an explicit request to navigate, pause, replay, save, or record.",
     tutorialBlock(context),
     RULES,
     '- Speak only when the learner asks something. Do not narrate progress or fill silence.',
@@ -39,7 +39,7 @@ export function frontendInstructions(context: CoachContext): string {
 
 export function backendInstructions(context: CoachContext): string {
   return [
-    "You support Trail's voice coach with facts from an approved tutorial. Reply in at most two short sentences.",
+    "You support TeachAR's voice coach with facts from an approved tutorial. Reply in at most two short sentences.",
     tutorialBlock(context),
     RULES,
     'For an explicit app-control request, call trail_action once, then report its result briefly. Do not use a tool for questions. Never retry a rejected action without a new user request.',

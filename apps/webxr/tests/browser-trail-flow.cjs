@@ -97,6 +97,6 @@ if(a.mode!=='save-home')fail('Create must begin with save-position setup');
  await migration.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await migration.locator('#browser-tools').evaluate(e=>e.open=true);await migration.locator('[data-route=library]').first().click();await migration.getByText('Existing device recording',{exact:true}).waitFor();
  assert.equal(await migration.evaluate(async()=>{const m=await import('/tutorial-store.mjs');return(await m.loadTutorial()).id;}),oldId);
  await migrationContext.close();
- assert.deepEqual(errors,[]);console.log('PASS new Trail workflow', {...result,authoring:true,oldLibraryMigration:true});
+ assert.deepEqual(errors,[]);console.log('PASS new TeachAR workflow', {...result,authoring:true,oldLibraryMigration:true});
  // Render output captured before reload is returned via the evaluation in a separate lightweight check elsewhere.
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1);});

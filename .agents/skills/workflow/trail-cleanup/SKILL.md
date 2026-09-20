@@ -1,9 +1,9 @@
 ---
 name: trail-cleanup
-description: Simplify an implemented Trail change or fix concrete review findings while preserving its spatial contracts and runtime behavior. Use for cleanup, simplify, polish, or make the diff smaller.
+description: Simplify an implemented TeachAR change or fix concrete review findings while preserving its spatial contracts and runtime behavior. Use for cleanup, simplify, polish, or make the diff smaller.
 ---
 
-# Clean up a Trail change
+# Clean up a TeachAR change
 
 Read [AGENTS.md](../../../../AGENTS.md), the complete task diff, and immediate
 consumers/tests where needed. Scope the pass to this change; preserve unrelated

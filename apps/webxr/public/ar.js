@@ -167,7 +167,7 @@ async function poll() {
     if(tutorialMode)$('readiness').textContent='Tutorial mode: both hands, local step photos, manual learner confirmation. No paid checks.';
     $('budget').textContent=`${status.calls||0}/${status.max_calls||100} paid attempts · $${(status.reserved_usd||0).toFixed(2)} of $${(status.budget_usd||2).toFixed(2)} allowance reserved. Exiting AR pauses checks.`;
   } catch(e) {
-    // Served by the Trail API, the tutor has no camera-lab status endpoint; stop asking instead of overwriting every notice.
+    // Served by the TeachAR API, the tutor has no camera-lab status endpoint; stop asking instead of overwriting every notice.
     if(tutorialMode&&/Not Found|HTTP 404/i.test(e.message))legacyStatusMissing=true;else tell(`Server connection: ${e.message}`);
   }
   finally { polling=false; update(); }
@@ -274,7 +274,7 @@ function update() {
   ctx.clearRect(0,0,1080,560);ctx.fillStyle='#10231f';ctx.fillRect(0,0,1080,560);
   const accent={pass:'#9cf0ca',fail:'#ff9e95',unknown:'#ffe094'}[result.verdict];
   ctx.fillStyle=accent;ctx.fillRect(0,0,14,560);
-  ctx.font='600 24px system-ui';ctx.fillStyle='#b3ccc5';ctx.fillText('TRAIL · '+schedule,36,45);
+  ctx.font='600 24px system-ui';ctx.fillStyle='#b3ccc5';ctx.fillText('TeachAR · '+schedule,36,45);
   ctx.font='700 50px system-ui';ctx.fillStyle=accent;ctx.fillText(result.title,36,114);
   ctx.fillStyle='#f4fff9';wrap(message,36,166,1000,38,'29px system-ui',3);
   ctx.fillStyle='#b3ccc5';ctx.font='22px system-ui';
@@ -357,7 +357,7 @@ async function enterAR() {
     narrationPlayer?.unlock();void feedbackAudio.unlock();
     // Must happen directly inside the click, before awaiting unrelated work.
     const requested=navigator.xr.requestSession('immersive-ar',handsMode?{requiredFeatures:['hand-tracking']}:{optionalFeatures:['hand-tracking']});
-    busy=true;speak(tutorialMode?'Welcome to Trail. Choose Create or Follow.':'Starting the headset test. Look at the toys and labels.');
+    busy=true;speak(tutorialMode?'Welcome to TeachAR. Choose Create or Follow.':'Starting the headset test. Look at the toys and labels.');
     const active=await requested; session=active;
     active.addEventListener('end',()=>{voice?.stop();dropHeldSpeech();observation?.suspend('session_ended');libraryInput?.remove();libraryInput=null;spatial?.reset();session=null;captureSetup?.cancel();guide?.endSession();observation?.observe({active:false,visible:visible()});pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
     active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){spatial?.cancel();voice?.muteFor(1500);pauseOnLeave();guide?.hide();observation?.suspend('hidden');}observation?.observe({active:true,visible:visible()});});

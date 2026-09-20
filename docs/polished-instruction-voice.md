@@ -7,7 +7,7 @@ understanding is implied by rewriting narration.
 
 ## Author and learner flow
 
-Record the steps, then **Finish tutorial**. Trail saves the original tutorial first,
+Record the steps, then **Finish tutorial**. TeachAR saves the original tutorial first,
 then processes narrated steps sequentially: transcribe → concise instruction → speech
 → durable local save. The finishing screen shows step progress. Existing generated
 speech and steps without narration are skipped. No per-step polish/approval clicks

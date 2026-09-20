@@ -1,10 +1,10 @@
-# Trail Create / Follow interaction update
+# TeachAR Create / Follow interaction update
 
 Implemented locally in `/tutorial`, in the existing Quest Browser WebXR runtime. The earlier clickable concept is a design reference, not another app to launch.
 
 ## Decisions informed by current XR guidance
 
-Meta recommends generous, separated hand-interaction targets, predictable layouts, readable depth placement, clear feedback, and repositionable panels. Trail now uses a small set of contextual controls, matching visual/button hit regions, and a world-stable panel placed about 1.1 m ahead with a side offset. Move panel alternates sides and recenters it near the current view without modifying the tutorial’s workspace. Complex settings stay behind More options. This is a browser ray/pinch interface, not a claim of Meta Interaction SDK integration or measured ergonomic compliance.
+Meta recommends generous, separated hand-interaction targets, predictable layouts, readable depth placement, clear feedback, and repositionable panels. TeachAR now uses a small set of contextual controls, matching visual/button hit regions, and a world-stable panel placed about 1.1 m ahead with a side offset. Move panel alternates sides and recenters it near the current view without modifying the tutorial’s workspace. Complex settings stay behind More options. This is a browser ray/pinch interface, not a claim of Meta Interaction SDK integration or measured ergonomic compliance.
 
 Sources consulted on 19 September 2026:
 - [Meta: Hand tracking UI best practices](https://developers.meta.com/horizon/design/hands-ui-best-practices/)

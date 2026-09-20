@@ -27,7 +27,7 @@ def running():
         return False
 
 if running():
-    print(f'Trail WebXR already running: {origin}/tutorial')
+    print(f'TeachAR WebXR already running: {origin}/tutorial')
     raise SystemExit(0)
 runtime=root/'.runtime';runtime.mkdir(mode=0o700,exist_ok=True)
 with (runtime/'server.log').open('ab') as log:
@@ -36,7 +36,7 @@ with (runtime/'server.log').open('ab') as log:
 (runtime/'server.pid').write_text(str(process.pid))
 for _ in range(30):
     if running():
-        print(f'Trail WebXR running in background (PID {process.pid}): {origin}/tutorial')
+        print(f'TeachAR WebXR running in background (PID {process.pid}): {origin}/tutorial')
         print(f'Quest: http://localhost:{port}/tutorial')
         break
     if process.poll() is not None:

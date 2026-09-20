@@ -35,11 +35,11 @@ describe('local scaffold server', () => {
   });
   it('serves only built assets and leaves unimplemented APIs as 404', async () => {
     const webRoot = await temp();
-    await writeFile(join(webRoot, 'index.html'), '<h1>Trail fixture</h1>');
+    await writeFile(join(webRoot, 'index.html'), '<h1>TeachAR fixture</h1>');
     await writeFile(join(webRoot, '.env'), 'do-not-serve');
     const app = await createApp(readConfig({ DATA_DIR: await temp() }), { webRoot });
     try {
-      expect((await app.inject('/')).body).toContain('Trail fixture');
+      expect((await app.inject('/')).body).toContain('TeachAR fixture');
       expect((await app.inject('/api/tutorials')).statusCode).toBe(404);
       expect((await app.inject('/.env')).body).not.toContain('do-not-serve');
     } finally { await app.close(); }

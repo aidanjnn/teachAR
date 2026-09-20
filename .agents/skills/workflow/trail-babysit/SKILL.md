@@ -1,9 +1,9 @@
 ---
 name: trail-babysit
-description: Bring an existing Trail PR to merge readiness by addressing actual conflicts, review findings, and CI failures in bounded repair cycles. Use for babysit PR, fix CI, or address PR feedback.
+description: Bring an existing TeachAR PR to merge readiness by addressing actual conflicts, review findings, and CI failures in bounded repair cycles. Use for babysit PR, fix CI, or address PR feedback.
 ---
 
-# Babysit a Trail PR
+# Babysit a TeachAR PR
 
 Use [AGENTS.md](../../../../AGENTS.md). Resolve actual blockers in order:
 conflicts, actionable review feedback, then CI. This workflow authorizes related

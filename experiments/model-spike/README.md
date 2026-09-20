@@ -1,6 +1,6 @@
 # Offline object-localization spike
 
-This is isolated from the running Trail server. It does not consume OpenAI credits, upload camera frames, run in the background, or advance tutorial steps.
+This is isolated from the running TeachAR server. It does not consume OpenAI credits, upload camera frames, run in the background, or advance tutorial steps.
 
 The public Grounding DINO Tiny safetensors checkpoint is pinned at `a2bb814dd30d776dcf7e30523b00659f4f141c71`. The historical local run used Transformers 4.57.6 with Torch/Pillow. This source-only archive does not include that environment or claim a fresh-checkout reproduction; it is not a dependency of the tutor. Model weights, environment and private outputs are ignored by Git. No `trust_remote_code` or pickle weights are used.
 

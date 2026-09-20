@@ -1,4 +1,4 @@
-# Trail WebXR ownership
+# TeachAR WebXR ownership
 
 The product direction is [the WebXR stack from PR #17, #23 and #24](plan.md). The native workstreams are
 retired. This assigns boundaries for future work; it does not authorize delegation.

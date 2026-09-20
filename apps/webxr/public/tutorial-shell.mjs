@@ -42,7 +42,7 @@ export function mountTutorialShell(guide,{isActive,tell}){
   const next=structuredClone(guide.tutorial);next.title=$('tutorial-title').value.trim()||'Untitled tutorial';
   const layout=$('tutorial-setup').value.trim()||'Use the same size materials and starting orientation. Mark A at the near-left corner of the work area, then B along its near edge to the right.';
   if(next.setup!==layout)next.steps.forEach(s=>{s.reviewed=false;s.acceptance=null;});next.setup=layout;next.revision++;
-  await guide.replaceTutorial(next);guide.nextEntry='create';$('setup-status').textContent='Setup saved. Choose Enter Trail AR below.';$('enter').scrollIntoView({behavior:'smooth',block:'center'});
+  await guide.replaceTutorial(next);guide.nextEntry='create';$('setup-status').textContent='Setup saved. Choose Enter TeachAR AR below.';$('enter').scrollIntoView({behavior:'smooth',block:'center'});
  });
  const updateAppearance=()=>{applyAppearance(guide.appearance);$('appearance-toggle').textContent=`Appearance: ${guide.appearance.theme==='light'?'Warm gray':'Charcoal'}`;$('event-sounds').textContent=`Event sounds: ${guide.appearance.sound?'On':'Off'}`;$('event-sounds').setAttribute('aria-pressed',String(guide.appearance.sound));};
  $('appearance-toggle').onclick=()=>{guide.appearance.theme=guide.appearance.theme==='light'?'charcoal':'light';updateAppearance();};

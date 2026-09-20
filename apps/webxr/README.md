@@ -1,6 +1,6 @@
-# Trail: runnable Quest Browser tutor
+# TeachAR: runnable Quest Browser tutor
 
-This is Trail's primary recording, review and learner runtime, promoted from the PR #17 → #23 → #24 stack. **Quest Browser / WebXR is the product foundation.**
+This is TeachAR's primary recording, review and learner runtime, promoted from the PR #17 → #23 → #24 stack. **Quest Browser / WebXR is the product foundation.**
 
 Start with [web delivery status and next steps](../../docs/web-delivery.md), including the clean UI reference and remaining coach integration.
 
@@ -36,7 +36,7 @@ See [immersive entry and holographic hands](../../docs/web-immersive-entry.md) f
 
 ## Voice coach and narration drafting
 
-Expand **Browser tools · review, import and backup** for the Voice coach card. It pairs this browser with the Trail API, publishes the
+Expand **Browser tools · review, import and backup** for the Voice coach card. It pairs this browser with the TeachAR API, publishes the
 current tutorial's reviewed step titles and instructions as a coach guide, and starts the coach
 before you enter AR so the entry click stays synchronous. Inside AR the practice panel gains
 **Ask coach**; press it, speak, and the answer comes back over the coach's own audio. The coach

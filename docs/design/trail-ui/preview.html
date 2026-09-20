@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trail — WebXR design reference</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TeachAR — WebXR design reference</title>
 <style>body{margin:0;padding:20px;background:#e5e4dc;font:15px/1.5 system-ui,sans-serif;color:#242522}main{max-width:1100px;margin:auto}.export-note{max-width:80ch}#preview-tools{display:flex;flex-wrap:wrap;gap:16px;padding:16px 0}#preview-tools select{font:inherit;padding:6px}a{color:inherit}</style></head><body><main>
-<p class="export-note"><strong>Trail design reference — simulated, not a working tutor.</strong> Use the screen controls to inspect every state. Tracking, storage, audio and calibration are not connected. The timer, hand illustration and tutorial content are examples. <a href="README.md">Read the handoff</a>.</p>
+<p class="export-note"><strong>TeachAR design reference — simulated, not a working tutor.</strong> Use the screen controls to inspect every state. Tracking, storage, audio and calibration are not connected. The timer, hand illustration and tutorial content are examples. <a href="README.md">Read the handoff</a>.</p>
 <div id="preview-tools" aria-label="Design review controls outside the product"></div>
 <style>
 #trail-review { --surface:#242522;--ink:#f2f0e9;--muted:#bebfb5;--line:#45463f;--action:#e8e7dc;--action-ink:#20231f;--cyan:#7cdadd;--success:#a5dbb5;--warning:#e4bd7c;--wall:#a8aaa0;--table:#777966;--mat:#4d5148;font:400 15px/1.5 system-ui,sans-serif;color:var(--ink); }
@@ -89,7 +89,7 @@
 @media(max-width:520px){#trail-review .scene {min-height:820px}#trail-review .panel {padding:24px;margin-top:20px}#trail-review .panel.side {width:90%;margin:20px auto 0!important}#trail-review .hands {right:calc(50% - 135px)!important;left:auto!important;bottom:88px}#trail-review h2 {font-size:28px}#trail-review .concept {padding:14px 18px}#trail-review .dock {gap:8px;padding:6px 18px}}
 @media(prefers-reduced-motion:reduce){#trail-review * {transition:none!important}}
 </style>
-<div id="trail-review" aria-label="Trail spatial interface design">
+<div id="trail-review" aria-label="TeachAR spatial interface design">
   <div class="appearance-preview" role="group" aria-label="Preview appearance, outside the headset interface">
     <span>Compare appearance</span>
     <button type="button" data-appearance="graphite" aria-pressed="true">Charcoal</button>
@@ -123,7 +123,7 @@
  forest:{surface:'#192e2a',ink:'#e8f0e8',muted:'#b0c6bb',line:'#3a5349',action:'#dfebe0','action-ink':'#192e2a'}
  };
  const button=(label,screen,primary=false)=>`<button class="button ${primary?'primary':''}" data-go="${screen}">${label}</button>`;
- const title=(section,heading,body)=>`<div class="heading"><span class="wordmark">TRAIL</span><span>${section}</span></div><h2>${heading}</h2><p>${body}</p>`;
+ const title=(section,heading,body)=>`<div class="heading"><span class="wordmark">TeachAR</span><span>${section}</span></div><h2>${heading}</h2><p>${body}</p>`;
  function remember(){window.openai?.setWidgetState?.({modelContent:{...state,proposalOnly:true},privateContent:{prior}})?.catch(()=>{});}
  function render(){
    Object.entries(palettes[state.theme]||palettes.graphite).forEach(([k,v])=>root.style.setProperty('--'+k,v));
@@ -140,7 +140,7 @@
    root.querySelector('#tr-handlabel').textContent=state.screen==='save-pose'?'Your save position · illustration':['record','record-ready','record-paused'].includes(state.screen)?'Your tracked hand · illustration':state.feedback==='lost'&&state.screen==='guiding'?'Tracking lost · ghost waiting':'Expert hand · illustration';
    let html='';
    switch(state.screen){
-    case 'home': html='<div class="heading"><span class="wordmark">TRAIL</span><span>Your workspace</span></div>'+
+    case 'home': html='<div class="heading"><span class="wordmark">TeachAR</span><span>Your workspace</span></div>'+
       '<div class="home-tiles"><button class="home-tile" data-go="create"><span class="tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></span><span><strong>Create a tutorial</strong><small>Teach a skill</small></span></button><button class="home-tile" data-go="library"><span class="tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16M9 4v16M14 4v16M18 4l3 16"/></svg></span><span><strong>Follow a tutorial</strong><small>Learn from a recording</small></span></button></div><div class="rule"></div><div class="small">Recent tutorials</div><button class="choice" data-go="align"><span><strong>My demonstration</strong><small>3 steps · example tutorial</small></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19L19 5M5 5h14v14"/></svg></button>';break;
     case 'create': html=title('Create · workspace','Where will you work?','Place your materials, then align the tutorial to this surface.')+'<div class="layout-map"><span>Choose the surface</span><span>Check alignment</span></div><div class="actions">'+button('Set up workspace','save-pose',true)+button('Back','home')+'</div>';break;
     case 'save-pose': html=title('Create · save gesture','Choose your resting spot.','Hold both hands somewhere clear of the task. Return here to save each step.')+'<div class="cue">Set once for this tutorial.<br>Review the trimmed ending after each step.</div><div class="actions"><button class="button primary" data-go="record-ready" data-save="yes">Set this position</button><button class="button" data-go="record-ready" data-save="no">Use buttons instead</button></div>';break;

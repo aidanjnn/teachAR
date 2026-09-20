@@ -1,6 +1,6 @@
-# How Codex improved Trail
+# How Codex improved TeachAR
 
-Trail used Codex across planning, implementation, debugging, testing and
+TeachAR used Codex across planning, implementation, debugging, testing and
 integration. The strongest evidence is a behavior that changed, its source
 revision and a repeatable check. This page selects three examples from the
 [development log](codex-log.md) for the [OpenAI track demo](openai-track.md).
@@ -15,7 +15,7 @@ the team's role in setting requirements, reviewing and testing.
 
 **Problem.** The learner could hold both palms at the midpoint of a short
 recorded movement. Overlapping target regions let the old follower advance
-without observing the demonstrated movement. That undermined Trail's central
+without observing the demonstrated movement. That undermined TeachAR's central
 promise: moving with the guide at your own pace.
 
 **Codex work.** The recorded review reproduced the defect with a 41-frame,

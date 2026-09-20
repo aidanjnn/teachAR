@@ -24,7 +24,7 @@ export function mountDiagnostics({telemetry, document = globalThis.document} = {
     return node;
   };
   const root = el('details'); root.id = 'trail-diagnostics';
-  const summary = el('summary'), name = el('span', 'TRAIL / OBSERVATORY', 'td-eyebrow'), pulse = el('span', 'Idle', 'td-pulse');
+  const summary = el('summary'), name = el('span', 'TeachAR / OBSERVATORY', 'td-eyebrow'), pulse = el('span', 'Idle', 'td-pulse');
   summary.append(name, pulse);
   const body = el('div', undefined, 'td-body'), heading = el('h2', 'Diagnostic reconstruction — not headset video');
   const status = el('p', STATUS_LABELS.local, 'td-status'); status.setAttribute('role', 'status');

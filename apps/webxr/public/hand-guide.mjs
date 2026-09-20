@@ -228,7 +228,7 @@ export class HandGuide {
     if(this.problem){text=this.problem;color='#ffe094';}
     if(this.pending){title=`${this.pending.kind.toUpperCase()} IN ${Math.max(0,Math.ceil((this.pending.until-performance.now())/1000))}s`;text=this.note;}
     ctx.clearRect(0,0,1080,560);ctx.fillStyle='#10231f';ctx.fillRect(0,0,1080,560);ctx.fillStyle=color;ctx.fillRect(0,0,12,560);
-    ctx.textAlign='left';ctx.font='600 23px system-ui';ctx.fillStyle='#b5ccc4';ctx.fillText(`TRAIL · LOCAL HAND GUIDANCE · ${this.hand.toUpperCase()} HAND ${tracking?'TRACKED':'NOT TRACKED'}`,26,39);
+    ctx.textAlign='left';ctx.font='600 23px system-ui';ctx.fillStyle='#b5ccc4';ctx.fillText(`TeachAR · LOCAL HAND GUIDANCE · ${this.hand.toUpperCase()} HAND ${tracking?'TRACKED':'NOT TRACKED'}`,26,39);
     ctx.font='700 46px system-ui';ctx.fillStyle=color;ctx.fillText(title,26,99);
     ctx.font='29px system-ui';ctx.fillStyle='#f3fff9';this.text(ctx,text,26,147,1020,37,4);
     ctx.font='23px system-ui';ctx.fillStyle='#b5ccc4';

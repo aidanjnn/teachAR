@@ -1,4 +1,4 @@
-# Trail interaction diagnostics
+# TeachAR interaction diagnostics
 
 The browser tutor observes gesture delivery, reconstructs approved diagnostic
 state for Sentry Session Replay, and summarizes interruptions within each tutorial
@@ -8,7 +8,7 @@ The integration alone is not evidence that Sentry improved the product. Record a
 actual discovery, its fix and a comparable follow-up run before making that claim.
 
 For a concise sponsor walkthrough of the implemented features and the verified
-debugging story, read [Trail × Sentry](sentry.md).
+debugging story, read [TeachAR × Sentry](sentry.md).
 
 ## Run locally
 
@@ -21,7 +21,7 @@ cd apps/webxr
 sh start.sh
 ```
 
-Open `/tutorial`. Expand **TRAIL / OBSERVATORY** to inspect observations. Diagnostics
+Open `/tutorial`. Expand **TeachAR / OBSERVATORY** to inspect observations. Diagnostics
 are local until explicitly configured. The Sentry SDK is bundled from the exact
 workspace dependency pin; no runtime CDN is needed. A blocked configuration request,
 unavailable SDK or failed transport must not interrupt recording or local guidance.

@@ -1,6 +1,6 @@
-# Trail agent guide
+# TeachAR agent guide
 
-Trail records a physical demonstration and replays workspace-relative hand motion
+TeachAR records a physical demonstration and replays workspace-relative hand motion
 for a learner who progresses at their own pace. **Quest Browser / WebXR is the
 selected product foundation**, based on the PR #17 → #23 → #24 stack. The Unity implementation and its
 tooling are retired. Do not reintroduce an editor, APK, C# parity gate or native
@@ -30,7 +30,7 @@ are requested. Complete authorized delivery steps without asking at each boundar
 Canonical skills live in `.agents/skills/workflow/`. `.claude/skills/` and
 `.cursor/skills/` contain relative discovery links; edit the canonical files.
 `CLAUDE.md` points here so guidance has one owner. These workflows are adapted
-from Copperlane's delivery skills for Trail's WebXR headset and TypeScript web/server project.
+from Copperlane's delivery skills for TeachAR's WebXR headset and TypeScript web/server project.
 
 | Request | Skill |
 | --- | --- |

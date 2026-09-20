@@ -368,7 +368,7 @@ if __name__=="__main__":
     server = ThreadingHTTPServer(("127.0.0.1",port),Handler)
     auto_stop=threading.Event()
     threading.Thread(target=auto_loop,args=(AUTO_AI,ai_ready,ai_status,run_ai_check,auto_stop),daemon=True).start()
-    print(f"Trail WebXR: http://localhost:{port}/tutorial\nLegacy camera lab: http://localhost:{port}/lab\nLoopback development server. Hand guidance needs no API key. Ctrl-C to stop.",flush=True)
+    print(f"TeachAR WebXR: http://localhost:{port}/tutorial\nLegacy camera lab: http://localhost:{port}/lab\nLoopback development server. Hand guidance needs no API key. Ctrl-C to stop.",flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

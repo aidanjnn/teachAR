@@ -1,9 +1,9 @@
 ---
 name: trail-grill-me
-description: Challenge Trail's plan one consequential decision at a time, grounding questions in the repository and physical-demo evidence. Use for grill me, stress-test this plan, or challenge assumptions.
+description: Challenge TeachAR's plan one consequential decision at a time, grounding questions in the repository and physical-demo evidence. Use for grill me, stress-test this plan, or challenge assumptions.
 ---
 
-# Challenge the Trail plan
+# Challenge the TeachAR plan
 
 Read [plan.md](../../../../docs/plan.md), [AGENTS.md](../../../../AGENTS.md), and any
 actual evidence for the decision at hand. Inspect the repository before asking

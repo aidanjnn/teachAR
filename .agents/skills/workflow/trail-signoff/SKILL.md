@@ -1,9 +1,9 @@
 ---
 name: trail-signoff
-description: Verify and repair Trail's applicable readiness checks for the current revision, separating code readiness from real headset and demo acceptance. Use for signoff, final verification, or checking readiness after PR fixes.
+description: Verify and repair TeachAR's applicable readiness checks for the current revision, separating code readiness from real headset and demo acceptance. Use for signoff, final verification, or checking readiness after PR fixes.
 ---
 
-# Sign off a Trail revision
+# Sign off a TeachAR revision
 
 Read [AGENTS.md](../../../../AGENTS.md) and
 [validation routes](../../../references/validation.md). Signoff establishes

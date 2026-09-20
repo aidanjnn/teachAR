@@ -1,8 +1,8 @@
-# Trail × Sentry
+# TeachAR × Sentry
 
 **Making a spatial tutor explain where an interaction stopped—without recording the learner's room.**
 
-Trail lets an expert record a physical movement and a learner follow ghost hands
+TeachAR lets an expert record a physical movement and a learner follow ghost hands
 at their own pace in Quest Browser. When a spatial control appears unresponsive,
 an exception alone cannot explain whether targeting failed, dispatch was rejected,
 the application waited, or the UI changed. We built an observatory around those
@@ -17,13 +17,13 @@ code, the hosted evidence and a short demonstration.
 
 The [Hack the North Sentry challenge](https://hackthenorth2026.devpost.com/)
 asks for at least two products beyond error monitoring, with creativity, depth
-and a concrete effect on the project. Trail uses three:
+and a concrete effect on the project. TeachAR uses three:
 
-| Sentry product | What Trail sends | What it helps us answer |
+| Sentry product | What TeachAR sends | What it helps us answer |
 | --- | --- | --- |
 | **Tracing** | Custom `trail.interaction` traces with child spans for observed targeting, activation, hit-test, dispatch, state change and render submission; explicit rejection and timeout paths | Where did this interaction stop, and how long passed between observed stages? |
 | **Logs** | Structured `trail.interaction`, `trail.guide_state`, `trail.guide_action` and `trail.step_summary` records with generated run/attempt aliases, source, revision and approved scalar fields | What state was the tutor in, which hands were required, and what happened during this attempt? |
-| **Session Replay** | A reconstruction of the sanitized **TRAIL / OBSERVATORY** panel, linked to interaction traces | What diagnostic state surrounded the interaction, without exposing room footage, tutorial text or hand coordinates? |
+| **Session Replay** | A reconstruction of the sanitized **TeachAR / OBSERVATORY** panel, linked to interaction traces | What diagnostic state surrounded the interaction, without exposing room footage, tutorial text or hand coordinates? |
 
 Error monitoring also captures sanitized runtime errors. Profiling, Uptime
 Monitoring and Sentry AI-agent monitoring are outside this integration's scope.
@@ -129,7 +129,7 @@ covers environment variables, sampling and the connected local preview.
 
 ## A two-minute sponsor walkthrough
 
-1. Open the running `/tutorial` page and expand **TRAIL / OBSERVATORY**. Show the
+1. Open the running `/tutorial` page and expand **TeachAR / OBSERVATORY**. Show the
    source, state and interaction timeline. On desktop, a preview click can show
    an explicit rejection without pretending to run immersive guidance.
 2. Open the [interaction trace](https://trail-yf.sentry.io/explore/traces/trace/e6c860257f1c45158bc8d26e960248a1/?project=4512117401321473)

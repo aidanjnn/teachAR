@@ -1,4 +1,4 @@
-# Trail validation routes
+# TeachAR validation routes
 
 Use [the current plan](../../docs/plan.md#11-verification-strategy-and-acceptance-checklist)
 and [AGENTS.md](../../AGENTS.md). Quest Browser / WebXR is the product runtime.

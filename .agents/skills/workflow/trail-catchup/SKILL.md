@@ -1,9 +1,9 @@
 ---
 name: trail-catchup
-description: Bring a Trail task branch up to date with its actual PR base or main, resolving merge conflicts while preserving shared schemas, motion semantics, and user work. Use for catch up, sync branch, or resolve conflicts.
+description: Bring a TeachAR task branch up to date with its actual PR base or main, resolving merge conflicts while preserving shared schemas, motion semantics, and user work. Use for catch up, sync branch, or resolve conflicts.
 ---
 
-# Catch up a Trail branch
+# Catch up a TeachAR branch
 
 Follow [AGENTS.md](../../../../AGENTS.md). Inspect status, current branch, base,
 and any merge/rebase already in progress. Use the existing PR's base or the

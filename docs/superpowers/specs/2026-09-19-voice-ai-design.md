@@ -10,7 +10,7 @@ needs an explicit approved-context/format adapter; see [the current plan](../../
 
 ## 1. Purpose
 
-Give Trail its words. Three capabilities, each usable without the headset:
+Give TeachAR its words. Three capabilities, each usable without the headset:
 
 1. **Narration recorder** (browser). Record the expert's voice on the same
    monotonic clock as the hand motion, keep one complete playable blob, and

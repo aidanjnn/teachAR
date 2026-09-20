@@ -1,8 +1,8 @@
-# Trail: OpenAI track brief and demo plan
+# TeachAR: OpenAI track brief and demo plan
 
 **Teach a physical skill once. Give the next learner an expert's movements and a voice they can question.**
 
-Trail combines recorded hand motion, translucent guides and GPT-Live conversation
+TeachAR combines recorded hand motion, translucent guides and GPT-Live conversation
 so a learner can ask for help while working with real objects. The most compelling
 demo is one short task, a real learner and an unexpected question answered from
 the tutorial they are following.
@@ -51,7 +51,7 @@ flowchart LR
     Hands[Tracked learner hands] --> Guide[Local WebXR movement guide]
     Recording[Recorded expert movement] --> Guide
     Guide --> Ghost[Ghost hands and movement checkpoints]
-    Guide -->|Step and attempt context| Server[Paired Trail server]
+    Guide -->|Step and attempt context| Server[Paired TeachAR server]
     Reviewed[Reviewed tutorial instructions] --> Server
     Learner[Learner microphone and speaker] <-->|WebRTC audio| Live[OpenAI GPT-Live]
     Server <-->|Create and control session| Live
@@ -98,7 +98,7 @@ the best rehearsed task instead of adding a new difficult task for judging.
 
 | Time | Show | Say or establish |
 | --- | --- | --- |
-| 0:00–0:15 | The real object, learner and mirrored headset view. | “Video tutorials make you look away. Trail puts the demonstration in your workspace and lets you question it.” |
+| 0:00–0:15 | The real object, learner and mirrored headset view. | “Video tutorials make you look away. TeachAR puts the demonstration in your workspace and lets you question it.” |
 | 0:15–0:45 | Record one short movement and preview it, or clearly load a previously recorded tutorial. | Establish where the ghost movement came from. |
 | 0:45–1:25 | Learner follows a movement, uses Ask coach and speaks a question about the current instruction. | Make the reply audible to judges. Explain why the answer helps this learner continue. |
 | 1:25–1:45 | Ask for a simpler explanation or interrupt and clarify, if rehearsed. | Demonstrate an adaptive exchange that recorded narration cannot provide. |

@@ -1,4 +1,4 @@
-# Web-first Trail delivery
+# Web-first TeachAR delivery
 
 ## Decision and runnable entry point
 

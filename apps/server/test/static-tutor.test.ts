@@ -56,11 +56,11 @@ describe('browser tutor static serving', () => {
   it('keeps the desktop build first when both roots are present', async () => {
     const tutorRoot = await tutorFixture();
     const webRoot = await temp();
-    await writeFile(join(webRoot, 'index.html'), '<h1>Trail desktop</h1>');
+    await writeFile(join(webRoot, 'index.html'), '<h1>TeachAR desktop</h1>');
     const app = await createApp(readConfig({ DATA_DIR: await temp() }), { webRoot, tutorRoot });
     try {
-      expect((await app.inject('/')).body).toContain('Trail desktop');
-      expect((await app.inject('/index.html')).body).toContain('Trail desktop');
+      expect((await app.inject('/')).body).toContain('TeachAR desktop');
+      expect((await app.inject('/index.html')).body).toContain('TeachAR desktop');
       expect((await app.inject('/tutorial.html')).body).toContain('Tutor fixture');
       expect((await app.inject('/tutorial')).body).toContain('Tutor fixture');
     } finally { await app.close(); }

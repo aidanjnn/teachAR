@@ -1,4 +1,4 @@
-# Trail: reviewed two-hand tutorials
+# TeachAR: reviewed two-hand tutorials
 
 A local Quest Browser testbed for the expert-record → review → learner-replay workflow. It now includes manual recording/pause, optional local narration, two articulated skeletons, optional expert-marked guide lines, local reference photos, a review editor, JSON import/export, and diagnostics. It does **not** automatically judge task results, recognize grasps, or adapt a lesson to differently shaped objects. Placement can be translated and rotated manually. The native GitHub runtime remains a separate implementation.
 
@@ -15,7 +15,7 @@ The server is also available at `http://127.0.0.1:4321/tutorial` on the laptop. 
 ### Five-minute headset test
 
 1. Exit AR and reload **the same Quest URL** (`http://localhost:4321/tutorial`). Do not clear browser storage. Existing recordings migrate into Your tutorials. Camera and microphone are optional.
-2. Press **Enter Trail AR**. Choose **Create tutorial** or **Follow tutorial** in the headset. The desktop page has the same choices; no desktop interaction is required for the basic flow.
+2. Press **Enter TeachAR AR**. Choose **Create tutorial** or **Follow tutorial** in the headset. The desktop page has the same choices; no desktop interaction is required for the basic flow.
 3. To create: first choose **Set save position**, then hold both hands in a comfortable visible resting spot after the countdown. This zone is reused for all recordings. Next use the explicit **Use first pose as setup** option, or enter a written starting layout before AR. Mark an **origin**, then a point to its right for **direction**, using the right index fingertip countdown. Preview and confirm. Record a short movement, pause/resume as needed, Finish recording, inspect the replay, choose **Required hands: Left, Right or Both**, then **Approve & save**. Wait for the durable save result; a failed write stays in review with retry/export instructions. Add another recording or follow it.
 4. To follow: choose your saved tutorial. Set up the physical task. Mark its origin and direction in the new workspace. A separation of 20–120 cm is accepted; it no longer has to match the expert’s spacing. Preview the first pose. **Adjust placement** shifts by 5 cm or rotates by 10 degrees; it preserves recorded size.
 5. The ghost waits at the beginning. Bring the required palms near it and hold about 0.6 seconds. Follow the ordered targets at your pace. Move sideways: guidance waits. Hide a required hand: progress pauses and reports tracking loss. Return and continue. **Watch again** plays the demonstration independently.

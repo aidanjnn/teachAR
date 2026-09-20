@@ -1,9 +1,9 @@
 ---
 name: trail-manual-flows
-description: Produce a focused Trail manual QA or demo checklist for real headset, physical calibration, audio/provider, and recovery behavior that fixture tests cannot prove. Use for manual test plan, headset QA, or demo rehearsal.
+description: Produce a focused TeachAR manual QA or demo checklist for real headset, physical calibration, audio/provider, and recovery behavior that fixture tests cannot prove. Use for manual test plan, headset QA, or demo rehearsal.
 ---
 
-# Trail manual flows
+# TeachAR manual flows
 
 ## Local desktop execution notes
 

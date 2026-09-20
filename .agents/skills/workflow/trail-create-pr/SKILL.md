@@ -1,9 +1,9 @@
 ---
 name: trail-create-pr
-description: Create or update a Trail GitHub PR with a Conventional Commits title, plan context, and truthful automated versus headset validation. Also supports drafting PR text without publishing.
+description: Create or update a TeachAR GitHub PR with a Conventional Commits title, plan context, and truthful automated versus headset validation. Also supports drafting PR text without publishing.
 ---
 
-# Create a Trail pull request
+# Create a TeachAR pull request
 
 Use [AGENTS.md](../../../../AGENTS.md) and the
 [PR template](../../../../.github/pull_request_template.md). If asked only for

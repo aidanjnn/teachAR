@@ -29,7 +29,7 @@ function setStatus(node: HTMLElement, text: string, tone: 'ok' | 'warn' | 'info'
 
 element('#app').innerHTML = `
   <header class="masthead">
-    <a class="brand" href="/" aria-label="Trail home"><span class="brand-mark" aria-hidden="true">⌁</span> Trail</a>
+    <a class="brand" href="/" aria-label="TeachAR home"><span class="brand-mark" aria-hidden="true">⌁</span> TeachAR</a>
     <nav class="masthead-links" aria-label="Pages"><a href="/">Motion workspace</a><a href="/voice-lab.html" aria-current="page">Voice lab</a></nav>
     <span class="stage-label" id="provider">AI provider: checking…</span>
   </header>

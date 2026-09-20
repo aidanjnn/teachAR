@@ -29,7 +29,7 @@ export class LiveVoiceControls {
   // Recording controls need no invented task instructions. Publish a bounded generic
   // app-control guide while authoring; never add it to the user's local library.
   this.authoring=spec.authoring;
-  const tutorial=this.authoring?{id:'trail-app-controls-v1',revision:0,title:'Trail recording controls',setup:'Only explain app and recording controls. A task has not been opened for live coaching; do not invent task instructions.',steps:[{id:'recording-controls',title:'Record a demonstration',instruction:'Save ends a step. Record starts another step. Finish saves the tutorial. Pause and resume control the current recording.'}]}:g.tutorial;
+  const tutorial=this.authoring?{id:'trail-app-controls-v1',revision:0,title:'TeachAR recording controls',setup:'Only explain app and recording controls. A task has not been opened for live coaching; do not invent task instructions.',steps:[{id:'recording-controls',title:'Record a demonstration',instruction:'Save ends a step. Record starts another step. Finish saves the tutorial. Pause and resume control the current recording.'}]}:g.tutorial;
   try{const result=await this.coach.start(tutorial,this.authoring?tutorial.steps[0]:g.player?.step||tutorial.steps[0],g.epoch);
    if(generation!==this.generation)return;
    if(!['live','listening'].includes(result.mode)){this.active=false;this.state='off';this.message=result.error||'Live voice unavailable. Buttons and gestures still work.';}else this.message='Live voice ready';

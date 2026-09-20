@@ -1,9 +1,9 @@
 ---
 name: trail-staff-review
-description: Review Trail branch or PR readiness at staff level, with an evidence-based weighted score and actionable findings for spatial correctness, runtime recovery, privacy, and architecture. Read-only unless fixes are separately requested.
+description: Review TeachAR branch or PR readiness at staff level, with an evidence-based weighted score and actionable findings for spatial correctness, runtime recovery, privacy, and architecture. Read-only unless fixes are separately requested.
 ---
 
-# Staff review for Trail
+# Staff review for TeachAR
 
 Judge the changed behavior against [AGENTS.md](../../../../AGENTS.md) and the
 relevant sections of [plan.md](../../../../docs/plan.md). Be direct and specific.

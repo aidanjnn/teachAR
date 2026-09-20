@@ -97,7 +97,7 @@ frame ID, revision and server-computed `age_ms`. It polls without paying. The
 existing `/api/ai/auto` and `/api/ai/check` routes are the only paid controls and
 retain their token, budget and cooldown checks. No model credentials enter XR.
 
-To move this into Trail, port `ar-state.mjs` into the guide package, adapt the
+To move this into TeachAR, port `ar-state.mjs` into the guide package, adapt the
 status/command transport to the integrated server, and render the panel in the
 repo's existing Three.js scene. Keep capture and rendering in the same Quest
 page; avoid launching an independent background camera tab. No spatial hand
@@ -117,7 +117,7 @@ contains workspace transforms, recording validation and ordered wrist-path
 progression. Exported records contain joint names, positions/orientations/radii
 or nulls, timestamps, handedness, workspace basis, quality and event history.
 
-For Trail: XR owns the reader/renderer/session lifecycle; motion owns the pure
+For TeachAR: XR owns the reader/renderer/session lifecycle; motion owns the pure
 follower and tuning; integration maps these records to the versioned shared
 contract. Retain missing samples and session/reset invalidation. Verification
 keeps the image verdict separate from motion completion; an attempt ID rejects

@@ -1,4 +1,4 @@
-# Trail WebXR implementation plan
+# TeachAR WebXR implementation plan
 
 ## 1. Product direction
 
@@ -9,7 +9,7 @@ On 2026-09-20 the user retired Unity and selected the WebXR stack
 The old native implementation plan is superseded; Git and the append-only
 [activity log](codex-log.md) retain its history.
 
-Trail records a safe physical demonstration, lets an expert review it, then
+TeachAR records a safe physical demonstration, lets an expert review it, then
 replays workspace-relative hand motion for a learner at their own pace.
 Movement matching is guidance, not proof of assembly or hidden object state.
 

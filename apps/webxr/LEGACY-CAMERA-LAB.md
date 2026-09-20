@@ -255,7 +255,7 @@ This starts the background server if needed, reconnects USB port forwarding,
 then opens **http://localhost:4321/ar in Quest Browser**. Leave the laptop awake
 and USB connected. Close the older `/camera` sender tab so this page owns capture.
 No npm install, Unity, printed markers, or CDN connection is required. Three.js
-0.186.0 (matching Trail) and its MIT license are vendored under `public/vendor`.
+0.186.0 (matching TeachAR) and its MIT license are vendored under `public/vendor`.
 
 On the Quest:
 

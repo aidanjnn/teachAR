@@ -98,7 +98,7 @@ export function validateSavePosition(value){
   return {space:'workspace',left:[...value.left],right:[...value.right]};
 }
 export function validateTutorial(input){
-  if(!record(input)||!['trail.tutorial.prototype.v1','trail.tutorial.prototype.v2',SCHEMA].includes(input.schema))throw Error('Unsupported tutorial format. Import a Trail tutorial JSON export.');
+  if(!record(input)||!['trail.tutorial.prototype.v1','trail.tutorial.prototype.v2',SCHEMA].includes(input.schema))throw Error('Unsupported tutorial format. Import a TeachAR tutorial JSON export.');
   if(input.units!=='meters'||!Array.isArray(input.joint_names)||input.joint_names.length!==25||input.joint_names.some((n,i)=>n!==JOINTS[i]))throw Error('Tutorial units or joint ordering are incompatible.');
   if(!Array.isArray(input.steps)||input.steps.length>MAX_STEPS)throw Error('Tutorial must contain at most twelve steps.');
   if(input.steps.length&& !finite(input.calibration_span_m,.2,1.2))throw Error('A recorded tutorial needs valid workspace spacing.');

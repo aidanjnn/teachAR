@@ -1,9 +1,9 @@
 ---
 name: trail-commit
-description: Stage focused Trail changes and create Conventional Commits; push when requested. Use for commit, commit and push, or committing a completed delivery task.
+description: Stage focused TeachAR changes and create Conventional Commits; push when requested. Use for commit, commit and push, or committing a completed delivery task.
 ---
 
-# Commit Trail changes
+# Commit TeachAR changes
 
 Follow [AGENTS.md](../../../../AGENTS.md). A commit-only request is local; an
 explicit commit-and-push or PR delivery request includes pushing. Do not expand
@@ -24,7 +24,7 @@ this task into a review, cleanup, PR, or deployment.
    its tests, and its docs can belong in the same commit.
 5. Use `type(scope): imperative summary`, under 72 characters, no final period.
    Examples: `fix(motion): clear dwell after tracking loss` or
-   `chore(agents): add Trail delivery skills`. Explain non-obvious reasons in
+   `chore(agents): add TeachAR delivery skills`. Explain non-obvious reasons in
    the body. For multiline messages use a temporary file with `git commit -F`.
 6. Honor hooks and configured authorship. Fix an in-scope hook failure and
    retry; never bypass a hook. Do not amend or add attribution unless requested.

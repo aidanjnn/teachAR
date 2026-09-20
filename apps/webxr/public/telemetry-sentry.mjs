@@ -92,7 +92,7 @@ export function sanitizeError(event, config = {}) {
     if (Number.isInteger(frame.colno) && frame.colno > 0) safe.colno = frame.colno;
     return [safe];
   }) ?? [];
-  return { ...eventBase(event, config), level: 'error', exception: { values: [{ type: 'TrailRuntimeError', value: 'Trail runtime error; private details withheld', ...(frames.length ? { stacktrace: { frames } } : {}) }] } };
+  return { ...eventBase(event, config), level: 'error', exception: { values: [{ type: 'TrailRuntimeError', value: 'TeachAR runtime error; private details withheld', ...(frames.length ? { stacktrace: { frames } } : {}) }] } };
 }
 export function sanitizeTransaction(event, config = {}) {
   if (!['trail.interaction', 'trail.step_summary'].includes(event?.transaction)) return null;
