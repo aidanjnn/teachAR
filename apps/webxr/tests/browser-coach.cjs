@@ -29,7 +29,7 @@ const assert=require('node:assert/strict');
     });
     const origin=process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321';
     await page.goto(`${origin}/tutorial`);
-    await page.waitForFunction(()=>document.querySelector('#hud-preview').getAttribute('aria-label').includes('What would you like to do?'));
+    await page.waitForFunction(()=>document.querySelector('#coach-mode')?.textContent==='idle'&&document.querySelector('#tutorial-title'));
     const stepIds=await page.evaluate(async()=>{
       const {newTutorial,prepareStep,finishTutorial}=await import('/tutorial-core.mjs');
       const {saveTutorial,loadTutorial,draftVersion}=await import('/tutorial-store.mjs');
