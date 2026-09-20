@@ -1,5 +1,7 @@
 # Headset voice controls and origami demo
 
+For polished tutorial narration (recorded explanation → reviewed instruction → saved AI speech), see [instruction voice](polished-instruction-voice.md).
+
 ## What this delivery connects
 
 Main's PR #28 supplies the shared GPT-Live coach, paired step-text grounding,
@@ -96,17 +98,14 @@ should emit separately timestamped advisory evidence, with a later explicit phys
 result gate if needed. Voice user navigation is different from AI inference that a
 step is complete.
 
-## Crane feasibility and paper alignment
+## General origami and paper alignment
 
-A crane is achievable as a guided demonstration. It is not currently achievable as
-reliable autonomous grading of every crease, concealed finger, or paper layer.
-[This illustrated crane guide](https://origami.me/crane/) has 28 numbered stages;
-a full novice run is longer than a short judging pitch. Use large two-colour square
-paper, identical size for expert and learner, and a contrasting uncluttered table.
-For a short showcase, start with a prepared base, teach one difficult fold, and show
-a finished crane. For the full recording, split into chapters (base, body, neck/wings)
-or group stages carefully: the browser currently caps a tutorial at 12 recorded steps.
-No authored crane recording has been fabricated or inserted into the library.
+The current demo direction is origami in general, not a required crane lesson. Use a
+short recorded sequence, large two-colour paper, identical size for expert and learner,
+and a contrasting uncluttered table. More elaborate models can be split into chapters:
+the browser currently caps a tutorial at 12 recorded steps. No authored origami recording
+has been fabricated or inserted into the library. Reliable autonomous grading of every
+crease, concealed finger or paper layer remains outside this implementation.
 
 For initial calibration, choose the same named paper corners in the same order, with
 the same coloured face and orientation. Keep the original scale. A square has four
@@ -144,7 +143,7 @@ illustrate the motion, not require matching every fingertip exactly.
 
 Automated tests distinguish synthetic hand/audio and mocked providers from live API
 checks. Successful transcription/interpretation/TTS requests do not establish real
-Quest microphone recognition, audible playback, concurrency, or a successful crane.
+Quest microphone recognition, audible playback, concurrency, or a successful origami task.
 Record final device observations separately before claiming end-to-end human acceptance.
 
 ### Observed during this delivery

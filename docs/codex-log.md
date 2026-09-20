@@ -1320,3 +1320,24 @@ workflows; all eight desktop workflows passed. A final focused synthetic browser
 case also drove spoken-action dispatch through the real countdown, continuous step
 save, durable write and tutorial finalization methods. These are software proofs,
 not a human crane or microphone acceptance run. PR #31 was verified mergeable.
+
+## 2026-09-20 — Polished instruction narration
+
+User confirmed original step narration is audible on the headset and clarified the desired
+learner experience: concise professional instructions derived from the expert's explanation,
+spoken through the voice pipeline. Added an explicit draft/review/generate flow in AR and
+browser review, preserved original narration, stored portable generated speech on each step,
+and decoupled speech speed/duration from ghost motion. Preview waits for generated speech
+before offering the start pose; playback has no provider calls. Edited wording and trimmed
+motion invalidate previous speech. Added paired author-only, bounded generation routes and
+failure/stale/persistence tests. See `docs/polished-instruction-voice.md` for ownership and
+headset acceptance. This is general task/origami infrastructure, not a crane-specific lesson.
+
+Validation: 377 shared/API cases with typecheck/build, fixtures, eight desktop workflows,
+115 WebXR module cases, 53 Python cases and 20 synthetic browser workflows passed.
+Focused provider/label cases passed after refining the prompt to avoid invented force or
+axis terms observed in the first live synthetic test. Final live synthetic input produced
+concise faithful wording and generated speech. Inspected AR, 1100 px and 375 px review UI.
+Updated the task-owned 4345 server and re-paired the existing Quest tab without reloading
+or editing its library. Original narration audibility was user-reported; new generated
+voice still requires the user's worn-headset acceptance.

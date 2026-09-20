@@ -22,7 +22,7 @@ export function applyVoiceCommand(g,command){
  if(command==='record'&&g.mode==='author'){g.action('primary');return done('Recording starts in three seconds.');}
  if(command==='pause'){
   if(g.mode==='capture'){g.action('replay');return done('Recording paused.');}
-  if(follow){if(g.watchOnly?!g.player.paused:!g.gatePaused)g.action('replay');return done('Guidance paused.');}
+  if(follow){if(g.watchOnly?!!g.audioPlayer?.node||!g.player.paused:!g.gatePaused)g.action('replay');return done('Guidance paused.');}
  }
  if(command==='resume'){
   if(g.mode==='capture-paused'){g.action('replay');return g.problem?{ok:false,message:g.problem}:done('Recording resumed.');}

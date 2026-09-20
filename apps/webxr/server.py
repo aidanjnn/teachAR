@@ -236,7 +236,7 @@ class Handler(BaseHTTPRequestHandler):
                      "/vendor/GLTFLoader.js":"vendor/GLTFLoader.js","/vendor/SkeletonUtils.js":"vendor/SkeletonUtils.js","/vendor/BufferGeometryUtils.js":"vendor/BufferGeometryUtils.js",
                      "/vendor/three.module.js":"vendor/three.module.js","/vendor/three.core.js":"vendor/three.core.js",
                      "/voice-actions.mjs":"voice-actions.mjs","/voice-commands.mjs":"voice-commands.mjs","/command-audio-worklet.js":"command-audio-worklet.js",
-                     "/tutorial-coach.mjs":"tutorial-coach.mjs","/tutorial-coach-panel.mjs":"tutorial-coach-panel.mjs","/narration-labels.mjs":"narration-labels.mjs","/vendor/trail-coach.js":"vendor/trail-coach.js"}
+                     "/tutorial-coach.mjs":"tutorial-coach.mjs","/tutorial-coach-panel.mjs":"tutorial-coach-panel.mjs","/narration-labels.mjs":"narration-labels.mjs","/instruction-voice.mjs":"instruction-voice.mjs","/vendor/trail-coach.js":"vendor/trail-coach.js"}
             if path not in files:
                 return self.send(404,{"error":"Not found"})
             file = ROOT/"public"/files[path]

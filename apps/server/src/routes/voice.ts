@@ -6,6 +6,7 @@ import {
 } from '@trail/contracts';
 import { z } from 'zod';
 import { registerVoiceCommands } from './voice-commands.js';
+import { registerInstructionVoice } from './instruction-voice.js';
 import { LiveSessionRegistry } from '../ai/live-sessions.js';
 import type { AiProvider } from '../ai/provider.js';
 import type { PairingAuthority, PairingRole } from '../auth/pairing.js';
@@ -119,6 +120,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
     });
 
     registerVoiceCommands(voice, provider, learnerOrAuthor);
+    registerInstructionVoice(voice, provider, authorOnly);
 
     voice.post('/api/voice/transcriptions', { ...authorOnly, bodyLimit: MAX_NARRATION_BYTES }, async (request, reply) => {
       const body = request.body;

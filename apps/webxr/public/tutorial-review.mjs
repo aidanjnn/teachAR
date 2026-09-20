@@ -4,6 +4,7 @@ import {HandGuide} from '/hand-guide.mjs';
 import {newTutorial,prepareStep,parseTutorialJSON,validateTutorial,trimStep,TutorialPlayer,MAX_FILE_BYTES,learningReadiness,authoringReadiness,finishTutorial} from '/tutorial-core.mjs';
 import {NarrationPlayback} from '/narration.mjs';
 import {draftFromNarration} from '/narration-labels.mjs';
+import {polishStep,generateInstructionVoice} from '/instruction-voice.mjs';
 
 // Entirely generated fixture: never presented as a physical task recording.
 export function syntheticTutorial(){
@@ -29,6 +30,7 @@ export function mountReview(guide,{isActive,tell}){
   let selected=0,player=null,renderer=null,scene,camera,ghosts,foldPreview,previous=0,sourceStep=null;
   const status=message=>{$('review-status').textContent=message;};
   const voice=new NarrationPlayback({onError:status});
+  let instructionBusy=false;
   const editable=()=>{if(isActive())throw Error('Exit AR before editing, importing or replacing a tutorial.');};
   const report=async fn=>{try{editable();await fn();}catch(e){status(e.message);tell(e.message);}};
   async function replace(data){await guide.replaceTutorial(data);sourceStep=null;renderList();}
@@ -50,7 +52,7 @@ export function mountReview(guide,{isActive,tell}){
     const center=bounds.getCenter(new THREE.Vector3()),size=Math.max(.4,bounds.getSize(new THREE.Vector3()).length());
     camera.position.copy(center).add(new THREE.Vector3(0,size*.8,size*1.2));camera.lookAt(center);
     $('step-title').value=step.title||'';$('step-instruction').value=step.instruction;$('trim-start').value=0;$('trim-end').value=(step.duration_ms/1000).toFixed(3);
-    $('narration-summary').textContent=step.narration_issue?`Narration needs repair: ${step.narration_issue}`:step.narration?`Recorded narration: ${(step.narration.duration_ms/1000).toFixed(1)} seconds. Listen with the ghost before approving. Timing is approximate.`:'No recorded narration. This step uses written instructions.';
+    $('narration-summary').textContent=step.instruction_voice?'AI instruction voice saved · Original narration retained. Replay uses the polished instruction.':step.narration_issue?`Narration needs repair: ${step.narration_issue}`:step.narration?`Recorded narration: ${(step.narration.duration_ms/1000).toFixed(1)} seconds. Listen with the ghost before approving. Timing is approximate.`:'No recorded narration. This step uses written instructions.';
     $('remove-narration').disabled=!step.narration&&!step.narration_issue;
     $('guide-hands').value=step.guide_hands||'recorded';$('guide-hands').dispatchEvent(new Event('ui-refresh'));
     $('reviewed').checked=step.reviewed;$('step-photo').hidden=!step.reference;
@@ -78,6 +80,9 @@ export function mountReview(guide,{isActive,tell}){
     if(document.activeElement!==$('tutorial-setup'))$('tutorial-setup').value=tutorial.setup;
     document.querySelectorAll('[data-tutorial-edit]').forEach(e=>e.disabled=isActive());
     $('remove-narration').disabled=isActive()||(!selectedStep()?.narration&&!selectedStep()?.narration_issue);
+    $('polish-step').disabled=isActive()||instructionBusy||!selectedStep()?.narration||!!selectedStep()?.narration_issue;
+    $('generate-instruction-voice').disabled=isActive()||instructionBusy||!selectedStep();
+    $('original-instruction-voice').disabled=isActive()||instructionBusy||!selectedStep()?.instruction_voice;
   }
   $('save-tutorial-details').onclick=()=>void report(async()=>{
     const next=structuredClone(guide.tutorial);next.title=$('tutorial-title').value;
@@ -114,6 +119,38 @@ export function mountReview(guide,{isActive,tell}){
   $('guide-hands').onchange=()=>{$('reviewed').checked=false;};
   $('step-instruction').oninput=()=>{$('reviewed').checked=false;};
   $('step-title').oninput=()=>{$('reviewed').checked=false;};
+  async function instructionJob(generate){
+    if(instructionBusy)return;
+    const tutorial=guide.tutorial,step=selectedStep(),revision=tutorial.revision,index=selected;
+    if(!step)return;
+    const title=$('step-title').value,instruction=$('step-instruction').value.trim();
+    instructionBusy=true;renderList();
+    const current=()=>guide.tutorial===tutorial&&tutorial.revision===revision&&selected===index&&selectedStep()===step&&!isActive();
+    $('instruction-voice-status').textContent=generate?'Generating and saving AI voice…':'Polishing your recorded explanation…';
+    try{
+      if(generate){
+        if(!instruction)throw Error('Write or draft an instruction first.');
+        const audio=await generateInstructionVoice(instruction,{signal:AbortSignal.timeout(30000)});
+        if(!current()||$('step-instruction').value.trim()!==instruction||$('step-title').value!==title)throw Error('The step changed. No generated audio was applied.');
+        const next=structuredClone(tutorial),s=next.steps[index];s.title=title;s.instruction=instruction;s.instruction_voice=audio;s.reviewed=false;s.acceptance=null;next.revision++;
+        await replace(next);voice.unlock();player.replay();
+        $('instruction-voice-status').textContent='AI instruction voice saved. Listen, review the step, then finish the tutorial. Original audio is retained.';
+      }else{
+        const draft=await polishStep(step,{signal:AbortSignal.timeout(100000)});
+        if(!current()||$('step-instruction').value.trim()!==instruction||$('step-title').value!==title)throw Error('The step changed. Draft again for the current step.');
+        $('step-title').value=draft.title;$('step-instruction').value=draft.instruction;$('reviewed').checked=false;
+        $('instruction-voice-status').textContent=`Draft ready. Check or edit the wording below, then approve its voice.${draft.needsReview?' The explanation contained ambiguity.':''} You said: ${draft.transcript}`;
+      }
+    }catch(e){$('instruction-voice-status').textContent=e.message;}
+    finally{instructionBusy=false;renderList();}
+  }
+  $('polish-step').onclick=()=>void report(()=>instructionJob(false));
+  $('generate-instruction-voice').onclick=()=>void report(()=>instructionJob(true));
+  $('original-instruction-voice').onclick=()=>void report(async()=>{
+    if(instructionBusy)return;
+    const next=structuredClone(guide.tutorial),step=next.steps[selected];step.instruction_voice=null;step.reviewed=false;step.acceptance=null;next.revision++;
+    await replace(next);$('instruction-voice-status').textContent='Original narration restored. The written instruction is unchanged.';
+  });
   // Whisper and the label model draft text from what the expert said; nothing is applied until the expert chooses Apply.
   $('draft-from-narration').onclick=()=>void report(async()=>{
     const narrated=guide.tutorial.steps.filter(s=>s.narration?.audio).length;
@@ -155,7 +192,7 @@ export function mountReview(guide,{isActive,tell}){
   });
   $('remove-narration').onclick=()=>void report(async()=>{
     if(!confirm('Remove narration and use the written instruction? Review this step again before finishing.'))return;
-    const next=structuredClone(guide.tutorial),step=next.steps[selected];step.narration=null;step.narration_issue=null;step.reviewed=false;step.acceptance=null;next.revision++;
+    const next=structuredClone(guide.tutorial),step=next.steps[selected];step.narration=null;step.instruction_voice=null;step.narration_issue=null;step.reviewed=false;step.acceptance=null;next.revision++;
     await replace(next);status('Narration removed. Review the written instruction and motion again.');
   });
   $('trim-step').onclick=()=>void report(async()=>{
@@ -173,12 +210,12 @@ export function mountReview(guide,{isActive,tell}){
     [next.steps[selected],next.steps[destination]]=[next.steps[destination],next.steps[selected]];
     next.steps.forEach(s=>{s.reviewed=false;s.acceptance=null;});next.revision++;selected=destination;await replace(next);status('Step order changed. Review all steps in their new order.');
   });
-  $('preview-play').onclick=()=>{voice.unlock();if(player)player.paused=!player.paused;};
+  $('preview-play').onclick=()=>{voice.unlock();if(player){const playing=!!voice.node||!player.paused;player.paused=playing;player.audioPaused=playing;}};
   $('preview-replay').onclick=()=>{voice.unlock();player?.replay();};
   $('preview-sound').onclick=()=>voice.unlock();
   $('preview-voice').onchange=()=>{voice.enabled=$('preview-voice').checked;if(voice.enabled)voice.unlock();else voice.stop();};
   $('preview-speed').onchange=()=>player?.setRate(Number($('preview-speed').value));
-  $('scrub').oninput=()=>{if(player){player.time=Number($('scrub').value);player.paused=true;}};
+  $('scrub').oninput=()=>{if(player){player.time=Number($('scrub').value);player.paused=true;player.audioPaused=true;}};
   $('download-tutorial').onclick=()=>{
     try{const data=validateTutorial(guide.tutorial),text=JSON.stringify(data);
       if(new TextEncoder().encode(text).byteLength>MAX_FILE_BYTES)throw Error('Tutorial exceeds the download size limit.');
@@ -195,7 +232,7 @@ export function mountReview(guide,{isActive,tell}){
     const active=isActive();if(active!==wasActive){wasActive=active;if(!active)sourceStep=null;renderList();}
     if(!document.hidden&&!active&&player&&renderer){
       const frame=player.tick(previous?time-previous:0);ghosts[0].drawHand(frame?.right,0x8debd4);ghosts[1].drawHand(frame?.left,0x92bfff);
-      renderer.render(scene,camera);$('scrub').value=player.time;$('preview-play').textContent=player.paused?'Resume':'Pause';
+      renderer.render(scene,camera);$('scrub').value=player.time;$('preview-play').textContent=voice.node||!player.paused?'Pause':'Resume';
       $('playback-time').textContent=`${(player.time/1000).toFixed(1)} / ${(player.step.duration_ms/1000).toFixed(1)} seconds`;
     }
     voice.sync(player,!document.hidden&&!active);

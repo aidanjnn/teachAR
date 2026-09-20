@@ -75,3 +75,10 @@ html:has(.tutorial-page){background:var(--trail-ground)}
 
 .boundary-note { max-width: 540px; color: var(--trail-muted); font-size: 14px; text-align: left; }
 .boundary-note summary { cursor: pointer; text-align: center; }
+
+/* Keep reviewable wording beside the action that approves its voice. */
+.tutorial-page #instruction-voice-tools{border-color:var(--trail-line);border-radius:16px;padding:20px;margin:20px 0}
+.tutorial-page #instruction-voice-tools label{display:block;width:100%;margin:12px 0 0}
+.tutorial-page #step-title,.tutorial-page #step-instruction{display:block;box-sizing:border-box;width:100%;margin-top:8px;background:var(--trail-ground);color:var(--trail-ink);border:1px solid var(--trail-line);border-radius:12px;font:inherit;padding:12px 14px}
+.tutorial-page #generate-instruction-voice{background:var(--trail-action);color:var(--trail-actionInk)}
+.tutorial-page #instruction-voice-status{overflow-wrap:anywhere}

@@ -33,7 +33,7 @@ describe('openai provider labels', () => {
     let seen: { schemaName?: string; model?: string } = {};
     const provider = createOpenAiProvider({ ...models, gateway: gateway({ parseJson: (async (input: { schemaName: string; model: string }) => { seen = input; return { status: 'ok', parsed: goodLabels }; }) as OpenAiGateway['parseJson'] }) });
     const result = await provider.label(labelRequest, signal);
-    expect(result.provenance).toEqual({ labels: 'model', model: 'gpt-4.1-mini', promptVersion: 'labels-v1' });
+    expect(result.provenance).toEqual({ labels: 'model', model: 'gpt-4.1-mini', promptVersion: 'labels-v2-concise-instructions' });
     expect(result.labels[1]?.title).toBe('Move 2');
     expect(seen).toMatchObject({ schemaName: 'segment_labels', model: 'gpt-4.1-mini' });
   });

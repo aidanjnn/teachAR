@@ -58,8 +58,32 @@ export class NarrationPlayback{
     try{this.context??=new AudioContext();void this.context.resume().catch(e=>this.onError(e.message));}
     catch(e){this.onError(`Narration playback unavailable: ${e.message}`);}
   }
-  stop(){if(this.node){try{this.node.stop();}catch{}this.node.disconnect();this.node=null;}}
+  stop(){if(this.node){if(this.instructionPlaying){this.instructionOffset=Math.min(this.buffer.duration,this.offset+Math.max(0,this.context.currentTime-this.startedAt));this.instructionPlaying=false;}try{this.node.stop();}catch{}this.node.disconnect();this.node=null;}}
+  instructionPending(player){
+    if(!this.enabled||this.preferOriginal||!player?.step?.instruction_voice||!this.context||this.context.state!=='running')return false;
+    return this.instructionPlayer!==player||this.instructionKey!==player.step.instruction_voice||this.instructionRevision!==(player.playbackRevision||0)||!this.instructionDone;
+  }
+  syncInstruction(player,allowed){
+    if(!this.context){return;}
+    const voice=player.step.instruction_voice;
+    if(this.instructionPlayer!==player||this.instructionKey!==voice||this.instructionRevision!==(player.playbackRevision||0)){
+      this.stop();this.instructionPlayer=player;this.instructionKey=voice;this.instructionRevision=player.playbackRevision||0;this.instructionOffset=0;this.instructionDone=false;this.instructionPlaying=false;this.key=null;
+      const samples=decodeNarration(voice);this.buffer=this.context?.createBuffer(1,samples.length,AUDIO_RATE);this.buffer?.copyToChannel(samples,0);
+    }
+    if(!allowed||!this.enabled||player.audioPaused||(player.paused&&player.time<player.step.duration_ms)){this.stop();return;}
+    if(!this.context||this.context.state!=='running'||!this.buffer)return;
+    // A stalled headset audio clock must never hold the learner indefinitely.
+    if(this.node&&this.instructionPlaying&&performance.now()>this.instructionDeadline){this.stop();this.instructionDone=true;this.onError('Instruction audio interrupted. Read the written instruction or replay.');}
+    if(this.instructionDone||this.node)return;
+    if(this.instructionOffset>=this.buffer.duration){this.instructionDone=true;return;}
+    const node=this.context.createBufferSource();node.buffer=this.buffer;node.connect(this.context.destination);
+    this.node=node;this.instructionPlaying=true;this.offset=this.instructionOffset;this.startedAt=this.context.currentTime;
+    this.instructionDeadline=performance.now()+(this.buffer.duration-this.offset)*1000+2500;
+    node.onended=()=>{if(this.node===node){node.disconnect();this.node=null;this.instructionPlaying=false;this.instructionDone=true;}};node.start(0,this.offset);
+  }
   sync(player,allowed=true){
+    if(player?.step?.instruction_voice&&!this.preferOriginal){this.syncInstruction(player,allowed);return;}
+    this.instructionPlayer=null;this.instructionKey=null;
     const voice=player?.step?.narration;
     if(!allowed||!this.enabled||!voice||player.paused){this.stop();return;}
     if(!this.context||this.context.state!=='running'){

@@ -40,7 +40,7 @@ export function createOpenAiGateway(apiKey: string, options: { baseURL?: string 
   const client = new OpenAI({ apiKey, maxRetries: 1, ...(options.baseURL ? { baseURL: options.baseURL } : {}) });
   return {
     async speech(text, signal) {
-      const response = await client.audio.speech.create({ model: 'gpt-4o-mini-tts-2025-12-15', voice: 'coral', input: text, response_format: 'mp3' }, { signal });
+      const response = await client.audio.speech.create({ model: 'gpt-4o-mini-tts-2025-12-15', voice: 'coral', input: text, instructions: 'Speak clearly and naturally, like a calm instructor beside the learner. Use a measured conversational pace and brief pauses between actions. Read only the supplied words; add no introduction or filler.', response_format: 'mp3' }, { signal });
       return new Uint8Array(await response.arrayBuffer());
     },
     async transcribeVerbose({ bytes, mimeType, model, signal }) {

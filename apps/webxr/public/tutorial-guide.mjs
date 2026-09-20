@@ -8,6 +8,7 @@ import {TutorialPractice,guidanceReadiness} from '/tutorial-follow.mjs';
 import {drawTutorialUI} from '/tutorial-ui.mjs';
 import {preferences,applyAppearance,THEMES} from '/tutorial-design.mjs';
 import {TutorialFeedback} from '/tutorial-feedback.mjs';
+import {polishStep,generateInstructionVoice} from './instruction-voice.mjs';
 import {saveTutorial, loadTutorial, draftVersion, listTutorials, findTutorial} from '/tutorial-store.mjs';
 
 export const TUTORIAL_BUTTONS=[
@@ -170,6 +171,7 @@ export class TutorialGuide extends HandGuide {
     this.markers.forEach(m => m.children.filter(c=>c.isSprite).forEach(c=>c.visible=false));
   }
   reset() {
+    this.cancelPolish();
     this.segmenter?.reset();this.homeAfterSave=false;
     if(this.mediaPending){this.media?.cancel();this.mediaPending=false;}
     this.takeGeneration=(this.takeGeneration||0)+1;this.narrator?.cancel();this.audioPlayer?.stop();
@@ -238,7 +240,41 @@ export class TutorialGuide extends HandGuide {
     if(this.mode==='learn'){this.gatePaused=true;this.practice?.pause();this.followEngine?.pause();}
     if(this.player)this.player.paused=true;this.audioPlayer?.stop();
   }
+  cancelPolish(){this.polishController?.abort();this.polishController=null;this.polishBusy=false;}
+  async prepareInstruction(approve){
+    if(this.polishBusy||!this.player?.step||this.mode!=='polish')return;
+    if(approve&&!this.polishDraft)return;
+    const tutorial=this.tutorial,step=this.player.step,revision=tutorial.revision,epoch=this.epoch;
+    const controller=new AbortController();this.polishController=controller;this.polishBusy=true;this.problem='';
+    const current=()=>!controller.signal.aborted&&this.activeSession&&this.mode==='polish'&&this.tutorial===tutorial&&tutorial.revision===revision&&this.player?.step===step&&this.epoch===epoch;
+    try{
+      const services=this.instructionServices||{polishStep,generateInstructionVoice};
+      const signal=AbortSignal.any([controller.signal,AbortSignal.timeout(approve?30000:100000)]);
+      if(!approve){const draft=await services.polishStep(step,{signal});if(current())this.polishDraft=draft;}
+      else {
+        const draft={...this.polishDraft},voice=await services.generateInstructionVoice(draft.instruction,{signal});
+        if(!current())return;
+        step.title=draft.title;step.instruction=draft.instruction;step.instruction_voice=voice;step.reviewed=false;step.acceptance=null;
+        await this.changed();
+        // Durable-save success only. Navigation/exit may have happened during the write.
+        if(!controller.signal.aborted&&this.mode==='polish'&&this.tutorial===tutorial&&this.player?.step===step){this.mode='review-step';this.player.replay();this.audioPlayer?.unlock();this.note='Instruction voice saved. Listen with the ghost, then approve this step.';}
+      }
+    }catch(e){if(!controller.signal.aborted&&this.mode==='polish')this.problem=e.message;}
+    finally{if(this.polishController===controller){this.polishBusy=false;this.polishController=null;}this.onChange?.();}
+  }
   handleUX(id){
+    if(this.mode==='polish'&&!id.startsWith('polish-'))this.cancelPolish();
+    if(id==='polish-open'){
+      this.player.paused=true;this.audioPlayer?.stop();this.voice?.stop('Voice controls paused during instruction review.');this.coach?.stop();
+      this.polishDraft=null;this.problem='';this.mode='polish';return true;
+    }
+    if(this.mode==='polish'){
+      if(id==='polish-draft'){void this.prepareInstruction(false);return true;}
+      if(id==='polish-written'){const s=this.player.step;this.polishDraft={title:s.title,instruction:s.instruction,transcript:'Written instruction',needsReview:false};return true;}
+      if(id==='polish-approve'){void this.prepareInstruction(true);return true;}
+      if(id==='polish-back'){this.cancelPolish();this.mode='review-step';this.player.replay();return true;}
+      if(id==='polish-original'&&!this.polishBusy){this.player.step.instruction_voice=null;this.player.step.reviewed=false;this.player.step.acceptance=null;this.changed().catch(()=>{});this.mode='review-step';this.player.replay();return true;}
+    }
     if(id==='voice-open'){
       if(this.pending||this.mediaPending||['voice','voice-help'].includes(this.mode))return true;
       if(this.mode==='capture'){this.action('replay');}
@@ -295,7 +331,7 @@ export class TutorialGuide extends HandGuide {
       const ready=guidanceReadiness(this.player.step);if(!ready.ready){this.problem=ready.message;return true;}
       this.player.step.reviewed=true;this.changed();this.player=null;this.photoPanel.visible=false;this.mode='author';return true;
     }
-    if(id==='review-pause'&&this.mode==='review-step'){this.player.paused=!this.player.paused;return true;}
+    if(id==='review-pause'&&this.mode==='review-step'){const playing=!!this.audioPlayer?.node||!this.player.paused;this.player.paused=playing;this.player.audioPaused=playing;return true;}
     if(id==='trim-open'){this.player.paused=true;this.audioPlayer?.stop();this.trimRange=[0,this.player.step.duration_ms];this.mode='trim';return true;}
     if(id.startsWith('trim-')&&this.mode==='trim'){
       const range=this.trimRange,duration=this.player.step.duration_ms;
@@ -457,7 +493,7 @@ export class TutorialGuide extends HandGuide {
       this.note='Hold your right index fingertip on the FIRST end of the guide line. Four seconds.';this.speak(this.note);return;
     }
     if(id==='removeCue'&&this.mode==='review-step'){
-      if(this.player.step.narration_issue){this.player.step.narration=null;this.player.step.narration_issue=null;this.player.step.reviewed=false;this.player.step.acceptance=null;this.changed();this.note='Failed narration removed. Review the written instruction before approving.';return;}
+      if(this.player.step.narration_issue){this.player.step.narration=null;this.player.step.instruction_voice=null;this.player.step.narration_issue=null;this.player.step.reviewed=false;this.player.step.acceptance=null;this.changed();this.note='Failed narration removed. Review the written instruction before approving.';return;}
       this.player.step.cues=[];this.player.step.reviewed=false;this.player.step.acceptance=null;this.changed();this.foldLine.visible=false;this.note='Guide line removed. Review the step again.';return;
     }
     if(id==='clear') {
@@ -531,7 +567,7 @@ export class TutorialGuide extends HandGuide {
         if(done){this.mode='finished';this.note='All steps self-confirmed. Task correctness has not been automatically checked.';this.speak(this.note);}
         else this.showStep();
       }
-      if(id==='replay'){this.player.paused=!this.player.paused;}
+      if(id==='replay'){const playing=!!this.audioPlayer?.node||!this.player.paused;this.player.paused=playing;this.player.audioPaused=playing;}
       if(id==='hand'){this.watchOnly=false;this.gatePaused=false;this.player.previous();this.showStep();}
       if(id==='verify')this.player.replay();
     }
@@ -540,10 +576,10 @@ export class TutorialGuide extends HandGuide {
     this.nextPathKey=null;
     this.alignment.reset();this.alignmentResult=null;
     const step=this.player.step;
-    if(this.ux&&this.mode==='learn'&&!preserve){this.practice=new TutorialPractice(step);this.followEngine=this.practice.follower;this.player.time=0;this.player.paused=false;this.player.setRate(.75);this.movementOnly=false;}
+    if(this.ux&&this.mode==='learn'&&!preserve){this.practice=new TutorialPractice(step);this.followEngine=this.practice.follower;this.player.replay();this.player.setRate(.75);this.movementOnly=false;}
     // Forward local step changes without giving the coach progression authority.
     if(this.mode==='learn'&&!preserve)this.coach?.onStep(step,this.epoch);
-    this.note=step.instruction || `Step ${this.player.index+1}`;if(!step.narration)this.speak(this.ux&&this.mode==='learn'&&!preserve?`Watch step ${this.player.index+1}. ${this.note}`:this.note);else globalThis.speechSynthesis?.cancel();
+    this.note=step.instruction || `Step ${this.player.index+1}`;if(!step.narration&&!step.instruction_voice)this.speak(this.ux&&this.mode==='learn'&&!preserve?`Watch step ${this.player.index+1}. ${this.note}`:this.note);else globalThis.speechSynthesis?.cancel();
     this.photoPanel.visible=false;
     const epoch=this.photoEpoch=(this.photoEpoch||0)+1;
     if(step.reference?.image) {
@@ -653,7 +689,7 @@ export class TutorialGuide extends HandGuide {
     if(this.ux&&this.mode==='learn'&&!this.watchOnly){
       if(this.practice?.phase==='preview'){
         this.player.paused=!!this.gatePaused;sample=this.player.tick(dt);
-        if(!this.gatePaused){this.practice.update(this.currentHands,time,this.player.time>=this.player.step.duration_ms);if(this.practice.phase==='ready'){this.speak('Your turn. Bring your hands near the starting regions.');this.audioPlayer?.stop();}}
+        if(!this.gatePaused){this.practice.update(this.currentHands,time,this.player.time>=this.player.step.duration_ms&&!this.audioPlayer?.instructionPending?.(this.player));if(this.practice.phase==='ready'){this.speak('Your turn. Bring your hands near the starting regions.');this.audioPlayer?.stop();}}
       }else{
         if(!this.gatePaused)this.practice?.update(this.currentHands,time);
         sample=this.followEngine.target;this.player.time=sample?.t||0;this.player.paused=true;
@@ -698,7 +734,7 @@ export class TutorialGuide extends HandGuide {
         if(zone.visible){zone.position.fromArray(result.target);zone.children[0].material.color.setHex(color);}
       }
     }else {this.alignment.reset();this.alignmentResult=null;}
-    this.audioPlayer?.sync(this.player,['learn','review-step'].includes(this.mode)&&!this.pending&&(!this.ux||this.mode!=='learn'||this.watchOnly||this.practice?.phase==='preview'));
+    this.audioPlayer?.sync(this.player,['learn','review-step'].includes(this.mode)&&!this.pending&&(this.mode!=='learn'||!this.gatePaused)&&(!this.ux||this.mode!=='learn'||this.watchOnly||this.practice?.phase==='preview'));
     this.foldLine.visible=false;
     const cue=this.player?.step?.cues?.[0];
     if(cue&&['learn','review-step'].includes(this.mode)&&!this.pending){
