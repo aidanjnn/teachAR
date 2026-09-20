@@ -18,7 +18,8 @@ with tempfile.TemporaryDirectory(prefix="trail-browser-tests-") as runtime:
         port = listener.getsockname()[1]
     origin = f"http://127.0.0.1:{port}"
     env = dict(os.environ, PORT=str(port), TRAIL_RUNTIME_DIR=runtime,
-               TRAIL_TEST_ORIGIN=origin, OPENAI_API_KEY="", OPENAI_API_KEY_FILE=os.devnull)
+               TRAIL_TEST_ORIGIN=origin, OPENAI_API_KEY="", OPENAI_API_KEY_FILE=os.devnull,
+               SENTRY_ENABLED="false", SENTRY_BROWSER_DSN="", SENTRY_REPLAY_ENABLED="false")
     env.pop("RESTORE_REFERENCE_DIR", None)
     with open(Path(runtime)/"server.log", "w+") as log:
         server = subprocess.Popen([sys.executable, str(root/"server.py")],
