@@ -2,6 +2,9 @@
 import {palm} from './tutorial-assist.mjs';
 import {distance,segmentDistance} from './motion-core.mjs';
 export const MAX_SAMPLE_GAP_MS=200;
+// Fraction of each recorded gate displacement that must be observed live.
+// This is a prototype tuning value, not measured headset accuracy.
+const MIN_GATE_MOVEMENT_FRACTION=.6;
 export function requiredHands(step){
   const choice=step.guide_hands;
   if(choice==='left'||choice==='right')return [choice];
@@ -53,20 +56,37 @@ export class TutorialFollower {
     }
     this.startPalms=null;this.excursion={};
     this.index=0;this.dwell=0;this.last=null;this.started=false;this.done=false;this.state='waiting';
+    this.lastPalms=null;this.movement={};
   }
-  pause(){this.dwell=0;this.last=null;if(!this.done)this.state='waiting';}
+  clearEvidence(){this.dwell=0;this.lastPalms=null;this.movement={};}
+  pause(){this.clearEvidence();this.last=null;if(!this.done)this.state='waiting';}
   get radius(){return this.relaxed?(this.started?.14:.18):(this.started?.10:.12);}
   get target(){return this.gates[this.index]||this.step.frames[0];}
   update(hands,time){
-    if(!Number.isFinite(time)||(this.last!==null&&time<=this.last)){this.dwell=0;this.state='tracking';return this.state;}
+    if(!Number.isFinite(time)||(this.last!==null&&time<=this.last)){this.clearEvidence();this.state='tracking';return this.state;}
     const gap=this.last===null?0:time-this.last;this.last=time;
-    if(gap>200)this.dwell=0;
-    const dt=gap>200?0:Math.min(100,gap);
+    if(gap>MAX_SAMPLE_GAP_MS)this.clearEvidence();
+    const dt=gap>MAX_SAMPLE_GAP_MS?0:Math.min(100,gap);
     if(this.invalid){this.state='reference-gap';return this.state;}
-    if(this.hands.some(side=>!palm(hands?.[side]))){this.dwell=0;this.state='tracking';return this.state;}
+    if(this.hands.some(side=>!palm(hands?.[side]))){this.clearEvidence();this.state='tracking';return this.state;}
     if(this.done){this.state='checkpoint';return this.state;}
-    const radius=this.radius;
-    let near=this.hands.every(side=>{
+    const radius=this.radius,points=Object.fromEntries(this.hands.map(side=>[side,palm(hands[side])]));
+    let moved=true;
+    if(this.started&&this.index>0)for(const side of this.hands){
+      const previous=palm(this.gates[this.index-1][side]),target=palm(this.target[side]);
+      const delta=target.map((v,i)=>v-previous[i]),length2=delta.reduce((sum,v)=>sum+v*v,0);
+      // Static required hands still need proximity, but no invented movement.
+      if(length2<=1e-12)continue;
+      if(this.lastPalms){
+        const progress=delta.reduce((sum,v,i)=>sum+v*(points[side][i]-this.lastPalms[side][i]),0)/length2;
+        // Net directional excursion, not path length: small back-and-forth
+        // jitter cannot accumulate credit. A retreat allows a fresh approach.
+        this.movement[side]=Math.max(0,(this.movement[side]||0)+progress);
+      }
+      if((this.movement[side]||0)<MIN_GATE_MOVEMENT_FRACTION)moved=false;
+    }
+    this.lastPalms=points;
+    let near=moved&&this.hands.every(side=>{
       const live=palm(hands[side]),target=palm(this.target[side]);
       if(distance(live,target)>radius)return false;
       // Broad regions must not let a stationary hand skip forward through overlapping gates.
@@ -89,7 +109,7 @@ export class TutorialFollower {
     this.state=!this.started?'waiting':near?'following':'waiting';
     if(this.dwell>=(!this.started?600:final?(this.relaxed?650:500):this.relaxed?80:220)){
       if(!this.started)this.startPalms=Object.fromEntries(this.hands.map(side=>[side,[...palm(hands[side])]]));
-      this.dwell=0;this.started=true;
+      this.dwell=0;this.movement={};this.started=true;
       if(final){this.done=true;this.state='checkpoint';}else {this.index++;this.state='following';}
     }
     return this.state;
