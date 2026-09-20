@@ -143,7 +143,7 @@ const assert=require('node:assert/strict');
    await run('dragging cancels a pending capture countdown',async()=>{
     const g=make();g.mode='author';g.frames=[];g.action('primary');check(!!g.pending,'Test must start the countdown');
     const scene=new THREE.Scene(),panel=new THREE.Mesh(new THREE.PlaneGeometry(1.08,.56),new THREE.MeshBasicMaterial());scene.add(panel);
-    const spatial=new SpatialControls(scene,panel,g),source={},pose={transform:{position:{x:0,y:.307,z:1},orientation:{x:0,y:0,z:0,w:1}}};
+    const spatial=new SpatialControls(scene,panel,g),source={},pose={transform:{position:{x:0,y:-.322,z:1},orientation:{x:0,y:0,z:0,w:1}}};
     const workspace=JSON.stringify(g.workspace);check(spatial.start(source,pose),'Drag handle missed');
     check(!g.pending&&g.mode==='author'&&!g.frames.length,'Dragging left capture armed');
     check(JSON.stringify(g.workspace)===workspace,'Dragging changed calibration');

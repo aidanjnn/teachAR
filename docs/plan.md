@@ -48,7 +48,7 @@ integration or device acceptance is implied.
 
 Local guidance works independently of the TypeScript backend. A validated coach-guide
 adapter now publishes approved step text for paired voice and narration drafting;
-reference-image and fresh-frame integration remain pending. The headset browser is the sole progression
+assisted landmark reference images now have a bounded optional API; general fresh-scene coaching remains separate. The headset browser is the sole progression
 authority. Backend and desktop observations remain advisory/read-only.
 
 The exact Three.js dependency is pinned in the WebXR package. Vendoring checks
@@ -57,10 +57,10 @@ No additional UI framework or database is part of this foundation.
 
 ## 4. Expert workflow
 
-1. Create a tutorial and place its workspace using origin plus heading.
-2. Choose its save position once, then record real hands with pause/resume.
-3. Finish manually or return to the save zone; review any automatic trim.
-4. Replay, trim, enter instructions and approve each step explicitly.
+1. Create a tutorial, choose one rest/save position, then place its workspace.
+2. Optionally share a reference photo for named landmark suggestions; confirm A/B with stable fingertip marks.
+3. Record real hands; save by button, voice, hold or the configured return gesture.
+4. Finish separately. Narration is polished automatically; ambiguous wording and incomplete movement still need review.
 5. Await the local save; reopen it from the library and export for backup/transfer.
 
 Keep optional audio/photo capture bounded and explicit. Missing tracking or
@@ -70,10 +70,11 @@ must remain visible; a save animation must follow durable storage success.
 ## 5. Learner workflow and spatial limits
 
 Load a reviewed tutorial and place it in the current XR session at its original
-scale. Each step demonstrates first at 0.75×, waits for a broad starting pose,
-then guides ordered movement. Completion automatically previews the next step;
-the final summary reports movement only. Pause/repeat/watch and tracking recovery
-remain available. No physical-result confirmation is generated automatically.
+scale. Default Repeat & practise loops each demonstration at 0.75×, gives broad
+untimed palm-path feedback, and lets the learner choose Next. Optional Guided
+movement previews, waits for a broad start, then uses ordered checkpoints with
+automatic movement-only progression. Neither mode verifies the physical result.
+See [assisted workspace and live voice](assisted-workspace-experience.md).
 
 Current placement is a rigid origin-plus-heading transform. It is not the former
 three-point calibration/fourth-mark protocol. Use the same object geometry and

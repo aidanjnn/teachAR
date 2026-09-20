@@ -1,5 +1,5 @@
 // Bridges the browser tutorial to the shared coach runtime (public/vendor/trail-coach.js, built from apps/web).
-// The coach only ever hears reviewed step text through the paired server; it never advances a step.
+// Task coaching uses published step text. Explicit voice actions pass through local availability/context checks.
 export const GUIDE_MAP_KEY='trail-coach-guides';
 const MAX_TITLE=60,MAX_INSTRUCTION=240,MAX_NOTES=500,MAX_TUTORIAL_TITLE=120;
 export const CAPTION_GAP_MS=2500,LEARNER_TURN_MS=800;
@@ -37,7 +37,7 @@ function writeMap(storage,map){try{storage?.setItem(GUIDE_MAP_KEY,JSON.stringify
  * Owns one coach at a time. `runtime` is the bundle's exports ({createCoach, sessionState, pairBrowser});
  * it is loaded lazily from /vendor/trail-coach.js unless injected, so tests never touch the network or a microphone.
  */
-export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(input,init),storage=globalThis.localStorage,audioSink=null,tell=()=>{}}={}){
+export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(input,init),storage=globalThis.localStorage,audioSink=null,tell=()=>{},continuous=false,actionContext,onAction,getUserMedia}={}){
   let api=null,loaded=runtime,attemptId=null,epoch=0,captionAt=0,startGeneration=0,captionStreaming=false;
   const state={mode:'idle',listenRequested:false,pairing:'unknown',role:null,grounded:false,reason:null,error:null,caption:'',tutorialId:null,tutorialRevision:null};
   const stateHandlers=new Set(),captionHandlers=new Set();
@@ -110,7 +110,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
     if(cancelled())return snapshot();
     state.grounded=guide.grounded;state.reason=guide.reason;
     const context=coachContextFor(tutorial,guide,{runId:uuid(),attemptId,stepId:step.id,epoch});
-    const created=rt.createCoach({context,fetchImpl,...(audioSink?{audioSink}:{})});
+    const created=rt.createCoach({context,fetchImpl,continuous,actionContext,onAction,getUserMedia,...(audioSink?{audioSink}:{})});
     api=created;
     created.onState(s=>{if(api!==created)return;state.mode=s.mode;state.listenRequested=!!s.listenRequested;emit();});
     created.onTranscript(entry=>{if(api!==created||entry.stale)return;caption(entry);});
@@ -124,7 +124,7 @@ export function createTutorCoach({runtime=null,fetchImpl=(input,init)=>fetch(inp
   }
   function onStep(step,currentEpoch){epoch=currentEpoch;api?.setStep(step.id,Math.max(0,Math.floor(currentEpoch||0)));}
   function onAttempt(){if(!api)return;attemptId=uuid();api.setAttempt(attemptId);}
-  function ask(){api?.ask();}
+  function ask(){if(continuous&&api?.state.mode==='listening')return;api?.ask();}
   function askText(question){return api?api.askText(question):Promise.resolve(null);}
   function stop(){startGeneration++;if(api){const old=api;api=null;try{old.dispose();}catch{/* already gone */}}state.tutorialId=null;state.tutorialRevision=null;captionAt=0;captionStreaming=false;state.listenRequested=false;if(state.mode!=='idle'){state.mode='idle';emit();}}
   async function pair(code){

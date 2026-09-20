@@ -1,3 +1,5 @@
+> Current UI/voice update: [assisted workspace and live voice](assisted-workspace-experience.md). The headset now uses streaming commands and general Repeat & practise; clip-command and task-specific Watch & do descriptions below document the earlier implementation/diagnostic path.
+
 ## Current headset rehearsal (2026-09-20)
 
 1. Exit AR and reload the same Quest origin; do not change host/port if it contains your recordings. Enter the experience. Home must show Create and Library, without asking for marks.

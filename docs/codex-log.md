@@ -1528,3 +1528,48 @@ Task-owned server restarted as PID26511 on port4345; USB reverse 4321/4345 resto
 - **Scope:** Merged main `4f2f4d5` (Sentry PR #33) into documentation PR #34 from `73c9c25`. Retained both branches' complete dated activity entries and all README navigation. The resulting PR still changes only README and the three OpenAI/Codex documentation files.
 - **Validation:** All 31 focused follower, practice-regression and coach tests passed. Checked 97 local documentation links and 16 immutable file references, balanced fences, preserved histories and patch whitespace; no new broken paths. Existing historical native-file links remain unchanged. Application/browser gates are not rerun for this documentation-only diff.
 - **Evidence boundary:** Automated checks only. No new provider, hosted Sentry or headset/human evidence; the original dirty checkout remains untouched.
+
+## Assisted workspace, unified live actions and forgiving practice — September 20, 2026
+
+The user asked to wire the audited improvements into the running WebXR product:
+reference-assisted markers, responsive live commands and polished narration,
+native-like panel grips, rename/delete/edit library controls, and a general
+following experience that does not demand synchronized tracing. Kept the existing
+Create/Library and gesture capture flow from #31; merged current main at 26c2162.
+
+Implemented one GPT-Live-1 session with locally checked, deduplicated action tools
+and context refresh when selecting tutorials. Home publishes generic app controls
+rather than coaching a restored draft. Added real microphone-level indication,
+stop/visibility cleanup, Marin narration and removal of sequential polish delays.
+Added opt-in JPEG landmark suggestions/reference matching, saved names/photo,
+stable median fingertip marking and smaller placement adjustments. Added durable
+rename/delete with stale-tab deletion tombstones. Default practice now repeats the
+ghost with untimed palm-proximity feedback; optional ordered guidance remains.
+Moved grips below the panel, constrained rotation to yaw, added corner resizing,
+and preserved a minimum status-panel gap across scale changes. Raw tracking,
+recorded scale and local progression authority remain separate from rendering/AI.
+
+Validation: pnpm check passed typechecking, 411 tests across 37 files and builds;
+fixture validation passed; eight Playwright end-to-end cases passed; WebXR suite
+passed 159 Node tests, 61 Python tests and all 27 isolated browser workflows.
+Updated guided-only regressions to opt into Guided explicitly and added coverage
+for the new default, library tombstones, live context refresh, tool duplication/
+staleness, landmark schema serialization and stable capture. Inspected the rendered
+3D panel/grips and fixed overlap at small panel scales and distorted grip labels.
+
+Separate live probes used the connected Quest browser, not a simulated WebRTC API:
+synthetic speech "Can you go back please?" executed previous-step in an isolated
+sample tutorial and returned streamed GPT-Live speech. Action time was 4.207 s
+from utterance start (includes speaking time); no claim of instant replies. Real
+TTS returned in about 1.53 s and decoded on Quest; playback was muted. Synthetic
+paper-image suggestions returned in about 2.2 s. The first probe exposed an SDK
+strict-schema tuple incompatibility, which was repaired and regression-tested.
+Correct landmark labels had approximate pixel positions, so manual physical
+confirmation remains necessary. No real room image or user recording was used.
+
+Not verified by these checks: worn-headset microphone/echo with narration,
+comfortable panel manipulation, measured headset rendering rate, physical landmark
+accuracy and relocation. No automatic 3D registration, variable-size retargeting,
+contact/crease verification or hidden-hand reconstruction was added. New integration
+and rehearsal guidance lives in docs/assisted-workspace-experience.md. #35 OMNI
+advice remains separate from explicit locally checked user actions.

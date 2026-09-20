@@ -38,7 +38,7 @@ const assert=require('node:assert/strict');
    const {Telemetry}=await import('/telemetry.mjs'),{createRuntimeObserver}=await import('/telemetry-runtime.mjs');
    const guide=new TutorialGuide({speak:()=>{},exit:()=>{}});guide.attach(new THREE.Scene());
    const fixture=syntheticTutorial();fixture.steps.forEach(step=>{step.guide_hands='both';step.reviewed=true;});
-   guide.tutorial=finishTutorial(fixture);guide.begin('home');guide.startLearning();guide.currentHands=fixture.steps[0].frames[0];
+   guide.tutorial=finishTutorial(fixture);guide.begin('home');guide.followStyle='guided';guide.startLearning();guide.currentHands=fixture.steps[0].frames[0];
    const events=new Telemetry(),observer=createRuntimeObserver({telemetry:events,guide});
    observer.observe({active:true,visible:true,freshFrame:true});
    const state=()=>events.snapshot().events.filter(e=>e.type==='guide_state').at(-1).data;

@@ -1,3 +1,4 @@
+import {validateLandmarks} from './workspace-assist.mjs';
 // Portable, bounded tutorial data. No XR, rendering, provider or storage dependency.
 import {JOINTS, tracked} from './motion-core.mjs';
 import {validateNarration,trimNarration} from './narration-core.mjs';
@@ -118,6 +119,7 @@ export function validateTutorial(input){
   });
   const result={...newTutorial(input.title),id:id(input.id,uid),revision:Number.isSafeInteger(input.revision)&&input.revision>=0?input.revision:0,
     calibration_span_m:input.calibration_span_m??null,save_position:validateSavePosition(input.save_position),steps,source:input.source==='synthetic-fixture'?'synthetic-fixture':'live-capture',setup:boundedText(input.setup??'',2000,'Starting layout')};
+  if(input.workspace_reference){const reference=validateReference(input.workspace_reference);result.workspace_reference={...reference,...validateLandmarks(input.workspace_reference)};}
   const completed=input.completion;
   if(input.schema===SCHEMA&&record(completed)&&completed.revision===result.revision&&typeof completed.finished_at==='string'&&completed.finished_at.length<=40&&Number.isFinite(Date.parse(completed.finished_at))&&authoringReadiness(result).ready)
     result.completion={revision:result.revision,finished_at:completed.finished_at,kind:steps.some(s=>!s.reviewed)?'expert-accepted; physical result unverified':'expert-reviewed; physical result unverified'};

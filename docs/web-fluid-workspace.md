@@ -1,3 +1,5 @@
+> Current UI/voice update: [assisted workspace and live voice](assisted-workspace-experience.md). The headset now uses streaming commands and general Repeat & practise; clip-command and task-specific Watch & do descriptions below document the earlier implementation/diagnostic path.
+
 ## Simplified recording loop (2026-09-20)
 
 AR opens at Home. Choose Create or Library; restoring a recording or resetting XR coordinates must not open calibration automatically. Library selection exposes Play and Edit before placement.

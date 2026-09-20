@@ -6,12 +6,12 @@ import { TranscriptResultSchema, LabelResultSchema } from '@trail/contracts';
 // Separate authoring allowance, shared by all clients in this server process.
 // Failed calls consume attempts too; saved audio is replayed locally thereafter.
 export function registerInstructionVoice(app: FastifyInstance, provider: AiProvider, guard: RouteShorthandOptions) {
-  let attempts = 0, busy = false, nextAt = 0;
+  let attempts = 0, busy = false;
   async function run(reply: import('fastify').FastifyReply, work: () => Promise<unknown>) {
     reply.header('Cache-Control', 'no-store');
     if (provider.name !== 'openai') return reply.code(503).send({ message: 'Pair with the AI server to polish recorded instructions. Mock narration is never used.' });
-    if (busy || Date.now() < nextAt || attempts >= 48) return reply.code(429).header('Retry-After', '2').send({ message: attempts >= 48 ? 'Instruction allowance used (48 requests this server run). Saved audio still plays.' : 'Another instruction is processing. Try again shortly.' });
-    busy = true; attempts++; nextAt = Date.now() + 2000;
+    if (busy || attempts >= 48) return reply.code(429).header('Retry-After', '2').send({ message: attempts >= 48 ? 'Instruction allowance used (48 requests this server run). Saved audio still plays.' : 'Another instruction is processing. Try again shortly.' });
+    busy = true; attempts++;
     try { return await work(); }
     catch { return reply.code(503).send({ message: 'Could not prepare this instruction. Your original recording is unchanged.' }); }
     finally { busy = false; }

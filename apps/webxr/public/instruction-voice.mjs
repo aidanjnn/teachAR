@@ -66,7 +66,4 @@ export async function polishTutorialInstructions(tutorial,{signal,onProgress=()=
   if(prepared){result.revision++;if(result.completion)result.completion={...result.completion,revision:result.revision,kind:'expert-accepted; physical result unverified'};}
   return {tutorial:result,prepared,total:candidates.length,issues};
 }
-function waitForCooldown(signal){return new Promise((resolve,reject)=>{
-  signal?.throwIfAborted();const abort=()=>{clearTimeout(timer);reject(signal.reason);};
-  const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},2100);signal?.addEventListener('abort',abort,{once:true});
-});}
+async function waitForCooldown(signal){signal?.throwIfAborted();}

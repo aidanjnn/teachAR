@@ -18,7 +18,7 @@ const {chromium}=require('@playwright/test');const assert=require('node:assert/s
   if(!exported.completion.kind.includes('accepted'))fail('Continuous capture misrepresented as replay reviewed');
   const panel=new THREE.Mesh(new THREE.PlaneGeometry(1.08,.56),new THREE.MeshBasicMaterial());scene.add(panel);const spatial=new SpatialControls(scene,panel,g),source={};
   const pose=(x,y,z)=>({transform:{position:{x,y,z},orientation:{x:0,y:0,z:0,w:1}}});
-  const workspace=JSON.stringify(g.workspace);if(!spatial.start(source,pose(0,.307,1)))fail('Handle not ray draggable');spatial.move(source,pose(.3,.4,1));spatial.end(source);if(panel.position.x<.29||JSON.stringify(g.workspace)!==workspace)fail('Panel drag moved tutorial or failed');
+  const workspace=JSON.stringify(g.workspace);if(!spatial.start(source,pose(0,-.322,1)))fail('Handle not ray draggable');spatial.move(source,pose(.3,.4,1));spatial.end(source);if(panel.position.x<.29||JSON.stringify(g.workspace)!==workspace)fail('Panel drag moved tutorial or failed');
   spatial.tick(t,pose(0,1,1));if(!spatial.timer.visible)fail('Workspace timer missing');
   // A top-down ray can move the timer independently without moving the workspace.
   const timerSource={},q=spatial.timer.quaternion.clone(),p=spatial.timer.position.clone();

@@ -133,8 +133,9 @@ export function createRuntimeObserver({telemetry,guide,now=()=>performance.now()
     let phase='idle';
     if(practice&&active&&!visible)phase='hidden';
     else if(practice&&active){
-      if(mode()!=='learn'||guide.gatePaused||guide.watchOnly)phase='user_paused';
+      if(mode()!=='learn'||guide.gatePaused||(guide.watchOnly&&guide.followStyle!=='loop'))phase='user_paused';
       else if(!fresh)phase='system_wait';
+      else if(guide.watchOnly&&guide.followStyle==='loop')phase='demo_preview';
       else if(guide.pending||guide.followEngine?.invalid||guide.followEngine?.state==='reference-gap'||(!requiredLeft&&!requiredRight))phase='system_wait';
       else if(guide.practice?.phase==='preview')phase='demo_preview';
       else if((requiredLeft&&!left)||(requiredRight&&!right))phase='tracking_lost';

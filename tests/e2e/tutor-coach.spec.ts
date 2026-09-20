@@ -49,6 +49,17 @@ test('pairs the browser tutor, publishes a coach guide and coaches from server-s
   await expect(page.locator('#coach-status')).toContainText('Paired as author');
   await expect(page.locator('#coach-status')).not.toContainText("this browser's step text");
 
+  // Home must not silently coach the restored draft. It answers app-control questions.
+  await page.getByLabel('Type a question').fill('what now');
+  await page.getByRole('button', { name: 'Ask by text' }).click();
+  await expect(page.locator('#coach-log li').last()).toContainText('Save ends a step.');
+  // Explicitly select the recorded tutorial through the same coach adapter used by AR.
+  await page.evaluate(async () => {
+    const path = '/tutorial-store.mjs';
+    const { loadTutorial } = await import(path);
+    const tutorial = await loadTutorial();
+    await (window as unknown as { trailCoach: { start: (t: unknown, step: unknown, epoch: number) => Promise<unknown> } }).trailCoach.start(tutorial, tutorial.steps[0], 0);
+  });
   await page.getByLabel('Type a question').fill('what now');
   await page.getByRole('button', { name: 'Ask by text' }).click();
   await expect(page.locator('#coach-log li').last()).toContainText('Slide the base to the centre.');
@@ -62,7 +73,7 @@ test('pairs the browser tutor, publishes a coach guide and coaches from server-s
 
   // The guide the coach answered from is server-owned text, readable back by a paired client.
   const mapping = await page.evaluate(() => JSON.parse(localStorage.getItem('trail-coach-guides') ?? '{}') as Record<string, { id: string; guideRevision: number }>);
-  const [entry] = Object.values(mapping);
+  const entry = Object.entries(mapping).find(([key]) => key !== 'trail-app-controls-v1')?.[1];
   expect(entry?.guideRevision).toBe(1);
   const guide = await page.evaluate(async id => {
     const response = await fetch(`/api/coach-guides/${id}/query`, { method: 'POST', credentials: 'same-origin' });

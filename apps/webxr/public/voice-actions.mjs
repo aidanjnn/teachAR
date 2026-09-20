@@ -28,11 +28,11 @@ export function applyVoiceCommand(g,command,{saveCutoff}={}){
  }
  if(command==='pause'){
   if(g.mode==='capture'){g.action('replay');return done('Recording paused.');}
-  if(follow){if(g.watchOnly?!!g.audioPlayer?.node||!g.player.paused:!g.gatePaused)g.action('replay');return done('Guidance paused.');}
+  if(follow){if(g.watchOnly&&g.followStyle!=='loop'?!!g.audioPlayer?.node||!g.player.paused:!g.gatePaused)g.action('replay');return done('Guidance paused.');}
  }
  if(command==='resume'){
   if(g.mode==='capture-paused'){g.action('replay');return g.problem?{ok:false,message:g.problem}:done('Recording resumed.');}
-  if(follow){if(g.watchOnly?g.player.paused:g.gatePaused)g.action('replay');return done('Guidance resumed.');}
+  if(follow){if(g.watchOnly&&g.followStyle!=='loop'?g.player.paused:g.gatePaused)g.action('replay');return done('Guidance resumed.');}
  }
  if(command==='save'&&capture){
   if(g.stepByStep){if(!g.saveCurrentStep(saveCutoff))return {ok:false,message:g.problem};return done('Saving step. Return to the rest position for the next step.');}

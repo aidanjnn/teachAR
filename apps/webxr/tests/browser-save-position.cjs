@@ -21,7 +21,7 @@ const assert=require('node:assert/strict');
   if(g.mode!=='setup-new'||!g.saveHomeWorld)fail('Stable save position not captured');
   const hud=document.createElement('canvas');hud.width=1080;hud.height=560;
   g.action('setup-ready');
-  const mark=p=>{data.right=hand(p);g.action('primary');t=g.pending.until-380;tick(11);};
+  const mark=p=>{data.right=hand(p);g.action('primary');t=g.pending.until-380;tick(52);};
   mark([0,1,0]);mark([.5,1,0]);g.action('placement-ready');
   const home=JSON.stringify(g.tutorial.save_position);if(g.mode!=='author'||!g.cleanSave||!g.tutorial.save_position)fail('Save zone not persisted after placement');
   if(Math.abs(g.tutorial.save_position.left[2]-.3)>.001)fail('Save position not workspace relative');

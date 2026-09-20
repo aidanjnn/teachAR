@@ -1,3 +1,4 @@
+import { LandmarkSuggestions,LANDMARK_PROMPT,type LandmarkInput,type LandmarkResult } from './landmarks.js';
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 import type { LiveCreateParams, LiveCreateResponse } from 'openai/resources/live/live';
@@ -21,6 +22,7 @@ export interface ParseJsonInput<T> {
 
 /** The only surface the provider uses. Tests substitute a fake; the real one wraps the SDK. */
 export interface OpenAiGateway {
+  landmarks?(input:LandmarkInput,signal:AbortSignal):Promise<LandmarkResult>;
   speech?(text: string, signal: AbortSignal): Promise<Uint8Array>;
   transcribeVerbose(input: { bytes: Uint8Array<ArrayBuffer>; mimeType: string; model: string; signal: AbortSignal }): Promise<VerboseTranscript>;
   parseJson<T>(input: ParseJsonInput<T>): Promise<ParsedJson<T>>;
@@ -39,8 +41,15 @@ export function fileNameFor(mimeType: string): string {
 export function createOpenAiGateway(apiKey: string, options: { baseURL?: string } = {}): OpenAiGateway {
   const client = new OpenAI({ apiKey, maxRetries: 1, ...(options.baseURL ? { baseURL: options.baseURL } : {}) });
   return {
+    async landmarks(input,signal){
+      const content: import('openai/resources/responses/responses').ResponseInputContent[]=[];
+      if(input.reference)content.push({type:'input_text',text:'Reference landmarks: '+JSON.stringify(input.reference.landmarks)},{type:'input_image',image_url:input.reference.image,detail:'high'});
+      content.push({type:'input_text',text:'Current workspace view:'},{type:'input_image',image_url:input.image,detail:'high'});
+      const result=await client.responses.parse({model:'gpt-4.1-mini-2025-04-14',instructions:LANDMARK_PROMPT,input:[{role:'user',content}],text:{format:zodTextFormat(LandmarkSuggestions,'workspace_landmarks')},max_output_tokens:500},{signal});
+      return LandmarkSuggestions.parse(result.output_parsed);
+    },
     async speech(text, signal) {
-      const response = await client.audio.speech.create({ model: 'gpt-4o-mini-tts-2025-12-15', voice: 'coral', input: text, instructions: 'Speak clearly and naturally, like a calm instructor beside the learner. Use a measured conversational pace and brief pauses between actions. Read only the supplied words; add no introduction or filler.', response_format: 'mp3' }, { signal });
+      const response = await client.audio.speech.create({ model: 'gpt-4o-mini-tts-2025-12-15', voice: 'marin', input: text, instructions: 'Speak clearly and naturally, like a calm instructor beside the learner. Use a brisk conversational pace with natural phrasing. Read only the supplied words; add no introduction or filler.', response_format: 'mp3' }, { signal });
       return new Uint8Array(await response.arrayBuffer());
     },
     async transcribeVerbose({ bytes, mimeType, model, signal }) {

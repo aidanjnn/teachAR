@@ -1,3 +1,4 @@
+import {wasTutorialDeleted} from './tutorial-store.mjs';
 import {guidanceReadiness} from '/tutorial-follow.mjs';
 import * as THREE from '/vendor/three.module.js';
 import {HandGuide} from '/hand-guide.mjs';
@@ -97,6 +98,7 @@ export function mountReview(guide,{isActive,tell}){
     const file=event.target.files[0];event.target.value='';if(!file)return;
     if(file.size>MAX_FILE_BYTES)throw Error('Choose a tutorial JSON file no larger than 48 MB.');
     const parsed=parseTutorialJSON(await file.text());
+    if(await wasTutorialDeleted(parsed.id))parsed.id=crypto.randomUUID(); // Explicit import restores a copy; stale autosaves remain blocked.
     if(guide.tutorial.steps.length&&!confirm('Open this imported tutorial? Your other saved tutorials remain in the library.'))return;
     await replace(parsed);status('Imported and validated. Re-mark the workspace before AR. Imported motion is not hardware-validated.');
   });

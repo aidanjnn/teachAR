@@ -7,10 +7,10 @@ const MIN_SCALE=.65,MAX_SCALE=1.6;
 export class SpatialControls {
  constructor(scene,panel,guide){
   Object.assign(this,{scene,panel,guide});this.drag=null;this.suppressed=new WeakSet();this.ray=new THREE.Raycaster();this.controls=[];this.panelScale=1;
-  this.handle=this.addControl(panel,'move','Pinch + move',0,.307,.24);
-  this.addControl(panel,'rotate','Rotate',-.265,.307,.22);
-  this.addControl(panel,'resize','Resize',.265,.307,.22);
-  this.addControl(panel,'face','Face me',0,-.315,.20);
+  this.handle=this.addControl(panel,'move','━━',0,-.322,.32);
+  this.addControl(panel,'rotate','Turn',-.42,-.322,.15);
+  this.addControl(panel,'resize','↗',.51,.273,.07);
+  this.addControl(panel,'face','Face me',.32,-.322,.18);
   this.canvas=document.createElement('canvas');this.canvas.width=768;this.canvas.height=256;this.ctx=this.canvas.getContext('2d');
   this.texture=new THREE.CanvasTexture(this.canvas);this.texture.colorSpace=THREE.SRGBColorSpace;
   this.timer=new THREE.Mesh(new THREE.PlaneGeometry(.38,.127),new THREE.MeshBasicMaterial({map:this.texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));this.timer.rotation.x=-Math.PI/2;this.timer.visible=false;scene.add(this.timer);this.timer.renderOrder=12;
@@ -21,7 +21,7 @@ export class SpatialControls {
   this.paintControls();
  }
  addControl(object,mode,label,x,y,width){
-  const canvas=document.createElement('canvas');canvas.width=440;canvas.height=88;
+  const canvas=document.createElement('canvas');canvas.width=Math.round(width/.046*88);canvas.height=88;
   const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
   // Recovery grips remain targetable even if the user turns the panel away.
   const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,.046),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthTest:false,depthWrite:false,toneMapped:false}));
@@ -33,9 +33,9 @@ export class SpatialControls {
   this.paintedTheme=theme;this.paintedActive=active;
   const p=THEMES[theme]||THEMES.charcoal;
   for(const control of this.controls){
-   const c=control.canvas.getContext('2d'),selected=control===active;
-   c.clearRect(0,0,440,88);c.fillStyle=selected?p.action:p.surface;c.strokeStyle=p.line;c.lineWidth=2;c.beginPath();c.roundRect(2,2,436,84,30);c.fill();c.stroke();
-   c.fillStyle=selected?p.actionInk:p.ink;c.font='500 34px system-ui';c.textAlign='center';c.fillText(control.label,220,56);control.mesh.material.map.needsUpdate=true;
+   const c=control.canvas.getContext('2d'),selected=control===active,w=control.canvas.width;
+   c.clearRect(0,0,w,88);c.fillStyle=selected?p.action:p.surface;c.strokeStyle=p.line;c.lineWidth=2;c.beginPath();c.roundRect(2,2,w-4,84,30);c.fill();c.stroke();
+   c.fillStyle=selected?p.actionInk:p.ink;c.font='500 34px system-ui';c.textAlign='center';c.fillText(control.label,w/2,56);control.mesh.material.map.needsUpdate=true;
   }
  }
  rayFrom(pose){this.ray.set(new THREE.Vector3().copy(pose.transform.position),new THREE.Vector3(0,0,-1).applyQuaternion(new THREE.Quaternion().copy(pose.transform.orientation)));}
@@ -60,7 +60,8 @@ export class SpatialControls {
   if(d.mode==='rotate'){
    // Apply the incremental controller/hand-ray orientation from the grab pose;
    // no Euler wrap, no snap to the hand's absolute orientation, no moving pivot.
-   d.object.quaternion.copy(pose.transform.orientation).multiply(d.orientation.clone().invert()).multiply(d.rotation).normalize();
+   const q=new THREE.Quaternion().copy(pose.transform.orientation),a=new THREE.Vector3(0,0,-1).applyQuaternion(d.orientation),b=new THREE.Vector3(0,0,-1).applyQuaternion(q);
+   if(Math.hypot(a.x,a.z)>.15&&Math.hypot(b.x,b.z)>.15){const yaw=Math.atan2(b.x,b.z)-Math.atan2(a.x,a.z);d.object.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0),yaw).multiply(d.rotation).normalize();}
   }else if(d.mode==='resize'){
    const point=this.ray.ray.intersectPlane(d.plane,new THREE.Vector3());
    if(point&&d.radius>.01){const scale=THREE.MathUtils.clamp(d.scale*point.distanceTo(d.object.position)/d.radius,MIN_SCALE,MAX_SCALE);d.object.scale.setScalar(scale);if(d.object===this.panel)this.panelScale=scale;}
@@ -87,7 +88,7 @@ export class SpatialControls {
   const g=this.guide,w=g.workspace;
   if(!w||['home','library','loading-library'].includes(g.mode)){if(this.drag?.object===this.timer)this.cancel();this.timer.visible=false;this.rings.forEach(r=>r.visible=false);return;}
   if(this.workspace!==w){if(this.drag?.object===this.timer)this.cancel();this.workspace=w;this.timerMoved=false;this.timer.scale.setScalar(1);}
-  if(!this.timerMoved){this.panel.updateMatrixWorld(true);this.timer.position.copy(this.panel.localToWorld(new THREE.Vector3(0,-.49,0)));this.timer.quaternion.copy(this.panel.quaternion);}
+  if(!this.timerMoved){this.panel.updateMatrixWorld(true);this.timer.position.copy(this.panel.localToWorld(new THREE.Vector3(0,-.35-.18/Math.max(.1,this.panel.scale.y),0)));this.timer.quaternion.copy(this.panel.quaternion);}
   this.timer.visible=true;
   const progress=g.mode==='capture'&&g.fluidCapture?g.segmenter.progress:0;
   this.rings.forEach((r,i)=>{const side=i?'right':'left',rest=g.mode==='step-ready',p=rest?g.tutorial.save_position?.[side]:palm(g.currentHands?.[side]);r.visible=!!p&&(rest||progress>0&&g.segmenter.sides?.includes(side));if(r.visible){r.position.copy(g.space.localToWorld(new THREE.Vector3(...p)));r.quaternion.copy(viewer.transform.orientation);r.geometry.setDrawRange(0,Math.max(3,Math.floor((g.mode==='step-ready'?1:progress)*64)*6));}});

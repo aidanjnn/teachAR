@@ -30,6 +30,11 @@ export function mountTutorialShell(guide,{isActive,tell}){
   }catch(e){$('library-status').textContent=e.message;}
  }
  document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>run(()=>show(b.dataset.route)));
+ $('selected-rename').onclick=()=>run(()=>{$('delete-tutorial-confirm').hidden=true;$('rename-tutorial-form').hidden=false;$('rename-tutorial-title').value=guide.tutorial.title;$('rename-tutorial-title').focus();});
+ $('rename-tutorial-form').onsubmit=e=>{e.preventDefault();run(async()=>{await guide.renameTutorial($('rename-tutorial-title').value);$('selected-tutorial-title').textContent=guide.tutorial.title;$('rename-tutorial-form').hidden=true;});};
+ $('selected-delete').onclick=()=>run(()=>{$('rename-tutorial-form').hidden=true;$('delete-tutorial-confirm').hidden=false;});
+ $('selected-delete-cancel').onclick=()=>{$('delete-tutorial-confirm').hidden=true;};
+ $('selected-delete-confirm').onclick=()=>run(async()=>{await guide.removeTutorial();$('delete-tutorial-confirm').hidden=true;show('library');});
  $('selected-edit').onclick=()=>run(()=>show('review'));
  $('selected-follow').onclick=()=>run(()=>{show('home');$('launch-title').textContent='Follow inside AR';$('launch-help').textContent='Enter AR, open Library and choose your tutorial, then Follow to place its workspace.';$('enter').scrollIntoView({block:'center'});});
  $('create-tutorial').onclick=()=>run(async()=>{await guide.replaceTutorial(newTutorial(`Tutorial ${new Date().toLocaleDateString()}`));$('tutorial-instructions').value='';show('create');});

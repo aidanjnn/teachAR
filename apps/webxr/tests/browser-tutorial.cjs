@@ -29,7 +29,7 @@ const assert=require('node:assert/strict');
       const session={visibilityState:'visible',inputSources:['left','right'].map(side=>({handedness:side,hand:new Map(JOINTS.map((n,i)=>[n,{side,i}]))}))};
       const frame={getJointPose:({side,i})=>{const j=data[side]?.[i];return j?{transform:{position:{x:j.p[0],y:j.p[1],z:j.p[2]},orientation:{x:0,y:0,z:0,w:1}},radius:.007}:null;}};
       const tick=(dt=40)=>{t+=dt;g.tick(frame,session,{},t);};
-      const mark=p=>{data.right=hand(p);g.action('primary');t=g.pending.until-360;for(let i=0;i<20;i++)tick(20);};
+      const mark=p=>{data.right=hand(p);g.action('primary');t=g.pending.until-360;for(let i=0;i<105;i++)tick(20);};
       mark([0,1,-.5]);mark([.4,1,-.5]);if(g.mode!=='author')fail('Calibration failed '+g.problem);
       function record(){
         data.left=hand([.05,1,-.5]);data.right=hand([.3,1,-.5]);g.action('primary');t=g.pending.until;tick();

@@ -13,15 +13,14 @@ import {telemetry} from './telemetry.mjs';
 import {createRuntimeObserver} from './telemetry-runtime.mjs';
 import {mountDiagnostics} from './telemetry-panel.mjs';
 import {initializeSentry} from './telemetry-sentry.mjs';
-import {createTutorCoach} from '/tutorial-coach.mjs';
-import {VoiceCommands} from '/voice-commands.mjs';
+import {LiveVoiceControls} from '/live-voice.mjs';
 import {mountCoachPanel} from '/tutorial-coach-panel.mjs';
 const tutorialMode=['/','/tutorial','/tutorial.html'].includes(location.pathname);
 const handsMode=tutorialMode||location.pathname==='/hands';
 const feedbackAudio=new FeedbackAudio();
 const narrator=tutorialMode?new NarrationRecorder({onStatus:message=>{document.getElementById('microphone-status').textContent=message;}}):null;
 const narrationPlayer=tutorialMode?new NarrationPlayback({onError:message=>tell(message)}):null;
-const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>closeAR(),snapshot:tutorialSnapshot,media:tutorialMode?{enable:()=>captureSetup.enable(),cancel:()=>captureSetup.cancel()}:null,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take||event.kind==='saved')feedbackAudio.play(event);}}):null;
+const guide=handsMode?new (tutorialMode?TutorialGuide:HandGuide)({speak,verify:()=>action('check'),exit:()=>closeAR(),snapshot:tutorialSnapshot,media:tutorialMode?{camera:()=>stream?.getVideoTracks().some(t=>t.readyState==='live')?Promise.resolve():startCamera(true),enable:()=>captureSetup.enable(),cancel:()=>captureSetup.cancel()}:null,narrator,audioPlayer:narrationPlayer,onFeedback:event=>{feedbackAudio.enabled=guide.appearance.sound;if(!narrator?.take||event.kind==='saved')feedbackAudio.play(event);}}):null;
 
 const observation=tutorialMode?createRuntimeObserver({telemetry,guide}):null;
 let diagnostics=null,sentryConnection=null,telemetryDisposed=false;
@@ -35,10 +34,10 @@ if(tutorialMode){
 }
 
 const $=id=>document.getElementById(id);
-// Voice commands and live coaching are explicitly enabled and use exclusive listening modes.
+// Voice commands and coaching share one explicitly enabled live session.
 // Coach problems must be readable inside AR too, so they also land on the guide's detail line.
-const coach=tutorialMode?createTutorCoach({audioSink:$('coach-audio'),tell:message=>{tell(message);if(guide&&['learn','learn-options'].includes(guide.mode))guide.problem=message;}}):null;
-const voice=tutorialMode?new VoiceCommands(guide,{tell,getUserMedia:constraints=>narrator?.ready?Promise.resolve(narrator.stream.clone()):navigator.mediaDevices.getUserMedia(constraints),canListen:()=>!!session&&session.visibilityState==='visible'&&!coach?.active&&!globalThis.speechSynthesis?.speaking}):null;
+const voice=tutorialMode?new LiveVoiceControls(guide,{audioSink:$('coach-audio'),tell,getUserMedia:constraints=>narrator?.ready?Promise.resolve(narrator.stream.clone()):navigator.mediaDevices.getUserMedia(constraints),visible:()=>!!session&&session.visibilityState==='visible'}):null;
+const coach=voice?.coach;
 if(guide&&coach){guide.coach=coach;guide.voice=voice;}
 // Speech requested while the coach is taking a question or answering is held (last three lines) and read together once the coach is quiet.
 // Each line is tagged with the guide epoch it was spoken for; Stop, leaving AR and any guide invalidation drop it.
@@ -51,7 +50,7 @@ function releaseHeldSpeech(){
   if(coachBusy()){heldSpeechTimer=setTimeout(releaseHeldSpeech,500);return;}
   const held=heldSpeech.map(h=>h.text).join(' ');heldSpeech=[];speak(held);
 }
-coach?.onState(state=>{if(state.mode==='connecting')voice?.stop('Voice commands paused for the coach.');releaseHeldSpeech();});
+coach?.onState(()=>{releaseHeldSpeech();});
 const hud=$('hud-preview'), ctx=hud.getContext('2d');
 const capture=document.createElement('canvas'), captureCtx=capture.getContext('2d');
 let stream=null, cameraGeneration=0, uploading=false, lastVideo=-1, lastUpload=-Infinity;
@@ -79,6 +78,7 @@ function visible() { return session ? session.visibilityState==='visible' : !doc
 function tell(message) { notice=message; noticeUntil=performance.now()+6500; $('notice').textContent=message; }
 function speak(message,commandReply=false) {
   // One voice at a time: while the coach is taking a question or answering, step text waits its turn.
+  if(voice?.active)return;
   if (coachBusy()) { if(heldSpeech.length>=3)heldSpeech.shift();heldSpeech.push({text:message,epoch:guide?.epoch}); if(!heldSpeechTimer)heldSpeechTimer=setTimeout(releaseHeldSpeech,500); return; }
   voice?.muteFor(1400);
   if ((!commandReply&&!$('speech').checked) || !('speechSynthesis' in window) || !visible()) return;
@@ -295,7 +295,7 @@ function initRenderer() {
   scene=new THREE.Scene();camera=new THREE.PerspectiveCamera();head=new THREE.Group();scene.add(head);guide?.attach(scene);
   texture=new THREE.CanvasTexture(hud);texture.colorSpace=THREE.SRGBColorSpace;
   panel=new THREE.Mesh(new THREE.PlaneGeometry(tutorialMode?1.08:1.35,tutorialMode?.56:.70),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
-  panel.position.set(0,.34,-1.4);panel.renderOrder=10;if(tutorialMode){scene.add(panel);spatial=new SpatialControls(scene,panel,guide);guide.onLibrarySearch=()=>{if(libraryInput){libraryInput.type='search';libraryInput.maxLength=80;libraryInput.oninput=()=>{guide.libraryQuery=libraryInput.value.slice(0,80);guide.libraryIndex=0;};libraryInput.value=guide.libraryQuery||'';libraryInput.focus();}if(!session?.isSystemKeyboardSupported){guide.problem='Use a connected keyboard to search, or browse the cards and filters.';}};guide.onVoicePair=()=>{if(!libraryInput)return;libraryInput.type='text';libraryInput.inputMode='numeric';libraryInput.maxLength=8;libraryInput.value='';libraryInput.oninput=()=>{if(/^\d{8}$/.test(libraryInput.value)){const code=libraryInput.value;libraryInput.value='';libraryInput.blur();void coach.pair(code).then(result=>{guide.problem=result.ok?'Paired. Enable voice controls or start the coach.':result.message;});}};libraryInput.focus();guide.problem='Enter the eight-digit pairing code shown on the laptop.';};guide.onRepositionPanel=()=>{spatial.cancel();panelSide=!panelSide;panelNeedsPlace=true;};guide.onResetPanels=()=>{spatial.resetPlacement();panelSide=false;panelNeedsPlace=true;};}else head.add(panel);
+  panel.position.set(0,.34,-1.4);panel.renderOrder=10;if(tutorialMode){scene.add(panel);spatial=new SpatialControls(scene,panel,guide);guide.onPlacementPreview=()=>{panel.add(guide.photoPanel);guide.photoPanel.position.set(-.80,0,0);guide.photoPanel.rotation.set(0,0,0);guide.photoPanel.scale.setScalar(1.5);};guide.onRenameTutorial=()=>{if(!libraryInput)return;libraryInput.type='text';libraryInput.inputMode='text';libraryInput.setAttribute('aria-label','Rename tutorial');libraryInput.maxLength=120;libraryInput.value=guide.tutorial.title;libraryInput.oninput=null;libraryInput.onkeydown=e=>{if(e.key==='Enter'){const title=libraryInput.value;libraryInput.blur();libraryInput.onkeydown=null;void guide.renameTutorial(title);}};libraryInput.focus();guide.problem='Type a name, then press Enter to save.';};guide.onLibrarySearch=()=>{if(libraryInput){libraryInput.onkeydown=null;libraryInput.type='search';libraryInput.inputMode='search';libraryInput.setAttribute('aria-label','Search tutorials');libraryInput.maxLength=80;libraryInput.oninput=()=>{guide.libraryQuery=libraryInput.value.slice(0,80);guide.libraryIndex=0;};libraryInput.value=guide.libraryQuery||'';libraryInput.focus();}if(!session?.isSystemKeyboardSupported){guide.problem='Use a connected keyboard to search, or browse the cards and filters.';}};guide.onVoicePair=()=>{if(!libraryInput)return;libraryInput.onkeydown=null;libraryInput.setAttribute('aria-label','Pairing code');libraryInput.type='text';libraryInput.inputMode='numeric';libraryInput.maxLength=8;libraryInput.value='';libraryInput.oninput=()=>{if(/^\d{8}$/.test(libraryInput.value)){const code=libraryInput.value;libraryInput.value='';libraryInput.blur();void coach.pair(code).then(result=>{guide.problem=result.ok?'Paired. Enable voice controls or start the coach.':result.message;});}};libraryInput.focus();guide.problem='Enter the eight-digit pairing code shown on the laptop.';};guide.onRepositionPanel=()=>{spatial.cancel();panelSide=!panelSide;panelNeedsPlace=true;};guide.onResetPanels=()=>{spatial.resetPlacement();panelSide=false;panelNeedsPlace=true;};}else head.add(panel);
   for(let i=0;i<2;i++) {
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,0,-2)]),
       new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8,depthTest:false}));
@@ -321,7 +321,7 @@ function initRenderer() {
     }
     observation?.target(hover||null,'webxr');
     if(spatial?.drag&&!Array.from(session.inputSources).includes(spatial.drag.source))spatial.cancel();
-    guide?.tick(frame,session,reference,time);
+    guide?.tick(frame,session,reference,time);voice?.observe();
     if(tutorialMode){
       spatial.tick(time,pose);
       if(animatedMode!==guide.mode){animatedMode=guide.mode;modeEntered=time;}
@@ -354,7 +354,7 @@ async function enterAR() {
     active.addEventListener('end',()=>{voice?.stop();dropHeldSpeech();observation?.suspend('session_ended');libraryInput?.remove();libraryInput=null;spatial?.reset();session=null;captureSetup?.cancel();guide?.endSession();observation?.observe({active:false,visible:visible()});pauseOnLeave();hover='';tell(tutorialMode?'AR closed. Your saved tutorials remain in the library.':'AR closed. Paid checks paused.');update();});
     active.addEventListener('visibilitychange',()=>{if(active.visibilityState!=='visible'){spatial?.cancel();voice?.muteFor(1500);pauseOnLeave();guide?.hide();observation?.suspend('hidden');}observation?.observe({active:true,visible:visible()});});
     if(tutorialMode){
-      libraryInput=document.createElement('input');libraryInput.type='search';libraryInput.maxLength=80;libraryInput.setAttribute('aria-label','Search tutorials in AR');libraryInput.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;';document.body.append(libraryInput);
+      libraryInput=document.createElement('input');libraryInput.onkeydown=null;libraryInput.type='search';libraryInput.inputMode='search';libraryInput.setAttribute('aria-label','Search tutorials');libraryInput.maxLength=80;libraryInput.setAttribute('aria-label','Search tutorials in AR');libraryInput.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;';document.body.append(libraryInput);
       libraryInput.oninput=()=>{guide.libraryQuery=libraryInput.value.slice(0,80);guide.libraryIndex=0;};
       active.addEventListener('selectstart',event=>{if(active.visibilityState!=='visible')return;const pose=event.frame.getPose(event.inputSource.targetRaySpace,renderer.xr.getReferenceSpace());if(pose)spatial.start(event.inputSource,pose);});
       active.addEventListener('selectend',event=>spatial.end(event.inputSource));
