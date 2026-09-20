@@ -14,7 +14,7 @@ export class UtteranceGate{
   if(!this.started){this.lead.push(block);while(this.lead.length*ms>250)this.lead.shift();if(!speech)return null;this.started=true;this.blocks=this.lead;this.lead=[];this.duration=this.blocks.reduce((n,b)=>n+b.length/this.rate*1000,0);}
   else {this.blocks.push(block);this.duration+=ms;}
   this.silence=speech?0:this.silence+ms;
-  if(this.duration>5400||this.silence>=600){const blocks=this.blocks,result=this.duration>=350?blocks:null;this.reset();return result;}
+  if(this.duration>5400||this.silence>=350){const blocks=this.blocks,result=this.duration>=350?blocks:null;this.reset();return result;}
   return null;
  }
 }
@@ -37,6 +37,7 @@ export class VoiceCommands{
    stream.getTracks().forEach(t=>t.addEventListener('ended',()=>{if(generation===this.generation)this.stop('Microphone disconnected. Enable voice again.');}));
    node.port.onmessage=e=>{
     if(generation!==this.generation||!this.active)return;
+    this.inputLevel=this.canListen()&&!this.busy?Math.sqrt(e.data.reduce((n,v)=>n+v*v,0)/e.data.length):0;
     const key=voiceContext(this.guide);
     if(!this.canListen()||Date.now()<this.muteUntil||this.busy){this.gate.reset();this.clipContext=null;return;}
     if(this.clipContext&&this.clipContext!==key){this.gate.reset();this.clipContext=null;}
@@ -48,7 +49,7 @@ export class VoiceCommands{
  muteFor(ms){this.muteUntil=Math.max(this.muteUntil,Date.now()+ms);this.gate?.reset();this.clipContext=null;}
  async submit(audio,context){
   if(!this.active||this.busy)return;if(this.attempts>=this.limit){this.stop('Voice clip limit reached. Enable again when needed.');return;}
-  const generation=this.generation;this.busy=true;this.state='processing';this.message='Hearing command…';this.attempts++;const abort=new AbortController();this.abort=abort;const timeout=setTimeout(()=>abort.abort(),22000);
+  const saveCutoff=this.guide.segmenter?.cutoff(this.guide.recordElapsed);const generation=this.generation;this.busy=true;this.state='processing';this.message='Hearing command…';this.attempts++;const abort=new AbortController();this.abort=abort;const timeout=setTimeout(()=>abort.abort(),22000);
   try{
    const response=await this.fetchImpl('/api/voice/commands',{method:'POST',credentials:'same-origin',headers:{'content-type':'audio/wav','x-trail-voice-context':encodeURIComponent(JSON.stringify(voiceIntentContext(this.guide)))},body:audio,signal:this.abort.signal});const result=await response.json();
    if(generation!==this.generation)return;
@@ -58,7 +59,7 @@ export class VoiceCommands{
    if(command==='none'){this.message=String(result.response||'Listening…').slice(0,240);if(result.response)await this.reply(this.message,result.speechTicket);return;}
    if(!voiceIntentContext(this.guide).allowed.includes(command)){this.message='That action is not available here.';return;}
    if(command==='stop'){this.active=false;this.state='off';this.stream?.getTracks().forEach(t=>t.stop());this.message='Voice controls off.';await this.reply('Voice controls off.',result.speechTicket);if(generation===this.generation)this.stop('Voice controls off.');return;}
-   const outcome=applyVoiceCommand(this.guide,command);this.message=outcome.message;this.tell(outcome.message);this.guide.notify(outcome.ok?'open':'error',outcome.message);this.muteFor(900);await this.reply(outcome.message,result.speechTicket);
+   const outcome=applyVoiceCommand(this.guide,command,{saveCutoff});this.message=outcome.message;this.tell(outcome.message);this.guide.notify(outcome.ok?'open':'error',outcome.message);this.muteFor(900);await this.reply(outcome.message,result.speechTicket);
   }catch(e){if(generation===this.generation)this.message=e.name==='AbortError'?'Voice timed out. Try again.':e.message;}
   finally{clearTimeout(timeout);if(generation===this.generation){this.busy=false;this.state=this.active?'listening':'off';this.muteFor(700);}}
  }
@@ -82,6 +83,6 @@ export class VoiceCommands{
   }catch{if(generation===this.generation)this.message=text+' · Audio unavailable; reply shown here.';}
  }
  stop(message='Voice controls off'){
-  this.generation++;this.active=false;this.busy=false;this.state='off';this.message=message;this.abort?.abort();this.replyNode?.stop();this.replyNode=null;clearTimeout(this.timer);this.node?.disconnect();this.source?.disconnect();this.stream?.getTracks().forEach(t=>t.stop());this.stream=null;void this.context?.close().catch(()=>{});this.context=null;this.gate?.reset();this.clipContext=null;
+  this.inputLevel=0;this.generation++;this.active=false;this.busy=false;this.state='off';this.message=message;this.abort?.abort();this.replyNode?.stop();this.replyNode=null;clearTimeout(this.timer);this.node?.disconnect();this.source?.disconnect();this.stream?.getTracks().forEach(t=>t.stop());this.stream=null;void this.context?.close().catch(()=>{});this.context=null;this.gate?.reset();this.clipContext=null;
  }
 }

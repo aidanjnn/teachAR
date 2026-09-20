@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { VoiceIntentContextSchema, VoiceIntentSchema } from '../ai/voice-intent.js';
+import { directVoiceIntent, VoiceIntentContextSchema, VoiceIntentSchema } from '../ai/voice-intent.js';
 import type { FastifyInstance, RouteShorthandOptions } from 'fastify';
 import { TranscriptResultSchema } from '@trail/contracts';
 import type { AiProvider } from '../ai/provider.js';
@@ -48,7 +48,7 @@ export function registerVoiceCommands(app: FastifyInstance, provider: AiProvider
       if (result.source !== 'model') return reply.code(503).send({ error: 'voice_unavailable', message: 'No live transcription was returned.' });
       const text = result.spans.map(s => s.text).join(' ').slice(0, 500);
       if (!provider.interpretCommand) return reply.code(503).send({ error: 'voice_unavailable', message: 'Natural voice control is not configured.' });
-      const intent = VoiceIntentSchema.parse(await provider.interpretCommand(text, context, AbortSignal.timeout(8_000)));
+      const intent = VoiceIntentSchema.parse(directVoiceIntent(text,context) ?? await provider.interpretCommand(text, context, AbortSignal.timeout(8_000)));
       if (intent.action !== 'none' && !context.allowed.includes(intent.action)) return { action: 'none', response: 'That action is not available here.', ...status() };
       return { ...intent, speechTicket: intent.action !== 'none' || intent.response ? ticket() : null, ...status() };
     } catch {

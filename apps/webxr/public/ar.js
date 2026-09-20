@@ -352,7 +352,7 @@ async function enterAR() {
         guide.instructions=$('tutorial-instructions').value.split('\n').map(s=>s.trim());
       }
       panelNeedsPlace=true;guide.begin(tutorialMode?'home':undefined);if(tutorialMode)guide.nextEntry=null;
-      renderer.xr.getReferenceSpace().addEventListener('reset',()=>{spatial?.reset();panelNeedsPlace=true;guide.reset();tell('XR origin changed. Mark the workspace again.');speak('Tracking origin changed. Mark the workspace again.');});
+      renderer.xr.getReferenceSpace().addEventListener('reset',()=>{spatial?.reset();panelNeedsPlace=true;if(tutorialMode){guide.trackingOriginChanged();tell(guide.note||guide.problem);}else{guide.reset();tell('Tracking space changed. Mark the workspace again.');}});
       await setAuto(false).catch(()=>tell('Server unavailable. Local hand guidance still works.'));
       return;
     }

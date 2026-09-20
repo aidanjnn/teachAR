@@ -1,3 +1,19 @@
+## Simplified recording loop (2026-09-20)
+
+AR opens at Home. Choose Create or Library; restoring a recording or resetting XR coordinates must not open calibration automatically. Library selection exposes Play and Edit before placement.
+
+Create explains the workflow, captures one rest/save position, then places the workspace. Both hands are the default; single-hand overrides live in Options. In hold mode, move at least 3 cm, hold still for one second, then hold through a one-second circle. The saved take ends before the circle. Saving enters a ready state. Return to the configured rest position, hold briefly, and a three-second countdown starts the next take. Moving away cancels readiness. Save step and Finish tutorial are separate operations. Finish runs narration polishing automatically when configured; original recordings remain available.
+
+Spoken Save uses the most recent qualified stationary hold when available. Speech processing and replies finish before a new countdown. Common unambiguous commands bypass intent inference after transcription; other phrasing still uses the model. This command pipeline is clip-based, not OpenAI Realtime streaming.
+
+For folding, choose **Watch & do** in tutorial detail: watch each demonstration, perform it freely, then say Next. Guided mode retains local hand checkpoints. Neither mode confirms a correct physical fold from hand proximity.
+
+Placement is rigid translation and rotation, not object detection or task resizing. Use the same two recognizable landmarks in the original and new setup, preserving size and orientation. Workspace calibration currently requires landmarks 20–120 cm apart: use table landmarks around smaller paper rather than its corners. The status panel starts below the main panel and remains independently movable.
+
+Quest acceptance still required: Home after entry/reset; record two takes using the rest/countdown loop; inspect trimmed replay; Play versus Edit routing; test voice with the real headset microphone; compare Watch & do with guided folding. Synthetic browser tests do not establish worn-headset tracking quality.
+
+---
+
 # Fluid recording, movable controls and immersive library
 
 Follow-up to [immersive entry](web-immersive-entry.md) and [preview-first practice](web-practice-flow.md). The active runtime is `apps/webxr` on the WebXR product foundation.

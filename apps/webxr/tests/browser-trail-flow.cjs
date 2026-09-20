@@ -4,8 +4,8 @@ const assert=require('node:assert/strict');
  const context=await browser.newContext({viewport:{width:1280,height:1100}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));await context.route('**/api/**',async r=>{assert.equal(r.request().method(),'GET');await r.fulfill({contentType:'application/json',body:'{"automatic":{"enabled":false}}'});});
  await page.goto(`${process.env.TRAIL_TEST_ORIGIN||'http://127.0.0.1:4321'}/tutorial`);await page.locator('#browser-tools').evaluate(e=>e.open=true);await page.getByRole('button',{name:'Create tutorial',exact:true}).click();
- await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#notice').textContent.includes('Describe the starting setup'));
- await page.locator('#setup-from-pose').check();await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#setup-status').textContent.includes('Setup saved'));
+ await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#setup-status').textContent.includes('Setup saved'));
+ await page.locator('#ready-create').click();await page.waitForFunction(()=>document.querySelector('#setup-status').textContent.includes('Setup saved'));
  const result=await page.evaluate(async()=>{
   const THREE=await import('/vendor/three.module.js'),{TutorialGuide,tutorialButton}=await import('/tutorial-guide.mjs');
   const {syntheticTutorial}=await import('/tutorial-review.mjs'),{finishTutorial}=await import('/tutorial-core.mjs');

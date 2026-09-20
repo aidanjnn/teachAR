@@ -4,7 +4,7 @@ import {tutorialView,uiButtons} from '../public/tutorial-ui.mjs';
 import {TutorialFeedback} from '../public/tutorial-feedback.mjs';
 const guide=mode=>({mode,tutorial:{steps:[],title:'Example',setup:''},player:{index:0,step:{}},endpoint:{returnSince:null,cutoff:()=>null},appearance:{theme:'charcoal',sound:true}});
 test('all workflow controls fit the texture and never overlap another target',()=>{
- for(const mode of ['home','confirm-home','boundary-help','library','media-setup','media-wait','save-home','setup-new','setup-follow','tutorial-detail','choose-hands','polishing-tutorial','start','end','placement','adjust-placement','author','author-options','capture','capture-paused','confirm-discard','confirm-exit','saving','review-step','review-options','trim','settings','saved','learn','learn-options','finished']){
+ for(const mode of ['create-intro','step-ready','saving-step','home','confirm-home','boundary-help','library','media-setup','media-wait','save-home','setup-new','setup-follow','tutorial-detail','choose-hands','polishing-tutorial','start','end','placement','adjust-placement','author','author-options','capture','capture-paused','confirm-discard','confirm-exit','saving','review-step','review-options','trim','settings','saved','learn','learn-options','finished']){
   const g=guide(mode);g.trimRange=[0,3000];g.cleanSave=true;g.tutorial.steps=[{}];
   const buttons=uiButtons(tutorialView(g));
   for(const b of buttons){assert(b.x>=0&&b.y>=0&&b.x+b.w<=1080&&b.y+b.h<=560,`${mode}/${b.id} out of bounds`);assert(b.w>=100&&b.h>=44);}

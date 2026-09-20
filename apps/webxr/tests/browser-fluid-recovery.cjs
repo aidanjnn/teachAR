@@ -101,7 +101,7 @@ const assert=require('node:assert/strict');
     g.action('home');g.action('home-discard');g.action('create');
     check(g.mode==='saving'&&g.tutorial.id===oldId,'New tutorial replaced pending narration');
     resolveAudio(encodeNarration(new Float32Array(AUDIO_RATE*3)));await g.saveTask;await g.saveQueue;
-    check(g.tutorial.id!==oldId&&g.mode==='setup-new','Create did not continue after finalization');
+    check(g.tutorial.id!==oldId&&g.mode==='create-intro','Create did not continue after finalization');
     check(writes.filter(t=>t.id===oldId).at(-1).steps[0].narration,'Earlier tutorial lost finalized narration');
    });
    await run('XR exit keeps accepted media without changing the next session',async()=>{

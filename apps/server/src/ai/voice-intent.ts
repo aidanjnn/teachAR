@@ -16,3 +16,19 @@ For a question about the task, use none and answer briefly ONLY from context.ste
     input: JSON.stringify({ speech: text, context }),
   };
 }
+
+/** Fast path only for complete, explicit commands. Everything else uses the model. */
+export function directVoiceIntent(text: string, context: VoiceIntentContext): VoiceIntent | null {
+  const phrase = text.toLowerCase().trim().replace(/[.!?]+$/u, '').replace(/\s+/gu, ' ')
+    .replace(/^(?:hey trail[, ]+|trail[, ]+)/u, '').replace(/^(?:can you |could you |please )/u, '').replace(/ please$/u, '');
+  const actions: Record<string, z.infer<typeof VoiceActionSchema>> = {
+    pause:'pause', 'pause recording':'pause', 'pause tutorial':'pause', resume:'resume', continue:'resume',
+    replay:'replay', 'replay this step':'replay', 'repeat this step':'replay',
+    'next step':'next', 'go forward':'next', 'previous step':'previous', 'go back':'previous',
+    'start recording':'record', 'record next step':'record', 'save':'save', 'save it now':'save', 'save step':'save',
+    'save this step':'save', 'finish tutorial':'finish', 'finish the tutorial':'finish',
+    'go home':'home', 'stop listening':'stop', help:'help', 'what do i do':'instruction',
+  };
+  const action = actions[phrase];
+  return action && context.allowed.includes(action) ? {action,response:''} : null;
+}

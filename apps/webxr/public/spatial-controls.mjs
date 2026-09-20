@@ -87,16 +87,16 @@ export class SpatialControls {
   const g=this.guide,w=g.workspace;
   if(!w||['home','library','loading-library'].includes(g.mode)){if(this.drag?.object===this.timer)this.cancel();this.timer.visible=false;this.rings.forEach(r=>r.visible=false);return;}
   if(this.workspace!==w){if(this.drag?.object===this.timer)this.cancel();this.workspace=w;this.timerMoved=false;this.timer.scale.setScalar(1);}
-  if(!this.timerMoved){this.timer.position.copy(g.space.localToWorld(new THREE.Vector3(w.span/2,.008,.28)));this.timer.quaternion.copy(g.space.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-Math.PI/2));}
+  if(!this.timerMoved){this.panel.updateMatrixWorld(true);this.timer.position.copy(this.panel.localToWorld(new THREE.Vector3(0,-.49,0)));this.timer.quaternion.copy(this.panel.quaternion);}
   this.timer.visible=true;
   const progress=g.mode==='capture'&&g.fluidCapture?g.segmenter.progress:0;
-  this.rings.forEach((r,i)=>{const p=palm(g.currentHands?.[i?'right':'left']);r.visible=!!p&&progress>0&&g.segmenter.sides?.includes(i?'right':'left');if(r.visible){r.position.copy(g.space.localToWorld(new THREE.Vector3(...p)));r.quaternion.copy(viewer.transform.orientation);r.geometry.setDrawRange(0,Math.max(3,Math.floor(progress*64)*6));}});
+  this.rings.forEach((r,i)=>{const side=i?'right':'left',rest=g.mode==='step-ready',p=rest?g.tutorial.save_position?.[side]:palm(g.currentHands?.[side]);r.visible=!!p&&(rest||progress>0&&g.segmenter.sides?.includes(side));if(r.visible){r.position.copy(g.space.localToWorld(new THREE.Vector3(...p)));r.quaternion.copy(viewer.transform.orientation);r.geometry.setDrawRange(0,Math.max(3,Math.floor((g.mode==='step-ready'?1:progress)*64)*6));}});
   if(time-(this.lastDraw||-Infinity)<50)return;this.lastDraw=time;
   const event=g.feedback?.visible(performance.now()),p=THEMES[g.appearance?.theme]||THEMES.charcoal,c=this.ctx;
   c.clearRect(0,0,768,256);c.fillStyle=p.surface;c.beginPath();c.roundRect(0,0,768,256,36);c.fill();c.fillStyle=p.muted;c.font='24px system-ui';c.fillText('TRAIL · PINCH TO MOVE',32,42);
-  const title=event?.text|| (g.pending?`${Math.max(0,Math.ceil((g.pending.until-performance.now())/1000))} seconds`:g.mode==='capture'?`${(g.recordElapsed/1000).toFixed(1)}s · Step ${g.tutorial.steps.length+1}`:g.mode==='capture-paused'?'Recording paused':g.practice?.phase==='transition'?'Next step starting…':g.practice?.phase==='preview'?'Watch the next movement':g.mode==='learn'?'Your turn':'Workspace ready');
+  const title=(g.pending?.waitForVoice?'Getting ready…':g.pending?`${Math.max(0,Math.ceil((g.pending.until-performance.now())/1000))} seconds`:event?.text?event.text:g.mode==='step-ready'?'Return to the rest rings':g.mode==='capture'?`${(g.recordElapsed/1000).toFixed(1)}s · Step ${g.tutorial.steps.length+1}`:g.mode==='capture-paused'?'Recording paused':g.practice?.phase==='transition'?'Next step starting…':g.practice?.phase==='preview'?'Watch the next movement':g.mode==='learn'?'Your turn':'Workspace ready');
   c.fillStyle=event?.kind==='saved'?p.success:p.ink;c.font='500 36px system-ui';g.text(c,title,32,102,700,42,2);
-  c.fillStyle=p.muted;c.font='25px system-ui';c.fillText(progress>0?'Hold still to save…':g.mode==='capture'&&g.fluidCapture?'Move, then hold. Each step saves automatically.':g.savedMessage||'',32,199,700);
+  c.fillStyle=p.muted;c.font='25px system-ui';c.fillText(progress>0?'Hold still to save…':g.mode==='capture'&&g.fluidCapture?'Hold 1 second, then let the circle fill.':g.savedMessage||'',32,199,700);
   if(progress>0){c.fillStyle=p.success;c.fillRect(32,226,704*progress,6);}this.texture.needsUpdate=true;
  }
 }

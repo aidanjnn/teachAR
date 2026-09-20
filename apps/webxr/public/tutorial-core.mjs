@@ -109,7 +109,7 @@ export function validateTutorial(input){
     step.id=id(s.id,uid);if(ids.has(step.id))throw Error('Duplicate step IDs.');ids.add(step.id);
     // Derived duration/quality and verification claims are never trusted on import.
     if(s.guide_hands!==undefined&&!['recorded','left','right','both'].includes(s.guide_hands))throw Error('Invalid guiding hands.');
-    step.guide_hands=s.guide_hands||'recorded';
+    step.guide_hands=!s.guide_hands||s.guide_hands==='recorded'?'both':s.guide_hands;
     step.reference=validateReference(s.reference);step.cues=validateCues(s.cues);step.reviewed=s.reviewed===true&&input.schema!=='trail.tutorial.prototype.v1'&&step.guide_hands!=='recorded';
     if(s.acceptance!=null&&!['hold','finish'].includes(s.acceptance))throw Error('Invalid step acceptance.');step.acceptance=s.acceptance||null;
     step.narration=validateNarration(s.narration,step.duration_ms);step.narration_issue=s.narration_issue?boundedText(s.narration_issue,240,'Narration issue'):null;

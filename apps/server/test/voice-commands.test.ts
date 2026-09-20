@@ -8,7 +8,7 @@ import { createMockProvider } from '../src/ai/mock.js';
 import { createPairingAuthority } from '../src/auth/pairing.js';
 import type { AiProvider } from '../src/ai/provider.js';
 import { commandAudioDuration } from '../src/routes/voice-commands.js';
-import { voiceIntentPrompt, VoiceIntentSchema } from '../src/ai/voice-intent.js';
+import { directVoiceIntent, voiceIntentPrompt, VoiceIntentSchema } from '../src/ai/voice-intent.js';
 const dirs:string[]=[];
 afterEach(async()=>{vi.restoreAllMocks();await Promise.all(dirs.splice(0).map(p=>rm(p,{recursive:true,force:true})));});
 function wav(seconds=1){const b=Buffer.alloc(44+16000*2*seconds);b.write('RIFF');b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(16000,24);b.writeUInt32LE(32000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(b.length-44,40);return b;}
@@ -46,4 +46,14 @@ it('permits only one bounded speech reply per command ticket',async()=>{
 it('cookie-paired browsers use POST status with Origin before acquiring the mic',async()=>{
  const origin='http://localhost:3401',auth=createPairingAuthority({allowedOrigins:[origin],allowUsbLoopback:true}),app=await appWith(provider,auth);
  try{const h={host:'localhost:3401',origin};const pair=await app.inject({method:'POST',url:'/api/pair',headers:h,payload:{code:auth.issueCode('author',auth.sessionId,'browser').code,client:'browser'}});const cookie=String(pair.headers['set-cookie']).split(';')[0];const status=await app.inject({method:'POST',url:'/api/voice/commands/status',headers:{...h,cookie}});expect(status.statusCode).toBe(200);expect(status.json()).toMatchObject({enabled:true,remaining:120});}finally{await app.close();}
+});
+
+it('fast commands skip interpretation but keep context, negation and questions guarded',async()=>{
+ const ctx={mode:'learn',allowed:['pause','previous','next','instruction'] as const,step:null};
+ const allowed={...ctx,allowed:[...ctx.allowed]};
+ expect(directVoiceIntent('Can you go back please?',allowed)?.action).toBe('previous');
+ expect(directVoiceIntent('Pause.',allowed)?.action).toBe('pause');
+ for(const speech of ["don't go back",'if I say pause','pause then next step','he said pause','finish tutorial','what next'])expect(directVoiceIntent(speech,allowed)).toBeNull();
+ const interpretCommand=vi.fn(provider.interpretCommand),app=await appWith({...provider,interpretCommand,transcribe:async()=>({...await provider.transcribe({} as never),spans:[{id:'one',startMs:0,endMs:800,text:'Pause.'}]})});
+ try{const r=await app.inject({method:'POST',url:'/api/voice/commands',headers,payload:wav()});expect(r.statusCode).toBe(200);expect(r.json().action).toBe('pause');expect(interpretCommand).not.toHaveBeenCalled();}finally{await app.close();}
 });

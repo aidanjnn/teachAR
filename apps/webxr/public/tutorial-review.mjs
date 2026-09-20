@@ -54,7 +54,7 @@ export function mountReview(guide,{isActive,tell}){
     $('step-title').value=step.title||'';$('step-instruction').value=step.instruction;$('trim-start').value=0;$('trim-end').value=(step.duration_ms/1000).toFixed(3);
     $('narration-summary').textContent=step.instruction_voice?'AI instruction voice saved · Original narration retained. Replay uses the polished instruction.':step.narration_issue?`Narration needs repair: ${step.narration_issue}`:step.narration?`Recorded narration: ${(step.narration.duration_ms/1000).toFixed(1)} seconds. Listen with the ghost before approving. Timing is approximate.`:'No recorded narration. This step uses written instructions.';
     $('remove-narration').disabled=!step.narration&&!step.narration_issue;
-    $('guide-hands').value=step.guide_hands||'recorded';$('guide-hands').dispatchEvent(new Event('ui-refresh'));
+    $('guide-hands').value=['left','right'].includes(step.guide_hands)?step.guide_hands:'both';$('guide-hands').dispatchEvent(new Event('ui-refresh'));
     $('reviewed').checked=step.reviewed;$('step-photo').hidden=!step.reference;
     if(step.reference)$('step-photo').src=step.reference.image;else $('step-photo').removeAttribute('src');
     $('scrub').max=step.duration_ms;$('scrub').value=0;
