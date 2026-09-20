@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CoachAnswerSchema, CoachContextSchema, CoachRequestSchema, CoachSessionRequestSchema, HealthSchema,
-  LabelRequestSchema, LabelResultSchema, LabelSegmentsSchema, LiveStepUpdateSchema, NarrationCaptureSchema, TranscriptResultSchema, describeStepChange,
+  LabelRequestSchema, LabelResultSchema, LabelSegmentsSchema, LiveStepUpdateSchema, NarrationCaptureSchema, TranscriptResultSchema, describeStepChange, fallbackCoachAnswer,
 } from '../src/index.js';
 import transcriptRaw from '../../../fixtures/narration-transcript.v1.json';
 import segmentsRaw from '../../../fixtures/label-segments.v1.json';
@@ -60,6 +60,12 @@ describe('voice contracts', () => {
     expect(CoachContextSchema.safeParse({ ...context, steps: [{ ...context.steps[0], title: 'x'.repeat(61) }] }).success).toBe(false);
   });
 
+  it('builds a fallback answer from the current step with every identifier copied', () => {
+    expect(fallbackCoachAnswer({ requestId: 'req-1', context: { ...context, tutorialRevision: 3, attemptId: 'att-2', currentStepId: 'seg-2', stepRevision: 1 } })).toEqual({
+      schemaVersion: 1, requestId: 'req-1', runId: 'run-1', tutorialId: 'tut-1', tutorialRevision: 3, stepId: 'seg-2', stepRevision: 1,
+      attemptId: 'att-2', answer: 'Insert the support. Drop the support into the base.', grounded: true, source: 'fallback', model: null,
+    });
+  });
   it('bounds coach requests and answers', () => {
     expect(CoachRequestSchema.safeParse({ schemaVersion: 1, requestId: 'req-1', context, question: 'What now?' }).success).toBe(true);
     expect(CoachRequestSchema.safeParse({ schemaVersion: 1, requestId: 'req-1', context, question: 'x'.repeat(501) }).success).toBe(false);

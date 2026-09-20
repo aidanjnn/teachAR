@@ -106,11 +106,16 @@ export const CoachContextSchema = z.strictObject({
 });
 export type CoachContext = z.infer<typeof CoachContextSchema>;
 
-/** Plain-language context pushed to the coach when the learner's step or attempt changes. Shared by server and clients. */
-export function describeStepChange(context: CoachContext): string {
+export function currentCoachStep(context: CoachContext): { step: CoachStep; index: number } {
   const index = context.steps.findIndex(step => step.id === context.currentStepId);
   const step = context.steps[index];
   if (!step) throw new Error('Coach context has no current step');
+  return { step, index };
+}
+
+/** Plain-language context pushed to the coach when the learner's step or attempt changes. Shared by server and clients. */
+export function describeStepChange(context: CoachContext): string {
+  const { step, index } = currentCoachStep(context);
   return `The learner is now on step ${index + 1} of ${context.steps.length}: "${step.title}". Instruction: ${step.instruction} Questions about earlier steps are stale; answer for this step.`;
 }
 
@@ -126,6 +131,19 @@ export const CoachAnswerSchema = z.strictObject({
   source: z.enum(['model', 'fallback']), model: ShortName.nullable(),
 });
 export type CoachAnswer = z.infer<typeof CoachAnswerSchema>;
+
+/** Identical approved-step fallback for server failures and an unreachable backend. */
+export function fallbackCoachAnswer(request: Pick<CoachRequest, 'requestId' | 'context'>): CoachAnswer {
+  const { context, requestId } = request;
+  const { step } = currentCoachStep(context);
+  return CoachAnswerSchema.parse({
+    schemaVersion: 1, requestId, runId: context.runId, tutorialId: context.tutorialId,
+    tutorialRevision: context.tutorialRevision, stepId: context.currentStepId,
+    stepRevision: context.stepRevision, attemptId: context.attemptId,
+    answer: `${step.title}. ${step.instruction}`.slice(0, MAX_ANSWER_CHARS),
+    grounded: true, source: 'fallback', model: null,
+  });
+}
 
 export const CoachSessionRequestSchema = z.strictObject({
   schemaVersion: z.literal(1), sdp: z.string().min(1).max(MAX_SDP_CHARS), context: CoachContextSchema,

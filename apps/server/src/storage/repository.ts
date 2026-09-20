@@ -94,15 +94,22 @@ export class TutorialRepository {
       return { id, sha256: hash, status: 'ready' as const };
     });
   }
-  async recording(id: string) {
+  private async readRecording(id: string) {
     const manifest = await this.uploadStatus(id);
     if (manifest.status !== 'ready' || !manifest.hash) throw new StoreError(409, 'Recording upload is incomplete');
     const bytes = await readFile(this.files.path('recordings', id, 'recording.json'));
     const recording = parseContractJson(RecordingSchema, bytes.toString('utf8'));
     if (digest(bytes) !== manifest.hash) throw new StoreError(422, 'Recording integrity check failed');
-    return { recording, sha256: manifest.hash };
+    return { recording, bytes, sha256: manifest.hash };
   }
-  async recordingContent(id: string) { await this.recording(id); return readFile(this.files.path('recordings', id, 'recording.json')); }
+  async recording(id: string) {
+    const { recording, sha256 } = await this.readRecording(id);
+    return { recording, sha256 };
+  }
+  async recordingContent(id: string) {
+    const { bytes, sha256 } = await this.readRecording(id);
+    return { bytes, sha256 };
+  }
   async uploadBytes(id: string, index: number, bytes: Buffer, expectedHash: string) {
     return this.files.serial(id, async () => {
       const upload = await this.uploadStatus(id);

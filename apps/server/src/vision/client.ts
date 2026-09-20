@@ -1,3 +1,4 @@
+import { readVisionJson } from './response.js';
 import { VisionHealthSchema, type VisionDependency } from '@trail/contracts';
 
 export interface VisionConnection { url: string; token: string }
@@ -9,19 +10,10 @@ export async function probeVision(connection: VisionConnection | null): Promise<
       headers: { authorization: `Bearer ${connection.token}` },
       signal: AbortSignal.timeout(1500), redirect: 'error',
     });
-    if (!response.ok || !response.body) return { status: 'unavailable' };
-    const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let length = 0;
-    try {
-      while (true) {
-        const chunk = await reader.read();
-        if (chunk.done) break;
-        length += chunk.value.byteLength;
-        if (length > 8192) { await reader.cancel(); return { status: 'unavailable' }; }
-        chunks.push(chunk.value);
-      }
-    } finally { reader.releaseLock(); }
-    return { status: 'reachable', health: VisionHealthSchema.parse(JSON.parse(Buffer.concat(chunks).toString('utf8'))) };
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => undefined);
+      return { status: 'unavailable' };
+    }
+    return { status: 'reachable', health: VisionHealthSchema.parse(await readVisionJson(response, 8192)) };
   } catch { return { status: 'unavailable' }; }
 }

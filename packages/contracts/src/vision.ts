@@ -14,7 +14,6 @@ export const VisionReadinessSchema = z.strictObject({
   schemaVersion: z.literal(1), service: z.literal('vision'), ready: z.boolean(),
   reason: z.enum(['not-implemented', 'ready', 'mock-provider', 'provider-unconfigured', 'busy']),
 }).refine(value => value.ready === (value.reason === 'ready'), 'Readiness reason mismatch');
-export const VisionUnavailableSchema = z.strictObject({ schemaVersion: z.literal(1), error: z.literal('vision-not-implemented') });
 export const VisionDependencySchema = z.discriminatedUnion('status', [
   z.strictObject({ status: z.literal('disabled') }), z.strictObject({ status: z.literal('unavailable') }),
   z.strictObject({ status: z.literal('reachable'), health: VisionHealthSchema }),

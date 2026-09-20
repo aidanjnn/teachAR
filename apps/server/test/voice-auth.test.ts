@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MAX_NARRATION_BYTES, type CoachSessionRequest } from '@trail/contracts';
 import { createMockProvider } from '../src/ai/mock.js';
 import type { AiProvider, LiveControlChannel } from '../src/ai/provider.js';
@@ -214,6 +214,16 @@ describe('voice routes behind pairing', () => {
 });
 
 describe('groundContext', () => {
+  it.each(['success', 'failure', 'timeout'])('clears the lookup deadline after %s', async outcome => {
+    vi.useFakeTimers();
+    try {
+      const pending = groundContext(clientContext, () => outcome === 'success' ? Promise.resolve(stored)
+        : outcome === 'failure' ? Promise.reject(new Error('unavailable')) : new Promise(() => undefined), 'learner');
+      if (outcome === 'timeout') await vi.advanceTimersByTimeAsync(2000);
+      expect((await pending).ok).toBe(outcome === 'success');
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
   it('keeps every step so numbering matches the tutorial, and bounds the derived title', async () => {
     const long: CoachTutorialSource = { id: 'long', revision: 0, steps: Array.from({ length: 40 }, (_, i) => ({ id: `s${i + 1}`, title: `Step ${i + 1}`, instruction: `Do ${i + 1}.` })) };
     const result = await groundContext({ ...clientContext, tutorialId: 'long', tutorialRevision: 0, currentStepId: 's30' }, async () => long, 'learner');

@@ -70,7 +70,7 @@ describe('fallback labels', () => {
   it('marks model provenance only through modelLabels', () => {
     const validated = validateLabelOutput(request, good);
     if (!validated.ok) throw new Error('expected ok');
-    const result = modelLabels(request, validated.labels, 'gpt-4.1-mini');
+    const result = modelLabels(validated.labels, 'gpt-4.1-mini');
     expect(result.provenance).toEqual({ labels: 'model', model: 'gpt-4.1-mini', promptVersion: 'labels-v1' });
     expect(result.failure).toBeNull();
   });

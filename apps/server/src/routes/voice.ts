@@ -1,11 +1,10 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest, RouteShorthandOptions } from 'fastify';
 import {
-  AUDIO_MIME_TYPES, COACH_TEXT_DEADLINE_MS, CoachAnswerSchema, CoachContextSchema, CoachRequestSchema, CoachSessionRequestSchema,
+  fallbackCoachAnswer, AUDIO_MIME_TYPES, COACH_TEXT_DEADLINE_MS, CoachAnswerSchema, CoachContextSchema, CoachRequestSchema, CoachSessionRequestSchema,
   CoachSessionResponseSchema, LabelRequestSchema, LabelResultSchema, LiveStepUpdateSchema, MAX_NARRATION_BYTES, MAX_RECORDING_DURATION_MS,
   TranscriptResultSchema, type CoachAnswer, type CoachContext, type VoiceUnavailable,
 } from '@trail/contracts';
 import { z } from 'zod';
-import { fallbackAnswer } from '../ai/coach-prompts.js';
 import { LiveSessionRegistry } from '../ai/live-sessions.js';
 import type { AiProvider } from '../ai/provider.js';
 import type { PairingAuthority, PairingRole } from '../auth/pairing.js';
@@ -42,6 +41,16 @@ export interface VoiceRouteOptions {
 
 type Grounded = { ok: true; context: CoachContext } | { ok: false; status: number; body: VoiceUnavailable };
 
+async function withinDeadline<T>(work: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([work, new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Voice operation timed out')), timeoutMs);
+      timer.unref();
+    })]);
+  } finally { clearTimeout(timer); }
+}
+
 function unavailable(reply: FastifyReply, status: number, body: VoiceUnavailable) {
   return reply.code(status).header('Cache-Control', 'no-store').send(body);
 }
@@ -58,10 +67,7 @@ export async function groundContext(context: CoachContext, resolveTutorial: Coac
   if (!resolveTutorial) return { ok: true, context };
   let tutorial: CoachTutorialSource | null;
   try {
-    tutorial = await Promise.race([
-      resolveTutorial(context.tutorialId),
-      new Promise<never>((_, reject) => { setTimeout(() => reject(new Error('lookup timeout')), LOOKUP_TIMEOUT_MS).unref?.(); }),
-    ]);
+    tutorial = await withinDeadline(resolveTutorial(context.tutorialId), LOOKUP_TIMEOUT_MS);
   } catch {
     return { ok: false, status: 503, body: { error: 'provider_unavailable', message: 'Tutorial lookup failed.' } };
   }
@@ -144,7 +150,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
       try {
         answer = await provider.coachText(coachRequest, AbortSignal.timeout(COACH_TEXT_DEADLINE_MS - 500));
       } catch {
-        answer = fallbackAnswer(coachRequest);
+        answer = fallbackCoachAnswer(coachRequest);
       }
       return reply.header('Cache-Control', 'no-store').send(CoachAnswerSchema.parse(answer));
     });
@@ -166,10 +172,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, provider: AiProv
         const control = provider.openLiveControl(result.sessionId);
         if (!control) return unavailable(reply, 503, { error: 'live_unavailable', message: 'The live coach control channel could not be opened.' });
         try {
-          await Promise.race([
-            control.ready,
-            new Promise<never>((_, reject) => { setTimeout(() => reject(new Error('control timeout')), CONTROL_READY_TIMEOUT_MS).unref?.(); }),
-          ]);
+          await withinDeadline(control.ready, CONTROL_READY_TIMEOUT_MS);
         } catch {
           try { control.close(); } catch { /* already closed */ }
           return unavailable(reply, 503, { error: 'live_unavailable', message: 'The live coach control channel did not become ready.' });

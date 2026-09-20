@@ -97,7 +97,7 @@ export function fallbackLabels(request: LabelRequest, failure: LabelFailure | nu
   });
 }
 
-export function modelLabels(_request: LabelRequest, labels: SegmentLabel[], model: string): LabelResult {
+export function modelLabels(labels: SegmentLabel[], model: string): LabelResult {
   return LabelResultSchema.parse({
     schemaVersion: 1, labels, provenance: { labels: 'model', model, promptVersion: LABEL_PROMPT_VERSION }, failure: null,
   });

@@ -1,11 +1,11 @@
 import {
-  COACH_TEXT_DEADLINE_MS,
+  COACH_TEXT_DEADLINE_MS, fallbackCoachAnswer,
   type CoachAnswer, type CoachContext, type CoachRequest, type CoachSessionRequest, type CoachSessionResponse,
   type LabelFailure, type LabelRequest, type LabelResult, type VoiceUnavailable,
 } from '@trail/contracts';
 import type { LiveCreateParams } from 'openai/resources/live/live';
 import { alignTranscript } from './align.js';
-import { CoachModelOutputSchema, backendInstructions, coachTextPrompt, fallbackAnswer, frontendInstructions, modelAnswer } from './coach-prompts.js';
+import { CoachModelOutputSchema, backendInstructions, coachTextPrompt, frontendInstructions, modelAnswer } from './coach-prompts.js';
 import { LabelModelOutputSchema, buildLabelPrompt, fallbackLabels, modelLabels, validateLabelOutput } from './labels.js';
 import type { OpenAiGateway } from './openai-gateway.js';
 import type { AiProvider, TranscribeInput } from './provider.js';
@@ -67,7 +67,7 @@ export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider
         if (parsed.status === 'incomplete') return fail('incomplete', `The model stopped early (${parsed.reason})`);
         if (parsed.status === 'unparsed') return fail('invalid_output', 'The model returned no parsable labels');
         const validated = validateLabelOutput(request, parsed.parsed);
-        return validated.ok ? modelLabels(request, validated.labels, options.textModel) : fallbackLabels(request, validated.failure);
+        return validated.ok ? modelLabels(validated.labels, options.textModel) : fallbackLabels(request, validated.failure);
       } catch (error) {
         return isTimeoutError(error) ? fail('timeout', `Labeling exceeded ${labelTimeoutMs} ms`) : fail('provider_unavailable', 'The labeling provider failed');
       }
@@ -78,10 +78,10 @@ export function createOpenAiProvider(options: OpenAiProviderOptions): AiProvider
           model: options.textModel, ...coachTextPrompt(request), schema: CoachModelOutputSchema, schemaName: 'coach_answer',
           maxOutputTokens: 200, signal: AbortSignal.any([signal, AbortSignal.timeout(coachTimeoutMs)]),
         });
-        if (parsed.status !== 'ok') return fallbackAnswer(request);
-        return modelAnswer(request, parsed.parsed, options.textModel) ?? fallbackAnswer(request);
+        if (parsed.status !== 'ok') return fallbackCoachAnswer(request);
+        return modelAnswer(request, parsed.parsed, options.textModel) ?? fallbackCoachAnswer(request);
       } catch {
-        return fallbackAnswer(request);
+        return fallbackCoachAnswer(request);
       }
     },
     async createLiveSession(request: CoachSessionRequest, signal: AbortSignal): Promise<CoachSessionResponse | VoiceUnavailable> {
