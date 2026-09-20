@@ -963,6 +963,12 @@ Native CI diagnosis on the same branch: the Unity EditMode/PlayMode jobs had fai
 
 - Completion / verification: cancelled the old queued self-hosted run, unregistered `trail-unity` (GitHub API confirms zero runners), and removed only its local registration/credential files while retaining job artifacts. Actionlint and patch-whitespace checks passed; local links in the four updated guidance documents resolve. Runtime/test inputs are unchanged, so prior workspace/fixture/browser results remain applicable; the cleanup PR will run the retained hosted jobs. No new native, live-provider or headset test is claimed.
 
+### 2026-09-19 — Merge voice authentication PR #14 into main
+
+Merged `codex/voice-auth` head `7886188` into `main` as `1f9ff02` after the branch had absorbed #16's retirement of the native workflows, so the merge changed no CI definitions. It carries pair-gated voice routes, stored-tutorial grounding through the tutorial repository, the server-owned live step channel with generation ordering and control-channel readiness, the browser's pending-sync gate, the paired Voice Lab with Playwright pairing setup, and the second-round review fixes. All five reviewer threads were resolved with the fixing commits cited; no thread remains open.
+
+Validation on `main` `1f9ff02`: `pnpm check` passed strict typechecks, 352 unit/API tests in 32 files, production builds and the static quest scaffold check; `pnpm validate:fixtures` passed; `pnpm test:e2e` passed 7 Chromium scenarios against the built server in mock mode with pairing enabled; hosted Check run 35475345582 passed all four jobs. This is automated web/server and desktop fixture evidence only. A successful OpenAI sideband handshake, live-provider coaching, and headset behaviour remain unverified, and the Voice Lab coach on a paired server falls back to local text because its steps are not a saved guide.
+
 ### 2026-09-19 — Package browser tutor as a Unity integration reference
 
 - User requested publication of the local work so Hamza can merge and complete the Unity implementation. Prepared isolated `codex/browser-tutor-handoff` from main `8cd87f7`; the running local prototype and private recordings are untouched. No native source/contracts changed, no merge or reviewer notification is performed.
