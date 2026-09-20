@@ -265,7 +265,7 @@ function initRenderer() {
   scene=new THREE.Scene();camera=new THREE.PerspectiveCamera();head=new THREE.Group();scene.add(head);guide?.attach(scene);
   texture=new THREE.CanvasTexture(hud);texture.colorSpace=THREE.SRGBColorSpace;
   panel=new THREE.Mesh(new THREE.PlaneGeometry(tutorialMode?1.08:1.35,tutorialMode?.56:.70),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
-  panel.position.set(0,.34,-1.4);panel.renderOrder=10;if(tutorialMode){scene.add(panel);spatial=new SpatialControls(scene,panel,guide);guide.onLibrarySearch=()=>{if(libraryInput){libraryInput.type='search';libraryInput.maxLength=80;libraryInput.oninput=()=>{guide.libraryQuery=libraryInput.value.slice(0,80);guide.libraryIndex=0;};libraryInput.value=guide.libraryQuery||'';libraryInput.focus();}if(!session?.isSystemKeyboardSupported){guide.problem='Use a connected keyboard to search, or browse the cards and filters.';}};guide.onVoicePair=()=>{if(!libraryInput)return;libraryInput.type='text';libraryInput.inputMode='numeric';libraryInput.maxLength=8;libraryInput.value='';libraryInput.oninput=()=>{if(/^\d{8}$/.test(libraryInput.value)){const code=libraryInput.value;libraryInput.value='';libraryInput.blur();void coach.pair(code).then(result=>{guide.problem=result.ok?'Paired. Enable voice controls or start the coach.':result.message;});}};libraryInput.focus();guide.problem='Enter the eight-digit pairing code shown on the laptop.';};guide.onRepositionPanel=()=>{panelSide=!panelSide;panelNeedsPlace=true;};}else head.add(panel);
+  panel.position.set(0,.34,-1.4);panel.renderOrder=10;if(tutorialMode){scene.add(panel);spatial=new SpatialControls(scene,panel,guide);guide.onLibrarySearch=()=>{if(libraryInput){libraryInput.type='search';libraryInput.maxLength=80;libraryInput.oninput=()=>{guide.libraryQuery=libraryInput.value.slice(0,80);guide.libraryIndex=0;};libraryInput.value=guide.libraryQuery||'';libraryInput.focus();}if(!session?.isSystemKeyboardSupported){guide.problem='Use a connected keyboard to search, or browse the cards and filters.';}};guide.onVoicePair=()=>{if(!libraryInput)return;libraryInput.type='text';libraryInput.inputMode='numeric';libraryInput.maxLength=8;libraryInput.value='';libraryInput.oninput=()=>{if(/^\d{8}$/.test(libraryInput.value)){const code=libraryInput.value;libraryInput.value='';libraryInput.blur();void coach.pair(code).then(result=>{guide.problem=result.ok?'Paired. Enable voice controls or start the coach.':result.message;});}};libraryInput.focus();guide.problem='Enter the eight-digit pairing code shown on the laptop.';};guide.onRepositionPanel=()=>{spatial.cancel();panelSide=!panelSide;panelNeedsPlace=true;};guide.onResetPanels=()=>{spatial.resetPlacement();panelSide=false;panelNeedsPlace=true;};}else head.add(panel);
   for(let i=0;i<2;i++) {
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,0,-2)]),
       new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8,depthTest:false}));
@@ -285,7 +285,7 @@ function initRenderer() {
     hover='';rayLines.forEach(l=>l.visible=false);
     let i=0;
     for(const source of session.inputSources) {
-      const target=frame.getPose(source.targetRaySpace,reference);if(!target)continue;
+      const target=frame.getPose(source.targetRaySpace,reference);if(!target){spatial?.move(source,null);continue;}
       spatial?.move(source,target);const hit=hitFromPose(target); if(hit)hover=hit;
       const line=rayLines[i++];if(line){line.visible=true;line.position.copy(target.transform.position);line.quaternion.copy(target.transform.orientation);}
     }
@@ -295,7 +295,7 @@ function initRenderer() {
       spatial.tick(time,pose);
       if(animatedMode!==guide.mode){animatedMode=guide.mode;modeEntered=time;}
       const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const t=Math.min(1,(time-modeEntered)/220),scale=reduced?1:.975+.025*(1-(1-t)**3);panel.scale.setScalar(scale);
+      const t=Math.min(1,(time-modeEntered)/220),scale=reduced?1:.975+.025*(1-(1-t)**3);spatial.applyPanelEntrance(scale);
     }
     update();renderer.render(scene,camera);
     // XR drives networking too, so this does not depend on background DOM RAF.
@@ -340,7 +340,7 @@ async function enterAR() {
         guide.instructions=$('tutorial-instructions').value.split('\n').map(s=>s.trim());
       }
       panelNeedsPlace=true;guide.begin(tutorialMode?'home':undefined);if(tutorialMode)guide.nextEntry=null;
-      renderer.xr.getReferenceSpace().addEventListener('reset',()=>{panelNeedsPlace=true;guide.reset();tell('XR origin changed. Mark the workspace again.');speak('Tracking origin changed. Mark the workspace again.');});
+      renderer.xr.getReferenceSpace().addEventListener('reset',()=>{spatial?.reset();panelNeedsPlace=true;guide.reset();tell('XR origin changed. Mark the workspace again.');speak('Tracking origin changed. Mark the workspace again.');});
       await setAuto(false).catch(()=>tell('Server unavailable. Local hand guidance still works.'));
       return;
     }

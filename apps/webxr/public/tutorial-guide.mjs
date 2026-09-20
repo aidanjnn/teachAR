@@ -346,6 +346,7 @@ export class TutorialGuide extends HandGuide {
       this.player.time=id.includes('start')?range[0]:range[1];return true;
     }
     if(id==='panel-place'){this.onRepositionPanel?.();return true;}
+    if(id==='panels-reset'){this.onResetPanels?.();return true;}
     if(id==='coach-ask'){this.coach?.ask();return true;}
     if(id==='retry-save'){if(this.saveStatus==='failed')this.persist();return true;}
     if(id==='home'){

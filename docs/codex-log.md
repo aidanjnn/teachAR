@@ -1341,3 +1341,23 @@ concise faithful wording and generated speech. Inspected AR, 1100 px and 375 px 
 Updated the task-owned 4345 server and re-paired the existing Quest tab without reloading
 or editing its library. Original narration audibility was user-reported; new generated
 voice still requires the user's worn-headset acceptance.
+
+## 2026-09-20 — Spatial panel rotation and resizing
+
+Added explicit Move, Rotate, Resize and Face me grips to the WebXR main panel; the
+workspace timer has independent rotation, resizing and facing in addition to dragging
+its surface. Rotation uses grab-relative quaternions around a stationary center. Resize
+is bounded to 65–160%, and entry animations preserve the user size. Settings can bring
+the panel to the viewer or reset the layout. Grips follow theme tokens and highlight
+on pinch. Presentation changes pause capture/guidance, preserve calibration/motion,
+suppress release clicks, and cancel on missing pose/focus/session/reference-space loss.
+Layout remains session-local; this does not expose an OS window API.
+
+Validation: full WebXR gate passed 115 Node cases, 53 Python cases and 21 synthetic
+browser workflows. New browser cases cover relative rotation from existing orientation,
+back-facing recovery, bounded resize, entrance-size retention, missing input, independent
+timer transforms, unchanged workspace and pause on all grips. Actual Three.js render
+inspected at 1200 px and 375 px. Reused previous passing shared/API build, fixture and
+desktop evidence because those inputs are unchanged. No new paid API calls. Actual
+worn-Quest rotation feel and grip targeting remain to be tested; exit AR and reload
+the existing localhost4345 origin to load the new modules.
