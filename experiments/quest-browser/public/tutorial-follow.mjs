@@ -1,24 +1,56 @@
 // Local, ordered palm-position guidance. No object recognition or physical-result verdict.
 import {palm} from './tutorial-assist.mjs';
-import {distance} from './motion-core.mjs';
+import {distance,segmentDistance} from './motion-core.mjs';
+export const MAX_SAMPLE_GAP_MS=200;
 export function requiredHands(step){
-  const choice=step.guide_hands||'recorded';
+  const choice=step.guide_hands;
   if(choice==='left'||choice==='right')return [choice];
   if(choice==='both')return ['left','right'];
-  return ['left','right'].filter(side=>step.quality[side+'_tracked_fraction']>=.8);
+  // Missing/legacy automatic selection requires author review. Coverage must
+  // never remove the hand performing the demonstrated movement.
+  return [];
+}
+export function guidanceReadiness(step){
+  const hands=requiredHands(step);
+  if(!hands.length)return {ready:false,message:'Choose required hands (Left, Right or Both), then review this step.'};
+  if(!step.frames?.length)return {ready:false,message:'Re-record this step: no motion samples are available.'};
+  let prior=null;
+  for(const frame of step.frames){
+    if(!Number.isFinite(frame.t)||(prior!==null&&(frame.t<=prior||frame.t-prior>MAX_SAMPLE_GAP_MS)))
+      return {ready:false,message:`Recording timing gap near ${(frame.t/1000).toFixed(2)} s. Trim the gap or re-record this step.`};
+    for(const side of hands)if(!palm(frame[side]))
+      return {ready:false,message:`Required ${side} hand is missing at ${(frame.t/1000).toFixed(2)} s. Trim the gap or re-record with that hand visible.`};
+    prior=frame.t;
+  }
+  return {ready:true,message:'Required hands have continuous recorded palm tracking.'};
 }
 export class TutorialFollower {
   constructor(step,options={}){
     this.relaxed=!!options.relaxed;
-    this.step=step;this.hands=requiredHands(step);this.gates=[];this.invalid=false;
-    let prior=null;
-    for(const f of step.frames){
-      if(!this.hands.length||this.hands.some(side=>!palm(f[side]))||(prior&&f.t-prior.t>200)){this.invalid=true;break;}
+    this.step=step;this.hands=requiredHands(step);this.gates=[];this.invalid=!guidanceReadiness(step).ready;
+    for(const f of this.invalid?[]:step.frames){
       const last=this.gates.at(-1);
       if(!last||this.hands.some(side=>distance(palm(f[side]),palm(last[side]))>=(this.relaxed?.18:.09)))this.gates.push(f);
-      prior=f;
     }
     if(!this.invalid&&this.gates.at(-1)!==step.frames.at(-1))this.gates.push(step.frames.at(-1));
+    // Coarse distance sampling must retain short turns and closed excursions.
+    // Refine only segments whose omitted palms leave the straight gate path.
+    this.extents={};
+    if(this.relaxed&&!this.invalid){
+      const indices=new Map(step.frames.map((f,i)=>[f,i]));
+      const kept=new Set(this.gates.map(f=>indices.get(f))),ranges=[];
+      const initial=[...kept];for(let i=1;i<initial.length;i++)ranges.push([initial[i-1],initial[i]]);
+      while(ranges.length){
+        const [a,b]=ranges.pop();let peak=-1,error=.04;
+        for(let i=a+1;i<b;i++)for(const side of this.hands){
+          const deviation=segmentDistance(palm(step.frames[i][side]),palm(step.frames[a][side]),palm(step.frames[b][side]));
+          if(deviation>error){peak=i;error=deviation;}
+        }
+        if(peak>=0){kept.add(peak);ranges.push([a,peak],[peak,b]);}
+      }
+      this.gates=[...kept].sort((a,b)=>a-b).map(i=>step.frames[i]);
+      for(const side of this.hands)this.extents[side]=Math.max(...step.frames.map(f=>distance(palm(f[side]),palm(step.frames[0][side]))));
+    }
     this.startPalms=null;this.excursion={};
     this.index=0;this.dwell=0;this.last=null;this.started=false;this.done=false;this.state='waiting';
   }
@@ -49,7 +81,7 @@ export class TutorialFollower {
     if(this.relaxed&&this.startPalms){
       for(const side of this.hands){
         this.excursion[side]=Math.max(this.excursion[side]||0,distance(palm(hands[side]),this.startPalms[side]));
-        const extent=Math.max(...this.gates.map(g=>distance(palm(g[side]),palm(this.gates[0][side]))));
+        const extent=this.extents[side];
         if(final&&extent>=.04&&this.excursion[side]<Math.min(.06,extent*.4))near=false;
       }
     }
