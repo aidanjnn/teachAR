@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <!-- The real shipped cache and contract sources, so anything this writes is exactly
+         what the headset will accept. PrivateTutorialCache has no UnityEngine reference. -->
+    <Compile Include="../../apps/quest/Assets/Trail/Contracts/*.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Runtime/Storage/PrivateTutorialCache.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+</Project>

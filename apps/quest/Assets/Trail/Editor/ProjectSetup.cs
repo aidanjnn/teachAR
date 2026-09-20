@@ -190,10 +190,30 @@ namespace Trail.Editor
             Directory.CreateDirectory(Path.GetDirectoryName(output));
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
             var development = Environment.GetEnvironmentVariable("TRAIL_DEVELOPMENT_BUILD") == "1";
+            // Android blocks cleartext at the platform level independently of Unity's own
+            // UnityWebRequest check, so DevelopmentOnly still emits
+            // cleartextTrafficPermitted="false" and the USB-loopback development endpoint
+            // (adb reverse to 127.0.0.1) is unreachable. Permit cleartext for development
+            // players only, and assert the release player keeps it disallowed. Release builds
+            // must use HTTPS/WSS; ConnectionPolicy independently refuses any non-loopback
+            // http:// origin, so this never widens an untethered build.
+            var requested = development ? InsecureHttpOption.AlwaysAllowed : InsecureHttpOption.DevelopmentOnly;
+            if (PlayerSettings.insecureHttpOption != requested)
+            {
+                PlayerSettings.insecureHttpOption = requested;
+                // The Android manifest and network security config are generated from the
+                // serialized player settings, so the change has to be written before the build
+                // reads them. Without this the setting is ignored and cleartext stays blocked.
+                AssetDatabase.SaveAssets();
+            }
+            Debug.Log("Trail Android cleartext policy: insecureHttpOption=" + PlayerSettings.insecureHttpOption +
+                " (development=" + development + ")");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                 scenes = new[] { ScenePath }, locationPathName = output, target = BuildTarget.Android,
                 options = development ? BuildOptions.Development : BuildOptions.None
             });
+            // Never leave a checkout configured to ship cleartext.
+            if (development) PlayerSettings.insecureHttpOption = InsecureHttpOption.DevelopmentOnly;
             if (report.summary.result != BuildResult.Succeeded || report.summary.totalErrors != 0 || !File.Exists(output))
                 throw new BuildFailedException("Trail Android build failed; inspect Unity build report");
             File.WriteAllText(Environment.GetEnvironmentVariable("TRAIL_BUILD_REPORT_PATH") ?? output + ".json",
