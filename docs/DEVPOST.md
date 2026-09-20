@@ -2,11 +2,10 @@
 
 Copy each block into the matching Devpost field. Markers used below:
 
-- `[CHOOSE]` marks the two headset variants. Both stay in until the team decides. Delete the other one before 8 am.
 - `[UPDATE BEFORE SUBMIT]` marks a fact that was true late Saturday and may improve overnight.
 - `[PLACEHOLDER]` marks a sponsor section with nothing behind it yet. Delete it if that is still true.
 
-Facts were checked against `main` at `6b0a069`, PR 19 (`codex/native-mvp-integration`), PR 21, Hamza's `codex/recording-integration` branch and PR 17 (`codex/browser-tutor-handoff`) around midnight Saturday.
+Facts were checked against the WebXR foundation stack (PR 17, 23, 24, 26) and the voice PR 28 at about 4 am Sunday. Unity was retired in PR 26; the headset app is the Quest Browser tutor in `apps/webxr`.
 
 ---
 
@@ -119,15 +118,15 @@ That second answer is the whole product in one line. The coach knows what it can
 
 | Layer | Technology | Job |
 | --- | --- | --- |
-| Headset `[CHOOSE A]` | Unity 6, Meta XR SDK 205, OpenXR, XR Hands, MRUK, Unity WebRTC | Passthrough, hand tracking, the ghost, camera frames, native audio |
-| Headset `[CHOOSE B]` | Quest Browser, WebXR hand input, Three.js, IndexedDB | Passthrough, hand tracking, the ghost, local guide library, no install |
-| Progression | Pure C# (`Contracts/`, `Motion/`) with a 24-scenario harness `[A]`, or a pure JS module with adversarial tests `[B]` | Decides, alone, when a step is complete |
+| Headset | Quest Browser, WebXR hand input and passthrough, Three.js, IndexedDB, served by our API over one origin | Passthrough, hand tracking, the ghost, local guide library, no install |
+| Progression | Pure JS follower and practice modules with adversarial tests | Decide, alone, when a step is complete; missing or stale tracking pauses a gate |
+| Coach in the tutor | `tutorial-coach.mjs` plus the bundled desktop coach runtime (`trail-coach.js`) | Publishes reviewed step text as a coach guide, starts GPT-Live before AR, follows step and attempt changes, Ask coach on the headset panel |
 | Contracts | Zod 4 schemas, generated C#, shared fixture files | One recording and guide format that TypeScript and C# both validate |
 | Server | Node 22, Fastify 5, WebSocket | Storage, pairing, spectator relay, live session registry, credential boundary |
 | Vision | Second Fastify process, Sharp, Responses API | Compares a fresh frame with reference photos, returns structured advice |
 | Desktop | Vite 8, TypeScript, Three.js | Authoring workbench, 3D replay, spectator page, Voice Lab |
 | Voice | GPT-Live over WebRTC, whisper-1, gpt-4.1-mini structured outputs | Spoken coach, timestamped transcription, step labels |
-| Checks | Vitest, Playwright, Unity Test Framework, GitHub Actions | 361 tests, 7 browser flows, 57 EditMode and 13 PlayMode tests |
+| Checks | Vitest, node:test, Playwright, GitHub Actions | 365 server and web tests, 80 tutor tests, 10 tutor browser workflows, 8 end-to-end flows |
 
 ### The pieces that took the most thought
 
@@ -164,7 +163,7 @@ The same fixture files are validated by the Zod schemas in TypeScript and by the
 
 **3. Calibration that refuses instead of stretching.** The learner touches three marks. Each touch needs 400 ms of stillness with a spread under 1 cm. A fourth mark, excluded from the fit, has to land within 2 cm or the whole thing is rejected. The mat's measured edges must match the recorded mat within 2 cm too, so the motion is never scaled to fit. Recentering, focus loss or taking the headset off invalidates everything.
 
-**4. A voice pipeline the client cannot lie to.** GPT-Live runs over WebRTC directly between the headset and OpenAI. The only thing that passes through our server is the SDP offer, and the server holds the key.
+**4. A voice pipeline the client cannot lie to.** GPT-Live runs over WebRTC directly between the headset browser and OpenAI. The only thing that passes through our server is the SDP offer, and the server holds the key. Because the browser tutor has no server recording, the expert publishes the reviewed step titles and instructions as a **coach guide** first; the server resolves coach context from that store, so the model never hears client-supplied text once pairing is on. The tutor page is served by the API itself, so the page, the pairing cookie and the voice routes share one origin over the USB cable.
 
 ```
 learner speaks ──► headset mic ──WebRTC──► GPT-Live ──WebRTC──► headset speaker
@@ -185,11 +184,11 @@ The step text the model hears comes from the stored guide, never from the client
 
 ### How we worked
 
-Twenty-one pull requests over the weekend, each with the same checklist: typecheck, 361 tests, builds, fixtures and 7 browser flows in GitHub Actions, then a staff-style review before merge. Every substantive decision is written in a dated log in the repo, `docs/codex-log.md`, which is past sixty entries. We built the delivery workflow around Codex from the first commit. Branches are named `codex/<task>` and the repo carries Codex skills for commit, PR, review, cleanup, catch-up and PR babysitting.
+Twenty-eight pull requests over the weekend, each with the same checklist: typecheck, 365 tests, builds, fixtures and 8 browser flows in GitHub Actions, then a staff-style review before merge. Every substantive decision is written in a dated log in the repo, `docs/codex-log.md`, which is past sixty entries. We built the delivery workflow around Codex from the first commit. Branches are named `codex/<task>` and the repo carries Codex skills for commit, PR, review, cleanup, catch-up and PR babysitting.
 
 ## Challenges we ran into
 
-**1. It rendered black.** Forty-one Unity tests were green and the app had never actually started on a headset. The first real launch on Saturday evening crashed on startup because two components looked for siblings inside a rig that was still switched off. After fixing that, the view was black with one red dot per eye. Hamza's logs showed the passthrough layer being paused while the app still had focus, which ruled out the obvious focus-loss story. Aidan traced it to the pairing panel hiding itself by deactivating the object it lived on. That object was the app root, camera rig included. The wearer confirmed the room and the Trail menu at 10:19 pm. `[UPDATE BEFORE SUBMIT: add a sentence if a full step was followed on device overnight.]`
+**1. It rendered black.** Forty-one Unity tests were green and the app had never actually started on a headset. The first real launch on Saturday evening crashed on startup because two components looked for siblings inside a rig that was still switched off. After fixing that, the view was black with one red dot per eye. Hamza's logs showed the passthrough layer being paused while the app still had focus, which ruled out the obvious focus-loss story. Aidan traced it to the pairing panel hiding itself by deactivating the object it lived on. That object was the app root, camera rig included. The wearer confirmed the room and the Trail menu at 10:19 pm. By 1 am we made the call anyway: the browser tutor Zain had been building in parallel already recorded, replayed and relocated a real tutorial on the same headset, so we retired Unity and made WebXR the foundation. The voice stack moved with it that night: same server, same coach runtime, new host.
 
 **2. Fingers vanish the moment you grab something.** Quest hand tracking is good in the open and falls apart around a gripped object. We stopped fighting it. Trail checks only the wrist, after the grasp, and the demo task uses big lightweight parts so a wrist position means something. The plan carries a rule we kept coming back to: never widen a tolerance to hide a bad calibration. Make the parts bigger instead.
 
@@ -201,7 +200,7 @@ Twenty-one pull requests over the weekend, each with the same checklist: typeche
 
 **6. A CI job that was never going to pass.** Our hosted Unity tests failed eight runs out of eight before Unity even started. The test-runner action emitted a negated flag that the CLI it wraps rejects, because that CLI turns negation off in its argument parser. We found it by reading both projects' source, retired hosted native CI the same night and run the Unity gates locally with the results recorded in the repo.
 
-**7. Android versus the USB cable.** The built app refuses plain HTTP over a USB cable, and three different ways of allowing it failed, including the Unity setting that claims to. So the headset can load a guide from files pushed over the cable, and anything over the network needs HTTPS. `[UPDATE BEFORE SUBMIT if the headset paired successfully overnight.]`
+**7. Android versus the USB cable.** The native build refused plain HTTP over a USB cable, and three different ways of allowing it failed. The browser tutor sidesteps it: Quest Browser treats `localhost` over `adb reverse` as a secure context, so the tutor page, pairing and the voice routes all come from one origin on the laptop.
 
 ## Accomplishments that we're proud of
 
@@ -211,8 +210,8 @@ Twenty-one pull requests over the weekend, each with the same checklist: typeche
 | 2 cm | maximum calibration error before Trail refuses to continue |
 | 4 cm, 0.5 s | checkpoint radius and hold, checked on the learner's own headset |
 | 0 | ways the AI can advance, complete or skip a step |
-| 361 | automated tests on every pull request, plus 7 browser flows and 70 Unity tests locally |
-| 21 | pull requests this weekend, each reviewed before merge |
+| 365 | automated tests on every pull request, plus 80 tutor tests, 10 tutor browser workflows and 8 end-to-end flows |
+| 28 | pull requests this weekend, each reviewed before merge |
 | 10:19 pm | Saturday, the first time Trail rendered on a real Quest 3S `[UPDATE BEFORE SUBMIT]` |
 
 - A coach that refused to cheat in a live test. Asked "okay, I'm done," it answered that it cannot see the parts and only the hand checkpoint counts. We did not script that answer. The rules did.
@@ -277,13 +276,12 @@ Not integrated as of Saturday night. Environment placeholders exist and nothing 
 
 ## Full tech stack
 
-**Headset `[CHOOSE A]`:** Unity 6000.3, C#, Meta XR Core, Interaction and MRUK 205, Unity OpenXR 1.18, XR Hands 1.7, URP 17, Unity WebRTC 3.0
-**Headset `[CHOOSE B]`:** Quest Browser, WebXR hand input and passthrough, Three.js 0.186, IndexedDB
+**Headset:** Quest Browser, WebXR hand input and passthrough, Three.js 0.186, IndexedDB, served from the main API origin
 **Server:** Node 22, Fastify 5, Zod 4, ws, Sharp, OpenAI SDK 7
 **Vision:** Fastify 5, Sharp, OpenAI Responses API with strict JSON schema output
 **Desktop:** Vite 8, TypeScript 5.9, Three.js 0.186, plain HTML and CSS
 **Voice:** GPT-Live over WebRTC, whisper-1, gpt-4.1-mini structured outputs
-**Checks:** Vitest 5, Playwright 1.63, Unity Test Framework, .NET 8 harnesses, GitHub Actions
+**Checks:** Vitest 5, node:test, Playwright 1.63, GitHub Actions
 **Process:** pnpm 11 workspace, Conventional Commits, Codex skills, a dated decision log
 
 ---
@@ -294,8 +292,7 @@ Devpost tags, lowercase, up to 25. Past finalists list between two and ten. Keep
 
 Always: `meta-quest`, `openai`, `gpt-live`, `whisper`, `typescript`, `node.js`, `fastify`, `zod`, `webrtc`, `websocket`, `playwright`, `codex`
 
-`[CHOOSE A]` adds: `unity`, `c#`, `openxr`
-`[CHOOSE B]` adds: `webxr`, `three.js`, `javascript`
+Also: `webxr`, `three.js`, `javascript`
 
 Add `devin` only if the Cognition track stays selected.
 
@@ -316,7 +313,7 @@ Devpost wants 3:2, JPG or PNG, under 5 MB, up to 15. The first image is the thum
 Suggested order:
 
 1. Hero photo. The headset on the table beside the mat and the demo parts, natural light, nothing else in frame. Phone camera is fine. This is the thumbnail.
-2. In-headset capture of the ghost hand over the real parts, ring visible. `adb exec-out screencap -p > shot.png` gives a stereo pair at 3664 by 1920. Crop one eye to 3:2. `[UPDATE BEFORE SUBMIT: possible once the ghost shows on device.]`
+2. In-headset capture of the ghost hand over the real parts, ring visible. `adb exec-out screencap -p > shot.png` gives a stereo pair at 3664 by 1920. Crop one eye to 3:2. `[UPDATE BEFORE SUBMIT: capture once the ghost is on screen in Quest Browser.]`
 3. Voice Lab with the "live" badge and the transcript where the coach says it cannot see the parts. You had this on screen tonight. Crop tight.
 4. The authoring workbench with the step strip, the 3D replay and the transcript. `test-results/authoring-review.png` exists from the end-to-end run but is a full-page capture. Reshoot at 1500 by 1000 after importing the sample.
 5. The spectator page mid-run, step name and progress visible.
@@ -381,7 +378,7 @@ Optional on the form. If there is time Sunday morning, a 60 to 90 second phone v
 
 ## 9. Open items for the team
 
-1. Which headset runtime is the demo. PR 17 now says Quest Browser is "the immediate demo runtime" and PR 19 and PR 21 keep shipping the Unity app. Both variants stay in the text until this is decided. "What it does" is true either way; the architecture rows, one paragraph and three tags change.
+1. Runtime is decided: WebXR in Quest Browser (PR 26 retired Unity). The voice coach for it is PR 28, stacked on PR 26; the story above assumes both merge.
 2. OMNI is selected on the form and not in the code. Either integrate it or expect that section to be deleted.
 3. Devin's contribution is two documentation PRs. Decide whether to keep that track.
 4. Sentry is selected and not integrated.
