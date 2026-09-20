@@ -2,6 +2,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <ContractsRoot Condition="'$(ContractsRoot)' == ''">../../apps/quest/Assets/Trail/Contracts</ContractsRoot>
   </PropertyGroup>
@@ -11,7 +13,13 @@
     <Compile Include="../../apps/quest/Assets/Trail/Motion/WorkspaceCalibration.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Motion/CaptureMotion.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Motion/HandContinuity.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/GuideDefinition.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/SaveZone.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/RecordingState.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/RecordingDirector.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/TakeLedger.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Tests/EditMode/CaptureFixtureAssertions.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Tests/EditMode/RecordingFixtureAssertions.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>

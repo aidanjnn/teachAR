@@ -17,8 +17,10 @@ const files = [];
 for (const name of await readdir(resolve(repo, 'apps/quest/Assets/Trail/Contracts')))
   if (name.endsWith('.cs') || name.endsWith('.asmdef')) files.push(`Contracts/${name}`);
 files.push('Motion/Trail.Motion.asmdef', 'Motion/CoordinateBasis.cs', 'Motion/WorkspaceCalibration.cs', 'Motion/CaptureMotion.cs', 'Motion/HandContinuity.cs',
+  'Motion/GuideDefinition.cs', 'Motion/SaveZone.cs', 'Motion/RecordingState.cs', 'Motion/RecordingDirector.cs', 'Motion/TakeLedger.cs',
   'Runtime/Record/CaptureReplaySession.cs', 'Runtime/Record/HandObservationSource.cs', 'Runtime/XR/Trail.XR.asmdef', 'Runtime/XR/XRHandsSource.cs',
   'Tests/EditMode/Trail.Tests.EditMode.asmdef', 'Tests/EditMode/CaptureFixtureAssertions.cs', 'Tests/EditMode/CaptureMotionTests.cs',
+  'Tests/EditMode/RecordingFixtureAssertions.cs', 'Tests/EditMode/RecordingLifecycleTests.cs',
   'Tests/CaptureRuntime/Trail.Tests.CaptureRuntime.asmdef', 'Tests/CaptureRuntime/CaptureLifecycleTests.cs');
 const hashes = {};
 for (const file of files) {

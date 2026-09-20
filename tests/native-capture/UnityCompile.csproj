@@ -15,6 +15,11 @@
     <Compile Include="../../apps/quest/Assets/Trail/Motion/WorkspaceCalibration.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Motion/CaptureMotion.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Motion/HandContinuity.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/GuideDefinition.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/SaveZone.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/RecordingState.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/RecordingDirector.cs" />
+    <Compile Include="../../apps/quest/Assets/Trail/Motion/TakeLedger.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Record/*.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/XR/*.cs" />
     <Compile Include="../../apps/quest/Assets/Trail/Runtime/Network/*.cs" />

@@ -13,6 +13,20 @@ bridging/extrapolation across gaps. `CaptureRuntime` Unity tests additionally
 exercise lifecycle subscriptions, calibration/capture/replay invalidation and
 SDK enum mapping. Those require Unity and do not run in this console harness.
 
+`RecordingFixtureAssertions` covers the authoring lifecycle (handoff U2/U3)
+against the same real sources: the tutorial save position set once behind an
+explicit request and a countdown, reused by every take and never recaptured by
+re-record/pause/review; missing tracking, stalls, drift, replayed callbacks and
+foreign sources unable to establish one; explicit change/cancel and new-tutorial
+clearing; deliberate endpoint-hold to return-to-save detection with the return
+gesture trimmed off; motion, markers and narration trimmed on one half-open
+boundary; dwell cleared by pause, tracking loss, clock discontinuity and origin
+revision changes; paused wall time excluded from both the take clock and the
+saved timeline; a discarded replacement leaving the previous take intact; and
+explicit Stop for tasks that naturally end at the save position. These are pure
+domain assertions. They prove no Unity compilation, tracking quality, gesture
+ergonomics or physical result; the ported thresholds still need headset tuning.
+
 `dotnet build tests/native-capture/UnityCompile.csproj -p:UnityManagedDir=... -p:XRHandsAssembly=...`
 checks the actual runtime/adapter/presentation source against real Unity and
 XR Hands assemblies. Set the engine directory to the installed editor's
