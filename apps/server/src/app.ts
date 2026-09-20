@@ -34,6 +34,8 @@ async function storageWritable(dataDir: string): Promise<boolean> {
   }
 }
 
+export const LIVE_GREETING = 'Say exactly this, and nothing else: "Coach ready. Ask me about the current step whenever you like."';
+
 export async function createApp(
   config: ServerConfig,
   options: { webRoot?: string; tutorRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
@@ -107,7 +109,10 @@ export async function createApp(
     return probeVision(config.vision);
   });
   registerTelemetryRoute(app, config);
+  // A spoken line on connect proves the audio path before the learner enters AR; only the real provider can say it.
+  const greeting = config.openai?.liveGreeting ? LIVE_GREETING : undefined;
   await registerVoiceRoutes(app, options.provider ?? createProvider(config), {
+    ...(greeting ? { greeting } : {}),
     ...(options.auth ? { auth: options.auth } : {}),
     ...(resolveTutorial ? { resolveTutorial } : {}),
   });

@@ -29,6 +29,8 @@ const EnvironmentSchema = z.object({
   OPENAI_LIVE_MODEL: ModelName.default('gpt-live-1'),
   OPENAI_LIVE_BACKEND_MODEL: ModelName.default('gpt-5.6-luna'),
   OPENAI_LIVE_VOICE: z.string().min(1).max(64).default('marin'),
+  /** One short spoken line when a live session opens, so the presenter hears the coach before entering AR. */
+  OPENAI_LIVE_GREETING: z.enum(['on', 'off']).default('on'),
 }).superRefine((env, ctx) => {
   if (env.AI_PROVIDER === 'openai' && env.OPENAI_API_KEY.trim().length === 0) {
     ctx.addIssue({ code: 'custom', path: ['OPENAI_API_KEY'], message: 'Required when AI_PROVIDER=openai' });
@@ -65,6 +67,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     openai: values.AI_PROVIDER === 'openai' ? {
       apiKey: values.OPENAI_API_KEY.trim(), transcribeModel: values.OPENAI_TRANSCRIBE_MODEL, textModel: values.OPENAI_TEXT_MODEL,
       liveModel: values.OPENAI_LIVE_MODEL, liveBackendModel: values.OPENAI_LIVE_BACKEND_MODEL, liveVoice: values.OPENAI_LIVE_VOICE,
+      liveGreeting: values.OPENAI_LIVE_GREETING === 'on',
     } : null,
     vision: values.VISION_SERVICE_URL && values.VISION_SERVICE_TOKEN
       ? { url: values.VISION_SERVICE_URL, token: values.VISION_SERVICE_TOKEN } : null,

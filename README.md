@@ -286,8 +286,10 @@ stays synchronous. Step changes and restarts reach the model through the server'
 an Ask coach button on the headset panel opens the microphone. The review screen's
 "Draft titles from narration" sends each step's WAV through `whisper-1` and the label route and
 shows the drafts for the expert to apply. With the mock provider the coach answers in text; with
-a real key it goes live. Microphone, WebRTC and an immersive session together on the Quest are
-not yet verified.
+a real key it goes live and says one short greeting so the presenter hears the audio path before
+entering AR (`OPENAI_LIVE_GREETING=off` silences it). Microphone, WebRTC and an immersive session
+together on the Quest are not yet verified; [docs/voice-demo-checklist.md](docs/voice-demo-checklist.md)
+is the headset rehearsal list.
 
 
 Mock mode needs no credentials. OpenAI mode uses `AI_PROVIDER=openai` and a server-side
