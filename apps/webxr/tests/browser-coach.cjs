@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
   const browser=await chromium.launch({channel:process.env.TRAIL_BROWSER_CHANNEL||undefined,headless:true,
     args:['--enable-unsafe-swiftshader','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--autoplay-policy=no-user-gesture-required']});
   try {
-    const page=await browser.newPage({viewport:{width:1200,height:950}}),errors=[],coachBodies=[];let publishes=0;
+    const page=await browser.newPage({viewport:{width:1200,height:950}}),errors=[],coachBodies=[],sceneBodies=[];let publishes=0;
     page.on('pageerror',e=>errors.push(e.message));
     const guideId='22222222-2222-4222-8222-222222222222';
     await page.route('**/api/**',async route=>{
@@ -20,6 +20,10 @@ const assert=require('node:assert/strict');
       }
       if(/^\/api\/coach-guides\/[^/]+\/query$/.test(url.pathname)&&method==='POST')return json(200,{id:guideId,revision:1});
       if(url.pathname==='/api/live/sessions'&&method==='POST')return json(503,{error:'live_unavailable',message:'mock server'});
+      if(url.pathname==='/api/scene-coach'&&method==='POST'){
+        const body=request.postDataJSON();sceneBodies.push(body);
+        return json(200,{schemaVersion:1,requestId:body.requestId,tutorialId:body.context.tutorialId,tutorialRevision:body.context.tutorialRevision,stepId:body.context.currentStepId,stepRevision:body.context.stepRevision,epoch:body.epoch,source:body.source,transcript:'Turn the sheet so the marked corner is nearest you.',audio:null,model:'fake-omni',provenance:'model',latencyMs:12});
+      }
       if(url.pathname==='/api/coach'&&method==='POST'){
         const body=request.postDataJSON();coachBodies.push(body);const c=body.context;
         return json(200,{schemaVersion:1,requestId:body.requestId,runId:c.runId,tutorialId:c.tutorialId,tutorialRevision:c.tutorialRevision,
@@ -66,6 +70,20 @@ const assert=require('node:assert/strict');
     await page.click('#coach-start');
     await page.waitForFunction(()=>document.querySelector('#coach-mode').textContent==='text',null,{timeout:20000});
     assert.equal(publishes,1,'restarting at the same revision does not republish');
+    // Look & advise: the fake camera supplies a fresh frame, the mocked route answers, and the advice lands in the transcript as advice only.
+    await page.locator('#device-settings').evaluate(e=>{e.open=true;});
+    await page.click('#camera-start');
+    await page.waitForFunction(()=>!document.querySelector('#coach-look').disabled,null,{timeout:20000});
+    const stepBefore=await page.evaluate(()=>window.trailCoach.state.tutorialId&&document.querySelector('#tutorial-title').value);
+    await page.fill('#coach-question','Is my paper placed right?');
+    await page.click('#coach-look');
+    await page.waitForFunction(()=>[...document.querySelectorAll('#coach-log li[data-role=coach]')].some(li=>li.textContent.includes('Turn the sheet')),null,{timeout:20000});
+    assert.equal(sceneBodies.length,1,'one scene request per press');
+    assert.equal(sceneBodies[0].question,'Is my paper placed right?');
+    assert.equal(sceneBodies[0].context.tutorialId,guideId,'scene advice is grounded on the published guide, not browser text');
+    assert.equal(sceneBodies[0].image.mimeType,'image/jpeg');assert.ok(sceneBodies[0].image.dataBase64.length>100,'a real frame was captured');
+    assert.ok(sceneBodies[0].captureAgeMs<=3000,'the frame was fresh');
+    assert.equal(await page.evaluate(()=>document.querySelector('#tutorial-title').value),stepBefore,'advice changed nothing in the tutorial');
     await page.click('#coach-stop');
     await page.waitForFunction(()=>document.querySelector('#coach-mode').textContent==='idle');
     assert.ok(!JSON.stringify(coachBodies).includes('OPENAI'),'no provider material in requests');

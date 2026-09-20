@@ -30,9 +30,18 @@ const EnvironmentSchema = z.object({
   OPENAI_LIVE_VOICE: z.string().min(1).max(64).default('marin'),
   /** One short spoken line when a live session opens, so the presenter hears the coach before entering AR. */
   OPENAI_LIVE_GREETING: z.enum(['on', 'off']).default('on'),
+  /** Scene coach: a fresh camera frame plus the step's reference photo and a question go to an OMNI multimodal model. Off by default; the key stays on this server. */
+  SCENE_COACH: z.enum(['off', 'omni']).default('off'),
+  OMNI_API_KEY: z.string().default(''),
+  OMNI_BASE_URL: z.string().url().default('https://yibuapi.com/v1'),
+  OMNI_MODEL: ModelName.default('qwen3.5-omni-flash'),
+  OMNI_VOICE: z.string().min(1).max(64).default('Cherry'),
 }).superRefine((env, ctx) => {
   if (env.AI_PROVIDER === 'openai' && env.OPENAI_API_KEY.trim().length === 0) {
     ctx.addIssue({ code: 'custom', path: ['OPENAI_API_KEY'], message: 'Required when AI_PROVIDER=openai' });
+  }
+  if (env.SCENE_COACH === 'omni' && env.OMNI_API_KEY.trim().length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['OMNI_API_KEY'], message: 'Required when SCENE_COACH=omni' });
   }
 });
 
@@ -45,7 +54,7 @@ export function loadEnvironment(): void {
 }
 
 export function readConfig(env: NodeJS.ProcessEnv = process.env) {
-  const result = EnvironmentSchema.safeParse({ ...env, TLS_CERT_FILE: env.TLS_CERT_FILE || undefined, TLS_KEY_FILE: env.TLS_KEY_FILE || undefined, VISION_SERVICE_URL: env.VISION_SERVICE_URL || undefined, VISION_SERVICE_TOKEN: env.VISION_SERVICE_TOKEN || undefined });
+  const result = EnvironmentSchema.safeParse({ ...env, TLS_CERT_FILE: env.TLS_CERT_FILE || undefined, TLS_KEY_FILE: env.TLS_KEY_FILE || undefined, VISION_SERVICE_URL: env.VISION_SERVICE_URL || undefined, OMNI_BASE_URL: env.OMNI_BASE_URL || undefined, OMNI_MODEL: env.OMNI_MODEL || undefined, OMNI_VOICE: env.OMNI_VOICE || undefined, VISION_SERVICE_TOKEN: env.VISION_SERVICE_TOKEN || undefined });
   if (!result.success) {
     // Report field names only; environment values can contain credentials.
     throw new Error(`Invalid server configuration: ${result.error.issues.map(issue => issue.path.join('.')).join(', ')}`);
@@ -61,7 +70,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     host: values.HOST, port: values.PORT,
     dataDir: resolve(repositoryRoot, values.DATA_DIR),
     buildId: values.BUILD_ID,
-    providers: { ai: values.AI_PROVIDER, haptics: values.HAPTICS_DRIVER },
+    providers: { ai: values.AI_PROVIDER, haptics: values.HAPTICS_DRIVER, scene: values.SCENE_COACH },
     openai: values.AI_PROVIDER === 'openai' ? {
       apiKey: values.OPENAI_API_KEY.trim(), transcribeModel: values.OPENAI_TRANSCRIBE_MODEL, textModel: values.OPENAI_TEXT_MODEL,
       liveModel: values.OPENAI_LIVE_MODEL, liveBackendModel: values.OPENAI_LIVE_BACKEND_MODEL, liveVoice: values.OPENAI_LIVE_VOICE,
@@ -69,6 +78,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     } : null,
     vision: values.VISION_SERVICE_URL && values.VISION_SERVICE_TOKEN
       ? { url: values.VISION_SERVICE_URL, token: values.VISION_SERVICE_TOKEN } : null,
+    omni: values.SCENE_COACH === 'omni'
+      ? { apiKey: values.OMNI_API_KEY.trim(), baseUrl: values.OMNI_BASE_URL.replace(/\/+$/, ''), model: values.OMNI_MODEL, voice: values.OMNI_VOICE } : null,
   };
 }
 export type ServerConfig = ReturnType<typeof readConfig>;

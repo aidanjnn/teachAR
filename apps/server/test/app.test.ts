@@ -17,7 +17,7 @@ describe('local scaffold server', () => {
     try {
       const response = await app.inject('/api/health');
       expect(response.statusCode).toBe(200);
-      expect(HealthSchema.parse(response.json())).toEqual({ status: 'ok', buildId: 'test-build', providers: { ai: 'mock', haptics: 'mock' }, storage: { writable: true } });
+      expect(HealthSchema.parse(response.json())).toEqual({ status: 'ok', buildId: 'test-build', providers: { ai: 'mock', haptics: 'mock', scene: 'off' }, storage: { writable: true } });
       expect(response.body).not.toContain(config.dataDir);
       expect(response.body).not.toContain('not-a-real-secret');
       expect(response.headers['cache-control']).toBe('no-store');
@@ -57,6 +57,16 @@ describe('local scaffold server', () => {
       apiKey: 'sk-test-key', transcribeModel: 'whisper-1', textModel: 'gpt-4.1-mini-2025-04-14',
       liveModel: 'gpt-live-1', liveBackendModel: 'gpt-5.6-luna', liveVoice: 'cedar', liveGreeting: true,
     });
+    // Older .env files carry empty OMNI placeholders; they mean "unset", and the scene coach stays off until SCENE_COACH says otherwise.
+    const placeholders = readConfig({ OMNI_API_KEY: '', OMNI_BASE_URL: '', OMNI_MODEL: '', OMNI_VOICE: '' });
+    expect(placeholders.providers.scene).toBe('off');
+    expect(placeholders.omni).toBeNull();
+    const omni = readConfig({ SCENE_COACH: 'omni', OMNI_API_KEY: ' sk-omni-test ', OMNI_BASE_URL: 'https://gateway.example/v1/' });
+    expect(omni.omni).toEqual({ apiKey: 'sk-omni-test', baseUrl: 'https://gateway.example/v1', model: 'qwen3.5-omni-flash', voice: 'Cherry' });
+    expect(omni.providers.scene).toBe('omni');
+    let omniMessage = '';
+    try { readConfig({ SCENE_COACH: 'omni', OMNI_API_KEY: '' }); } catch (error) { omniMessage = String(error); }
+    expect(omniMessage).toContain('OMNI_API_KEY');
     let message = '';
     try { readConfig({ AI_PROVIDER: 'openai', OPENAI_API_KEY: '   ' }); } catch (error) { message = String(error); }
     expect(message).toContain('OPENAI_API_KEY');

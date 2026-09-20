@@ -19,6 +19,8 @@ import { createProvider } from './ai/index.js';
 import type { AiProvider } from './ai/provider.js';
 import type { ServerConfig } from './config.js';
 import { registerVoiceRoutes, type CoachTutorialLookup } from './routes/voice.js';
+import { registerSceneCoachRoutes } from './routes/scene-coach.js';
+import { createOmniSceneCoach, offSceneCoach, type SceneCoachProvider } from './ai/scene-coach.js';
 
 async function storageWritable(dataDir: string): Promise<boolean> {
   const probe = join(dataDir, `.health-${randomUUID()}`);
@@ -37,7 +39,7 @@ export const LIVE_GREETING = 'Say exactly this, and nothing else: "Coach ready. 
 
 export async function createApp(
   config: ServerConfig,
-  options: { webRoot?: string; tutorRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; resolveTutorial?: CoachTutorialLookup } = {},
+  options: { webRoot?: string; tutorRoot?: string; logger?: boolean; auth?: PairingAuthority; provider?: AiProvider; sceneCoach?: SceneCoachProvider; resolveTutorial?: CoachTutorialLookup } = {},
 ) {
   let resolveTutorial = options.resolveTutorial;
   const https = config.tls ? { cert: await readFile(config.tls.certFile), key: await readFile(config.tls.keyFile) } : null;
@@ -111,6 +113,12 @@ export async function createApp(
   const greeting = config.openai?.liveGreeting ? LIVE_GREETING : undefined;
   await registerVoiceRoutes(app, options.provider ?? createProvider(config), {
     ...(greeting ? { greeting } : {}),
+    ...(options.auth ? { auth: options.auth } : {}),
+    ...(resolveTutorial ? { resolveTutorial } : {}),
+  });
+  // Look & advise: a fresh camera frame to an OMNI model, grounded like the coach. Off unless SCENE_COACH=omni and a key are set here.
+  const sceneCoach = options.sceneCoach ?? (config.omni ? createOmniSceneCoach(config.omni) : offSceneCoach);
+  await registerSceneCoachRoutes(app, sceneCoach, {
     ...(options.auth ? { auth: options.auth } : {}),
     ...(resolveTutorial ? { resolveTutorial } : {}),
   });
