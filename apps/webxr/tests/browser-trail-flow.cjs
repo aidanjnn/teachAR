@@ -40,6 +40,9 @@ const assert=require('node:assert/strict');
   const gate=g.followEngine.index;data={};for(let i=0;i<20;i++)tick();if(g.followEngine.index!==gate||g.followEngine.state!=='tracking')fail('Missing hands advanced');
   if(tutorialView(g).detail.startsWith('Coach:'))fail('Coach caption hid tracking recovery');
   g.hide();session.visibilityState='visible';data=near(g.followEngine.target);tick();if(g.followEngine.index!==gate)fail('Visibility loss lost current gate');g.action('replay');
+  for(let i=0;i<40;i++)tick();if(g.followEngine.index!==gate)fail('Unobserved movement during tracking loss advanced a gate');
+  // Repeat the approach with fresh tracking; a hidden jump is not movement evidence.
+  data=near(g.followEngine.gates[gate-1]);for(let i=0;i<20;i++)tick();
   for(let i=0;i<500&&!g.followEngine.done;i++){data=near(g.followEngine.target);tick();}
   if(!g.followEngine.done||g.player.index!==0)fail('Checkpoint or progression authority failed');
   const hud=document.createElement('canvas');hud.width=1080;hud.height=560;g.draw(hud.getContext('2d'),t,'');window.trailNewHud=hud.toDataURL();
