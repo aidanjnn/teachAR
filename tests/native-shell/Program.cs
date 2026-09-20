@@ -143,19 +143,21 @@ internal static class Program
 
         var view = ShellModel.Describe(home, unpaired);
         Check(view.Entries.Count == 4, "Home offers Create, Follow, Library and Settings");
-        Check(!Can(home, ShellCommand.OpenFollow, unpaired), "an unpaired headset cannot follow");
-        Check(!Can(home, ShellCommand.OpenCreate, unpaired), "an unpaired headset cannot author");
-        Check(Can(home, ShellCommand.OpenSettings, unpaired), "settings stay reachable while unpaired so pairing can be fixed");
-        Check(view.Entries.First(e => e.Command == ShellCommand.OpenFollow).Reason.Length > 0,
-            "a disabled control explains itself rather than silently failing");
+        // Recording, reviewing and following are local to this headset, so an unpaired
+        // headset is fully usable. Head-gaze typing a pairing code to reach them would be
+        // both unusable and wrong: loaded guidance must survive loss of the backend.
+        Check(Can(home, ShellCommand.OpenFollow, unpaired), "an unpaired headset can still follow");
+        Check(Can(home, ShellCommand.OpenCreate, unpaired), "an unpaired headset can still record");
+        Check(Can(home, ShellCommand.OpenLibrary, unpaired), "an unpaired headset can still open its local library");
+        Check(Can(home, ShellCommand.OpenSettings, unpaired), "settings stay reachable so pairing can be added later");
+        Check(ShellModel.Describe(home, unpaired).Notice.Contains("Working on this headset"),
+            "Home says plainly that it works without a server");
 
-        // No silent role escalation: a learner may follow but never author.
         var learner = Learner();
         Check(Can(home, ShellCommand.OpenFollow, learner), "a paired learner can follow");
-        Check(!Can(home, ShellCommand.OpenCreate, learner), "a learner cannot enter authoring");
-        Check(ShellModel.Apply(home, ShellCommand.OpenCreate, learner).Route == ShellRoute.Home,
-            "a rejected command leaves the route unchanged");
         Check(Can(home, ShellCommand.OpenCreate, Author()), "a paired author can enter authoring");
+
+        var library0 = ShellModel.Apply(home, ShellCommand.OpenLibrary, learner);
 
         // Create: the save position gates recording, and is set exactly once.
         var create = ShellModel.Apply(home, ShellCommand.OpenCreate, Author());
@@ -178,6 +180,19 @@ internal static class Program
 
         var taken = Author(savePositionSet: true, hasTake: true);
         Check(Can(create, ShellCommand.UploadLastCapture, taken), "a finished take can be sent for review");
+        // Publishing leaves the device, so it stays privileged even though local work does not.
+        var offlineTake = new ShellConditions(paired: false, isAuthor: false, calibrated: true,
+            handsTracked: true, savePositionSet: true, hasLastTake: true);
+        Check(Can(create, ShellCommand.StartRecording, offlineTake), "recording works with no server");
+        Check(!Can(create, ShellCommand.UploadLastCapture, offlineTake), "publishing still requires pairing");
+        Check(ShellModel.Describe(create, offlineTake).Entries
+                .First(e => e.Command == ShellCommand.UploadLastCapture).Reason.Contains("Pair"),
+            "the upload control explains that pairing is what it needs");
+        var unpairedLibrary = new ShellConditions(paired: false, libraryHasEntries: true);
+        Check(Can(library0, ShellCommand.PreloadSelected, unpairedLibrary),
+            "a tutorial already on the device preloads with no server");
+        Check(!Can(library0, ShellCommand.RefreshLibrary, unpairedLibrary),
+            "refreshing the shared library still requires pairing");
         Check(Can(create, ShellCommand.DiscardTake, taken), "a take can be discarded");
         Check(!Can(create, ShellCommand.UploadLastCapture, Author(savePositionSet: true)), "there is nothing to upload without a take");
 
@@ -200,7 +215,7 @@ internal static class Program
             "the follow notice keeps the movement-checkpoint limit visible");
 
         // Library.
-        var library = ShellModel.Apply(home, ShellCommand.OpenLibrary, learner);
+        var library = library0;
         Check(Can(library, ShellCommand.PreloadSelected, learner), "a ready guide can be preloaded");
         Check(!Can(library, ShellCommand.PreloadSelected, Learner(library: false)), "an empty library offers nothing to preload");
 

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,11 +18,77 @@ namespace Trail.Runtime.Storage
         { Tutorial = tutorial; Recording = recording; RecordingHash = hash; }
     }
 
+    /// <summary>A ready tutorial already stored on this device. The verified recording hash is
+    /// deliberately absent: only <see cref="PrivateTutorialCache.Load"/> re-verifies the recorded
+    /// bytes, and only its result may reach a guide preload.</summary>
+    public sealed class CachedTutorial
+    {
+        public string Id { get; }
+        public int Revision { get; }
+        public string Title { get; }
+        public int StepCount { get; }
+        internal CachedTutorial(string id, int revision, string title, int stepCount)
+        { Id = id; Revision = revision; Title = title; StepCount = stepCount; }
+    }
+
+    /// <summary>One library row. Server rows carry the reviewed title; StoredOnDevice reports only
+    /// what this device actually holds, so offline availability is never implied by a server list.</summary>
+    public sealed class TutorialLibraryEntry
+    {
+        public string Id { get; }
+        public int Revision { get; }
+        public string Title { get; }
+        public int StepCount { get; }
+        public bool StoredOnDevice { get; }
+        public TutorialLibraryEntry(string id, int revision, string title, int stepCount, bool storedOnDevice)
+        {
+            if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || revision < 0 || stepCount < 0) throw new ArgumentException("Invalid library entry identity");
+            Id = id; Revision = revision; StepCount = stepCount; StoredOnDevice = storedOnDevice;
+            Title = string.IsNullOrWhiteSpace(title) ? "Untitled guide" : (title.Length <= 80 ? title : title.Substring(0, 80));
+        }
+    }
+
+    /// <summary>Pure merge policy shared by the runtime feature and its tests. No I/O.</summary>
+    public static class TutorialLibrary
+    {
+        public const int MaximumEntries = 128;
+        /// <summary>Server rows first, then device-only rows. A server refresh never removes a guide
+        /// this device already holds, so losing the backend cannot empty the library.</summary>
+        public static TutorialLibraryEntry[] Merge(IEnumerable<TutorialLibraryEntry> server, IEnumerable<CachedTutorial> local)
+        {
+            var stored = new List<CachedTutorial>();
+            var byKey = new Dictionary<string, CachedTutorial>(StringComparer.Ordinal);
+            if (local != null)
+                foreach (var entry in local)
+                    if (entry != null && !byKey.ContainsKey(Pair(entry.Id, entry.Revision)))
+                    { byKey.Add(Pair(entry.Id, entry.Revision), entry); stored.Add(entry); }
+            var merged = new List<TutorialLibraryEntry>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            if (server != null)
+                foreach (var entry in server)
+                {
+                    if (entry == null || merged.Count >= MaximumEntries) break;
+                    var key = Pair(entry.Id, entry.Revision);
+                    if (!seen.Add(key)) continue;
+                    merged.Add(new TutorialLibraryEntry(entry.Id, entry.Revision, entry.Title, entry.StepCount, byKey.ContainsKey(key)));
+                }
+            foreach (var entry in stored)
+            {
+                if (merged.Count >= MaximumEntries) break;
+                if (!seen.Add(Pair(entry.Id, entry.Revision))) continue;
+                merged.Add(new TutorialLibraryEntry(entry.Id, entry.Revision, entry.Title, entry.StepCount, true));
+            }
+            return merged.ToArray();
+        }
+        private static string Pair(string id, int revision) => id + "@" + revision.ToString(CultureInfo.InvariantCulture);
+    }
+
     /// <summary>Use Application.persistentDataPath as root. Never restores session calibration.</summary>
     public sealed class PrivateTutorialCache
     {
         public const int MaximumRecordingBytes = 64 * 1024 * 1024;
         public const int MaximumTutorialBytes = 2 * 1024 * 1024;
+        public const int MaximumListedTutorials = 64;
         private readonly string root;
         private readonly Func<long> availableBytes;
         private readonly object gate = new object();
@@ -75,6 +143,62 @@ namespace Trail.Runtime.Storage
                 if (loaded.Tutorial.Id != tutorialId || loaded.Tutorial.Revision != revision) throw new IOException("Cached tutorial identity mismatch");
                 return loaded;
             }
+        }
+        /// <summary>Ready tutorials already on this device, newest first, so the library works with no
+        /// server and no pairing. Unreadable, partial, foreign or unfinalized entries are skipped rather
+        /// than surfaced or thrown. This verifies the tutorial document and that the recording is present
+        /// and within bounds; <see cref="Load"/> still re-verifies the recorded bytes against the stored
+        /// hash before anything can be preloaded, so a listed entry is available, never proven loadable.</summary>
+        public CachedTutorial[] ListReady()
+        {
+            lock (gate)
+            {
+                var folders = Directory.GetDirectories(root);
+                Array.Sort(folders, (a, b) =>
+                {
+                    var order = Directory.GetLastWriteTimeUtc(b).CompareTo(Directory.GetLastWriteTimeUtc(a));
+                    return order != 0 ? order : string.CompareOrdinal(a, b);
+                });
+                var found = new List<CachedTutorial>();
+                foreach (var folder in folders)
+                {
+                    if (found.Count >= MaximumListedTutorials) break;
+                    var entry = Describe(folder);
+                    if (entry != null) found.Add(entry);
+                }
+                return found.ToArray();
+            }
+        }
+        /// <summary>Never throws: a damaged entry is not a ready entry.</summary>
+        private static CachedTutorial Describe(string folder)
+        {
+            try
+            {
+                var name = Path.GetFileName(folder);
+                var split = name.LastIndexOf('-');
+                int revision;
+                if (split <= 0 || !int.TryParse(name.Substring(split + 1), NumberStyles.None, CultureInfo.InvariantCulture, out revision)) return null;
+                var id = name.Substring(0, split);
+                // Rejects interrupted .pending-* writes and anything this cache did not write itself.
+                if (Key(id, revision) != name) return null;
+                var manifest = File.ReadAllText(Path.Combine(folder, "ready")).Split('\n');
+                if (manifest.Length != 2) return null;
+                var tutorialJson = ReadBounded(Path.Combine(folder, "tutorial.json"), MaximumTutorialBytes);
+                if (Hash(tutorialJson) != manifest[1]) return null;
+                var tutorial = ContractJson.ParseTutorial(new UTF8Encoding(false, true).GetString(tutorialJson));
+                if (tutorial.Status != "ready" || tutorial.Id != id || tutorial.Revision != revision || tutorial.RecordingHash != manifest[0]) return null;
+                using (var recording = new FileStream(Path.Combine(folder, "recording.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
+                    if (recording.Length <= 0 || recording.Length > MaximumRecordingBytes) return null;
+                return new CachedTutorial(id, revision, Title(tutorial), tutorial.Steps.Length);
+            }
+            catch (Exception) { return null; }
+        }
+        /// <summary>Tutorials carry no title of their own; use the first reviewed step title.</summary>
+        private static string Title(Tutorial tutorial)
+        {
+            foreach (var step in tutorial.Steps)
+                if (!string.IsNullOrWhiteSpace(step.Title)) return step.Title.Length <= 80 ? step.Title : step.Title.Substring(0, 80);
+            return "Guide " + tutorial.Id.Substring(0, 8);
         }
         /// <summary>Call at startup before any writes; interrupted directories never become ready.</summary>
         public void RecoverInterruptedWrites()

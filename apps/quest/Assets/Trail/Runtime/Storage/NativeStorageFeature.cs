@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Trail.Contracts;
@@ -14,15 +15,19 @@ namespace Trail.Runtime.Storage
     public sealed class NativeStorageFeature : MonoBehaviour, IPlatformFeature
     {
         public int Order => 40;
-        public string Status { get; private set; } = "Record locally, upload as author, review on desktop, then preload as learner.";
-        public string SelectedTitle => library.Length == 0 ? "No ready guide" : library[selected].title;
+        // Local use needs no session. Honest and obviously not a server-issued identifier.
+        public const string LocalSessionId = "local-device-no-paired-session";
+        public string Status { get; private set; } = "Guides stored on this headset load without pairing; publishing still needs an author pairing.";
+        public string SelectedTitle => library.Length == 0 ? "No ready guide" : library[selected].Title;
+        // Reflects the merged library: device-only guides count, so losing the backend does not empty it.
         public bool HasReadyGuides => library.Length > 0;
+        public bool SelectedIsStoredOnDevice => library.Length > 0 && library[selected].StoredOnDevice;
         public CaptureReplaySession Capture { get; private set; }
         private GuideController guide;
         private NativeApiConnection connection;
         private PrivateTutorialCache cache;
         private Recording lastCapture;
-        private TutorialItem[] library = new TutorialItem[0];
+        private TutorialLibraryEntry[] library = new TutorialLibraryEntry[0];
         private int selected;
         private bool busy;
         private long generation;
@@ -41,7 +46,13 @@ namespace Trail.Runtime.Storage
             Capture = context.Root.GetComponentInChildren<CaptureReplaySession>(true); guide = context.Root.GetComponentInChildren<GuideController>(true);
             if (Capture == null) throw new InvalidOperationException("Storage requires the capture feature");
             cache = new PrivateTutorialCache(Application.persistentDataPath); cache.RecoverInterruptedWrites();
-            try { lastCapture = cache.LoadLatestCapture(); if (lastCapture != null) Status = "Saved recording restored. Upload as author to review on desktop."; } catch (Exception) { }
+            // Populate from private storage first: the library must be useful with no server at all.
+            library = TutorialLibrary.Merge(null, LocalEntries()); selected = 0;
+            Status = library.Length == 0
+                ? "No guide stored on this headset yet. Record one, or pair once to download a reviewed guide."
+                : library.Length + " guide(s) stored on this headset. Preload needs no pairing.";
+            try { lastCapture = cache.LoadLatestCapture(); } catch (Exception) { }
+            if (lastCapture != null) Status = "Saved recording restored. " + Status;
             pendingPath = Path.Combine(Application.persistentDataPath, "trail-pending-upload.json");
             if (Capture != null) Capture.RecordingCompleted += SaveCapture;
             if (guide != null) guide.Telemetry += OnTelemetry;
@@ -122,23 +133,60 @@ namespace Trail.Runtime.Storage
             };
             send(0);
         }
+        /// <summary>Server refresh stays a paired operation; it merges into, never replaces, local entries.</summary>
         public void RefreshLibrary()
         {
-            if (busy || connection == null) return; busy=true; var revision=++generation;
+            if (busy || connection == null) return;
+            if (connection.State != ConnectionState.Ready)
+            { Status = "Pair to refresh from the server. Guides already on this headset stay available."; return; }
+            busy=true; var revision=++generation;
             connection.Request("GET","/api/tutorials",null,(status,text) => {
                 if(revision!=generation)return; busy=false;
-                try { if(status!=200)throw new IOException(); library=JsonUtility.FromJson<Library>("{\"items\":"+text+"}").items ?? new TutorialItem[0]; selected=0; Status=library.Length+" finalized guides available."; }
-                catch(Exception) { Status="Guide library unavailable. An already loaded guide remains local."; }
+                TutorialItem[] fetched=null;
+                try { if(status!=200)throw new IOException(); fetched=JsonUtility.FromJson<Library>("{\"items\":"+text+"}").items ?? new TutorialItem[0]; }
+                catch(Exception) { fetched=null; }
+                library=TutorialLibrary.Merge(Rows(fetched),LocalEntries()); selected=0;
+                Status=fetched==null
+                    ? "Server library unavailable. "+library.Length+" guide(s) on this headset remain available."
+                    : library.Length+" guide(s) listed; those already on this headset load without pairing.";
             });
         }
+        private CachedTutorial[] LocalEntries()
+        { try { return cache.ListReady(); } catch (Exception) { return new CachedTutorial[0]; } }
+        /// <summary>Server rows that fail validation are dropped rather than shown as loadable.</summary>
+        private static TutorialLibraryEntry[] Rows(TutorialItem[] items)
+        {
+            var rows = new List<TutorialLibraryEntry>();
+            foreach (var item in items ?? new TutorialItem[0])
+            {
+                if (item == null || item.status != "ready") continue;
+                try { rows.Add(new TutorialLibraryEntry(item.id, item.revision, item.title, item.steps, false)); }
+                catch (ArgumentException) { }
+            }
+            return rows.ToArray();
+        }
         public void NextGuide() { if(library.Length>0)selected=(selected+1)%library.Length; }
+        /// <summary>Local-first. A guide already on this headset loads with no server, no pairing and no
+        /// role; only downloading one that is absent needs the learner role.</summary>
         public void PreloadSelected()
         {
-            if(busy || library.Length==0 || guide==null || connection.Role!="learner") { Status="Choose a ready guide and pair as learner."; return; }
+            if(busy || library.Length==0 || guide==null) { Status="Record or download a guide before preloading."; return; }
             var item=library[selected];
-            try { var cached=cache.Load(item.id,item.revision); guide.Preload(cached.Tutorial,cached.Recording,cached.RecordingHash,connection.SessionId,cached.Recording.Source!="live"); Status="Cached guide loaded. Independently calibrate the learner workspace."; return; } catch(Exception) { }
+            var paired=connection!=null && connection.State==ConnectionState.Ready && connection.Role=="learner" && !string.IsNullOrWhiteSpace(connection.SessionId);
+            try {
+                // Load re-verifies the stored recording against its stored hash; nothing unverified passes here.
+                var cached=cache.Load(item.Id,item.Revision);
+                guide.Preload(cached.Tutorial,cached.Recording,cached.RecordingHash,paired?connection.SessionId:LocalSessionId,cached.Recording.Source!="live");
+                Status=(paired?"Loaded from this headset's storage; spectator telemetry uses the paired session. ":"Loaded from this headset's storage with no pairing. ")
+                    +"Independently calibrate the learner workspace.";
+                return;
+            } catch(Exception) { }
+            var listedLocally=false;
+            foreach(var local in LocalEntries()) if(local.Id==item.Id && local.Revision==item.Revision) listedLocally=true;
+            if(connection==null || connection.Role!="learner")
+            { Status=listedLocally?"This headset's copy failed its integrity check. Pair as learner to download it again.":"That guide is not on this headset. Pair as learner to download it."; return; }
             busy=true; var revision=++generation;
-            connection.Request("GET","/api/tutorials/"+item.id,null,(status,text)=> {
+            connection.Request("GET","/api/tutorials/"+item.Id,null,(status,text)=> {
                 if(revision!=generation)return;
                 try {
                     if(status!=200)throw new IOException(); var tutorial=ContractJson.ParseTutorial(text); if(tutorial.Status!="ready")throw new IOException(); var tutorialBytes=Encoding.UTF8.GetBytes(text);
@@ -151,7 +199,7 @@ namespace Trail.Runtime.Storage
                             get=index=> {
                                 if(revision!=generation) { data.Dispose(); return; }
                                 if(index==download.chunkCount) {
-                                    try { if(data.Length!=download.bytes)throw new IOException(); var loaded=cache.StoreReady(tutorialBytes,data.ToArray(),download.sha256); guide.Preload(loaded.Tutorial,loaded.Recording,loaded.RecordingHash,connection.SessionId,loaded.Recording.Source!="live"); Status="Guide preloaded. Calibrate this learner workspace before starting."; }
+                                    try { if(data.Length!=download.bytes)throw new IOException(); var loaded=cache.StoreReady(tutorialBytes,data.ToArray(),download.sha256); guide.Preload(loaded.Tutorial,loaded.Recording,loaded.RecordingHash,connection.SessionId,loaded.Recording.Source!="live"); library=TutorialLibrary.Merge(library,LocalEntries()); Status="Downloaded and stored on this headset; future loads need no pairing. Calibrate this learner workspace before starting."; }
                                     catch(Exception) { Status="Preload integrity or private storage check failed."; }
                                     finally { data.Dispose(); busy=false; } return;
                                 }

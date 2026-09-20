@@ -59,12 +59,15 @@ namespace Trail.Runtime.Shell
             diagnostics = context.Root.GetComponentsInChildren<MonoBehaviour>(true).OfType<IDiagnosticPanel>().ToArray();
 
             var panel = new GameObject("Trail shell");
-            panel.transform.SetParent(context.Root.transform, false);
+            // Parent under tracking space, like every other world-space panel. Parenting to the
+            // app root and setting a world position instead inherits the root's rotation rather
+            // than the rig's, which rendered the labels at the wrong orientation on device.
+            panel.transform.SetParent(context.TrackingSpace, false);
             // Offset to the side, within fingertip reach, matching the existing native panels.
             // Centring it would put the controls between the learner and the mat they are
             // working on; the browser reference reached the same conclusion and added a
             // "move panel" control. Exact placement still needs headset tuning.
-            panel.transform.position = context.TrackingSpace.TransformPoint(new Vector3(.40f, 1.15f, .55f));
+            panel.transform.localPosition = new Vector3(.40f, 1.15f, .55f);
             title = Label(panel.transform, "Shell title", new Vector3(0, .18f, 0), .010f);
             notice = Label(panel.transform, "Shell notice", new Vector3(0, .13f, 0), .006f);
             for (var i = 0; i < Capacity; i++)

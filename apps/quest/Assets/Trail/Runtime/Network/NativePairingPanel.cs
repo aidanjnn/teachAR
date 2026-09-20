@@ -7,8 +7,14 @@ using UnityEngine.UI;
 namespace Trail.Runtime.Network
 {
     /// <summary>World-fixed head-direction dwell keyboard. No eye/hand tracking or guide control.</summary>
-    public sealed class NativePairingPanel : MonoBehaviour
+    public sealed class NativePairingPanel : MonoBehaviour, IDiagnosticPanel
     {
+        // Pairing is not part of the guided experience and must never block it: head-gaze
+        // typing an eight-digit code is not an acceptable entry path. The shell keeps this
+        // hidden until Settings asks for it, and a tethered development build pairs itself
+        // from a USB handoff instead. See DevelopmentPairing.
+        public void SetPanelVisible(bool visible) => gameObject.SetActive(visible);
+
         private sealed class Key { public RectTransform Rect; public Image Image; public Action Press; }
         private readonly List<Key> keys = new List<Key>();
         private readonly PairingInput input = new PairingInput();
@@ -32,7 +38,10 @@ namespace Trail.Runtime.Network
             context = value;
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             var canvasObject = new GameObject("Native pairing setup", typeof(RectTransform), typeof(Canvas));
-            canvasObject.transform.SetParent(context.Root.transform, false);
+            // Tracking space, not the app root: the root carries no rig orientation, which left
+            // this canvas facing the wrong way on device.
+            canvasObject.transform.SetParent(context.TrackingSpace, false);
+            canvasObject.transform.localPosition = new Vector3(0, 1.3f, .7f);
             panel = canvasObject.GetComponent<RectTransform>(); panel.sizeDelta = new Vector2(820, 780); panel.localScale = Vector3.one * 0.001f;
             var canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.WorldSpace; canvas.worldCamera = context.HeadCamera;
             var background = canvasObject.AddComponent<Image>(); background.color = new Color(0.025f, 0.04f, 0.065f, 0.97f);

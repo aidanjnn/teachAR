@@ -133,6 +133,7 @@ namespace Trail.Runtime.Shell
                     Add(ShellCommand.StopRecording, "Stop recording");
                     Add(ShellCommand.DiscardTake, "Discard take");
                     Add(ShellCommand.UploadLastCapture, "Send for review");
+                    // Local takes are saved to private storage whether or not a server exists.
                     Add(ShellCommand.Back, "Back");
                     break;
                 case ShellRoute.Follow:
@@ -171,7 +172,8 @@ namespace Trail.Runtime.Shell
                     break;
                 default:
                     title = "Trail";
-                    notice = !c.Paired ? "Pair this headset to continue."
+                    notice = !c.Paired
+                        ? "Working on this headset. Pair in Settings to publish or use the coach."
                         : c.IsAuthor ? "Paired as author." : "Paired as learner.";
                     Add(ShellCommand.OpenCreate, "Create tutorial");
                     Add(ShellCommand.OpenFollow, "Follow tutorial");
@@ -188,10 +190,14 @@ namespace Trail.Runtime.Shell
             {
                 case ShellCommand.Back: return s.Route != ShellRoute.Home;
                 case ShellCommand.OpenSettings: return s.Route == ShellRoute.Home;
-                case ShellCommand.OpenLibrary: return s.Route == ShellRoute.Home && c.Paired;
-                // Only a paired author may enter authoring. No silent role escalation.
-                case ShellCommand.OpenCreate: return s.Route == ShellRoute.Home && c.Paired && c.IsAuthor;
-                case ShellCommand.OpenFollow: return s.Route == ShellRoute.Home && c.Paired;
+                // Recording, reviewing and following are local to this headset and its private
+                // storage, so they must work with no server: loaded guidance has to survive loss
+                // of the backend. Pairing gates the operations that genuinely leave the device --
+                // publishing for review, refreshing the shared library and the coach -- which is
+                // where the author/learner roles are still enforced.
+                case ShellCommand.OpenLibrary: return s.Route == ShellRoute.Home;
+                case ShellCommand.OpenCreate: return s.Route == ShellRoute.Home;
+                case ShellCommand.OpenFollow: return s.Route == ShellRoute.Home;
                 case ShellCommand.ToggleDiagnostics: return s.Route == ShellRoute.Settings;
 
                 case ShellCommand.Calibrate:
@@ -213,7 +219,9 @@ namespace Trail.Runtime.Shell
                     return s.Route == ShellRoute.Create && c.HasLastTake && !c.IsRecording && c.Paired && c.IsAuthor;
 
                 case ShellCommand.NextGuide: return s.Route == ShellRoute.Library && c.LibraryHasEntries;
+                // A tutorial already on this device loads without a server.
                 case ShellCommand.PreloadSelected: return s.Route == ShellRoute.Library && c.LibraryHasEntries;
+                // Refreshing reaches the shared library, so it stays paired.
                 case ShellCommand.RefreshLibrary: return s.Route == ShellRoute.Library && c.Paired;
 
                 case ShellCommand.StartStep: return s.Route == ShellRoute.Follow && c.GuideLoaded && c.GuideAwaitingExplicitStart;
@@ -229,11 +237,9 @@ namespace Trail.Runtime.Shell
         private static string Reason(ShellState s, ShellCommand command, ShellConditions c)
         {
             if (Enabled(s, command, c)) return "";
-            if (!c.Paired && (command == ShellCommand.OpenCreate || command == ShellCommand.OpenFollow ||
-                command == ShellCommand.OpenLibrary || command == ShellCommand.RefreshLibrary ||
-                command == ShellCommand.UploadLastCapture)) return "Pair this headset first.";
-            if (!c.IsAuthor && (command == ShellCommand.OpenCreate || command == ShellCommand.UploadLastCapture))
-                return "Pair as author to record.";
+            if (!c.Paired && (command == ShellCommand.RefreshLibrary || command == ShellCommand.UploadLastCapture))
+                return "Pair in Settings to reach the server.";
+            if (!c.IsAuthor && command == ShellCommand.UploadLastCapture) return "Pair as author to publish.";
             if (!c.Calibrated && (command == ShellCommand.SetSavePosition || command == ShellCommand.ChangeSavePosition ||
                 command == ShellCommand.StartRecording || command == ShellCommand.Repeat))
                 return "Calibrate the workspace in Settings.";
