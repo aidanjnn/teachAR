@@ -4,7 +4,7 @@ import {tutorialView,uiButtons} from '../public/tutorial-ui.mjs';
 import {TutorialFeedback} from '../public/tutorial-feedback.mjs';
 const guide=mode=>({mode,tutorial:{steps:[],title:'Example',setup:''},player:{index:0,step:{}},endpoint:{returnSince:null,cutoff:()=>null},appearance:{theme:'charcoal',sound:true}});
 test('all workflow controls fit the texture and never overlap another target',()=>{
- for(const mode of ['home','library','media-setup','media-wait','save-home','setup-new','setup-follow','start','end','placement','adjust-placement','author','author-options','capture','capture-paused','confirm-discard','confirm-exit','saving','review-step','review-options','trim','settings','saved','learn','learn-options','finished']){
+ for(const mode of ['home','confirm-home','boundary-help','library','media-setup','media-wait','save-home','setup-new','setup-follow','start','end','placement','adjust-placement','author','author-options','capture','capture-paused','confirm-discard','confirm-exit','saving','review-step','review-options','trim','settings','saved','learn','learn-options','finished']){
   const g=guide(mode);g.trimRange=[0,3000];g.cleanSave=true;g.tutorial.steps=[{}];
   const buttons=uiButtons(tutorialView(g));
   for(const b of buttons){assert(b.x>=0&&b.y>=0&&b.x+b.w<=1080&&b.y+b.h<=560,`${mode}/${b.id} out of bounds`);assert(b.w>=100&&b.h>=44);}
@@ -24,4 +24,10 @@ test('recording and practice use compact controls; setup and errors stay readabl
 test('feedback is bounded, cooldown-limited and cleared on session reset',()=>{
  const f=new TutorialFeedback();assert.equal(f.visible(0),null);assert(f.emit('saved','Saved',100));assert.equal(f.emit('saved','Saved',101),null);assert.equal(f.visible(1900),null);
  assert(f.emit('error','Not saved',2000));assert.equal(f.visible(2500).kind,'error');f.clear();assert.equal(f.visible(2501),null);
+});
+
+test('library cards, search and global Home have distinct usable targets',()=>{
+ const g=guide('library');g.libraryQuery='cloth';g.libraryFilter='all';g.libraryIndex=0;g.library=Array.from({length:7},(_,i)=>({title:'Tutorial '+i,steps:[{},{}],completion:{}}));
+ const buttons=uiButtons(tutorialView(g));assert.equal(buttons.filter(b=>b.card).length,3);assert(buttons.some(b=>b.id==='home'));
+ for(let i=0;i<buttons.length;i++)for(let j=i+1;j<buttons.length;j++){const a=buttons[i],b=buttons[j];assert(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,`${a.id}/${b.id} overlap`);}
 });

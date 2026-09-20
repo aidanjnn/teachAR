@@ -12,11 +12,11 @@ const assert=require('node:assert/strict');
   guide.persist=()=>Promise.resolve();guide.begin('home');guide.action('create');guide.action('media-enable');
   guide.hide(); // XR becomes visible-blurred while the browser owns the permission prompt.
   finish({camera:true,microphone:true,errors:[]});await guide.mediaTask;
-  if(guide.mode!=='save-home'||guide.mediaPending||!guide.captureCapabilities?.microphone)throw Error('Permission result was lost after focus interruption');
+  if(guide.mode!=='setup-new'||guide.mediaPending||!guide.captureCapabilities?.microphone)throw Error('Permission result was lost after focus interruption');
   guide.action('create');guide.action('media-enable');guide.action('settings');
   if(guide.mode!=='media-wait')throw Error('Settings stranded an in-flight permission request');
   guide.action('media-skip');finish({camera:true,microphone:true,errors:[]});await guide.mediaTask;
-  if(guide.mode!=='save-home'||guide.captureCapabilities.microphone||!cancelled)throw Error('Late permission result overrode hands-only');
+  if(guide.mode!=='setup-new'||guide.captureCapabilities.microphone||!cancelled)throw Error('Late permission result overrode hands-only');
   guide.action('create');guide.action('media-enable');guide.endSession();guide.begin('home');
   finish({camera:true,microphone:true,errors:[]});await guide.mediaTask;
   if(guide.mode!=='home'||guide.mediaPending)throw Error('Old permission result changed a new session');

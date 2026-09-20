@@ -73,6 +73,14 @@ const assert=require('node:assert/strict');
       // Do not write the independent repair fixture into the real draft.
       repair.persist=()=>Promise.resolve();repair.action('removeCue');
       if(repair.player.step.narration||repair.player.step.narration_issue||repair.player.step.reviewed)fail('Explicit text-only recovery failed');
+      // Consecutive continuous segments share the live microphone while earlier audio finalizes.
+      const fluidNarrator=new NarrationRecorder();await fluidNarrator.enable();
+      const fluid=new TutorialGuide({speak:()=>{},exit:()=>{},narrator:fluidNarrator,writeTutorial:async()=>{}});fluid.activeSession=true;fluid.workspace={span:.4};fluid.mode='capture';fluid.fluidCapture=true;fluid.tutorial.setup='Continuous synthetic microphone test';
+      fluidNarrator.begin();await wait(2700);fluid.frames=structuredClone(step.frames);fluid.sealFluidSegment();
+      if(!fluidNarrator.take||fluid.mode!=='capture')fail('Next narration did not start immediately');
+      await wait(2700);fluid.frames=structuredClone(step.frames);fluid.sealFluidSegment(true);await Promise.all([...fluid.segmentJobs]);
+      if(fluid.tutorial.steps.length!==2||fluid.tutorial.steps.some(s=>!s.narration||s.narration_issue))fail('Continuous segment audio was lost or rejected');
+      validateTutorial(fluid.exportData());fluidNarrator.disable();
       await playback.context.close();
       return {motion_ms:step.duration_ms,audio_ms:step.narration.duration_ms,pause_excluded:true,late_response_rejected:true};
     });
