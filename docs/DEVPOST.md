@@ -5,7 +5,7 @@ Copy each block into the matching Devpost field. Markers used below:
 - `[UPDATE BEFORE SUBMIT]` marks a fact that was true late Saturday and may improve overnight.
 - `[PLACEHOLDER]` marks a sponsor section with nothing behind it yet. Delete it if that is still true.
 
-Facts were checked against the WebXR foundation stack (PR 17, 23, 24, 26) and the voice PR 28 at about 4 am Sunday. Unity was retired in PR 26; the headset app is the Quest Browser tutor in `apps/webxr`.
+Facts were checked against `main` after the stack merged at 6:05 am Sunday (PR 17, 23, 24, 26 and the voice PR 28, main head `763676d`, CI green). Unity was retired in PR 26; the headset app is the Quest Browser tutor in `apps/webxr`.
 
 ---
 
@@ -126,7 +126,7 @@ That second answer is the whole product in one line. The coach knows what it can
 | Vision | Second Fastify process, Sharp, Responses API | Compares a fresh frame with reference photos, returns structured advice |
 | Desktop | Vite 8, TypeScript, Three.js | Authoring workbench, 3D replay, spectator page, Voice Lab |
 | Voice | GPT-Live over WebRTC, whisper-1, gpt-4.1-mini structured outputs | Spoken coach, timestamped transcription, step labels |
-| Checks | Vitest, node:test, Playwright, GitHub Actions | 365 server and web tests, 80 tutor tests, 10 tutor browser workflows, 8 end-to-end flows |
+| Checks | Vitest, node:test, Playwright, GitHub Actions | 365 server and web tests, 97 tutor tests, 10 tutor browser workflows, 8 end-to-end flows |
 
 ### The pieces that took the most thought
 
@@ -210,7 +210,7 @@ Twenty-eight pull requests over the weekend, each with the same checklist: typec
 | 2 cm | maximum calibration error before Trail refuses to continue |
 | 4 cm, 0.5 s | checkpoint radius and hold, checked on the learner's own headset |
 | 0 | ways the AI can advance, complete or skip a step |
-| 365 | automated tests on every pull request, plus 80 tutor tests, 10 tutor browser workflows and 8 end-to-end flows |
+| 365 | automated tests on every pull request, plus 97 tutor tests, 10 tutor browser workflows and 8 end-to-end flows |
 | 28 | pull requests this weekend, each reviewed before merge |
 | 10:19 pm | Saturday, the first time Trail rendered on a real Quest 3S `[UPDATE BEFORE SUBMIT]` |
 
@@ -378,7 +378,7 @@ Optional on the form. If there is time Sunday morning, a 60 to 90 second phone v
 
 ## 9. Open items for the team
 
-1. Runtime is decided: WebXR in Quest Browser (PR 26 retired Unity). The voice coach for it is PR 28, stacked on PR 26; the story above assumes both merge.
+1. Runtime is decided and merged: WebXR in Quest Browser (PR 26 retired Unity) and the voice coach (PR 28) are both on `main`. Zain's PR 25 (holographic hands and immersive entry) is still open; the story above does not depend on it.
 2. OMNI is selected on the form and not in the code. Either integrate it or expect that section to be deleted.
 3. Devin's contribution is two documentation PRs. Decide whether to keep that track.
 4. Sentry is selected and not integrated.
