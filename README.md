@@ -57,16 +57,16 @@ same tutor source:
 
 ```sh
 pnpm build
-ALLOW_USB_LOOPBACK=true PAIRING_ORIGINS=http://localhost:3001 pnpm dev:desktop
+ALLOW_USB_LOOPBACK=true PAIRING_ORIGINS=http://localhost:3001,http://127.0.0.1:5173 pnpm dev:desktop
 adb reverse tcp:3001 tcp:3001      # then open http://localhost:3001/tutorial
 ```
 
 The tutor then asks for a pairing code. Each API start writes a fresh single-use
 browser author code to `data/pairing.json`, valid for five minutes; enter it on
-the Quest. To pair more devices, use that code on the laptop's authoring page at
-`http://localhost:3001/` instead, then choose **New device: Author**,
-**Client: Browser** and **Create pairing code**. The dev page on port 5173 is not
-an allowed pairing origin in this setup. See [pairing](docs/pairing.md).
+the Quest. To pair more devices, use that code on the desktop authoring page at
+`http://127.0.0.1:5173` instead (allowed by the second `PAIRING_ORIGINS` entry),
+then choose **New device: Author**, **Client: Browser** and **Create pairing code**.
+See [pairing](docs/pairing.md).
 
 Mock mode needs no credentials and answers in text. Live voice needs
 `AI_PROVIDER=openai` and a server-side `OPENAI_API_KEY` in the root `.env`
