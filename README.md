@@ -61,6 +61,12 @@ ALLOW_USB_LOOPBACK=true PAIRING_ORIGINS=http://localhost:3001 pnpm dev:desktop
 adb reverse tcp:3001 tcp:3001      # then open http://localhost:3001/tutorial
 ```
 
+The tutor then asks for a pairing code. Mint an author code from the desktop
+authoring page (`http://127.0.0.1:5173`) or use the bootstrap code in
+`data/<dir>/pairing.json`; see [pairing](docs/pairing.md) and the
+[tutor guide][browser-guide]. Without pairing, the coach uses the steps stored in
+that browser.
+
 Mock mode needs no credentials and answers in text. Live voice needs
 `AI_PROVIDER=openai` and a server-side `OPENAI_API_KEY` in the root `.env`
 (see [.env.example](.env.example)); keys never reach browser assets or exports.
