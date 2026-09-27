@@ -14,7 +14,7 @@ are recommendations, not additional competition rules or a prediction of placeme
 ## Source and claim boundaries
 
 Reviewed September 20, 2026 against main at
-[`dfaf572`](https://github.com/aidanjnn/trail/tree/dfaf572a0c4bb1eb0ce15a14605649306fa550fe).
+[`dfaf572`](https://github.com/aidanjnn/teachAR/tree/dfaf572a0c4bb1eb0ce15a14605649306fa550fe).
 That snapshot uses Quest Browser/WebXR in `apps/webxr`. Source links below
 intentionally pin the inspected implementation, even as main advances. Neither
 this document nor old logs establish which revision is running on the demo headset.
@@ -33,16 +33,16 @@ an attached rehearsal result for the selected demo build.
 | Turn expert narration into editable instructions | Audio transcription plus structured Responses output; drafts retain model provenance and require review. | If rehearsed, record a short instruction, generate a draft, then correct and approve it. |
 | Check visible placement | A separate vision-service Responses adapter accepts a current image and labelled expert references. | Stretch goal: only show after fresh camera input changes the answer heard by the learner. Source existence alone does not prove this loop. |
 
-Source: [Live session configuration](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/server/src/ai/openai.ts),
-[SDK calls](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/server/src/ai/openai-gateway.ts),
-[coach prompts](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/server/src/ai/coach-prompts.ts),
-[browser bridge](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/public/tutorial-coach.mjs),
-[vision adapter](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/vision/src/provider.ts).
+Source: [Live session configuration](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/server/src/ai/openai.ts),
+[SDK calls](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/server/src/ai/openai-gateway.ts),
+[coach prompts](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/server/src/ai/coach-prompts.ts),
+[browser bridge](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/public/tutorial-coach.mjs),
+[vision adapter](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/vision/src/provider.ts).
 
 The inspected defaults are `gpt-live-1` for voice, `gpt-5.6-luna` for its
 delegated backend, `whisper-1` for transcription and `gpt-4.1-mini-2025-04-14`
 for text/labels. These are
-[configuration defaults](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/server/src/config.ts),
+[configuration defaults](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/server/src/config.ts),
 not proof of the models used by a particular running session. Record the actual
 model IDs during rehearsal without exposing credentials.
 

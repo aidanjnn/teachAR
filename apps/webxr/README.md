@@ -49,7 +49,7 @@ Run the tutor from the API origin for this: from the repository root, run `pnpm 
 and open `http://localhost:3001/tutorial` in Quest Browser. The API serves this folder's `public`
 files and `/vendor/trail-coach.js`, which `prepare-vendor.mjs` builds from `apps/web`. The page
 asks for a pairing code; mint an author code from the desktop authoring page or use the bootstrap
-code in `data/<dir>/pairing.json`. Without pairing the coach uses the steps in this browser. Live
+code in `data/pairing.json`. Without pairing the coach uses the steps in this browser. Live
 voice needs `AI_PROVIDER=openai` on the server; the mock provider answers in text. With a real key
 the coach says one short greeting when its session opens, so you hear the audio path before AR
 (`OPENAI_LIVE_GREETING=off` silences it). Microphone, WebRTC and an immersive session together on

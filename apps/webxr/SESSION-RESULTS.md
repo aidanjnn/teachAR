@@ -4,7 +4,7 @@ Create now begins with setting a visible two-palm save zone once. Its workspace-
 
 Validation: **56 Node tests, 52 Python tests, nine browser workflows passed** with synthetic/mocked sources. The added workflow captures two takes with different starts, checks their shared save zone and clean endpoints, rejects interrupted position setup, and verifies persistence and relocation. No new Quest validation or paid API calls.
 
-GitHub main `2a0b91c` and merged/open PRs were reviewed read-only. See [historical handoff](https://github.com/aidanjnn/trail/blob/40514f519a8db6b9fac3c47e223ecdc2ba474cc2/experiments/quest-browser/NATIVE-INTEGRATION-HANDOFF.md) for the source-based Unity assessment and next bounded port. No native code was changed or pushed.
+GitHub main `2a0b91c` and merged/open PRs were reviewed read-only. See [historical handoff](https://github.com/aidanjnn/teachAR/blob/40514f519a8db6b9fac3c47e223ecdc2ba474cc2/experiments/quest-browser/NATIVE-INTEGRATION-HANDOFF.md) for the source-based Unity assessment and next bounded port. No native code was changed or pushed.
 
 ---
 

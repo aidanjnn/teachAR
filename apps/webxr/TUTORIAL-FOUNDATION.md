@@ -72,7 +72,7 @@ PLAYWRIGHT_MODULE=/path/to/playwright node tests/browser-narration.cjs
 
 Also run the existing `browser-hands.cjs` and `browser-ar.cjs` after shared runtime changes. Browser tests use synthetic tracking/cameras/audio tones and mocked provider routes. The narration test exercises real MediaRecorder decoding and WebAudio playback with a generated tone, without opening a physical microphone. They cover rendering, review, persistence, malformed imports, stale-tab conflicts, delayed photos, camera stalls, tracking interruptions and explicit advancement. They cannot validate Quest camera/AR concurrency, occlusion, alignment drift or teaching effectiveness.
 
-See [the current WebXR delivery plan](../../docs/web-delivery.md) and [historical handoff](https://github.com/aidanjnn/trail/blob/40514f519a8db6b9fac3c47e223ecdc2ba474cc2/experiments/quest-browser/NATIVE-INTEGRATION-HANDOFF.md) for GitHub alignment and [META-VISION-RESEARCH.md](META-VISION-RESEARCH.md) for the next detection work.
+See [the current WebXR delivery plan](../../docs/web-delivery.md) and [historical handoff](https://github.com/aidanjnn/teachAR/blob/40514f519a8db6b9fac3c47e223ecdc2ba474cc2/experiments/quest-browser/NATIVE-INTEGRATION-HANDOFF.md) for GitHub alignment and [META-VISION-RESEARCH.md](META-VISION-RESEARCH.md) for the next detection work.
 
 ## Holograms, forgiving zones, and clean recording endpoints
 
