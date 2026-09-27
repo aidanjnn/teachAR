@@ -2,7 +2,7 @@
 
 Historical review of the pre-main catchup revision; source links below now point to the promoted `apps/webxr` tree. This is not validation of later commits.
 
-Reviewed [PR #29](https://github.com/aidanjnn/trail/pull/29), **feat(xr): add continuous capture and movable workspace UI**, on 20 September 2026. Scope: the complete 25-file merge-base diff from actual base `codex/immersive-entry-holograms` at `7843bfbb848ed19688b9d48791c83a6f838e4b26` to head `0d026d1ca2565a497f23cc61ae8806ebde149aa7`, plus immediate consumers and tests. No existing GitHub reviews/comments were present. Repairs were prepared on isolated `codex/pr29-review-fixes` for the existing PR branch `codex/fluid-workspace-ux`. The user subsequently requested commit and push; no GitHub review was posted.
+Reviewed [PR #29](https://github.com/aidanjnn/teachAR/pull/29), **feat(xr): add continuous capture and movable workspace UI**, on 20 September 2026. Scope: the complete 25-file merge-base diff from actual base `codex/immersive-entry-holograms` at `7843bfbb848ed19688b9d48791c83a6f838e4b26` to head `0d026d1ca2565a497f23cc61ae8806ebde149aa7`, plus immediate consumers and tests. No existing GitHub reviews/comments were present. Repairs were prepared on isolated `codex/pr29-review-fixes` for the existing PR branch `codex/fluid-workspace-ux`. The user subsequently requested commit and push; no GitHub review was posted.
 
 Reviewed head verdict: **Request changes — 76/100**. Repaired worktree verdict: **Approve for scoped code readiness — 91/100**. All six findings below are fixed in the accompanying changes. These judgments do not certify Quest behavior or physical task success; approval applies to the repairs, not the original reviewed head.
 

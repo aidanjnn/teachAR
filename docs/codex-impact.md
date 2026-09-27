@@ -34,10 +34,10 @@ threshold is a prototype setting, not an experimentally validated accuracy rate.
 alone in the regression, while valid fresh motion still completes. The repair
 was carried into both ordered guidance and relaxed practice.
 
-Evidence: [original repair `957b894`](https://github.com/aidanjnn/trail/commit/957b89447bad972e50299f162cb318146f1bde6c),
-[current follower tests](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/tests/tutorial-follow.test.mjs),
-[current follower](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/public/tutorial-follow.mjs),
-[original work record](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/docs/codex-log.md#2026-09-20--require-observed-movement-for-pr-17-palm-gates).
+Evidence: [original repair `957b894`](https://github.com/aidanjnn/teachAR/commit/957b89447bad972e50299f162cb318146f1bde6c),
+[current follower tests](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/tests/tutorial-follow.test.mjs),
+[current follower](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/public/tutorial-follow.mjs),
+[original work record](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/docs/codex-log.md#2026-09-20--require-observed-movement-for-pr-17-palm-gates).
 
 ### Fresh verification for this documentation
 
@@ -90,9 +90,9 @@ startup invalidates the old continuation. Tests cover stopping during pending
 publication and a newer start superseding the old one. This makes Stop dependable
 even when network work is delayed.
 
-Evidence: [repair `940a99e`](https://github.com/aidanjnn/trail/commit/940a99ee936ad6280c596826d02f91dde881ba52),
-[coach regressions](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/tests/tutorial-coach.test.mjs),
-and [integration and review-fix record](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/docs/codex-log.md#2026-09-20--integrate-voice-pr-28-with-its-retargeted-webxr-foundation).
+Evidence: [repair `940a99e`](https://github.com/aidanjnn/teachAR/commit/940a99ee936ad6280c596826d02f91dde881ba52),
+[coach regressions](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/tests/tutorial-coach.test.mjs),
+and [integration and review-fix record](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/docs/codex-log.md#2026-09-20--integrate-voice-pr-28-with-its-retargeted-webxr-foundation).
 The current regression cases passed within the fresh 32-test run above.
 Network/provider behavior is injected in these tests; no live microphone or
 OpenAI session was opened for this check.
@@ -108,16 +108,16 @@ reproduced it by delaying and rejecting GLB requests, retained the joint/bone
 display during loading and failure, and switched to the skin when ready. The
 fallback continues to receive fresh poses and hides missing tracking.
 
-Evidence: [repair `3b02d40`](https://github.com/aidanjnn/trail/commit/3b02d40884ce41ced5a34d8a46bc27cbde0604c0),
-[browser regression](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/tests/browser-hand-fallback.cjs),
-and [recorded validation](https://github.com/aidanjnn/trail/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/docs/codex-log.md#2026-09-20--preserve-visible-hands-when-pr-30-assets-fail).
+Evidence: [repair `3b02d40`](https://github.com/aidanjnn/teachAR/commit/3b02d40884ce41ced5a34d8a46bc27cbde0604c0),
+[browser regression](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/apps/webxr/tests/browser-hand-fallback.cjs),
+and [recorded validation](https://github.com/aidanjnn/teachAR/blob/dfaf572a0c4bb1eb0ce15a14605649306fa550fe/docs/codex-log.md#2026-09-20--preserve-visible-hands-when-pr-30-assets-fail).
 That work records 99 Node tests, 53 Python tests, 15 synthetic WebXR browser
 workflows and eight desktop workflows passing. Those suites were not rerun for
 this documentation. They do not prove headset contrast or comfort.
 
 ## Runtime API evidence is separate from Codex evidence
 
-The [voice integration record](https://github.com/aidanjnn/trail/blob/8b95701cddca9b06dec5009983854c0f5aeeb6f3/docs/codex-log.md#2026-09-20--webxr-voice-gpt-live-coach-and-whisper-labels-in-the-quest-browser-tutor)
+The [voice integration record](https://github.com/aidanjnn/teachAR/blob/8b95701cddca9b06dec5009983854c0f5aeeb6f3/docs/codex-log.md#2026-09-20--webxr-voice-gpt-live-coach-and-whisper-labels-in-the-quest-browser-tutor)
 reports a real OpenAI desktop smoke at about 01:50 EDT on September 20:
 paired guide publication, a Live session plus server sideband established in
 1.7 seconds, acknowledged step updates, typed grounded replies, and reviewed

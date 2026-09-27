@@ -3,9 +3,9 @@
 ## 1. Product direction
 
 On 2026-09-20 the user retired Unity and selected the WebXR stack
-[PR #17](https://github.com/aidanjnn/trail/pull/17) →
-[PR #23](https://github.com/aidanjnn/trail/pull/23) →
-[PR #24](https://github.com/aidanjnn/trail/pull/24) as the current foundation. `apps/webxr` is the primary runtime.
+[PR #17](https://github.com/aidanjnn/teachAR/pull/17) →
+[PR #23](https://github.com/aidanjnn/teachAR/pull/23) →
+[PR #24](https://github.com/aidanjnn/teachAR/pull/24) as the current foundation. `apps/webxr` is the primary runtime.
 The old native implementation plan is superseded; Git and the append-only
 [activity log](codex-log.md) retain its history.
 
