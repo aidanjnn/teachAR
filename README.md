@@ -2,6 +2,14 @@
 
 **Record a physical task once. Follow the expert's movements in your own workspace, at your own pace.**
 
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=roAt7l1E0Kc">
+    <img src="https://img.youtube.com/vi/roAt7l1E0Kc/maxresdefault.jpg" alt="Watch the Trail demo on YouTube" width="720">
+  </a>
+  <br>
+  <em>▶ Watch the demo on YouTube</em>
+</p>
+
 Trail is a mixed-reality physical-skill tutor for **Meta Quest 3S**, built on
 **Quest Browser, WebXR and Three.js**. An expert demonstrates a short task with
 tracked hands; a learner later follows translucent ghost hands and movement
