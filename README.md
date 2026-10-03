@@ -5,9 +5,9 @@
 <p align="center">
   <a href="https://www.youtube.com/watch?v=roAt7l1E0Kc">
     <img src="https://img.youtube.com/vi/roAt7l1E0Kc/maxresdefault.jpg" alt="Watch the Trail demo on YouTube" width="720">
+    <br>
+    <em>▶ Watch the demo on YouTube</em>
   </a>
-  <br>
-  <em>▶ Watch the demo on YouTube</em>
 </p>
 
 Trail is a mixed-reality physical-skill tutor for **Meta Quest 3S**, built on
