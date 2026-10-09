@@ -1,0 +1,211 @@
+{
+  "title": "Trail architecture",
+  "width": 1380,
+  "height": 780,
+  "seed": 3,
+  "groups": [
+    {
+      "x": 30,
+      "y": 60,
+      "w": 530,
+      "h": 560,
+      "label": "Quest Browser tutor (apps/webxr)"
+    },
+    {
+      "x": 640,
+      "y": 60,
+      "w": 340,
+      "h": 150,
+      "label": "Desktop (apps/web)"
+    },
+    {
+      "x": 640,
+      "y": 230,
+      "w": 700,
+      "h": 350,
+      "label": "Backend"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "cap",
+      "x": 60,
+      "y": 110,
+      "w": 210,
+      "h": 90,
+      "label": "Hand capture",
+      "sub": "record, review, trim",
+      "color": "blue"
+    },
+    {
+      "id": "lib",
+      "x": 320,
+      "y": 100,
+      "w": 200,
+      "h": 110,
+      "label": "IndexedDB",
+      "sub": "tutorial library",
+      "color": "green",
+      "shape": "cylinder"
+    },
+    {
+      "id": "guide",
+      "x": 320,
+      "y": 280,
+      "w": 200,
+      "h": 90,
+      "label": "Placement +\nguide engine",
+      "color": "blue"
+    },
+    {
+      "id": "ghost",
+      "x": 60,
+      "y": 280,
+      "w": 210,
+      "h": 90,
+      "label": "Three.js ghosts",
+      "sub": "and checkpoints",
+      "color": "blue"
+    },
+    {
+      "id": "coach",
+      "x": 320,
+      "y": 440,
+      "w": 200,
+      "h": 90,
+      "label": "Voice coach",
+      "sub": "mic, local commands",
+      "color": "blue"
+    },
+    {
+      "id": "desk",
+      "x": 670,
+      "y": 100,
+      "w": 280,
+      "h": 90,
+      "label": "Desktop web app",
+      "sub": "replay, authoring, spectator",
+      "color": "blue"
+    },
+    {
+      "id": "api",
+      "x": 680,
+      "y": 330,
+      "w": 240,
+      "h": 100,
+      "label": "Main API",
+      "sub": "apps/server, Fastify :3001",
+      "color": "yellow"
+    },
+    {
+      "id": "vis",
+      "x": 1080,
+      "y": 460,
+      "w": 220,
+      "h": 90,
+      "label": "Vision service",
+      "sub": "apps/vision, :3002",
+      "color": "yellow"
+    },
+    {
+      "id": "store",
+      "x": 1080,
+      "y": 300,
+      "w": 220,
+      "h": 110,
+      "label": "data/ dir",
+      "sub": "recordings, tutorials",
+      "color": "green",
+      "shape": "cylinder"
+    },
+    {
+      "id": "oai",
+      "x": 760,
+      "y": 640,
+      "w": 220,
+      "h": 100,
+      "label": "OpenAI",
+      "sub": "GPT Live, text,\ntranscribe, vision",
+      "color": "violet"
+    }
+  ],
+  "edges": [
+    {
+      "from": "cap",
+      "to": "lib",
+      "label": "save"
+    },
+    {
+      "from": "lib",
+      "to": "guide",
+      "label": "load"
+    },
+    {
+      "from": "guide",
+      "to": "ghost",
+      "label": "render"
+    },
+    {
+      "from": "guide",
+      "to": "coach",
+      "label": "current step"
+    },
+    {
+      "from": "lib",
+      "to": "api",
+      "label": "coach guide",
+      "dashed": true
+    },
+    {
+      "from": "coach",
+      "to": "api",
+      "label": "/api/voice",
+      "dashed": true,
+      "both": true
+    },
+    {
+      "from": "desk",
+      "to": "api",
+      "both": true
+    },
+    {
+      "from": "api",
+      "to": "store",
+      "label": "files"
+    },
+    {
+      "from": "api",
+      "to": "vis",
+      "label": "inspections"
+    },
+    {
+      "from": "api",
+      "to": "oai",
+      "label": "sideband",
+      "dashed": true
+    },
+    {
+      "from": "vis",
+      "to": "oai",
+      "dashed": true
+    },
+    {
+      "from": "coach",
+      "to": "oai",
+      "label": "WebRTC audio",
+      "dashed": true,
+      "both": true,
+      "lx": 40,
+      "ly": 0
+    }
+  ],
+  "notes": [
+    {
+      "x": 30,
+      "y": 655,
+      "text": "Dashed = optional. Guidance runs offline from IndexedDB.",
+      "size": 15,
+      "anchor": "start"
+    }
+  ]
+}
